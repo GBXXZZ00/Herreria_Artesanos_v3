@@ -108,11 +108,6 @@
     <div id="camposEspecificos"></div>
 
     <div class="field">
-      <label>Precio base (USD)</label>
-      <input type="number" id="fPrecio" placeholder="0" min="0" step="0.01">
-    </div>
-
-    <div class="field">
       <label>Fotos (una por cada acabado)</label>
       <div class="fotos-tipo" id="fotosTipo"></div>
     </div>
@@ -127,6 +122,18 @@
       <textarea id="fDescripcion" placeholder="Frase corta y sencilla, sin términos técnicos"></textarea>
     </div>
 
+    <div class="field">
+      <label>Precio base (USD)</label>
+      <input type="number" id="fPrecio" placeholder="0" min="0" step="0.01">
+    </div>
+
+    <div class="field">
+      <label>Categoría de pago (para lo que se le paga a los trabajadores)</label>
+      <select id="fCategoriaPago" disabled style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;color:var(--ink-soft)">
+        <option value="">Próximamente (módulo de Nómina)</option>
+      </select>
+    </div>
+
     <button class="btn-primary" id="btnGuardarModelo">Guardar modelo</button>
   </div>
 </div>
@@ -137,7 +144,12 @@
 <script src="assets/js/supabase-client.js?v=3"></script>
 <script src="assets/js/img-compress.js?v=3"></script>
 <script>
-const TIPOS = ['Puerta','Ventana','Portón','Combo','Puerta Multilock','Puerta de Madera'];
+// Tomamos el cliente real desde window.supabaseClient (ver assets/js/supabase-client.js).
+// Si por lo que sea no cargó, esto queda undefined y cargarModelos() lo detecta y avisa,
+// en vez de fallar en silencio contra el objeto equivocado.
+const supabase = window.supabaseClient;
+
+const TIPOS = ['Ventana','Portón','Combo','Puerta Multilock','Puerta de Madera'];
 const CATS_CHIP = ['Todos', ...TIPOS];
 
 let modelos = [];
@@ -269,7 +281,7 @@ function renderCamposEspecificos(tipo, v = {}){
     html += subWrap('ColorVidrio', pillFieldHtml('specColorVidrio', 'Color vidrio', ['Azul','Espejo','Negro'], v.color_vidrio || 'Espejo'));
     html += toggleFieldHtml('specManillon', 'Manillón', !!v.manillon);
     html += subWrap('Manillon', pillFieldHtml('specManillonTipo', 'Tipo de manillón', ['H','S','Luna'], v.manillon_tipo || 'H'));
-  } else if(tipo === 'Puerta' || tipo === 'Puerta Multilock'){
+  } else if(tipo === 'Puerta Multilock'){
     html += pillFieldHtml('specVidrio', 'Vidrio o Farquilla', ['Vidrio','Farquilla'], v.vidrio_o_farquilla || 'Vidrio');
     html += subWrap('ColorVidrio', pillFieldHtml('specColorVidrio', 'Color vidrio', ['Azul','Espejo','Negro'], v.color_vidrio || 'Negro'));
     html += toggleFieldHtml('specManillon', 'Manillón', !!v.manillon);
@@ -370,7 +382,7 @@ function leerEspecificaciones(tipo){
     if(base.vidrio_o_farquilla === 'Vidrio') base.color_vidrio = valorPills('specColorVidrio');
     base.manillon = valorToggle('specManillon');
     if(base.manillon) base.manillon_tipo = valorPills('specManillonTipo');
-  } else if(tipo === 'Puerta' || tipo === 'Puerta Multilock'){
+  } else if(tipo === 'Puerta Multilock'){
     base.vidrio_o_farquilla = valorPills('specVidrio');
     if(base.vidrio_o_farquilla === 'Vidrio') base.color_vidrio = valorPills('specColorVidrio');
     base.manillon = valorToggle('specManillon');

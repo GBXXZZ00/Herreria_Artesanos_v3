@@ -44,16 +44,26 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="assets/js/supabase-client.js?v=3"></script>
 <script>
+const supabase = window.supabaseClient;
 const NUMERO_WHATSAPP = ''; // TODO: pon aquí el número, ej. '584121234567'
 let modelos = [];
 let categoriaActiva = 'Todos';
 
 async function cargar(){
-  const { data, error } = await supabase.from('catalogo').select('*').order('id', { ascending:false });
-  if(error){ document.getElementById('grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1">No se pudo cargar el catálogo.</div>'; return; }
-  modelos = data || [];
-  pintarChips();
-  pintar();
+  const grid = document.getElementById('grid');
+  try{
+    if(!supabase){
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No se pudo conectar. Revisa tu conexión e intenta de nuevo.</div>';
+      return;
+    }
+    const { data, error } = await supabase.from('catalogo').select('*').order('id', { ascending:false });
+    if(error){ grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No se pudo cargar el catálogo.</div>'; return; }
+    modelos = data || [];
+    pintarChips();
+    pintar();
+  } catch(err){
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No se pudo cargar el catálogo.</div>';
+  }
 }
 
 function pintarChips(){
