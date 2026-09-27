@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=9">
+<link rel="stylesheet" href="assets/css/base.css?v=10">
 <style>
   /* Letra más grande: lo usan clientes de todas las edades */
   body{font-size:16px}
@@ -74,9 +74,9 @@
   <div class="sheet-foot" id="detalleFoot"></div>
 </section>
 
-<script src="assets/vendor/supabase.js?v=9"></script>
-<script src="assets/js/supabase-client.js?v=9"></script>
-<script src="assets/js/comun.js?v=9"></script>
+<script src="assets/vendor/supabase.js?v=10"></script>
+<script src="assets/js/supabase-client.js?v=10"></script>
+<script src="assets/js/comun.js?v=10"></script>
 <script>
 (function(){
   'use strict';
@@ -176,7 +176,7 @@
           <span class="linea-foto">${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 26)}</span>
           <span class="linea-txt">
             <span class="linea-t1">${p.color ? `<span class="swatch ${SW_COLOR[p.color] || ''}"></span>` : ''}${esc(t1)}</span>
-            <span class="linea-t2" style="display:block">Está en ${esc(nombreSede(p.sede_id))}</span>
+            ${nombreSede(p.sede_id) ? `<span class="linea-t2" style="display:block">Está en ${esc(nombreSede(p.sede_id))}</span>` : ''}
           </span>
           <span class="linea-precio">${dinero(p.precio)}</span>
           ${ICON_CHEV}

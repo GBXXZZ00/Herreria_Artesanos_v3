@@ -7,7 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const { TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA,
           especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
-          fotoModelo, fotoPieza, esc, dinero, specChipsHtml, toast, abrirHoja, cerrarHoja, hojaAbierta, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion } = window.AH;
+          fotoModelo, fotoPieza, esc, dinero, specChipsHtml, toast, abrirHoja, cerrarHoja, hojaAbierta, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion, antesDeCerrar, clavesGrupo, numOrNull } = window.AH;
 
   const ICON_CHEV = '<svg class="linea-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
   const ICON_PIN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
@@ -23,10 +23,12 @@
   let filtro = 'Todos';
   let primeraCarga = true;
   let cargando = false;
+  const recienGuardados = {}; // id -> { fila, t } para que un refresco no deshaga un guardado
 
   const buscarModelo = (id) => modelos.find(x => String(x.id) === String(id));
   const buscarPieza = (id) => piezas.find(x => String(x.id) === String(id));
-  const piezasDe = (m) => piezas.filter(p => p.catalogo_id === m.id);
+  const idReal = (m) => (m._editId != null ? m._editId : m.id);
+  const piezasDe = (m) => piezas.filter(p => p.catalogo_id === idReal(m));
   const totalDisp = (m) => piezasDe(m).reduce((a, p) => a + (p.cantidad || 0), 0);
   const nombreSede = (id) => (sedes.find(s => s.id === id) || {}).nombre || 'Sin sede';
 
@@ -128,14 +130,16 @@
   }
 
   function pintarRevisar(q){
+    const pendientes = modelos.filter(m => m._estado);
     let grupos = gruposRevisar();
     if(q) grupos = grupos.filter(g => g.some(m => (m.nombre || '').toLowerCase().includes(q)));
+    let i = 0;
+    const arriba = pendientes.map(m => tarjetaHtml(m, i++, false)).join('');
     if(!grupos.length){
-      $('grid').innerHTML = `<div class="state"><div class="state-title">No quedan repetidos</div><div class="state-text">Ya está todo limpio.</div></div>`;
+      $('grid').innerHTML = arriba + `<div class="state"><div class="state-title">No quedan repetidos</div><div class="state-text">Ya está todo limpio.</div></div>`;
       return;
     }
-    let i = 0;
-    $('grid').innerHTML = `
+    $('grid').innerHTML = arriba + `
       <div class="revisar-ayuda">Estos modelos tienen la misma foto o el mismo nombre. Toca la papelera en los que sobran, o abre uno para editarlo.</div>` +
       grupos.map(g => `
         <div class="grupo-head">${esc(g[0].nombre)}<span>${g.length} parecidos</span></div>
@@ -146,6 +150,7 @@
     const q = $('buscador').value.trim().toLowerCase();
     if(filtro === 'Revisar'){ pintarRevisar(q); return; }
     const lista = modelos.filter(m => {
+      if(m._estado) return true; // guardando o con error: siempre visible para poder reintentar
       if(filtro === 'Disponibles' && !totalDisp(m)) return false;
       if(filtro !== 'Todos' && filtro !== 'Disponibles' && m.tipo !== filtro) return false;
       return !q || (m.nombre || '').toLowerCase().includes(q);
@@ -191,6 +196,14 @@
       if(err) throw new Error(err.message);
       // Los que se están guardando en este momento se mantienen visibles
       const lista = rc.data || [];
+      // Lo guardado hace poco (por si este refresco salió antes de que terminara de guardarse)
+      const ahora = Date.now();
+      Object.keys(recienGuardados).forEach(id => {
+        const r = recienGuardados[id];
+        if(ahora - r.t > 60000){ delete recienGuardados[id]; return; }
+        const idx = lista.findIndex(x => x.id === r.fila.id);
+        if(idx > -1) lista[idx] = r.fila; else lista.unshift(r.fila);
+      });
       modelos.filter(m => m._estado).forEach(p => {
         const idx = p._editId != null ? lista.findIndex(x => x.id === p._editId) : -1;
         if(idx > -1) lista[idx] = p; else lista.unshift(p);
@@ -201,12 +214,15 @@
       if(primeraCarga){
         filtro = piezas.length ? 'Disponibles' : 'Todos';
         primeraCarga = false;
-        pintarChips();
       }
+      pintarChips();
       actualizarSubtitulo();
       pintarLista();
     } catch(err){
-      pintarError(err && err.message ? err.message : 'Error desconocido');
+      const msg = err && err.message ? err.message : 'Error desconocido';
+      // Si ya había una lista en pantalla, no se borra: solo se avisa
+      if(modelos.length) toast('No se pudo actualizar: ' + msg, 'error');
+      else pintarError(msg);
     } finally {
       cargando = false;
       $('btnActualizar').classList.remove('spinning');
@@ -500,6 +516,10 @@
   let sedePieza = null;
   let cantidadPieza = 1;
   let guardandoPieza = false;
+  let specsOriginal = null;  // especificaciones del modelo tal como estaban antes de editarlo
+  let tocados = new Set();   // grupos que el usuario cambió en esta edición
+  let formSucio = false;     // hay cambios sin guardar
+  let formSeq = 0;           // cambia cada vez que se abre el formulario
 
   function acabadosForm(){
     return modoForm === 'pieza' ? [{ key:'Pieza', label:'Foto real', sw:null }] : acabados(tipoActual);
@@ -566,11 +586,11 @@
         <span class="field-label">${esc(label)}</span>
         <div class="input-row">
           <div class="input-affix has-r">
-            <input class="input" ${idAlto ? `id="${idAlto}"` : ''} data-mkey="${keyAlto}" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(estado[keyAlto] ?? '')}" aria-label="Alto en metros">
+            <input class="input" ${idAlto ? `id="${idAlto}"` : ''} data-mkey="${keyAlto}" type="text" inputmode="decimal" autocomplete="off" value="${esc(estado[keyAlto] == null ? '' : estado[keyAlto])}" aria-label="Alto en metros">
             <span class="affix affix-r">alto</span>
           </div>
           <div class="input-affix has-r">
-            <input class="input" ${idAncho ? `id="${idAncho}"` : ''} data-mkey="${keyAncho}" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(estado[keyAncho] ?? '')}" aria-label="Ancho en metros">
+            <input class="input" ${idAncho ? `id="${idAncho}"` : ''} data-mkey="${keyAncho}" type="text" inputmode="decimal" autocomplete="off" value="${esc(estado[keyAncho] == null ? '' : estado[keyAncho])}" aria-label="Ancho en metros">
             <span class="affix affix-r">ancho</span>
           </div>
         </div>
@@ -646,7 +666,7 @@
     $('foldResumen').textContent = partes.length ? partes.join(' · ') : 'Etiqueta, descripción y características';
   }
 
-  function actualizarPrecio(){ $('precioPreview').textContent = 'Desde ' + dinero($('fPrecio').value); }
+  function actualizarPrecio(){ $('precioPreview').textContent = 'Desde ' + dinero(numOrNull($('fPrecio').value) || 0); }
 
   function setFold(abierto){
     const f = $('foldPublico');
@@ -680,6 +700,8 @@
   }
 
   function cambiarTipo(t){
+    specsOriginal = null;
+    formSucio = true;
     const altoPrevio = estado.alto, anchoPrevio = estado.ancho, tocoMedidas = estado._medidasTocadas;
     tipoActual = t;
     estado = estadoDesdeEspecificaciones(t, null);
@@ -696,6 +718,11 @@
 
   function abrirForm(id, tipo){
     const m = id != null ? buscarModelo(id) : null;
+    formSeq++;
+    specsOriginal = m ? { ...(m.especificaciones_base || {}) } : null;
+    tocados = new Set();
+    formSucio = false;
+    $('btnGuardar').disabled = false;
     modoForm = 'modelo';
     editandoId = m ? m.id : null;
     piezaEditId = null;
@@ -727,6 +754,11 @@
   }
 
   function abrirFormPieza(m, p){
+    formSeq++;
+    specsOriginal = null;
+    tocados = new Set();
+    formSucio = false;
+    $('btnGuardar').disabled = false;
     modoForm = 'pieza';
     modeloPieza = m;
     piezaEditId = p ? p.id : null;
@@ -757,6 +789,12 @@
     abrirHoja('sheetForm');
   }
 
+  ['input', 'change', 'click'].forEach(ev => $('formBody').addEventListener(ev, (e)=>{
+    if(ev === 'click' && !e.target.closest('.opt, .tchip, [data-cant], [data-color], [data-sede], [data-quitar], #btnAgregarCar')) return;
+    formSucio = true;
+  }));
+  antesDeCerrar.sheetForm = () => !formSucio || confirm('¿Salir sin guardar los cambios?');
+
   $('tipoFila').addEventListener('click', (e)=>{
     if(e.target.closest('[data-accion="cambiar-tipo"]')) abrirSelector('cambiar');
   });
@@ -766,6 +804,7 @@
     if(opt){
       const g = opt.dataset.g;
       estado[g] = opt.dataset.v;
+      tocados.add(g);
       if(g === 'ventanas_color') estado._ventanasColorTocado = true;
       const hayDependientes = esquema(tipoActual, modoEsquema()).grupos.some(h => h.si && typeof h.si === 'object' && h.si.g === g);
       if(hayDependientes){ pintarSpecs(); return; }
@@ -776,6 +815,7 @@
     if(t){
       const k = t.dataset.k;
       estado[k] = !estado[k];
+      tocados.add(k);
       if(tipoActual === 'Ventana'){
         if(k === 'marco_decorativo' && estado.marco_decorativo) estado.proteccion = true;
         if(k === 'proteccion' && !estado.proteccion) estado.marco_decorativo = false;
@@ -786,9 +826,9 @@
   });
   $('specs').addEventListener('input', (e)=>{
     const mk = e.target.dataset.mkey;
-    if(mk){ estado[mk] = e.target.value; if(mk === 'alto' || mk === 'ancho') estado._medidasTocadas = true; }
+    if(mk){ estado[mk] = e.target.value; tocados.add(mk); if(mk === 'alto' || mk === 'ancho') estado._medidasTocadas = true; }
     const tx = e.target.dataset.texto;
-    if(tx) estado[tx] = e.target.value;
+    if(tx){ estado[tx] = e.target.value; tocados.add(tx); }
   });
 
   $('optsColor').addEventListener('click', (e)=>{
@@ -859,11 +899,13 @@
   async function guardarPieza(){
     if(guardandoPieza) return;
     limpiarErrores();
-    const precio = parseFloat($('fPrecio').value);
+    const precio = numOrNull($('fPrecio').value);
     if(!(precio > 0)){ $('campoPrecio').classList.add('invalid'); $('campoPrecio').scrollIntoView({ behavior:'smooth', block:'center' }); return; }
     if(!db){ toast('Sin conexión con la base de datos', 'error'); return; }
     const m = modeloPieza;
     const btn = $('btnGuardar');
+    const seq = formSeq;
+    const editId = piezaEditId;
     guardandoPieza = true;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Guardando';
@@ -886,31 +928,35 @@
         estado: 'disponible',
         actualizado_en: new Date().toISOString()
       };
-      const q = piezaEditId != null
-        ? db.from('disponibles').update(fila).eq('id', piezaEditId).select().single()
+      const q = editId != null
+        ? db.from('disponibles').update(fila).eq('id', editId).select().single()
         : db.from('disponibles').insert(fila).select().single();
       const { data, error } = await q;
       if(error) throw new Error(error.message);
-      if(piezaEditId != null){
-        const i = piezas.findIndex(x => x.id === piezaEditId);
+      if(editId != null){
+        const i = piezas.findIndex(x => x.id === editId);
         if(i > -1) piezas[i] = data;
       } else {
         piezas.push(data);
       }
-      limpiarFotosNuevas();
-      cerrarHoja('sheetForm');
       actualizarSubtitulo();
+      pintarChips();
       pintarLista();
-      toast(piezaEditId != null ? 'Pieza actualizada' : 'Marcada como disponible');
-      det.modeloId = m.id;
-      if(piezaEditId != null) mostrarPieza(data, m); else mostrarLista(m);
-      if(!$('sheetDetalle').classList.contains('open')) abrirHoja('sheetDetalle');
+      toast(editId != null ? 'Pieza actualizada' : 'Marcada como disponible');
+      // Solo se cierra el formulario y se muestra la pieza si el usuario sigue en este mismo formulario
+      if(seq === formSeq){
+        limpiarFotosNuevas();
+        formSucio = false;
+        cerrarHoja('sheetForm', true);
+        det.modeloId = m.id;
+        if(editId != null) mostrarPieza(data, m); else mostrarLista(m);
+        if(!$('sheetDetalle').classList.contains('open')) abrirHoja('sheetDetalle');
+      }
     } catch(err){
       toast(err && err.message ? err.message : 'No se pudo guardar', 'error');
     } finally {
       guardandoPieza = false;
-      btn.disabled = false;
-      aplicarModo();
+      if(seq === formSeq){ btn.disabled = false; aplicarModo(); }
     }
   }
 
@@ -920,10 +966,34 @@
   // ---------------------------------------------------------------------------
   const trabajos = {};
 
+  // Al editar un modelo: no inventa valores en grupos que el modelo no tenía y el usuario
+  // no tocó, y conserva los campos que este formulario no maneja.
+  function especificacionesParaGuardar(){
+    const nuevo = especificacionesDesdeEstado(tipoActual, estado);
+    if(!specsOriginal) return nuevo;
+    const orig = specsOriginal;
+    const esq = esquema(tipoActual, 'modelo');
+    const manejadas = new Set(['alto', 'ancho']);
+    const tiene = (claves) => claves.some(k => Object.prototype.hasOwnProperty.call(orig, k));
+    if(!tiene(['alto', 'ancho']) && !tocados.has('alto') && !tocados.has('ancho')){ delete nuevo.alto; delete nuevo.ancho; }
+    esq.grupos.forEach(g => {
+      const claves = clavesGrupo(g);
+      claves.forEach(k => manejadas.add(k));
+      const tocado = tocados.has(g.g) || claves.some(k => tocados.has(k));
+      if(!tiene(claves) && !tocado) claves.forEach(k => { delete nuevo[k]; });
+    });
+    esq.extras.forEach(x => {
+      manejadas.add(x.k);
+      if(!tiene([x.k]) && !tocados.has(x.k)) delete nuevo[x.k];
+    });
+    Object.keys(orig).forEach(k => { if(!manejadas.has(k)) nuevo[k] = orig[k]; });
+    return nuevo;
+  }
+
   function guardarModelo(){
     limpiarErrores();
     const nombre = $('fNombre').value.trim();
-    const precio = parseFloat($('fPrecio').value);
+    const precio = numOrNull($('fPrecio').value);
     let primerError = null;
     if(!nombre){ $('campoNombre').classList.add('invalid'); primerError = primerError || $('campoNombre'); }
     if(!(precio > 0)){ $('campoPrecio').classList.add('invalid'); primerError = primerError || $('campoPrecio'); }
@@ -942,7 +1012,7 @@
     const payload = {
       nombre,
       tipo: tipoActual,
-      especificaciones_base: especificacionesDesdeEstado(tipoActual, estado),
+      especificaciones_base: especificacionesParaGuardar(),
       precio_base: precio,
       badge: $('fBadge').value.trim() || null,
       descripcion_publica: $('fDescripcion').value.trim() || null,
@@ -963,7 +1033,8 @@
     }
     if(filtro === 'Disponibles' && editandoId == null){ filtro = 'Todos'; pintarChips(); }
 
-    cerrarHoja('sheetForm');
+    formSucio = false;
+    cerrarHoja('sheetForm', true);
     actualizarSubtitulo();
     pintarLista();
     window.scrollTo({ top:0, behavior:'smooth' });
@@ -997,9 +1068,11 @@
       const idx = modelos.findIndex(x => x.id === t.tmpId);
       const real = data || { ...payload, id: t.editId };
       if(idx > -1) modelos[idx] = real; else modelos.unshift(real);
+      if(real.id != null) recienGuardados[real.id] = { fila: real, t: Date.now() };
       Object.values(t.nuevas).forEach(f => URL.revokeObjectURL(f.url));
       delete trabajos[t.tmpId];
       actualizarSubtitulo();
+      pintarChips();
       pintarLista();
       toast(t.editId != null ? 'Modelo actualizado' : 'Modelo agregado al catálogo');
     } catch(err){

@@ -164,6 +164,15 @@
     return s[gr.si.g] === gr.si.v;
   }
 
+  // Qué campos guardados controla cada grupo del formulario
+  function clavesGrupo(gr){
+    if(gr.tipo === 'medidas') return gr.keys;
+    if(gr.g === 'vidrio') return ['vidrio_o_farquilla', 'color_vidrio'];
+    if(gr.g === 'manillon') return ['manillon', 'manillon_tipo'];
+    if(gr.g === 'ahumado') return ['papel_ahumado', 'color_ahumado'];
+    return [gr.g];
+  }
+
   // Convierte lo elegido en pantalla a los mismos campos que usa el resto del sistema.
   function especificacionesDesdeEstado(tipo, s, modo){
     const out = { alto: numOrNull(s.alto), ancho: numOrNull(s.ancho) };
@@ -286,7 +295,7 @@
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
-  function numOrNull(v){ const n = parseFloat(v); return isFinite(n) ? n : null; }
+  function numOrNull(v){ const n = parseFloat(String(v == null ? '' : v).replace(',', '.').trim()); return isFinite(n) ? n : null; }
   const fmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
   function dinero(n){ return '$' + fmt.format(Number(n) || 0); }
   function specChipsHtml(lista){
@@ -309,6 +318,7 @@
   // ---------------------------------------------------------------------------
   const pila = [];
   const alCerrar = {};
+  const antesDeCerrar = {}; // id -> función que devuelve false para impedir el cierre
   function abrirHoja(id){
     const s = document.getElementById(id);
     s.style.transform = '';
@@ -317,7 +327,12 @@
     if(!pila.includes(id)) pila.push(id);
     document.body.style.overflow = 'hidden';
   }
-  function cerrarHoja(id){
+  function cerrarHoja(id, forzar){
+    if(!forzar && antesDeCerrar[id] && antesDeCerrar[id]() === false){
+      const s0 = document.getElementById(id);
+      s0.style.transition = ''; s0.style.transform = '';
+      return false;
+    }
     const s = document.getElementById(id);
     s.classList.remove('open');
     s.style.transform = '';
@@ -326,6 +341,7 @@
     if(i > -1) pila.splice(i, 1);
     if(!pila.length) document.body.style.overflow = '';
     if(alCerrar[id]) alCerrar[id]();
+    return true;
   }
   function hojaAbierta(){ return pila.length > 0; }
 
@@ -339,6 +355,9 @@
     }, { passive:true });
     sheet.addEventListener('touchmove', (e)=>{
       if(y0 == null) return;
+      const body = sheet.querySelector('.sheet-body');
+      // Si el contenido empezó a desplazarse, esto es scroll y no un gesto para cerrar
+      if(body && body.scrollTop > 0){ y0 = null; sheet.style.transition = ''; sheet.style.transform = ''; return; }
       dy = e.touches[0].clientY - y0;
       if(dy <= 0){ sheet.style.transition = ''; sheet.style.transform = ''; return; }
       sheet.style.transition = 'none';
@@ -368,6 +387,6 @@
     TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
     fotoModelo, fotoPieza, esc, numOrNull, fmt, dinero, specChipsHtml, toast,
-    abrirHoja, cerrarHoja, hojaAbierta, alCerrar
+    abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo
   };
 })();
