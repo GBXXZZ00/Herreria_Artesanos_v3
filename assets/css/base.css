@@ -1,16 +1,22 @@
-/* Paleta única de la app — modo claro, marfil/carbón/óxido. Nada de modo oscuro. */
+/* Paleta única de la app — modo claro, blanco puro/carbón/óxido. Nada de modo oscuro. */
 :root{
-  --paper:#F7F3EC;
+  --paper:#FFFFFF;
   --surface:#FFFFFF;
   --ink:#211D18;
   --ink-soft:#6B6459;
-  --line:#E4DCCB;
+  --line:#EAE7E1;
   --accent:#C2542A;
   --accent-ink:#FFFFFF;
   --radius:14px;
   --radius-sm:10px;
+  --nav-h:64px;
 }
 *{box-sizing:border-box}
+html,body{
+  overflow-x:hidden;
+  width:100%;
+  max-width:100%;
+}
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
@@ -20,8 +26,26 @@ body{
 }
 h1,h2,h3,.serif{font-family:Georgia,"Iowan Old Style",serif}
 button{font-family:inherit;cursor:pointer}
-input,select,textarea{font-family:inherit;font-size:15px}
+input,select,textarea{font-family:inherit;font-size:15px;max-width:100%}
+img{max-width:100%}
 ::-webkit-scrollbar{display:none}
+
+/* ---------- Barra de navegación inferior ---------- */
+.bottom-nav{
+  position:fixed;left:0;right:0;bottom:0;height:var(--nav-h);
+  background:var(--surface);border-top:1px solid var(--line);
+  display:flex;align-items:stretch;justify-content:space-around;
+  padding-bottom:env(safe-area-inset-bottom,0);
+  z-index:25;
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:none;color:var(--ink-soft);font-size:10.5px;font-weight:600;padding:6px 2px;
+}
+.nav-item svg{width:21px;height:21px}
+.nav-item.active{color:var(--ink)}
+.nav-item.disabled{color:#C9C3B8}
+.nav-item:active{transform:scale(0.95)}
 
 .topbar{
   display:flex;align-items:center;gap:10px;
@@ -49,7 +73,7 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
 .fab{
-  position:fixed;right:20px;bottom:24px;width:56px;height:56px;border-radius:16px;
+  position:fixed;right:20px;bottom:calc(var(--nav-h) + 16px);width:56px;height:56px;border-radius:16px;
   background:var(--ink);border:none;display:flex;align-items:center;justify-content:center;
   box-shadow:0 8px 20px rgba(33,29,24,0.25);z-index:30;
 }

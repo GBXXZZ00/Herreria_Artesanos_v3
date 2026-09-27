@@ -6,7 +6,9 @@
 <title>Catálogo — Herrería Artesanos</title>
 <link rel="stylesheet" href="assets/css/base.css">
 <style>
-  .content{padding:16px 18px 100px;max-width:640px;margin:0 auto}
+  .content{padding:16px 18px calc(var(--nav-h) + 90px);max-width:640px;margin:0 auto}
+  .error-state{text-align:center;padding:40px 20px;color:var(--ink-soft)}
+  .error-state button{margin-top:12px;background:var(--ink);color:var(--paper);border:none;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600}
   .grid-modelos{display:flex;flex-direction:column;gap:10px;margin-top:14px}
   .modelo-row{
     background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;
@@ -55,8 +57,27 @@
 </div>
 
 <button class="fab" id="btnNuevo" aria-label="Nuevo modelo">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F7F3EC" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
 </button>
+
+<nav class="bottom-nav">
+  <button class="nav-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    Catálogo
+  </button>
+  <button class="nav-item disabled" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l1.5 5h9L18 2"/><path d="M3.5 7h17l-1.4 12.5a2 2 0 01-2 1.5H6.9a2 2 0 01-2-1.5L3.5 7z"/></svg>
+    Ventas
+  </button>
+  <button class="nav-item disabled" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/></svg>
+    Producción
+  </button>
+  <button class="nav-item disabled" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
+    Nómina
+  </button>
+</nav>
 
 <!-- HOJA: nuevo / editar modelo -->
 <div class="sheet-scrim" id="scrim"></div>
@@ -129,8 +150,18 @@ function toast(msg){
 
 // ---------- Cargar y pintar lista ----------
 async function cargarModelos(){
+  const cont = document.getElementById('listaModelos');
   const { data, error } = await supabase.from('catalogo').select('*').order('id', { ascending:false });
-  if(error){ toast('Error cargando catálogo: ' + error.message); return; }
+  if(error){
+    cont.innerHTML = `
+      <div class="error-state">
+        No se pudo cargar el catálogo.<br><span style="font-size:12px">${error.message}</span>
+        <br><button id="btnReintentar">Reintentar</button>
+      </div>`;
+    document.getElementById('btnReintentar').onclick = cargarModelos;
+    toast('Error cargando catálogo');
+    return;
+  }
   modelos = data || [];
   document.getElementById('totalModelos').textContent = modelos.length + ' modelos';
   pintarChips();
