@@ -3,522 +3,201 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Catálogo — Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=3">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<title>Catálogo · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=4">
 <style>
-  .content{padding:16px 18px calc(var(--nav-h) + 90px);max-width:640px;margin:0 auto}
-  .error-state{text-align:center;padding:40px 20px;color:var(--ink-soft)}
-  .error-state button{margin-top:12px;background:var(--ink);color:var(--paper);border:none;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600}
-  .grid-modelos{display:flex;flex-direction:column;gap:10px;margin-top:14px}
-  .modelo-row{
-    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;
-    display:flex;align-items:center;gap:12px;text-align:left;border-width:1px;width:100%;
+  .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
+  .chips-inline{padding:0;flex-wrap:wrap;overflow:visible}
+
+  /* Cuadrícula de modelos */
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px 18px 0}
+  @media (min-width:620px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  .card-wrap{opacity:0;transform:translateY(10px);animation:cardIn 380ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms)}
+  @keyframes cardIn{to{opacity:1;transform:none}}
+  .card{
+    width:100%;height:100%;text-align:left;display:flex;flex-direction:column;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:8px 8px 12px;box-shadow:var(--shadow-sm);
+    transition:transform 150ms var(--ease-out);
   }
-  .modelo-row:active{transform:scale(0.99)}
-  .thumb{
-    width:52px;height:52px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#EFE8D8,#E4DCCB);
-    display:flex;align-items:center;justify-content:center;overflow:hidden;
+  .card:active{transform:scale(0.97)}
+  .card-photo{
+    position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface-2);
+    display:flex;align-items:center;justify-content:center;color:var(--ink-faint);
   }
-  .thumb img{width:100%;height:100%;object-fit:cover}
-  .modelo-info{flex:1;min-width:0}
-  .modelo-nombre{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .modelo-meta{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
-  .warn-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
-  .empty-state{text-align:center;padding:60px 20px;color:var(--ink-soft)}
-  .fotos-tipo{display:flex;gap:10px;flex-wrap:wrap}
-  .foto-slot{
-    width:76px;height:76px;border-radius:12px;border:1.5px dashed var(--line);background:var(--surface);
-    display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;
+  .card-photo img{width:100%;height:100%;object-fit:cover}
+  .card-badge{
+    position:absolute;top:8px;left:8px;padding:4px 9px;border-radius:999px;
+    background:rgba(255,255,255,0.94);font-size:11px;font-weight:800;color:var(--ink);
   }
-  .foto-slot img{width:100%;height:100%;object-fit:cover}
-  .foto-slot input{position:absolute;inset:0;opacity:0;cursor:pointer}
-  .foto-slot-label{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:9.5px;color:var(--ink-soft);background:rgba(255,255,255,0.85)}
+  .card-dots{position:absolute;right:8px;bottom:8px;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,0.94)}
+  .card-dots .swatch{width:12px;height:12px}
+  .card-name{font-size:15px;font-weight:700;line-height:1.25;margin:10px 4px 0;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .card-type{font-size:12.5px;color:var(--ink-soft);margin:3px 4px 0}
+  .card-price{font-size:16.5px;font-weight:800;color:var(--accent);margin:auto 4px 0;padding-top:6px;letter-spacing:-0.2px}
+
+  /* Esqueleto de carga */
+  .sk{background:var(--surface-2);border-radius:10px;animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .sk-card{border:1px solid var(--line);border-radius:var(--radius);padding:8px 8px 12px}
+  .sk-photo{aspect-ratio:1/1;border-radius:12px}
+  .sk-line{height:12px;margin:12px 4px 0}
+
+  /* Estados vacío y error */
+  .state{grid-column:1/-1;text-align:center;padding:48px 24px 24px;color:var(--ink-soft)}
+  .state-icon{width:64px;height:64px;border-radius:20px;background:var(--surface-2);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .state-title{font-size:17px;font-weight:800;color:var(--ink);margin-bottom:6px}
+  .state-text{font-size:14px;max-width:280px;margin:0 auto}
+  .state .btn-secondary{margin-top:18px}
+
+  /* Jalar para actualizar (solo cuando la app está anclada a la pantalla de inicio) */
+  .ptr{
+    position:fixed;left:50%;top:calc(76px + var(--safe-t));z-index:15;
+    width:38px;height:38px;margin-left:-19px;border-radius:50%;background:var(--surface);
+    box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center;color:var(--accent);
+    opacity:0;transform:translateY(-40px);pointer-events:none;
+  }
+  .ptr.anim{transition:transform 260ms var(--ease-out),opacity 200ms var(--ease-out)}
+
+  .precio-preview{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);margin-top:8px}
+  .precio-preview b{color:var(--accent);font-weight:800}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="logo-mark"><span>HA</span></div>
-  <div class="topbar-title">Catálogo</div>
-  <div style="font-size:12.5px;color:var(--ink-soft)" id="totalModelos">…</div>
-  <button id="btnActualizar" aria-label="Actualizar" style="background:none;border:none;padding:6px;display:flex">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6459" stroke-width="2"><path d="M3 12a9 9 0 0115.3-6.4L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 01-15.3 6.4L3 16M3 21v-5h5"/></svg>
+<header class="topbar" id="topbar">
+  <div class="logo-mark">HA</div>
+  <div class="topbar-text">
+    <div class="topbar-title">Catálogo</div>
+    <div class="topbar-sub" id="subtitulo">Cargando modelos</div>
+  </div>
+  <button class="icon-btn" id="btnActualizar" aria-label="Actualizar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
   </button>
+</header>
+
+<div class="ptr" id="ptr" aria-hidden="true">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
 </div>
 
-<div class="content">
-  <div class="search-box">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6459" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-    <input type="text" id="buscador" placeholder="Buscar modelo...">
-  </div>
-
-  <div class="chips" id="chips" style="margin-top:12px"></div>
-
-  <div class="grid-modelos" id="listaModelos">
-    <div class="empty-state">Cargando catálogo...</div>
-  </div>
-</div>
+<main class="page">
+  <div class="chips" id="chips" role="tablist" aria-label="Filtrar por tipo"></div>
+  <label class="search-box">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input type="search" id="buscador" placeholder="Buscar modelo" autocomplete="off" aria-label="Buscar modelo">
+  </label>
+  <section class="grid" id="grid" aria-live="polite"></section>
+</main>
 
 <button class="fab" id="btnNuevo" aria-label="Nuevo modelo">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
 </button>
 
 <div class="bottom-nav-wrap">
-<nav class="bottom-nav">
-  <button class="nav-item disabled" disabled>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-6 9 6v11a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg>
-    <span>Ventas</span>
-  </button>
-  <button class="nav-item active">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/></svg>
-    <span>Catálogo</span>
-  </button>
-  <button class="nav-item disabled" disabled>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 11-5.4 5.4L4 17v3h3l5.3-5.3"/></svg>
-    <span>Producción</span>
-  </button>
-  <button class="nav-item disabled" disabled>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M8 15h4"/></svg>
-    <span>Nómina</span>
-  </button>
-</nav>
+  <nav class="bottom-nav" aria-label="Módulos">
+    <button class="nav-item disabled" disabled aria-label="Ventas, próximamente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>
+      <span>Ventas</span>
+    </button>
+    <button class="nav-item active" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/></svg>
+      <span>Catálogo</span>
+    </button>
+    <button class="nav-item disabled" disabled aria-label="Producción, próximamente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/></svg>
+      <span>Producción</span>
+    </button>
+    <button class="nav-item disabled" disabled aria-label="Nómina, próximamente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+      <span>Nómina</span>
+    </button>
+  </nav>
 </div>
 
-<!-- HOJA: nuevo / editar modelo -->
+<!-- Hoja: nuevo / editar modelo -->
 <div class="sheet-scrim" id="scrim"></div>
-<div class="sheet" id="sheetModelo">
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitulo">
   <div class="sheet-handle"></div>
   <div class="sheet-head">
-    <h2 class="serif" style="margin:0;font-size:18px" id="sheetTitulo">Nuevo modelo</h2>
-    <button id="btnCerrarSheet" style="background:none;border:none;padding:6px">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#211D18" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    <h2 class="sheet-title" id="sheetTitulo">Nuevo modelo</h2>
+    <button class="icon-btn" id="btnCerrar" aria-label="Cerrar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
   </div>
-  <div class="sheet-body">
+
+  <div class="sheet-body" id="sheetBody">
     <div class="field">
-      <label>Nombre del modelo</label>
-      <input type="text" id="fNombre" placeholder="Ej: Puerta Toscana Doble Panel">
+      <span class="field-label">Fotos</span>
+      <div class="photos" id="fotos"></div>
+    </div>
+
+    <div class="field" id="campoNombre">
+      <label class="field-label" for="fNombre">Nombre del modelo</label>
+      <input class="input" id="fNombre" type="text" autocomplete="off" placeholder="Ej: Lineal con bitral">
+      <div class="field-error">Ponle un nombre al modelo</div>
     </div>
 
     <div class="field">
-      <label>Tipo de producto</label>
-      <div class="pill-group" id="pillsTipo"></div>
+      <span class="field-label">Tipo</span>
+      <div class="chips chips-inline" id="tipos"></div>
     </div>
 
-    <div id="camposEspecificos"></div>
+    <div id="specs"></div>
 
-    <div class="field">
-      <label>Fotos (una por cada acabado)</label>
-      <div class="fotos-tipo" id="fotosTipo"></div>
+    <div class="field" id="campoPrecio">
+      <label class="field-label" for="fPrecio">Precio base</label>
+      <div class="input-affix">
+        <span class="affix">$</span>
+        <input class="input" id="fPrecio" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0">
+      </div>
+      <div class="precio-preview">En el catálogo se verá: <b id="precioPreview">Desde $0</b></div>
+      <div class="field-error">Ingresa un precio mayor a 0</div>
     </div>
 
-    <div class="field">
-      <label>Insignia (opcional)</label>
-      <input type="text" id="fBadge" placeholder="Ej: Nuevo, Más vendido">
-    </div>
-
-    <div class="field">
-      <label>Descripción para el cliente (Catálogo Público)</label>
-      <textarea id="fDescripcion" placeholder="Frase corta y sencilla, sin términos técnicos"></textarea>
-    </div>
-
-    <div class="field">
-      <label>Precio base (USD)</label>
-      <input type="number" id="fPrecio" placeholder="0" min="0" step="0.01">
-    </div>
-
-    <div class="field">
-      <label>Categoría de pago (para lo que se le paga a los trabajadores)</label>
-      <select id="fCategoriaPago" disabled style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;color:var(--ink-soft)">
-        <option value="">Próximamente (módulo de Nómina)</option>
-      </select>
-    </div>
-
-    <button class="btn-primary" id="btnGuardarModelo">Guardar modelo</button>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="assets/js/supabase-client.js?v=3"></script>
-<script src="assets/js/img-compress.js?v=3"></script>
-<script>
-// Tomamos el cliente real desde window.supabaseClient (ver assets/js/supabase-client.js).
-// Si por lo que sea no cargó, esto queda undefined y cargarModelos() lo detecta y avisa,
-// en vez de fallar en silencio contra el objeto equivocado.
-const supabase = window.supabaseClient;
-
-const TIPOS = ['Ventana','Portón','Combo','Puerta Multilock','Puerta de Madera'];
-const CATS_CHIP = ['Todos', ...TIPOS];
-
-let modelos = [];
-let tipoSeleccionado = TIPOS[0];
-let categoriaActiva = 'Todos';
-let fotosPendientes = {}; // color -> {blob, previewUrl}
-let editandoId = null;
-
-function toast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2200);
-}
-
-// ---------- Cargar y pintar lista ----------
-function mostrarErrorCarga(mensaje){
-  const cont = document.getElementById('listaModelos');
-  cont.innerHTML = `
-    <div class="error-state">
-      No se pudo cargar el catálogo.<br><span style="font-size:12px">${mensaje}</span>
-      <br><button id="btnReintentar">Reintentar</button>
-    </div>`;
-  document.getElementById('btnReintentar').onclick = cargarModelos;
-  toast('Error cargando catálogo');
-}
-
-async function cargarModelos(){
-  const cont = document.getElementById('listaModelos');
-  cont.innerHTML = '<div class="empty-state">Cargando catálogo...</div>';
-  try{
-    if(typeof supabase === 'undefined'){
-      mostrarErrorCarga('No se pudo conectar (revisa tu conexión a internet e intenta de nuevo).');
-      return;
-    }
-    const { data, error } = await supabase.from('catalogo').select('*').order('id', { ascending:false });
-    if(error){
-      mostrarErrorCarga(error.message);
-      return;
-    }
-    modelos = data || [];
-    document.getElementById('totalModelos').textContent = modelos.length + ' modelos';
-    pintarChips();
-    pintarLista();
-  } catch(err){
-    mostrarErrorCarga(err.message || 'Error desconocido');
-  }
-}
-document.getElementById('btnActualizar').onclick = cargarModelos;
-
-function pintarChips(){
-  const cont = document.getElementById('chips');
-  cont.innerHTML = CATS_CHIP.map(c =>
-    `<button class="chip ${c===categoriaActiva?'active':''}" data-cat="${c}">${c}</button>`
-  ).join('');
-  cont.querySelectorAll('.chip').forEach(el=>{
-    el.onclick = ()=>{ categoriaActiva = el.dataset.cat; pintarChips(); pintarLista(); };
-  });
-}
-
-function pintarLista(){
-  const q = document.getElementById('buscador').value.trim().toLowerCase();
-  const filtrados = modelos.filter(m=>{
-    const pasaCat = categoriaActiva==='Todos' || m.tipo===categoriaActiva;
-    const pasaBusq = !q || m.nombre.toLowerCase().includes(q);
-    return pasaCat && pasaBusq;
-  });
-  const cont = document.getElementById('listaModelos');
-  if(filtrados.length===0){
-    cont.innerHTML = '<div class="empty-state">No hay modelos aquí todavía.<br>Toca el botón + para agregar el primero.</div>';
-    return;
-  }
-  cont.innerHTML = filtrados.map(m=>{
-    const [colorA, colorB] = coloresPorTipo(m.tipo);
-    const primeraFoto = (m.fotos && (m.fotos[colorA] || m.fotos[colorB])) || null;
-    const sinCategoria = !m.categoria_pago_id;
-    return `
-      <button class="modelo-row" data-id="${m.id}">
-        <div class="thumb">${primeraFoto ? `<img src="${primeraFoto}">` : ''}</div>
-        <div class="modelo-info">
-          <div class="modelo-nombre">${m.nombre}</div>
-          <div class="modelo-meta">${m.tipo} · $${Number(m.precio_base).toFixed(2)}</div>
+    <div class="fold" id="foldPublico">
+      <button class="fold-head" type="button" id="foldPublicoBtn" aria-expanded="false">
+        <span>Para el catálogo público<span class="muted" id="foldResumen">Etiqueta, descripción y características</span></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <div class="fold-body">
+        <div class="field">
+          <label class="field-label" for="fBadge">Etiqueta (opcional)</label>
+          <input class="input" id="fBadge" type="text" autocomplete="off" placeholder="Ej: Nuevo, Más vendido">
         </div>
-        ${sinCategoria ? '<div class="warn-dot" title="Falta categoría de pago"></div>' : ''}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B8AF9C" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-      </button>`;
-  }).join('');
-  cont.querySelectorAll('.modelo-row').forEach(el=>{
-    el.onclick = ()=> abrirSheet(Number(el.dataset.id));
-  });
-}
-
-document.getElementById('buscador').oninput = pintarLista;
-
-// ---------- Fotos: colores fijos por tipo (igual que la app original) ----------
-// Los productos de metal siempre tienen exactamente 2 acabados (Blanco/Negro); la Puerta
-// de Madera usa sus propios 2 acabados (Natural/Barnizada). Nunca más de 2 fotos por modelo.
-function coloresPorTipo(tipo){
-  if(tipo === 'Puerta de Madera') return ['Natural','Barnizada'];
-  return ['Blanco','Negro'];
-}
-
-function medidasHtml(v){
-  return `
-    <div class="field">
-      <label>Medidas típicas (m)</label>
-      <div style="display:flex;gap:10px">
-        <input type="number" id="specAlto" placeholder="Alto" step="0.01" value="${v.alto||''}" style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
-        <input type="number" id="specAncho" placeholder="Ancho" step="0.01" value="${v.ancho||''}" style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
+        <div class="field">
+          <label class="field-label" for="fDescripcion">Descripción (opcional)</label>
+          <textarea class="input" id="fDescripcion" placeholder="Lo que verá el cliente, en palabras sencillas"></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label" for="fCaracteristica">Características (opcional)</label>
+          <div class="tags" id="tags"></div>
+          <div class="input-row">
+            <input class="input" id="fCaracteristica" type="text" autocomplete="off" placeholder="Ej: Lámina calibre 16">
+            <button class="btn-secondary" type="button" id="btnAgregarCar" style="flex:0 0 auto">Agregar</button>
+          </div>
+        </div>
       </div>
-    </div>`;
-}
+    </div>
 
-// Campos reales de cada tipo, iguales a los de la app original (solo cambia el estilo visual:
-// pills/toggles en vez de checkboxes). El modelo de catálogo NO incluye sentido/posición/bloque
-// porque eso se decide por pedido, no por modelo — eso vive en Ventas, no aquí.
-function renderCamposEspecificos(tipo, v = {}){
-  const cont = document.getElementById('camposEspecificos');
-  let html = medidasHtml(v);
+    <button class="btn-text-danger hidden" type="button" id="btnEliminar">Eliminar modelo</button>
+  </div>
 
-  if(tipo === 'Ventana'){
-    html += toggleFieldHtml('specPapelAhumado', 'Papel ahumado (incluido de fábrica)', v.papel_ahumado !== false);
-    html += subWrap('PapelAhumado', pillFieldHtml('specColorAhumado', 'Color del ahumado', ['Espejo','Azul','Negro'], v.color_ahumado || 'Espejo'));
-    html += toggleFieldHtml('specProteccion', 'Protección', !!v.proteccion);
-    html += subWrap('Proteccion', toggleFieldHtml('specMarcoDecorativo', 'Marco decorativo en protección', !!v.marco_decorativo));
-    html += toggleFieldHtml('specMasHojas', 'Más de 2 hojas', !!v.mas_hojas);
-  } else if(tipo === 'Portón'){
-    html += pillFieldHtml('specVidrio', 'Vidrio o Farquilla', ['Vidrio','Farquilla'], v.vidrio_o_farquilla || 'Vidrio');
-    html += subWrap('ColorVidrio', pillFieldHtml('specColorVidrio', 'Color vidrio', ['Azul','Espejo','Negro'], v.color_vidrio || 'Espejo'));
-    html += toggleFieldHtml('specManillon', 'Manillón', !!v.manillon);
-    html += subWrap('Manillon', pillFieldHtml('specManillonTipo', 'Tipo de manillón', ['H','S','Luna'], v.manillon_tipo || 'H'));
-  } else if(tipo === 'Puerta Multilock'){
-    html += pillFieldHtml('specVidrio', 'Vidrio o Farquilla', ['Vidrio','Farquilla'], v.vidrio_o_farquilla || 'Vidrio');
-    html += subWrap('ColorVidrio', pillFieldHtml('specColorVidrio', 'Color vidrio', ['Azul','Espejo','Negro'], v.color_vidrio || 'Negro'));
-    html += toggleFieldHtml('specManillon', 'Manillón', !!v.manillon);
-    html += subWrap('Manillon', pillFieldHtml('specManillonTipo', 'Tipo de manillón', ['H','S','Luna'], v.manillon_tipo || 'Luna'));
-    html += toggleFieldHtml('specMarcoDecorativo', 'Marco decorativo', !!v.marco_decorativo);
-    html += toggleFieldHtml('specProteccion', 'Protección', !!v.proteccion);
-  } else if(tipo === 'Combo'){
-    html += pillFieldHtml('specVariante', 'Variante del combo', ['Sin protección en puerta','Con protección en puerta'], v.variante || 'Con protección en puerta');
-    html += `<div style="font-size:12px;color:var(--ink-soft);margin:-4px 0 16px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:10px">Las 2 ventanas del combo llevan protección de fábrica; la protección de la puerta ya viene incluida en el precio del combo.</div>`;
-    html += toggleFieldHtml('specPapelAhumado', 'Papel ahumado en las ventanas (de fábrica)', v.papel_ahumado !== false);
-    html += subWrap('PapelAhumado', pillFieldHtml('specColorAhumado', 'Color del ahumado', ['Espejo','Azul','Negro'], v.color_ahumado || 'Espejo'));
-    html += toggleFieldHtml('specManillon', 'Manillón (puerta)', !!v.manillon);
-    html += subWrap('Manillon', pillFieldHtml('specManillonTipo', 'Tipo de manillón', ['H','S','Luna'], v.manillon_tipo || 'Luna'));
-    html += toggleFieldHtml('specMarcoDecorativo', 'Marco decorativo (puerta)', !!v.marco_decorativo);
-  } else if(tipo === 'Puerta de Madera'){
-    html += pillFieldHtml('specMadera', 'Tipo de madera', ['Pino','Cedro','Roble'], v.tipo_madera || 'Pino');
-    html += toggleFieldHtml('specBarniz', 'Barniz incluido de fábrica', v.barniz !== false);
-  }
+  <div class="sheet-foot">
+    <button class="btn-primary" type="button" id="btnGuardar">Guardar modelo</button>
+  </div>
+</section>
 
-  cont.innerHTML = html;
-  cont.querySelectorAll('.pill-group[data-field]').forEach(activarPills);
-  cont.querySelectorAll('.toggle').forEach(activarToggle);
-  actualizarSubcampos();
-}
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-function subWrap(id, inner){
-  return `<div id="sub${id}" class="subfields" style="display:none;padding-left:4px;border-left:2px solid var(--line);margin:-8px 0 16px 4px">${inner}</div>`;
-}
-// Muestra/oculta los sub-campos condicionales (color de ahumado, color de vidrio, tipo de
-// manillón, marco decorativo dentro de protección) según el toggle/pill del que dependen.
-function actualizarSubcampos(){
-  const par = [
-    ['specPapelAhumado','subPapelAhumado','toggle'],
-    ['specProteccion','subProteccion','toggle'],
-    ['specManillon','subManillon','toggle'],
-  ];
-  par.forEach(([origenId, subId])=>{
-    const origen = document.getElementById(origenId);
-    const sub = document.getElementById(subId);
-    if(origen && sub) sub.style.display = origen.classList.contains('on') ? 'block' : 'none';
-  });
-  const vidrio = valorPills('specVidrio');
-  const subColorVidrio = document.getElementById('subColorVidrio');
-  if(subColorVidrio) subColorVidrio.style.display = vidrio === 'Vidrio' ? 'block' : 'none';
-}
-
-function pillFieldHtml(id, label, opciones, seleccionado){
-  return `
-    <div class="field">
-      <label>${label}</label>
-      <div class="pill-group" id="${id}" data-field="${id}">
-        ${opciones.map(o=>`<button type="button" class="pill ${o===seleccionado?'selected':''}" data-val="${o}">${o}</button>`).join('')}
-      </div>
-    </div>`;
-}
-function toggleFieldHtml(id, label, activo){
-  return `
-    <div class="toggle-row">
-      <span style="font-size:14px">${label}</span>
-      <button type="button" class="toggle ${activo?'on':''}" id="${id}"></button>
-    </div>`;
-}
-function activarPills(grupo){
-  grupo.querySelectorAll('.pill').forEach(p=>{
-    p.onclick = ()=>{
-      grupo.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected'));
-      p.classList.add('selected');
-      actualizarSubcampos();
-    };
-  });
-}
-function activarToggle(btn){
-  btn.onclick = ()=>{ btn.classList.toggle('on'); actualizarSubcampos(); };
-}
-function valorPills(id){
-  const grupo = document.getElementById(id);
-  const sel = grupo && grupo.querySelector('.pill.selected');
-  return sel ? sel.dataset.val : null;
-}
-function valorToggle(id){
-  const el = document.getElementById(id);
-  return el ? el.classList.contains('on') : false;
-}
-
-function leerEspecificaciones(tipo){
-  const base = {
-    alto: parseFloat(document.getElementById('specAlto').value) || null,
-    ancho: parseFloat(document.getElementById('specAncho').value) || null,
-  };
-  if(tipo === 'Ventana'){
-    base.papel_ahumado = valorToggle('specPapelAhumado');
-    if(base.papel_ahumado) base.color_ahumado = valorPills('specColorAhumado');
-    base.proteccion = valorToggle('specProteccion');
-    if(base.proteccion) base.marco_decorativo = valorToggle('specMarcoDecorativo');
-    base.mas_hojas = valorToggle('specMasHojas');
-  } else if(tipo === 'Portón'){
-    base.vidrio_o_farquilla = valorPills('specVidrio');
-    if(base.vidrio_o_farquilla === 'Vidrio') base.color_vidrio = valorPills('specColorVidrio');
-    base.manillon = valorToggle('specManillon');
-    if(base.manillon) base.manillon_tipo = valorPills('specManillonTipo');
-  } else if(tipo === 'Puerta Multilock'){
-    base.vidrio_o_farquilla = valorPills('specVidrio');
-    if(base.vidrio_o_farquilla === 'Vidrio') base.color_vidrio = valorPills('specColorVidrio');
-    base.manillon = valorToggle('specManillon');
-    if(base.manillon) base.manillon_tipo = valorPills('specManillonTipo');
-    base.marco_decorativo = valorToggle('specMarcoDecorativo');
-    base.proteccion = valorToggle('specProteccion');
-  } else if(tipo === 'Combo'){
-    base.variante = valorPills('specVariante');
-    base.papel_ahumado = valorToggle('specPapelAhumado');
-    if(base.papel_ahumado) base.color_ahumado = valorPills('specColorAhumado');
-    base.manillon = valorToggle('specManillon');
-    if(base.manillon) base.manillon_tipo = valorPills('specManillonTipo');
-    base.marco_decorativo = valorToggle('specMarcoDecorativo');
-  } else if(tipo === 'Puerta de Madera'){
-    base.tipo_madera = valorPills('specMadera');
-    base.barniz = valorToggle('specBarniz');
-  }
-  return base;
-}
-
-// ---------- Fotos ----------
-function pintarSlotsFotos(tipo, fotosExistentes = {}){
-  const cont = document.getElementById('fotosTipo');
-  const colores = coloresPorTipo(tipo);
-  cont.innerHTML = colores.map(c=>{
-    const previa = (fotosPendientes[c] && fotosPendientes[c].previewUrl) || fotosExistentes[c] || '';
-    return `
-      <div class="foto-slot" data-color="${c}">
-        ${previa ? `<img src="${previa}">` : ''}
-        <div class="foto-slot-label">${c}</div>
-        <input type="file" accept="image/*" capture="environment" data-color="${c}">
-      </div>`;
-  }).join('');
-  cont.querySelectorAll('input[type=file]').forEach(inp=>{
-    inp.onchange = async (e)=>{
-      const file = e.target.files[0];
-      if(!file) return;
-      toast('Comprimiendo foto...');
-      const blob = await comprimirFoto(file);
-      const previewUrl = URL.createObjectURL(blob);
-      fotosPendientes[inp.dataset.color] = { blob, previewUrl };
-      pintarSlotsFotos(tipo, fotosExistentes);
-      toast('Foto lista (' + Math.round(blob.size/1024) + ' KB)');
-    };
-  });
-}
-
-// ---------- Pills de tipo (arriba del sheet) ----------
-function pintarPillsTipo(seleccionado){
-  const cont = document.getElementById('pillsTipo');
-  cont.innerHTML = TIPOS.map(t=>`<button type="button" class="pill ${t===seleccionado?'selected':''}" data-tipo="${t}">${t}</button>`).join('');
-  cont.querySelectorAll('.pill').forEach(p=>{
-    p.onclick = ()=>{
-      cont.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected'));
-      p.classList.add('selected');
-      tipoSeleccionado = p.dataset.tipo;
-      renderCamposEspecificos(tipoSeleccionado);
-      pintarSlotsFotos(tipoSeleccionado, editandoId ? (modelos.find(m=>m.id===editandoId)?.fotos || {}) : {});
-    };
-  });
-}
-
-// ---------- Abrir / cerrar hoja ----------
-function abrirSheet(id = null){
-  editandoId = id;
-  fotosPendientes = {};
-  const modelo = id ? modelos.find(m=>m.id===id) : null;
-  document.getElementById('sheetTitulo').textContent = modelo ? 'Editar modelo' : 'Nuevo modelo';
-  document.getElementById('fNombre').value = modelo?.nombre || '';
-  document.getElementById('fPrecio').value = modelo?.precio_base || '';
-  document.getElementById('fBadge').value = modelo?.badge || '';
-  document.getElementById('fDescripcion').value = modelo?.descripcion_publica || '';
-  tipoSeleccionado = modelo?.tipo || TIPOS[0];
-  pintarPillsTipo(tipoSeleccionado);
-  renderCamposEspecificos(tipoSeleccionado, modelo?.especificaciones_base || {});
-  pintarSlotsFotos(tipoSeleccionado, modelo?.fotos || {});
-  document.getElementById('scrim').classList.add('open');
-  document.getElementById('sheetModelo').classList.add('open');
-}
-function cerrarSheet(){
-  document.getElementById('scrim').classList.remove('open');
-  document.getElementById('sheetModelo').classList.remove('open');
-}
-document.getElementById('btnNuevo').onclick = ()=> abrirSheet(null);
-document.getElementById('btnCerrarSheet').onclick = cerrarSheet;
-document.getElementById('scrim').onclick = cerrarSheet;
-
-// ---------- Guardar ----------
-document.getElementById('btnGuardarModelo').onclick = async ()=>{
-  const nombre = document.getElementById('fNombre').value.trim();
-  if(!nombre){ toast('Falta el nombre del modelo'); return; }
-  const btn = document.getElementById('btnGuardarModelo');
-  btn.disabled = true; btn.textContent = 'Guardando...';
-
-  try{
-    // Subir fotos pendientes a Supabase Storage
-    const fotosExistentes = editandoId ? (modelos.find(m=>m.id===editandoId)?.fotos || {}) : {};
-    const fotosFinal = { ...fotosExistentes };
-    for(const color of Object.keys(fotosPendientes)){
-      const { blob } = fotosPendientes[color];
-      const path = `${nombre.replace(/[^a-zA-Z0-9]+/g,'_')}_${color}_${Date.now()}.jpg`;
-      const { error: upErr } = await supabase.storage.from('catalogo-fotos').upload(path, blob, { contentType:'image/jpeg' });
-      if(upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('catalogo-fotos').getPublicUrl(path);
-      fotosFinal[color] = pub.publicUrl;
-    }
-
-    const payload = {
-      nombre,
-      tipo: tipoSeleccionado,
-      fotos: fotosFinal,
-      especificaciones_base: leerEspecificaciones(tipoSeleccionado),
-      precio_base: parseFloat(document.getElementById('fPrecio').value) || 0,
-      badge: document.getElementById('fBadge').value.trim() || null,
-      descripcion_publica: document.getElementById('fDescripcion').value.trim() || null
-    };
-
-    if(editandoId){
-      const { error } = await supabase.from('catalogo').update(payload).eq('id', editandoId);
-      if(error) throw error;
-      toast('Modelo actualizado');
-    } else {
-      const { error } = await supabase.from('catalogo').insert(payload);
-      if(error) throw error;
-      toast('Modelo guardado');
-    }
-    cerrarSheet();
-    await cargarModelos();
-  } catch(err){
-    toast('Error: ' + err.message);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Guardar modelo';
-  }
-};
-
-cargarModelos();
-</script>
+<script src="assets/vendor/supabase.js?v=4"></script>
+<script src="assets/js/supabase-client.js?v=4"></script>
+<script src="assets/js/img-compress.js?v=4"></script>
+<script src="assets/js/catalogo.js?v=4"></script>
 </body>
 </html>
