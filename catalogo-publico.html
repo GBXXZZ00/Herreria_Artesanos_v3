@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=10">
+<link rel="stylesheet" href="assets/css/base.css?v=11">
 <style>
   /* Letra más grande: lo usan clientes de todas las edades */
   body{font-size:16px}
@@ -41,11 +41,41 @@
   .sheet .linea-precio{font-size:18px}
   .sheet-back{font-size:16px;height:44px}
   .ayuda{font-size:15px;color:var(--ink-soft);margin-top:4px}
+  /* Pantalla de inicio: elegir qué ver */
+  .ini{padding:8px 18px 0}
+  .ini-title{font-size:28px;font-weight:800;letter-spacing:-0.6px;line-height:1.1;margin:12px 0 6px}
+  .ini-sub{font-size:16px;color:var(--ink-soft);margin:0 0 18px}
+  .ini-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (min-width:620px){.ini-grid{grid-template-columns:repeat(3,1fr)}}
+  .ini-tile{
+    position:relative;display:flex;flex-direction:column;text-align:left;width:100%;
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface);box-shadow:var(--shadow-sm);
+    opacity:0;transform:translateY(10px);animation:cardIn 380ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 50ms);
+    transition:transform 150ms var(--ease-out);
+  }
+  .ini-tile:active{transform:scale(0.97)}
+  @keyframes cardIn{to{opacity:1;transform:none}}
+  .ini-foto{aspect-ratio:4/3;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--accent);overflow:hidden}
+  .ini-foto img{width:100%;height:100%;object-fit:cover}
+  .ini-txt{padding:12px 14px 14px}
+  .ini-nombre{font-size:18px;font-weight:800;letter-spacing:-0.2px}
+  .ini-cuenta{font-size:14px;color:var(--ink-soft);margin-top:2px}
+  .ini-tile.destacado{grid-column:1/-1;flex-direction:row;align-items:stretch;border-color:var(--accent);background:var(--accent-soft)}
+  .ini-tile.destacado .ini-foto{width:42%;aspect-ratio:auto;min-height:130px;flex-shrink:0}
+  .ini-tile.destacado .ini-txt{display:flex;flex-direction:column;justify-content:center;padding:16px}
+  .ini-tile.destacado .ini-nombre{font-size:20px;color:var(--accent)}
+  .ini-tile.destacado .ini-cuenta{color:var(--ink);font-weight:600}
+  .ini-todo{margin:18px 0 0;width:100%;height:54px;font-size:16px}
+  .btn-inicio{display:flex;align-items:center;gap:4px;height:42px;padding:0 14px 0 8px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);font-weight:700;font-size:15px;flex-shrink:0;transition:transform 140ms var(--ease-out)}
+  .btn-inicio:active{transform:scale(0.95)}
 </style>
 </head>
 <body>
 <header class="topbar" id="topbar">
-  <div class="logo-mark">HA</div>
+  <button class="btn-inicio hidden" id="btnInicio" aria-label="Volver al inicio">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>Inicio
+  </button>
+  <div class="logo-mark" id="logoMark">HA</div>
   <div class="topbar-text">
     <div class="topbar-title" style="font-size:20px">Herrería Artesanos</div>
     <div class="topbar-sub" style="font-size:14px">Puertas, ventanas y portones</div>
@@ -53,14 +83,23 @@
 </header>
 
 <main class="page">
+  <section class="ini" id="vistaInicio">
+    <h1 class="ini-title">¿Qué estás buscando?</h1>
+    <p class="ini-sub">Toca una opción para ver los modelos.</p>
+    <div class="ini-grid" id="iniGrid">
+      <div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>
+    </div>
+    <button class="btn-secondary ini-todo hidden" id="btnVerTodo">Ver todo el catálogo</button>
+  </section>
+
+  <section class="hidden" id="vistaCatalogo">
   <div class="chips" id="chips"></div>
   <label class="search-box">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <input type="search" id="buscador" placeholder="Buscar puertas, ventanas" autocomplete="off" aria-label="Buscar">
   </label>
-  <div id="contenido">
-    <div class="grid"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
-  </div>
+  <div id="contenido"></div>
+  </section>
 </main>
 
 <div class="sheet-scrim" id="scrimDetalle" data-cerrar="sheetDetalle"></div>
@@ -74,9 +113,9 @@
   <div class="sheet-foot" id="detalleFoot"></div>
 </section>
 
-<script src="assets/vendor/supabase.js?v=10"></script>
-<script src="assets/js/supabase-client.js?v=10"></script>
-<script src="assets/js/comun.js?v=10"></script>
+<script src="assets/vendor/supabase.js?v=11"></script>
+<script src="assets/js/supabase-client.js?v=11"></script>
+<script src="assets/js/comun.js?v=11"></script>
 <script>
 (function(){
   'use strict';
@@ -84,7 +123,7 @@
   const $ = (id) => document.getElementById(id);
   const { TIPOS, iconoTipo, acabados, resumenSpecs, medidas, fotoModelo, fotoPieza, esc, dinero, specChipsHtml, abrirHoja, SW_COLOR, avisoFotoProteccion } = window.AH;
 
-  const NUMERO_WHATSAPP = ''; // Pendiente: número del negocio, ej. '584121234567'
+  const NUMERO_WHATSAPP = '584220167079';
   const ICON_WA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.18-1.77 1.24-.45.06-1.02.09-1.65-.1-.38-.12-.87-.28-1.5-.55-2.64-1.14-4.37-3.8-4.5-3.98-.13-.18-1.08-1.43-1.08-2.73s.68-1.93.92-2.2c.24-.26.53-.33.7-.33h.5c.16 0 .38-.06.6.45.22.53.75 1.83.82 1.96.07.13.11.29.02.47-.09.18-.13.29-.26.44-.13.16-.27.35-.39.47-.13.13-.26.27-.11.53.15.26.67 1.1 1.44 1.78 1 .88 1.83 1.15 2.09 1.28.26.13.42.11.57-.07.16-.18.65-.76.82-1.02.18-.26.35-.22.59-.13.24.09 1.5.71 1.76.84.26.13.43.2.5.31.07.13.07.71-.15 1.33z"/></svg>';
   const ICON_CHEV = '<svg class="linea-chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
   const ICON_PIN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
@@ -93,6 +132,9 @@
 
   let modelos = [], piezas = [], sedes = [];
   let filtro = 'Todos';
+  const ENTREGA = 'Entrega inmediata';
+  const PLURAL = { 'Puerta Multilock':'Puertas', 'Ventana':'Ventanas', 'Portón':'Portones', 'Combo':'Combos', 'Puerta de Madera':'Puertas de madera' };
+  const etiqueta = (c) => c === 'Todos' ? 'Todo' : (PLURAL[c] || c);
   let actual = null; // modelo abierto en la hoja
 
   const piezasDe = (m) => piezas.filter(p => p.catalogo_id === m.id);
@@ -103,11 +145,69 @@
     return NUMERO_WHATSAPP ? `https://wa.me/${NUMERO_WHATSAPP}?text=${t}` : `https://wa.me/?text=${t}`;
   }
 
+  const tiposPresentes = () => TIPOS.filter(t => modelos.some(m => m.tipo === t));
+
   function pintarChips(){
-    const tipos = TIPOS.filter(t => modelos.some(m => m.tipo === t));
-    const cats = [...(piezas.length ? ['Disponibles'] : []), 'Todos', ...tipos];
-    $('chips').innerHTML = cats.map(c => `<button class="chip ${c === filtro ? 'active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+    const cats = [...(piezas.length ? [ENTREGA] : []), ...tiposPresentes(), 'Todos'];
+    $('chips').innerHTML = cats.map(c => `<button class="chip ${c === filtro ? 'active' : ''}" data-cat="${esc(c)}">${esc(etiqueta(c))}</button>`).join('');
+    const activo = $('chips').querySelector('.chip.active');
+    if(activo) activo.scrollIntoView({ block:'nearest', inline:'center' });
   }
+
+  // ---------------- Pantalla de inicio ----------------
+  function pintarInicio(){
+    let i = 0;
+    let html = '';
+    if(piezas.length){
+      const n = piezas.reduce((a, p) => a + (p.cantidad || 0), 0);
+      const p0 = piezas[0];
+      const m0 = modelos.find(m => m.id === p0.catalogo_id);
+      const foto = m0 ? fotoPieza(p0, m0) : null;
+      html += `
+        <button class="ini-tile destacado" data-ver="${esc(ENTREGA)}" style="--i:${i++}">
+          <span class="ini-foto">${foto ? `<img src="${esc(foto)}" alt="">` : iconoTipo('Puerta Multilock', 40)}</span>
+          <span class="ini-txt"><span class="ini-nombre">Entrega inmediata</span><span class="ini-cuenta" style="display:block">${n === 1 ? '1 lista para llevar' : n + ' listas para llevar'}</span></span>
+        </button>`;
+    }
+    tiposPresentes().forEach(t => {
+      const ms = modelos.filter(m => m.tipo === t);
+      const conFoto = ms.find(m => totalDisp(m) && fotoModelo(m)) || ms.find(m => fotoModelo(m));
+      const foto = conFoto ? fotoModelo(conFoto) : null;
+      html += `
+        <button class="ini-tile" data-ver="${esc(t)}" style="--i:${i++}">
+          <span class="ini-foto">${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(t, 40)}</span>
+          <span class="ini-txt"><span class="ini-nombre">${esc(etiqueta(t))}</span><span class="ini-cuenta" style="display:block">${ms.length === 1 ? '1 modelo' : ms.length + ' modelos'}</span></span>
+        </button>`;
+    });
+    $('iniGrid').innerHTML = html || '<div class="state">Todavía no hay nada que mostrar aquí.</div>';
+    $('btnVerTodo').classList.toggle('hidden', !html);
+  }
+
+  // Navegación con el botón atrás del teléfono: #ver=Ventana abre el catálogo filtrado
+  function leerRuta(){
+    const m = location.hash.match(/^#ver=(.+)$/);
+    if(!m) return null;
+    const v = decodeURIComponent(m[1]);
+    return (v === ENTREGA || v === 'Todos' || TIPOS.includes(v)) ? v : null;
+  }
+  function mostrarRuta(){
+    const ver = leerRuta();
+    const enCatalogo = !!ver;
+    $('vistaInicio').classList.toggle('hidden', enCatalogo);
+    $('vistaCatalogo').classList.toggle('hidden', !enCatalogo);
+    $('btnInicio').classList.toggle('hidden', !enCatalogo);
+    $('logoMark').classList.toggle('hidden', enCatalogo);
+    if(enCatalogo){
+      filtro = (ver === ENTREGA && !piezas.length) ? 'Todos' : ver;
+      pintarChips();
+      pintar();
+    } else {
+      pintarInicio();
+    }
+    window.scrollTo(0, 0);
+  }
+  let vinoDeInicio = false;
+  function ir(ver){ if(ver) vinoDeInicio = true; location.hash = ver ? 'ver=' + encodeURIComponent(ver) : ''; }
 
   function tarjeta(m){
     const n = totalDisp(m);
@@ -123,7 +223,7 @@
         <div class="card-photo">
           ${foto ? `<img src="${esc(foto)}" alt="${esc(m.nombre)}" loading="lazy">` : iconoTipo(m.tipo, 36)}
           ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
-          ${n ? `<span class="tag-disp">Disponible · ${n}</span>` : `<span class="tag-agotado">Por encargo</span>`}
+          ${n ? `<span class="tag-disp">Entrega inmediata${n > 1 ? ' · ' + n : ''}</span>` : `<span class="tag-agotado">Por encargo</span>`}
         </div>
         <div class="card-name">${esc(m.nombre)}</div>
         <div class="card-price">${precio}</div>
@@ -133,19 +233,19 @@
   function pintar(){
     const q = $('buscador').value.trim().toLowerCase();
     const base = modelos.filter(m =>
-      (filtro === 'Todos' || filtro === 'Disponibles' || m.tipo === filtro) &&
+      (filtro === 'Todos' || filtro === ENTREGA || m.tipo === filtro) &&
       (!q || (m.nombre || '').toLowerCase().includes(q))
     );
     const disp = base.filter(m => totalDisp(m));
-    const encargo = filtro === 'Disponibles' ? [] : base.filter(m => !totalDisp(m));
+    const encargo = filtro === ENTREGA ? [] : base.filter(m => !totalDisp(m));
     if(!disp.length && !encargo.length){
       $('contenido').innerHTML = `<div class="grid"><div class="state">${q ? 'No encontramos ese modelo.' : 'Todavía no hay nada que mostrar aquí.'}</div></div>`;
       return;
     }
     let html = '';
     if(disp.length){
-      html += `<h2 class="sec-title">Disponibles para entrega inmediata</h2>
-               <div class="sec-sub">Ya están hechos. Toca uno para ver los detalles.</div>
+      html += `<h2 class="sec-title">Entrega inmediata</h2>
+               <div class="sec-sub">Ya están hechos, listos para llevar. Toca uno para ver los detalles.</div>
                <div class="grid">${disp.map(tarjeta).join('')}</div>`;
     }
     if(encargo.length){
@@ -185,7 +285,7 @@
     pintarVista(`
       <div class="vista-head">
         <div class="det-name" style="margin-top:0">${esc(m.nombre)}</div>
-        <div class="ayuda">${n === 1 ? 'Hay 1 disponible.' : `Hay ${n} disponibles.`} Toca una para verla.</div>
+        <div class="ayuda">${n === 1 ? 'Hay 1 lista para entrega inmediata.' : `Hay ${n} listas para entrega inmediata.`} Toca una para verla.</div>
       </div>
       <div class="det-section" style="margin-top:16px"><div class="lineas">${lineas}</div></div>`, '', false);
   }
@@ -196,7 +296,7 @@
     const specs = resumenSpecs(m.tipo, e);
     const sede = nombreSede(p.sede_id);
     const texto = [
-      'Hola, me interesa esta pieza disponible:',
+      'Hola, me interesa esta pieza de entrega inmediata:',
       `${m.nombre} (${m.tipo})`,
       p.color ? `Color: ${p.color}` : '',
       medidas(e) ? `Medidas: ${medidas(e)}` : '',
@@ -207,7 +307,7 @@
     pintarVista(`
       <div class="hero">
         ${foto ? `<img src="${esc(foto)}" alt="${esc(m.nombre)}">` : iconoTipo(m.tipo, 60)}
-        <span class="tag-disp" style="bottom:12px;left:12px">Disponible</span>
+        <span class="tag-disp" style="bottom:12px;left:12px">Entrega inmediata</span>
       </div>
       <div class="det-name">${esc(m.nombre)}</div>
       <div class="det-type">${esc([m.tipo, p.color].filter(Boolean).join(' · '))}</div>
@@ -274,10 +374,19 @@
   $('chips').addEventListener('click', (e)=>{
     const b = e.target.closest('.chip');
     if(!b) return;
+    // Cambiar de filtro reemplaza la dirección (no llena el historial de "atrás")
+    history.replaceState(null, '', '#ver=' + encodeURIComponent(b.dataset.cat));
     filtro = b.dataset.cat;
     pintarChips();
     pintar();
   });
+  $('iniGrid').addEventListener('click', (e)=>{
+    const t = e.target.closest('[data-ver]');
+    if(t) ir(t.dataset.ver);
+  });
+  $('btnVerTodo').addEventListener('click', ()=> ir('Todos'));
+  $('btnInicio').addEventListener('click', ()=>{ if(vinoDeInicio){ vinoDeInicio = false; history.back(); } else ir(null); });
+  window.addEventListener('hashchange', mostrarRuta);
   $('buscador').addEventListener('input', pintar);
   window.addEventListener('scroll', ()=> $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
 
@@ -294,10 +403,9 @@
       modelos = rc.data || [];
       piezas = rp.data || [];
       sedes = rs.data || [];
-      filtro = piezas.length ? 'Disponibles' : 'Todos';
-      pintarChips();
-      pintar();
+      mostrarRuta();
     } catch(err){
+      $('iniGrid').innerHTML = '<div class="state">No se pudo cargar el catálogo. Revisa tu conexión e intenta de nuevo.</div>';
       $('contenido').innerHTML = '<div class="grid"><div class="state">No se pudo cargar el catálogo. Revisa tu conexión e intenta de nuevo.</div></div>';
     }
   }
