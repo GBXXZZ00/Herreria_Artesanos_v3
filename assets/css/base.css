@@ -8,9 +8,9 @@
   --ink-faint:#A8A39B;
   --line:#E9E7E3;
   --line-strong:#D9D6D0;
-  --accent:#1F5F73;
+  --accent:#17555C;
   --accent-ink:#FFFFFF;
-  --accent-soft:rgba(31,95,115,0.09);
+  --accent-soft:rgba(23,85,92,0.09);
   --danger:#B42318;
   --radius:18px;
   --radius-md:14px;
@@ -104,7 +104,7 @@ input,select,textarea{font:inherit;font-size:16px;color:var(--ink);max-width:100
   position:fixed;right:18px;bottom:calc(var(--nav-h) + var(--safe-b) + 20px);z-index:30;
   width:60px;height:60px;border-radius:50%;background:var(--accent);color:#fff;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 12px 28px rgba(31,95,115,0.32);
+  box-shadow:0 12px 28px rgba(23,85,92,0.32);
   transition:transform 160ms var(--ease-out);
 }
 .fab:active{transform:scale(0.92)}
@@ -391,7 +391,7 @@ textarea.input{height:auto;min-height:88px;padding:12px 14px;resize:vertical}
 .tag-disp{
   position:absolute;left:8px;bottom:8px;display:inline-flex;align-items:center;gap:5px;
   padding:5px 10px;border-radius:999px;background:var(--accent);color:#fff;font-size:11.5px;font-weight:800;
-  box-shadow:0 2px 8px rgba(31,95,115,0.3);
+  box-shadow:0 2px 8px rgba(23,85,92,0.3);
 }
 .tag-disp::before{content:'';width:6px;height:6px;border-radius:50%;background:#7FE3C4}
 .tag-agotado{
@@ -452,3 +452,7 @@ textarea.input{height:auto;min-height:88px;padding:12px 14px;resize:vertical}
 .grupo-head span{font-size:12.5px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
 .card-del{position:absolute;top:8px;right:8px;z-index:2;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.95);color:var(--danger);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-md);transition:transform 140ms var(--ease-out)}
 .card-del:active{transform:scale(0.9)}
+
+/* Logo de la marca */
+.logo-mark.con-img{background:#fff;border:1px solid var(--line);overflow:hidden;padding:3px}
+.logo-mark.con-img img{width:100%;height:100%;object-fit:contain}
