@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=12">
+<link rel="stylesheet" href="assets/css/base.css?v=13">
 <style>
   /* Letra más grande: lo usan clientes de todas las edades */
   body{font-size:16px}
@@ -41,6 +41,10 @@
   .sheet .linea-precio{font-size:18px}
   .sheet-back{font-size:16px;height:44px}
   .ayuda{font-size:15px;color:var(--ink-soft);margin-top:4px}
+  .eslogan{font-family:Georgia,"Iowan Old Style",serif;font-style:italic;font-size:15px;color:var(--accent)}
+  /* La hoja no llega hasta arriba: siempre se ve la X */
+  .sheet.sheet-hero{height:calc(88vh - var(--safe-t));height:calc(88dvh - var(--safe-t))}
+  .vacio-wa{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px auto 0;max-width:320px}
   /* Pantalla de inicio: elegir qué ver */
   .ini{padding:8px 18px 0}
   .ini-title{font-size:28px;font-weight:800;letter-spacing:-0.6px;line-height:1.1;margin:12px 0 6px}
@@ -110,7 +114,7 @@
   <div class="logo-mark con-img" id="logoMark"><img src="assets/img/icon-192.png" alt=""></div>
   <div class="topbar-text">
     <div class="topbar-title" style="font-size:20px">Herrería Artesanos</div>
-    <div class="topbar-sub" style="font-size:14px">Puertas, ventanas y portones</div>
+    <div class="topbar-sub eslogan">Creando con distinción</div>
   </div>
 </header>
 
@@ -152,9 +156,9 @@
   <div class="sheet-foot" id="detalleFoot"></div>
 </section>
 
-<script src="assets/vendor/supabase.js?v=12"></script>
-<script src="assets/js/supabase-client.js?v=12"></script>
-<script src="assets/js/comun.js?v=12"></script>
+<script src="assets/vendor/supabase.js?v=13"></script>
+<script src="assets/js/supabase-client.js?v=13"></script>
+<script src="assets/js/comun.js?v=13"></script>
 <script>
 (function(){
   'use strict';
@@ -172,7 +176,7 @@
   let modelos = [], piezas = [], sedes = [];
   let filtro = 'Todos';
   const ENTREGA = 'Entrega inmediata';
-  const PLURAL = { 'Puerta Multilock':'Puertas', 'Ventana':'Ventanas', 'Portón':'Portones', 'Combo':'Combos', 'Puerta de Madera':'Puertas de madera' };
+  const PLURAL = { 'Puerta Multilock':'Puertas Multilock', 'Ventana':'Ventanas', 'Portón':'Portones', 'Combo':'Combos', 'Puerta de Madera':'Puertas de madera' };
   const etiqueta = (c) => c === 'Todos' ? 'Todo' : (PLURAL[c] || c);
   let actual = null; // modelo abierto en la hoja
 
@@ -184,7 +188,8 @@
     return NUMERO_WHATSAPP ? `https://wa.me/${NUMERO_WHATSAPP}?text=${t}` : `https://wa.me/?text=${t}`;
   }
 
-  const tiposPresentes = () => TIPOS.filter(t => modelos.some(m => m.tipo === t));
+  // Todas las categorías, aunque no tengan modelos todavía; Portones solo si hay alguno
+  const tiposPresentes = () => TIPOS.filter(t => t !== 'Portón' || modelos.some(m => m.tipo === t));
 
   function pintarChips(){
     const cats = [...(piezas.length ? [ENTREGA] : []), ...tiposPresentes(), 'Todos'];
@@ -231,7 +236,7 @@
       html += `
         <button class="ini-tile" data-ver="${esc(t)}" style="--i:${i++}">
           <span class="ini-ico">${iconoTipo(t, 28)}</span>
-          <span class="ini-txt"><span class="ini-nombre">${esc(etiqueta(t))}</span><span class="ini-cuenta" style="display:block">${ms.length === 1 ? '1 modelo' : ms.length + ' modelos'}</span></span>
+          <span class="ini-txt"><span class="ini-nombre">${esc(etiqueta(t))}</span><span class="ini-cuenta" style="display:block">${ms.length === 0 ? 'Por encargo' : ms.length === 1 ? '1 modelo' : ms.length + ' modelos'}</span></span>
         </button>`;
     });
     $('iniGrid').innerHTML = html || '<div class="state">Todavía no hay nada que mostrar aquí.</div>';
@@ -295,7 +300,15 @@
     const disp = base.filter(m => totalDisp(m));
     const encargo = filtro === ENTREGA ? [] : base.filter(m => !totalDisp(m));
     if(!disp.length && !encargo.length){
-      $('contenido').innerHTML = `<div class="grid"><div class="state">${q ? 'No encontramos ese modelo.' : 'Todavía no hay nada que mostrar aquí.'}</div></div>`;
+      const nombre = etiqueta(filtro).toLowerCase();
+      const texto = `Hola, quiero información sobre ${nombre}.`;
+      $('contenido').innerHTML = q
+        ? `<div class="grid"><div class="state">No encontramos ese modelo.</div></div>`
+        : `<div class="grid"><div class="state">
+             <div style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:6px">Te lo hacemos a la medida</div>
+             Todavía no tenemos fotos de ${esc(nombre)} aquí, pero escríbenos y te mostramos modelos y precios.
+             <a class="btn-wa vacio-wa" href="${linkWa(texto)}" target="_blank" rel="noopener">${ICON_WA}Consultar por WhatsApp</a>
+           </div></div>`;
       return;
     }
     let html = '';
@@ -351,15 +364,15 @@
     const foto = fotoPieza(p, m);
     const specs = resumenSpecs(m.tipo, e);
     const sede = nombreSede(p.sede_id);
-    const texto = [
-      'Hola, me interesa esta pieza de entrega inmediata:',
-      `${m.nombre} (${m.tipo})`,
-      p.color ? `Color: ${p.color}` : '',
-      medidas(e) ? `Medidas: ${medidas(e)}` : '',
-      resumenSpecs(m.tipo, e, true).map(s => s.t).join(', '),
-      sede ? `Está en: ${sede}` : '',
-      `Precio: ${dinero(p.precio)}`
-    ].filter(Boolean).join('\n');
+    const detalles = resumenSpecs(m.tipo, e, true).map(s => s.t).join(', ');
+    const lineas = ['Hola, me interesa esta pieza de *entrega inmediata*:', '', `*${m.nombre}* (${m.tipo})`];
+    if(p.color) lineas.push(`• Color: ${p.color}`);
+    if(medidas(e)) lineas.push(`• Medidas: ${medidas(e)}`);
+    if(detalles) lineas.push(`• ${detalles}`);
+    if(sede) lineas.push(`• Está en: ${sede}`);
+    lineas.push(`• Precio: *${dinero(p.precio)}*`);
+    if(foto) lineas.push('', `Foto: ${foto}`);
+    const texto = lineas.join('\n');
     pintarVista(`
       <div class="hero">
         ${foto ? `<img src="${esc(foto)}" alt="${esc(m.nombre)}">` : iconoTipo(m.tipo, 60)}
@@ -400,7 +413,10 @@
       ${m.descripcion_publica ? `<div class="det-section"><div class="det-desc">${esc(m.descripcion_publica)}</div></div>` : ''}
       ${specs.length ? `<div class="det-section"><div class="det-label">Detalles</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}
       ${cars.length ? `<div class="det-section"><ul class="feat-list">${cars.map(c => `<li>${ICON_CHECK}${esc(c)}</li>`).join('')}</ul></div>` : ''}`;
-    const texto = `Hola, quiero información sobre: ${m.nombre} (${m.tipo}), desde ${dinero(m.precio_base)}.`;
+    const fotoM = fotoModelo(m);
+    const lineasM = ['Hola, quiero información sobre este modelo:', '', `*${m.nombre}* (${m.tipo})`, `• Desde ${dinero(m.precio_base)}`];
+    if(fotoM) lineasM.push('', `Foto: ${fotoM}`);
+    const texto = lineasM.join('\n');
     pintarVista(html, `<a class="btn-wa" href="${linkWa(texto)}" target="_blank" rel="noopener">${ICON_WA}Consultar por WhatsApp</a>`, false);
   }
 
