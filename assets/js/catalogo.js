@@ -276,7 +276,7 @@
   // ---------------------------------------------------------------------------
   // Hoja de detalle con tres vistas: lista de disponibles, ficha del modelo, ficha de pieza
   // ---------------------------------------------------------------------------
-  let det = { modeloId:null, vista:null, piezaId:null, desdeLista:false };
+  let det = { modeloId:null, vista:null, piezaId:null, desdeLista:false, acabado:null };
 
   function abrirDetalle(m){
     det = { modeloId:m.id, vista:null, piezaId:null, desdeLista:false };
@@ -329,6 +329,7 @@
 
   function mostrarModelo(m, desdeLista){
     det.vista = 'modelo';
+    det.acabado = acabados(m.tipo).filter(x => (m.fotos || {})[x.key]).map(x => x.key)[0] || null;
     det.desdeLista = desdeLista;
     const f = m.fotos || {};
     const conFoto = acabados(m.tipo).filter(a => f[a.key]);
@@ -422,6 +423,7 @@
       $('detalleBody').querySelectorAll('[data-acabado]').forEach(x => { const s = x === ac; x.classList.toggle('selected', s); x.setAttribute('aria-pressed', s); });
       $('detalleBody').querySelectorAll('[data-acabado-img]').forEach(img => img.classList.toggle('off', img.dataset.acabadoImg !== key));
       actualizarFondoHero($('detalleBody').querySelector('.hero'));
+      det.acabado = key;
       return;
     }
     const a = e.target.closest('[data-accion]');
@@ -430,7 +432,7 @@
     if(!m) return;
     const accion = a.dataset.accion;
     if(accion === 'editar-modelo'){ cerrarHoja('sheetDetalle'); abrirForm(m.id); }
-    if(accion === 'marcar'){ abrirFormPieza(m, null); }
+    if(accion === 'marcar'){ abrirFormPieza(m, null, det.vista === 'modelo' ? det.acabado : null); }
     if(accion === 'editar-pieza'){ const p = buscarPieza(det.piezaId); if(p) abrirFormPieza(m, p); }
     if(accion === 'eliminar-modelo') await eliminarModelo(m, a);
     if(accion === 'quitar-pieza') await quitarPieza(m, a);
@@ -756,7 +758,7 @@
     abrirHoja('sheetForm');
   }
 
-  function abrirFormPieza(m, p){
+  function abrirFormPieza(m, p, colorElegido){
     formSeq++;
     specsOriginal = null;
     tocados = new Set();
@@ -771,7 +773,11 @@
     fotosExistentes = p && p.foto ? { Pieza: p.foto } : {};
     limpiarFotosNuevas();
     const f = m.fotos || {};
-    colorPieza = p && p.color ? p.color : (tieneColores(m.tipo) ? (f.Blanco ? 'Blanco' : (f.Negro ? 'Negro' : 'Blanco')) : null);
+    // Color: el de la pieza al editar; si no, el que se estaba viendo en la ficha; si no, el que tenga foto
+    colorPieza = p && p.color ? p.color
+      : !tieneColores(m.tipo) ? null
+      : (colorElegido === 'Blanco' || colorElegido === 'Negro') ? colorElegido
+      : (f.Blanco ? 'Blanco' : (f.Negro ? 'Negro' : 'Blanco'));
     sedePieza = p && p.sede_id ? p.sede_id : (sedes[0] ? sedes[0].id : null);
     cantidadPieza = p ? (p.cantidad || 1) : 1;
     // Las ventanas del combo salen del mismo color que la puerta, salvo que ya estuviera guardado otro
