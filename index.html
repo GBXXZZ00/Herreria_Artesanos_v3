@@ -41,6 +41,9 @@
   <div class="logo-mark"><span>HA</span></div>
   <div class="topbar-title">Catálogo</div>
   <div style="font-size:12.5px;color:var(--ink-soft)" id="totalModelos">…</div>
+  <button id="btnActualizar" aria-label="Actualizar" style="background:none;border:none;padding:6px;display:flex">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6459" stroke-width="2"><path d="M3 12a9 9 0 0115.3-6.4L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 01-15.3 6.4L3 16M3 21v-5h5"/></svg>
+  </button>
 </div>
 
 <div class="content">
@@ -110,7 +113,7 @@
     </div>
 
     <div class="field">
-      <label>Foto (por color, si aplica)</label>
+      <label>Fotos (una por cada acabado)</label>
       <div class="fotos-tipo" id="fotosTipo"></div>
     </div>
 
@@ -151,24 +154,39 @@ function toast(msg){
 }
 
 // ---------- Cargar y pintar lista ----------
+function mostrarErrorCarga(mensaje){
+  const cont = document.getElementById('listaModelos');
+  cont.innerHTML = `
+    <div class="error-state">
+      No se pudo cargar el catálogo.<br><span style="font-size:12px">${mensaje}</span>
+      <br><button id="btnReintentar">Reintentar</button>
+    </div>`;
+  document.getElementById('btnReintentar').onclick = cargarModelos;
+  toast('Error cargando catálogo');
+}
+
 async function cargarModelos(){
   const cont = document.getElementById('listaModelos');
-  const { data, error } = await supabase.from('catalogo').select('*').order('id', { ascending:false });
-  if(error){
-    cont.innerHTML = `
-      <div class="error-state">
-        No se pudo cargar el catálogo.<br><span style="font-size:12px">${error.message}</span>
-        <br><button id="btnReintentar">Reintentar</button>
-      </div>`;
-    document.getElementById('btnReintentar').onclick = cargarModelos;
-    toast('Error cargando catálogo');
-    return;
+  cont.innerHTML = '<div class="empty-state">Cargando catálogo...</div>';
+  try{
+    if(typeof supabase === 'undefined'){
+      mostrarErrorCarga('No se pudo conectar (revisa tu conexión a internet e intenta de nuevo).');
+      return;
+    }
+    const { data, error } = await supabase.from('catalogo').select('*').order('id', { ascending:false });
+    if(error){
+      mostrarErrorCarga(error.message);
+      return;
+    }
+    modelos = data || [];
+    document.getElementById('totalModelos').textContent = modelos.length + ' modelos';
+    pintarChips();
+    pintarLista();
+  } catch(err){
+    mostrarErrorCarga(err.message || 'Error desconocido');
   }
-  modelos = data || [];
-  document.getElementById('totalModelos').textContent = modelos.length + ' modelos';
-  pintarChips();
-  pintarLista();
 }
+document.getElementById('btnActualizar').onclick = cargarModelos;
 
 function pintarChips(){
   const cont = document.getElementById('chips');
@@ -193,7 +211,8 @@ function pintarLista(){
     return;
   }
   cont.innerHTML = filtrados.map(m=>{
-    const primeraFoto = m.fotos && Object.values(m.fotos)[0];
+    const [colorA, colorB] = coloresPorTipo(m.tipo);
+    const primeraFoto = (m.fotos && (m.fotos[colorA] || m.fotos[colorB])) || null;
     const sinCategoria = !m.categoria_pago_id;
     return `
       <button class="modelo-row" data-id="${m.id}">
@@ -213,16 +232,16 @@ function pintarLista(){
 
 document.getElementById('buscador').oninput = pintarLista;
 
-// ---------- Campos dinámicos por tipo ----------
+// ---------- Fotos: colores fijos por tipo (igual que la app original) ----------
+// Los productos de metal siempre tienen exactamente 2 acabados (Blanco/Negro); la Puerta
+// de Madera usa sus propios 2 acabados (Natural/Barnizada). Nunca más de 2 fotos por modelo.
 function coloresPorTipo(tipo){
   if(tipo === 'Puerta de Madera') return ['Natural','Barnizada'];
   return ['Blanco','Negro'];
 }
 
-function renderCamposEspecificos(tipo, valoresPrevios = {}){
-  const cont = document.getElementById('camposEspecificos');
-  const v = valoresPrevios;
-  let html = `
+function medidasHtml(v){
+  return `
     <div class="field">
       <label>Medidas típicas (m)</label>
       <div style="display:flex;gap:10px">
@@ -230,25 +249,71 @@ function renderCamposEspecificos(tipo, valoresPrevios = {}){
         <input type="number" id="specAncho" placeholder="Ancho" step="0.01" value="${v.ancho||''}" style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
       </div>
     </div>`;
+}
 
-  if(tipo === 'Combo'){
+// Campos reales de cada tipo, iguales a los de la app original (solo cambia el estilo visual:
+// pills/toggles en vez de checkboxes). El modelo de catálogo NO incluye sentido/posición/bloque
+// porque eso se decide por pedido, no por modelo — eso vive en Ventas, no aquí.
+function renderCamposEspecificos(tipo, v = {}){
+  const cont = document.getElementById('camposEspecificos');
+  let html = medidasHtml(v);
+
+  if(tipo === 'Ventana'){
+    html += toggleFieldHtml('specPapelAhumado', 'Papel ahumado (incluido de fábrica)', v.papel_ahumado !== false);
+    html += subWrap('PapelAhumado', pillFieldHtml('specColorAhumado', 'Color del ahumado', ['Espejo','Azul','Negro'], v.color_ahumado || 'Espejo'));
+    html += toggleFieldHtml('specProteccion', 'Protección', !!v.proteccion);
+    html += subWrap('Proteccion', toggleFieldHtml('specMarcoDecorativo', 'Marco decorativo en protección', !!v.marco_decorativo));
+    html += toggleFieldHtml('specMasHojas', 'Más de 2 hojas', !!v.mas_hojas);
+  } else if(tipo === 'Portón'){
+    html += pillFieldHtml('specVidrio', 'Vidrio o Farquilla', ['Vidrio','Farquilla'], v.vidrio_o_farquilla || 'Vidrio');
+    html += subWrap('ColorVidrio', pillFieldHtml('specColorVidrio', 'Color vidrio', ['Azul','Espejo','Negro'], v.color_vidrio || 'Espejo'));
+    html += toggleFieldHtml('specManillon', 'Manillón', !!v.manillon);
+    html += subWrap('Manillon', pillFieldHtml('specManillonTipo', 'Tipo de manillón', ['H','S','Luna'], v.manillon_tipo || 'H'));
+  } else if(tipo === 'Puerta' || tipo === 'Puerta Multilock'){
+    html += pillFieldHtml('specVidrio', 'Vidrio o Farquilla', ['Vidrio','Farquilla'], v.vidrio_o_farquilla || 'Vidrio');
+    html += subWrap('ColorVidrio', pillFieldHtml('specColorVidrio', 'Color vidrio', ['Azul','Espejo','Negro'], v.color_vidrio || 'Negro'));
+    html += toggleFieldHtml('specManillon', 'Manillón', !!v.manillon);
+    html += subWrap('Manillon', pillFieldHtml('specManillonTipo', 'Tipo de manillón', ['H','S','Luna'], v.manillon_tipo || 'Luna'));
+    html += toggleFieldHtml('specMarcoDecorativo', 'Marco decorativo', !!v.marco_decorativo);
+    html += toggleFieldHtml('specProteccion', 'Protección', !!v.proteccion);
+  } else if(tipo === 'Combo'){
     html += pillFieldHtml('specVariante', 'Variante del combo', ['Sin protección en puerta','Con protección en puerta'], v.variante || 'Con protección en puerta');
+    html += `<div style="font-size:12px;color:var(--ink-soft);margin:-4px 0 16px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:10px">Las 2 ventanas del combo llevan protección de fábrica; la protección de la puerta ya viene incluida en el precio del combo.</div>`;
+    html += toggleFieldHtml('specPapelAhumado', 'Papel ahumado en las ventanas (de fábrica)', v.papel_ahumado !== false);
+    html += subWrap('PapelAhumado', pillFieldHtml('specColorAhumado', 'Color del ahumado', ['Espejo','Azul','Negro'], v.color_ahumado || 'Espejo'));
+    html += toggleFieldHtml('specManillon', 'Manillón (puerta)', !!v.manillon);
+    html += subWrap('Manillon', pillFieldHtml('specManillonTipo', 'Tipo de manillón', ['H','S','Luna'], v.manillon_tipo || 'Luna'));
+    html += toggleFieldHtml('specMarcoDecorativo', 'Marco decorativo (puerta)', !!v.marco_decorativo);
   } else if(tipo === 'Puerta de Madera'){
     html += pillFieldHtml('specMadera', 'Tipo de madera', ['Pino','Cedro','Roble'], v.tipo_madera || 'Pino');
     html += toggleFieldHtml('specBarniz', 'Barniz incluido de fábrica', v.barniz !== false);
-  } else {
-    html += pillFieldHtml('specVidrio', 'Vidrio o Farquilla', ['Vidrio','Farquilla'], v.vidrio_o_farquilla || 'Vidrio');
-    if(tipo !== 'Portón'){
-      html += toggleFieldHtml('specManillon', 'Manillón', !!v.manillon);
-      html += toggleFieldHtml('specMarco', 'Marco decorativo', !!v.marco_decorativo);
-      html += toggleFieldHtml('specProteccion', 'Protección', !!v.proteccion);
-    } else {
-      html += toggleFieldHtml('specManillon', 'Manillón', !!v.manillon);
-    }
   }
+
   cont.innerHTML = html;
   cont.querySelectorAll('.pill-group[data-field]').forEach(activarPills);
   cont.querySelectorAll('.toggle').forEach(activarToggle);
+  actualizarSubcampos();
+}
+
+function subWrap(id, inner){
+  return `<div id="sub${id}" class="subfields" style="display:none;padding-left:4px;border-left:2px solid var(--line);margin:-8px 0 16px 4px">${inner}</div>`;
+}
+// Muestra/oculta los sub-campos condicionales (color de ahumado, color de vidrio, tipo de
+// manillón, marco decorativo dentro de protección) según el toggle/pill del que dependen.
+function actualizarSubcampos(){
+  const par = [
+    ['specPapelAhumado','subPapelAhumado','toggle'],
+    ['specProteccion','subProteccion','toggle'],
+    ['specManillon','subManillon','toggle'],
+  ];
+  par.forEach(([origenId, subId])=>{
+    const origen = document.getElementById(origenId);
+    const sub = document.getElementById(subId);
+    if(origen && sub) sub.style.display = origen.classList.contains('on') ? 'block' : 'none';
+  });
+  const vidrio = valorPills('specVidrio');
+  const subColorVidrio = document.getElementById('subColorVidrio');
+  if(subColorVidrio) subColorVidrio.style.display = vidrio === 'Vidrio' ? 'block' : 'none';
 }
 
 function pillFieldHtml(id, label, opciones, seleccionado){
@@ -272,11 +337,12 @@ function activarPills(grupo){
     p.onclick = ()=>{
       grupo.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected'));
       p.classList.add('selected');
+      actualizarSubcampos();
     };
   });
 }
 function activarToggle(btn){
-  btn.onclick = ()=> btn.classList.toggle('on');
+  btn.onclick = ()=>{ btn.classList.toggle('on'); actualizarSubcampos(); };
 }
 function valorPills(id){
   const grupo = document.getElementById(id);
@@ -293,18 +359,34 @@ function leerEspecificaciones(tipo){
     alto: parseFloat(document.getElementById('specAlto').value) || null,
     ancho: parseFloat(document.getElementById('specAncho').value) || null,
   };
-  if(tipo === 'Combo'){
+  if(tipo === 'Ventana'){
+    base.papel_ahumado = valorToggle('specPapelAhumado');
+    if(base.papel_ahumado) base.color_ahumado = valorPills('specColorAhumado');
+    base.proteccion = valorToggle('specProteccion');
+    if(base.proteccion) base.marco_decorativo = valorToggle('specMarcoDecorativo');
+    base.mas_hojas = valorToggle('specMasHojas');
+  } else if(tipo === 'Portón'){
+    base.vidrio_o_farquilla = valorPills('specVidrio');
+    if(base.vidrio_o_farquilla === 'Vidrio') base.color_vidrio = valorPills('specColorVidrio');
+    base.manillon = valorToggle('specManillon');
+    if(base.manillon) base.manillon_tipo = valorPills('specManillonTipo');
+  } else if(tipo === 'Puerta' || tipo === 'Puerta Multilock'){
+    base.vidrio_o_farquilla = valorPills('specVidrio');
+    if(base.vidrio_o_farquilla === 'Vidrio') base.color_vidrio = valorPills('specColorVidrio');
+    base.manillon = valorToggle('specManillon');
+    if(base.manillon) base.manillon_tipo = valorPills('specManillonTipo');
+    base.marco_decorativo = valorToggle('specMarcoDecorativo');
+    base.proteccion = valorToggle('specProteccion');
+  } else if(tipo === 'Combo'){
     base.variante = valorPills('specVariante');
+    base.papel_ahumado = valorToggle('specPapelAhumado');
+    if(base.papel_ahumado) base.color_ahumado = valorPills('specColorAhumado');
+    base.manillon = valorToggle('specManillon');
+    if(base.manillon) base.manillon_tipo = valorPills('specManillonTipo');
+    base.marco_decorativo = valorToggle('specMarcoDecorativo');
   } else if(tipo === 'Puerta de Madera'){
     base.tipo_madera = valorPills('specMadera');
     base.barniz = valorToggle('specBarniz');
-  } else {
-    base.vidrio_o_farquilla = valorPills('specVidrio');
-    base.manillon = valorToggle('specManillon');
-    if(tipo !== 'Portón'){
-      base.marco_decorativo = valorToggle('specMarco');
-      base.proteccion = valorToggle('specProteccion');
-    }
   }
   return base;
 }

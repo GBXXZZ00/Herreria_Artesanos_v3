@@ -78,7 +78,8 @@ function pintar(){
     return;
   }
   grid.innerHTML = filtrados.map(m=>{
-    const foto = m.fotos && Object.values(m.fotos)[0];
+    const colores = m.tipo === 'Puerta de Madera' ? ['Natural','Barnizada'] : ['Blanco','Negro'];
+    const foto = (m.fotos && (m.fotos[colores[0]] || m.fotos[colores[1]])) || null;
     const msg = encodeURIComponent(`Hola, quiero información sobre: ${m.nombre}`);
     const link = NUMERO_WHATSAPP ? `https://wa.me/${NUMERO_WHATSAPP}?text=${msg}` : `https://wa.me/?text=${msg}`;
     return `
