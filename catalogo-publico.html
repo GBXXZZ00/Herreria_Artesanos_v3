@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=11">
+<link rel="stylesheet" href="assets/css/base.css?v=12">
 <style>
   /* Letra más grande: lo usan clientes de todas las edades */
   body{font-size:16px}
@@ -71,11 +71,15 @@
   .ini-txt{padding:12px 14px 14px}
   .ini-nombre{font-size:18px;font-weight:800;letter-spacing:-0.2px}
   .ini-cuenta{font-size:14px;color:var(--ink-soft);margin-top:2px}
-  .ini-tile.destacado{grid-column:1/-1;flex-direction:row;align-items:stretch;border-color:var(--accent);background:var(--accent-soft)}
-  .ini-tile.destacado .ini-foto{width:42%;aspect-ratio:auto;min-height:130px;flex-shrink:0}
-  .ini-tile.destacado .ini-txt{display:flex;flex-direction:column;justify-content:center;padding:16px}
-  .ini-tile.destacado .ini-nombre{font-size:20px;color:var(--accent)}
-  .ini-tile.destacado .ini-cuenta{color:var(--ink);font-weight:600}
+  .ini-tile{padding:16px;gap:14px}
+  .ini-ico{width:56px;height:56px;border-radius:16px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center}
+  .ini-tile .ini-txt{padding:0}
+  .ini-tile.destacado{grid-column:1/-1;flex-direction:row;align-items:center;background:var(--accent);border-color:var(--accent);color:#fff}
+  .ini-tile.destacado .ini-ico{background:rgba(255,255,255,0.16);color:#fff}
+  .ini-tile.destacado .ini-txt{flex:1}
+  .ini-tile.destacado .ini-nombre{font-size:20px;color:#fff}
+  .ini-tile.destacado .ini-cuenta{color:rgba(255,255,255,0.85);font-weight:600}
+  .ini-tile.destacado .chev{color:#fff;flex-shrink:0}
   .ini-todo{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:14px;padding:18px 16px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);font-size:17px;font-weight:800;color:var(--ink);transition:transform 140ms var(--ease-out)}
   .ini-todo:active{transform:scale(0.98)}
   .ini-todo svg{color:var(--accent)}
@@ -85,16 +89,14 @@
   .marca-linea{width:44px;height:3px;border-radius:2px;background:#F2C99A;margin:10px auto 0}
   .topbar .logo-chico{height:34px;width:auto;flex-shrink:0}
   /* Sedes */
-  .sedes{margin-top:30px}
-  .sedes h2{font-size:20px;font-weight:800;letter-spacing:-0.3px;margin:0 0 4px}
-  .sedes p{font-size:15px;color:var(--ink-soft);margin:0 0 14px}
-  .sede{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin-bottom:10px}
-  .sede-icon{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .sede-txt{flex:1;min-width:0}
-  .sede-nombre{font-size:16.5px;font-weight:800}
-  .sede-dir{font-size:14px;color:var(--ink-soft);margin-top:2px}
-  .sede-ir{height:42px;padding:0 14px;border-radius:999px;background:var(--accent);color:#fff;text-decoration:none;font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:transform 140ms var(--ease-out)}
-  .sede-ir:active{transform:scale(0.95)}
+  .sedes{margin-top:28px}
+  .sedes h2{font-size:15px;font-weight:700;color:var(--ink-soft);margin:0 0 10px}
+  .sedes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .sede{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--surface);text-decoration:none;color:var(--ink);transition:transform 140ms var(--ease-out)}
+  .sede:active{transform:scale(0.97)}
+  .sede-icon{color:var(--accent);display:flex}
+  .sede-nombre{font-size:15px;font-weight:800;line-height:1.2}
+  .sede-ir{font-size:13.5px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:2px}
   .pie{text-align:center;font-size:13px;color:var(--ink-faint);padding:26px 0 10px}
   .btn-inicio{display:flex;align-items:center;gap:4px;height:42px;padding:0 14px 0 8px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);font-weight:700;font-size:15px;flex-shrink:0;transition:transform 140ms var(--ease-out)}
   .btn-inicio:active{transform:scale(0.95)}
@@ -105,15 +107,16 @@
   <button class="btn-inicio hidden" id="btnInicio" aria-label="Volver al inicio">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>Inicio
   </button>
-  <img class="logo-chico hidden" id="logoChico" src="assets/img/logo.png" alt="Herrería Artesanos">
-  <div class="topbar-text"></div>
+  <div class="logo-mark con-img" id="logoMark"><img src="assets/img/icon-192.png" alt=""></div>
+  <div class="topbar-text">
+    <div class="topbar-title" style="font-size:20px">Herrería Artesanos</div>
+    <div class="topbar-sub" style="font-size:14px">Puertas, ventanas y portones</div>
+  </div>
 </header>
 
 <main class="page">
   <section class="ini" id="vistaInicio">
-    <div class="marca"><img src="assets/img/logo.png" alt="Herrería Artesanos"></div>
-    <div class="marca-linea"></div>
-    <h1 class="ini-title" style="margin-top:22px">¿Qué estás buscando?</h1>
+    <h1 class="ini-title">¿Qué estás buscando?</h1>
     <p class="ini-sub">Toca una opción para ver los modelos.</p>
     <div class="ini-grid" id="iniGrid">
       <div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>
@@ -122,9 +125,8 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
     </button>
     <div class="sedes hidden" id="sedes">
-      <h2>Nuestras sedes</h2>
-      <p>Visítanos en Maracaibo.</p>
-      <div id="sedesLista"></div>
+      <h2>Visítanos en Maracaibo</h2>
+      <div class="sedes-grid" id="sedesLista"></div>
     </div>
     <div class="pie">Herrería Artesanos · Maracaibo</div>
   </section>
@@ -150,9 +152,9 @@
   <div class="sheet-foot" id="detalleFoot"></div>
 </section>
 
-<script src="assets/vendor/supabase.js?v=11"></script>
-<script src="assets/js/supabase-client.js?v=11"></script>
-<script src="assets/js/comun.js?v=11"></script>
+<script src="assets/vendor/supabase.js?v=12"></script>
+<script src="assets/js/supabase-client.js?v=12"></script>
+<script src="assets/js/comun.js?v=12"></script>
 <script>
 (function(){
   'use strict';
@@ -197,16 +199,17 @@
     if(!f.length) return iconoTipo(tipo || 'Puerta Multilock', 40);
     return `<span class="collage n${f.length}">${f.map(u => `<img src="${esc(u)}" alt="" loading="lazy">`).join('')}</span>`;
   }
+  const ICON_LISTO = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>';
   const ICON_PIN2 = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
   function pintarSedes(){
     const lista = sedes.filter(s => s.nombre);
     $('sedes').classList.toggle('hidden', !lista.length);
     $('sedesLista').innerHTML = lista.map(s => `
-      <div class="sede">
+      <a class="sede" ${s.mapa_url ? `href="${esc(s.mapa_url)}" target="_blank" rel="noopener"` : ''}>
         <span class="sede-icon">${ICON_PIN2}</span>
-        <span class="sede-txt"><span class="sede-nombre" style="display:block">Sede ${esc(s.nombre)}</span>${s.direccion ? `<span class="sede-dir" style="display:block">${esc(s.direccion)}</span>` : ''}</span>
-        ${s.mapa_url ? `<a class="sede-ir" href="${esc(s.mapa_url)}" target="_blank" rel="noopener">Cómo llegar</a>` : ''}
-      </div>`).join('');
+        <span class="sede-nombre">${esc(s.nombre)}</span>
+        ${s.mapa_url ? `<span class="sede-ir">Cómo llegar<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>` : ''}
+      </a>`).join('');
   }
   function pintarInicio(){
     let i = 0;
@@ -216,8 +219,9 @@
       const fotos = piezas.map(p => { const m = modelos.find(x => x.id === p.catalogo_id); return m ? fotoPieza(p, m) : null; });
       html += `
         <button class="ini-tile destacado" data-ver="${esc(ENTREGA)}" style="--i:${i++}">
-          <span class="ini-foto">${collageHtml(fotos)}</span>
-          <span class="ini-txt"><span class="ini-nombre">Entrega inmediata</span><span class="ini-cuenta" style="display:block">${n === 1 ? '1 lista para llevar' : n + ' listas para llevar'}</span></span>
+          <span class="ini-ico">${ICON_LISTO}</span>
+          <span class="ini-txt"><span class="ini-nombre">Entrega inmediata</span><span class="ini-cuenta" style="display:block">${n === 1 ? '1 lista para llevar hoy' : n + ' listas para llevar hoy'}</span></span>
+          <svg class="chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
         </button>`;
     }
     tiposPresentes().forEach(t => {
@@ -226,7 +230,7 @@
       const orden = [...ms].sort((a, b) => (totalDisp(b) - totalDisp(a)) || ((b.badge ? 1 : 0) - (a.badge ? 1 : 0)));
       html += `
         <button class="ini-tile" data-ver="${esc(t)}" style="--i:${i++}">
-          <span class="ini-foto">${collageHtml(orden.map(m => fotoModelo(m)), t)}</span>
+          <span class="ini-ico">${iconoTipo(t, 28)}</span>
           <span class="ini-txt"><span class="ini-nombre">${esc(etiqueta(t))}</span><span class="ini-cuenta" style="display:block">${ms.length === 1 ? '1 modelo' : ms.length + ' modelos'}</span></span>
         </button>`;
     });
@@ -248,8 +252,7 @@
     $('vistaInicio').classList.toggle('hidden', enCatalogo);
     $('vistaCatalogo').classList.toggle('hidden', !enCatalogo);
     $('btnInicio').classList.toggle('hidden', !enCatalogo);
-    $('logoChico').classList.toggle('hidden', !enCatalogo);
-    $('topbar').style.display = enCatalogo ? '' : 'none';
+    $('logoMark').classList.toggle('hidden', enCatalogo);
     if(enCatalogo){
       filtro = (ver === ENTREGA && !piezas.length) ? 'Todos' : ver;
       pintarChips();
