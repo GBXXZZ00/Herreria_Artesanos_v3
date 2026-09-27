@@ -33,10 +33,33 @@
   // ---------------------------------------------------------------------------
   // Lista
   // ---------------------------------------------------------------------------
+  // Grupos de modelos que parecen repetidos: misma foto, o mismo nombre y tipo.
+  // Sirve para limpiar lo que vino de la app vieja.
+  const normalizar = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  function gruposRevisar(){
+    const lista = modelos.filter(m => !m._estado);
+    const padre = {};
+    const raiz = (x) => { while(padre[x] !== x){ padre[x] = padre[padre[x]]; x = padre[x]; } return x; };
+    const unir = (a, b) => { padre[raiz(a)] = raiz(b); };
+    const primero = {};
+    lista.forEach(m => {
+      padre[m.id] = m.id;
+      const claves = ['n:' + m.tipo + '|' + normalizar(m.nombre)];
+      const f = fotoModelo(m);
+      if(f) claves.push('f:' + f);
+      claves.forEach(k => { if(primero[k] != null) unir(m.id, primero[k]); else primero[k] = m.id; });
+    });
+    const grupos = {};
+    lista.forEach(m => { const r = raiz(m.id); (grupos[r] = grupos[r] || []).push(m); });
+    return Object.values(grupos).filter(g => g.length > 1).sort((a, b) => b.length - a.length);
+  }
+
   function pintarChips(){
-    const cats = ['Disponibles', 'Todos', ...TIPOS];
+    const nRevisar = gruposRevisar().reduce((a, g) => a + g.length, 0);
+    if(filtro === 'Revisar' && !nRevisar) filtro = 'Todos';
+    const cats = ['Disponibles', 'Todos', ...TIPOS, ...(nRevisar ? ['Revisar'] : [])];
     $('chips').innerHTML = cats.map(c =>
-      `<button class="chip ${c === filtro ? 'active' : ''}" role="tab" aria-selected="${c === filtro}" data-cat="${esc(c)}">${esc(c)}</button>`
+      `<button class="chip ${c === filtro ? 'active' : ''} ${c === 'Revisar' ? 'chip-revisar' : ''}" role="tab" aria-selected="${c === filtro}" data-cat="${esc(c)}">${c === 'Revisar' ? `Revisar repetidos · ${nRevisar}` : esc(c)}</button>`
     ).join('');
   }
 
@@ -80,8 +103,48 @@
     return '';
   }
 
+  function tarjetaHtml(m, i, conBorrar){
+    const foto = fotoModelo(m);
+    const f = m.fotos || {};
+    const dots = acabados(m.tipo).filter(a => a.sw && f[a.key]);
+    const n = totalDisp(m);
+    const etiqueta = m._estado ? '' : (n ? `<span class="tag-disp">Disponible · ${n}</span>` : `<span class="tag-agotado">Agotado</span>`);
+    return `
+      <div class="card-wrap" style="--i:${Math.min(i, 12)}">
+        <div class="card" role="button" tabindex="0" data-id="${esc(m.id)}">
+          <div class="card-photo">
+            ${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 34)}
+            ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
+            ${dots.length > 1 ? `<span class="card-dots">${dots.map(d => `<span class="swatch ${d.sw}"></span>`).join('')}</span>` : ''}
+            ${etiqueta}
+            ${conBorrar ? `<button class="card-del" data-borrar="${esc(m.id)}" aria-label="Eliminar ${esc(m.nombre)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>` : ''}
+            ${overlayHtml(m)}
+          </div>
+          <div class="card-name">${esc(m.nombre)}</div>
+          <div class="card-type">${esc(m.tipo)}</div>
+          <div class="card-price">Desde ${dinero(m.precio_base)}</div>
+        </div>
+      </div>`;
+  }
+
+  function pintarRevisar(q){
+    let grupos = gruposRevisar();
+    if(q) grupos = grupos.filter(g => g.some(m => (m.nombre || '').toLowerCase().includes(q)));
+    if(!grupos.length){
+      $('grid').innerHTML = `<div class="state"><div class="state-title">No quedan repetidos</div><div class="state-text">Ya está todo limpio.</div></div>`;
+      return;
+    }
+    let i = 0;
+    $('grid').innerHTML = `
+      <div class="revisar-ayuda">Estos modelos tienen la misma foto o el mismo nombre. Toca la papelera en los que sobran, o abre uno para editarlo.</div>` +
+      grupos.map(g => `
+        <div class="grupo-head">${esc(g[0].nombre)}<span>${g.length} parecidos</span></div>
+        ${g.map(m => tarjetaHtml(m, i++, true)).join('')}`).join('');
+  }
+
   function pintarLista(){
     const q = $('buscador').value.trim().toLowerCase();
+    if(filtro === 'Revisar'){ pintarRevisar(q); return; }
     const lista = modelos.filter(m => {
       if(filtro === 'Disponibles' && !totalDisp(m)) return false;
       if(filtro !== 'Todos' && filtro !== 'Disponibles' && m.tipo !== filtro) return false;
@@ -109,28 +172,7 @@
       return;
     }
 
-    $('grid').innerHTML = lista.map((m, i) => {
-      const foto = fotoModelo(m);
-      const f = m.fotos || {};
-      const dots = acabados(m.tipo).filter(a => a.sw && f[a.key]);
-      const n = totalDisp(m);
-      const etiqueta = m._estado ? '' : (n ? `<span class="tag-disp">Disponible · ${n}</span>` : `<span class="tag-agotado">Agotado</span>`);
-      return `
-        <div class="card-wrap" style="--i:${Math.min(i, 12)}">
-          <div class="card" role="button" tabindex="0" data-id="${esc(m.id)}">
-            <div class="card-photo">
-              ${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 34)}
-              ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
-              ${dots.length > 1 ? `<span class="card-dots">${dots.map(d => `<span class="swatch ${d.sw}"></span>`).join('')}</span>` : ''}
-              ${etiqueta}
-              ${overlayHtml(m)}
-            </div>
-            <div class="card-name">${esc(m.nombre)}</div>
-            <div class="card-type">${esc(m.tipo)}</div>
-            <div class="card-price">Desde ${dinero(m.precio_base)}</div>
-          </div>
-        </div>`;
-    }).join('');
+    $('grid').innerHTML = lista.map((m, i) => tarjetaHtml(m, i, false)).join('');
   }
 
   async function cargarDatos(){
@@ -181,7 +223,14 @@
   $('buscador').addEventListener('input', pintarLista);
   $('btnActualizar').addEventListener('click', cargarDatos);
 
-  $('grid').addEventListener('click', (e)=>{
+  $('grid').addEventListener('click', async (e)=>{
+    const del = e.target.closest('[data-borrar]');
+    if(del){
+      e.stopPropagation();
+      const m = buscarModelo(del.dataset.borrar);
+      if(m) await eliminarModelo(m, del, false);
+      return;
+    }
     const r = e.target.closest('[data-reintentar]');
     if(r){ e.stopPropagation(); const t = trabajos[r.dataset.reintentar]; if(t) ejecutarTrabajo(t); return; }
     const d = e.target.closest('[data-descartar]');
@@ -255,11 +304,11 @@
       </div>
       <div class="det-section" style="margin-top:16px">
         <div class="lineas">${lineas}</div>
-      </div>
-      <div class="det-section" style="margin-top:8px">
-        <button class="row-link" data-ir="modelo">Ver ficha del modelo ${ICON_CHEV}</button>
-        <button class="row-link" data-accion="marcar">Marcar otra disponible <span style="font-size:22px;line-height:1">+</span></button>
-      </div>`, '', null);
+      </div>`, `
+      <div class="det-foot">
+        <button class="btn-secondary" type="button" data-ir="modelo">Ver modelo</button>
+        <button class="btn-primary" type="button" data-accion="marcar">Marcar otra disponible</button>
+      </div>`, null);
   }
 
   function mostrarModelo(m, desdeLista){
@@ -291,8 +340,7 @@
       <div class="det-section" style="margin-top:14px">
         ${n
           ? `<button class="row-link" data-ir="lista"><span><span class="tag-disp" style="position:static">Disponible · ${n}</span></span>${ICON_CHEV}</button>`
-          : `<div class="row-link" style="color:var(--ink-soft);cursor:default">Agotado</div>`}
-        <button class="row-link" data-accion="marcar">Marcar disponible <span style="font-size:22px;line-height:1">+</span></button>
+          : `<div class="row-link" style="color:var(--ink-soft);cursor:default">Agotado · sin piezas en tienda</div>`}
       </div>`;
     if(specs.length){
       html += `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>`;
@@ -305,8 +353,9 @@
     }
     const foot = `
       <div class="det-foot">
-        <button class="btn-secondary" type="button" data-accion="eliminar-modelo">Eliminar</button>
-        <button class="btn-primary" type="button" data-accion="editar-modelo">Editar modelo</button>
+        <button class="btn-icon danger" type="button" data-accion="eliminar-modelo" aria-label="Eliminar modelo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>
+        <button class="btn-secondary" type="button" data-accion="editar-modelo">Editar</button>
+        <button class="btn-primary" type="button" data-accion="marcar">Marcar disponible</button>
       </div>`;
     pintarVista(html, foot, desdeLista ? 'lista' : null);
   }
@@ -331,7 +380,7 @@
       ${p.foto ? '' : `<div class="field-hint" style="margin-top:16px">La foto es la del modelo. Toca "Editar pieza" para ponerle la foto real.</div>`}`;
     const foot = `
       <div class="det-foot">
-        <button class="btn-secondary" type="button" data-accion="quitar-pieza">Ya no está</button>
+        <button class="btn-secondary danger" type="button" data-accion="quitar-pieza">Ya no está</button>
         <button class="btn-primary" type="button" data-accion="editar-pieza">Editar pieza</button>
       </div>`;
     pintarVista(html, foot, 'lista');
@@ -368,7 +417,7 @@
     if(accion === 'quitar-pieza') await quitarPieza(m, a);
   });
 
-  async function eliminarModelo(m, btn){
+  async function eliminarModelo(m, btn, desdeHoja = true){
     if(!db) return;
     const n = totalDisp(m);
     const aviso = n ? `\n\nTambién se quitarán sus ${n} piezas disponibles.` : '';
@@ -379,8 +428,9 @@
     if(error){ toast('No se pudo eliminar: ' + error.message, 'error'); return; }
     modelos = modelos.filter(x => x !== m);
     piezas = piezas.filter(p => p.catalogo_id !== m.id);
-    cerrarHoja('sheetDetalle');
+    if(desdeHoja) cerrarHoja('sheetDetalle');
     actualizarSubtitulo();
+    pintarChips();
     pintarLista();
     toast('Modelo eliminado');
   }
