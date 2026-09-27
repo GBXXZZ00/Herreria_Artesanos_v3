@@ -7,7 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const { TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA,
           especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
-          fotoModelo, fotoPieza, esc, dinero, specChipsHtml, toast, abrirHoja, cerrarHoja, hojaAbierta, SW_COLOR, esquema, grupoActivo } = window.AH;
+          fotoModelo, fotoPieza, esc, dinero, specChipsHtml, toast, abrirHoja, cerrarHoja, hojaAbierta, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion } = window.AH;
 
   const ICON_CHEV = '<svg class="linea-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
   const ICON_PIN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
@@ -327,7 +327,8 @@
       <div class="det-price">${dinero(p.precio)}</div>
       <div class="det-where">${ICON_PIN}Está en ${esc(nombreSede(p.sede_id))}</div>
       ${specs.length ? `<div class="det-section"><div class="det-label">Esta pieza</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}
-      ${p.foto ? '' : `<div class="field-hint" style="margin-top:16px">La foto es la del modelo. Toca "Editar" para ponerle la foto real.</div>`}`;
+      ${avisoFotoProteccion(p, m) ? `<div class="det-where" style="color:var(--accent)">${ICON_CHECK}${esc(avisoFotoProteccion(p, m))}</div>` : ''}
+      ${p.foto ? '' : `<div class="field-hint" style="margin-top:16px">La foto es la del modelo. Toca "Editar pieza" para ponerle la foto real.</div>`}`;
     const foot = `
       <div class="det-foot">
         <button class="btn-secondary" type="button" data-accion="quitar-pieza">Ya no está</button>
@@ -509,29 +510,49 @@
       </div>`;
   }
 
-  const modoEsquema = () => modoForm === 'pieza' ? 'pedido' : 'modelo';
-
-  function pintarSpecs(){
-    const esq = esquema(tipoActual, modoEsquema());
-    let html = `
+  function medidasHtml(label, keyAlto, keyAncho, idAlto, idAncho){
+    return `
       <div class="field">
-        <span class="field-label">${esc(modoForm === 'pieza' ? 'Medidas de esta pieza' : (esq.medidas.label || 'Medidas típicas'))}</span>
+        <span class="field-label">${esc(label)}</span>
         <div class="input-row">
           <div class="input-affix has-r">
-            <input class="input" id="specAlto" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(estado.alto ?? '')}" aria-label="Alto en metros">
+            <input class="input" ${idAlto ? `id="${idAlto}"` : ''} data-mkey="${keyAlto}" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(estado[keyAlto] ?? '')}" aria-label="Alto en metros">
             <span class="affix affix-r">alto</span>
           </div>
           <div class="input-affix has-r">
-            <input class="input" id="specAncho" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(estado.ancho ?? '')}" aria-label="Ancho en metros">
+            <input class="input" ${idAncho ? `id="${idAncho}"` : ''} data-mkey="${keyAncho}" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(estado[keyAncho] ?? '')}" aria-label="Ancho en metros">
             <span class="affix affix-r">ancho</span>
           </div>
         </div>
         <div class="field-hint">En metros</div>
       </div>`;
-    // Los extras van antes de los grupos que dependen de ellos (ej. bloque de la protección)
-    const sueltos = esq.grupos.filter(g => !g.si);
-    const condicionados = esq.grupos.filter(g => g.si);
-    sueltos.forEach(g => { html += optsHtml(g, estado[g.g]); });
+  }
+
+  function grupoHtml(g){
+    if(g.tipo === 'medidas') return medidasHtml(g.label, g.keys[0], g.keys[1]);
+    if(g.tipo === 'texto'){
+      return `
+        <div class="field">
+          <label class="field-label">${esc(g.label)}</label>
+          <input class="input" type="text" data-texto="${g.g}" value="${esc(estado[g.g] || '')}" placeholder="${esc(g.placeholder || '')}" autocomplete="off">
+        </div>`;
+    }
+    return optsHtml(g, estado[g.g]);
+  }
+
+  const modoEsquema = () => modoForm === 'pieza' ? 'pedido' : 'modelo';
+
+  function pintarSpecs(){
+    const esq = esquema(tipoActual, modoEsquema());
+    let html = medidasHtml(modoForm === 'pieza' ? (esq.medidas.label || 'Medidas de esta pieza') : (esq.medidas.label || 'Medidas típicas'), 'alto', 'ancho', 'specAlto', 'specAncho');
+    // Orden: cada grupo, y justo debajo los que dependen de él; luego los extras,
+    // y al final lo que depende de un extra (ej. bloque o sentido de la protección).
+    const dependeDeGrupo = (g) => g.si && typeof g.si === 'object';
+    const dependeDeExtra = (g) => g.si && typeof g.si === 'string';
+    esq.grupos.filter(g => !g.si).forEach(g => {
+      html += grupoHtml(g);
+      esq.grupos.filter(h => dependeDeGrupo(h) && h.si.g === g.g && grupoActivo(h, estado)).forEach(h => { html += grupoHtml(h); });
+    });
     if(esq.extras.length){
       html += `
         <div class="field">
@@ -545,7 +566,7 @@
           </div>
         </div>`;
     }
-    condicionados.forEach(g => { if(grupoActivo(g, estado)) html += optsHtml(g, estado[g.g]); });
+    esq.grupos.filter(g => dependeDeExtra(g) && grupoActivo(g, estado)).forEach(g => { html += grupoHtml(g); });
     $('specs').innerHTML = html;
   }
 
@@ -668,6 +689,11 @@
     colorPieza = p && p.color ? p.color : (tieneColores(m.tipo) ? (f.Blanco ? 'Blanco' : (f.Negro ? 'Negro' : 'Blanco')) : null);
     sedePieza = p && p.sede_id ? p.sede_id : (sedes[0] ? sedes[0].id : null);
     cantidadPieza = p ? (p.cantidad || 1) : 1;
+    // Las ventanas del combo salen del mismo color que la puerta, salvo que ya estuviera guardado otro
+    if(m.tipo === 'Combo'){
+      if(p && p.especificaciones && p.especificaciones.ventanas_color) estado._ventanasColorTocado = p.especificaciones.ventanas_color !== p.color;
+      else estado.ventanas_color = colorPieza || 'Blanco';
+    }
 
     $('formTitulo').textContent = p ? 'Editar pieza' : 'Marcar disponible';
     $('formSub').textContent = m.nombre;
@@ -688,7 +714,11 @@
   $('specs').addEventListener('click', (e)=>{
     const opt = e.target.closest('.opt');
     if(opt){
-      estado[opt.dataset.g] = opt.dataset.v;
+      const g = opt.dataset.g;
+      estado[g] = opt.dataset.v;
+      if(g === 'ventanas_color') estado._ventanasColorTocado = true;
+      const hayDependientes = esquema(tipoActual, modoEsquema()).grupos.some(h => h.si && typeof h.si === 'object' && h.si.g === g);
+      if(hayDependientes){ pintarSpecs(); return; }
       opt.parentElement.querySelectorAll('.opt').forEach(o => { const s = o === opt; o.classList.toggle('selected', s); o.setAttribute('aria-pressed', s); });
       return;
     }
@@ -700,13 +730,15 @@
         if(k === 'marco_decorativo' && estado.marco_decorativo) estado.proteccion = true;
         if(k === 'proteccion' && !estado.proteccion) estado.marco_decorativo = false;
       }
-      const depende = esquema(tipoActual, modoEsquema()).grupos.some(g => g.si);
+      const depende = esquema(tipoActual, modoEsquema()).grupos.some(g => g.si === k);
       if(depende) pintarSpecs(); else pintarExtras();
     }
   });
   $('specs').addEventListener('input', (e)=>{
-    if(e.target.id === 'specAlto'){ estado.alto = e.target.value; estado._medidasTocadas = true; }
-    if(e.target.id === 'specAncho'){ estado.ancho = e.target.value; estado._medidasTocadas = true; }
+    const mk = e.target.dataset.mkey;
+    if(mk){ estado[mk] = e.target.value; if(mk === 'alto' || mk === 'ancho') estado._medidasTocadas = true; }
+    const tx = e.target.dataset.texto;
+    if(tx) estado[tx] = e.target.value;
   });
 
   $('optsColor').addEventListener('click', (e)=>{
@@ -715,6 +747,7 @@
     colorPieza = b.dataset.color;
     pintarColorSede();
     pintarFotos(); // la foto de respaldo cambia al color elegido
+    if(tipoActual === 'Combo' && !estado._ventanasColorTocado){ estado.ventanas_color = colorPieza; pintarSpecs(); }
   });
   $('optsSede').addEventListener('click', (e)=>{
     const b = e.target.closest('[data-sede]');

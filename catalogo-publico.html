@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=7">
+<link rel="stylesheet" href="assets/css/base.css?v=8">
 <style>
   /* Letra más grande: lo usan clientes de todas las edades */
   body{font-size:16px}
@@ -74,15 +74,15 @@
   <div class="sheet-foot" id="detalleFoot"></div>
 </section>
 
-<script src="assets/vendor/supabase.js?v=7"></script>
-<script src="assets/js/supabase-client.js?v=7"></script>
-<script src="assets/js/comun.js?v=7"></script>
+<script src="assets/vendor/supabase.js?v=8"></script>
+<script src="assets/js/supabase-client.js?v=8"></script>
+<script src="assets/js/comun.js?v=8"></script>
 <script>
 (function(){
   'use strict';
   const db = window.db;
   const $ = (id) => document.getElementById(id);
-  const { TIPOS, iconoTipo, acabados, resumenSpecs, medidas, fotoModelo, fotoPieza, esc, dinero, specChipsHtml, abrirHoja, SW_COLOR } = window.AH;
+  const { TIPOS, iconoTipo, acabados, resumenSpecs, medidas, fotoModelo, fotoPieza, esc, dinero, specChipsHtml, abrirHoja, SW_COLOR, avisoFotoProteccion } = window.AH;
 
   const NUMERO_WHATSAPP = ''; // Pendiente: número del negocio, ej. '584121234567'
   const ICON_WA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.18-1.77 1.24-.45.06-1.02.09-1.65-.1-.38-.12-.87-.28-1.5-.55-2.64-1.14-4.37-3.8-4.5-3.98-.13-.18-1.08-1.43-1.08-2.73s.68-1.93.92-2.2c.24-.26.53-.33.7-.33h.5c.16 0 .38-.06.6.45.22.53.75 1.83.82 1.96.07.13.11.29.02.47-.09.18-.13.29-.26.44-.13.16-.27.35-.39.47-.13.13-.26.27-.11.53.15.26.67 1.1 1.44 1.78 1 .88 1.83 1.15 2.09 1.28.26.13.42.11.57-.07.16-.18.65-.76.82-1.02.18-.26.35-.22.59-.13.24.09 1.5.71 1.76.84.26.13.43.2.5.31.07.13.07.71-.15 1.33z"/></svg>';
@@ -213,6 +213,7 @@
       <div class="det-type">${esc([m.tipo, p.color].filter(Boolean).join(' · '))}</div>
       <div class="det-price">${dinero(p.precio)}</div>
       ${sede ? `<div class="det-where">${ICON_PIN}Está en ${esc(sede)}</div>` : ''}
+      ${avisoFotoProteccion(p, m) ? `<div class="det-where" style="color:var(--accent)">${ICON_CHECK}${esc(avisoFotoProteccion(p, m))}</div>` : ''}
       ${specs.length ? `<div class="det-section"><div class="det-label">Detalles</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}`,
       `<a class="btn-wa" href="${linkWa(texto)}" target="_blank" rel="noopener">${ICON_WA}Me interesa</a>`,
       true);

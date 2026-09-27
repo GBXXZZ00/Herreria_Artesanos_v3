@@ -37,7 +37,21 @@
   const OPC_VARIANTE = [{v:'Con protección en puerta', t:'Con protección'},{v:'Sin protección en puerta', t:'Sin protección'}];
   const SW_COLOR = { Azul:'sw-azul', Espejo:'sw-espejo', Negro:'sw-negro', Blanco:'sw-blanco' };
 
-  // Qué se pregunta en cada tipo, en orden. Valores por defecto tomados de la app original.
+  // Opciones que se repiten en varios tipos
+  const OPC_SENTIDO   = [{v:'Derecha'},{v:'Izquierda'}];
+  const OPC_POSICION  = [{v:'Adentro'},{v:'Afuera'}];
+  const OPC_BLOQUE    = [{v:'10'},{v:'15'},{v:'Tubo'}];
+  const OPC_ALUMINIO  = [{v:'Panorámica'},{v:'Ecobel'}];
+  const OPC_COLOR     = [{v:'Blanco',sw:'sw-blanco'},{v:'Negro',sw:'sw-negro'}];
+  const OPC_CERRADURA = [{v:'Manilla de pomo', t:'Pomo'},{v:'Manilla negra', t:'Manilla negra'},{v:'Personalizada'}];
+  const CON_PROT_COMBO = { g:'variante', v:'Con protección en puerta' };
+
+  // Qué se pregunta en cada tipo al crear el MODELO del catálogo, en orden.
+  // Valores por defecto tomados de la app original.
+  //   si: 'extra'          -> el grupo solo aparece si ese extra está marcado
+  //   si: {g, v}           -> el grupo solo aparece si otro grupo tiene ese valor
+  //   tipo: 'medidas'      -> par de medidas (keys)
+  //   tipo: 'texto'        -> campo de texto libre
   const ESQUEMA = {
     'Ventana': {
       medidas:{ alto:1, ancho:1 },
@@ -70,25 +84,25 @@
     'Combo': {
       medidas:{ alto:2, ancho:1, label:'Medidas de la puerta' },
       grupos:[
-        { g:'variante', label:'Variante', opts:OPC_VARIANTE, def:'Con protección en puerta', cols:2 },
-        { g:'ahumado', label:'Papel ahumado de las ventanas', opts:OPC_AHUMADO, def:'Espejo' },
-        { g:'manillon', label:'Manillón de la puerta', opts:OPC_MANILLON, def:'Sin' }
+        { g:'variante', label:'Protección en la puerta', opts:OPC_VARIANTE, def:'Con protección en puerta', cols:2 },
+        { g:'vidrio', label:'Vidrio o farquilla de la puerta', opts:OPC_VIDRIO, def:'Negro' },
+        { g:'manillon', label:'Manillón de la puerta', opts:OPC_MANILLON, def:'Sin' },
+        { g:'ahumado', label:'Papel ahumado de las ventanas', opts:OPC_AHUMADO, def:'Espejo', zona:'ventanas' }
       ],
-      extras:[ { k:'marco_decorativo', label:'Marco decorativo' } ]
+      extras:[ { k:'marco_decorativo', label:'Marco decorativo en la puerta' } ]
     },
     'Puerta de Madera': {
       medidas:{ alto:2, ancho:0.9 },
-      grupos:[],
+      grupos:[
+        { g:'cerradura', label:'Cerradura', opts:OPC_CERRADURA, def:'Manilla de pomo', cols:3 },
+        { g:'cerradura_detalle', label:'¿Qué cerradura lleva?', tipo:'texto', placeholder:'Ej: Manilla dorada con llave', si:{ g:'cerradura', v:'Personalizada' } }
+      ],
       extras:[]
     }
   };
 
-  // Lo que se decide por pieza física o por pedido, no por modelo (igual que la app original:
+  // Lo que se decide por pieza física o por venta, no por modelo (igual que la app original:
   // el modelo de catálogo no lleva sentido, posición ni bloque).
-  const OPC_SENTIDO  = [{v:'Derecha'},{v:'Izquierda'}];
-  const OPC_POSICION = [{v:'Adentro'},{v:'Afuera'}];
-  const OPC_BLOQUE   = [{v:'10'},{v:'15'},{v:'Tubo'}];
-  const OPC_ALUMINIO = [{v:'Panorámica'},{v:'Ecobel'}];
   const PEDIDO = {
     'Ventana': {
       antes:[ { g:'aluminio', label:'Aluminio', opts:OPC_ALUMINIO, def:'Panorámica' } ],
@@ -107,36 +121,48 @@
       despues:[
         { g:'sentido', label:'Sentido de apertura', opts:OPC_SENTIDO, def:'Derecha' },
         { g:'posicion', label:'Posición de apertura', opts:OPC_POSICION, def:'Afuera' },
-        { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'15' }
+        { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'15' },
+        { g:'proteccion_sentido', label:'¿Hacia dónde abre la protección?', opts:OPC_SENTIDO, def:'Derecha', si:'proteccion' }
       ]
     },
     'Combo': {
       antes:[],
       despues:[
+        { g:'proteccion_sentido', label:'¿Hacia dónde abre la protección?', opts:OPC_SENTIDO, def:'Derecha', si:CON_PROT_COMBO },
         { g:'sentido', label:'Sentido de apertura', opts:OPC_SENTIDO, def:'Derecha' },
         { g:'posicion', label:'Posición de apertura', opts:OPC_POSICION, def:'Afuera' },
-        { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'10' }
+        { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'10' },
+        { g:'ventanas_medidas', label:'Medidas de las 2 ventanas', tipo:'medidas', keys:['ventanas_alto','ventanas_ancho'], def:[1, 1], zona:'ventanas' },
+        { g:'ventanas_color', label:'Color de las ventanas', opts:OPC_COLOR, def:'Blanco', zona:'ventanas' }
       ]
     },
     'Puerta de Madera': {
       antes:[],
       despues:[
         { g:'sentido', label:'Sentido de apertura', opts:OPC_SENTIDO, def:'Derecha' },
-        { g:'posicion', label:'Posición de apertura', opts:OPC_POSICION, def:'Afuera' }
+        { g:'posicion', label:'Posición de apertura', opts:OPC_POSICION, def:'Afuera' },
+        { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'15' }
       ]
     }
   };
-  const DIRECTOS = ['sentido', 'posicion', 'bloque', 'aluminio'];
+  // Grupos que se guardan tal cual (mismo nombre de campo y valor)
+  const DIRECTOS = ['sentido', 'posicion', 'bloque', 'aluminio', 'proteccion_sentido', 'cerradura', 'ventanas_color'];
 
   // Esquema según dónde se usa: 'modelo' (catálogo) o 'pedido' (pieza disponible / venta).
   function esquema(tipo, modo){
     const base = ESQUEMA[tipo] || ESQUEMA['Puerta Multilock'];
     if(modo !== 'pedido') return base;
     const extra = PEDIDO[tipo] || { antes:[], despues:[] };
-    return { medidas: base.medidas, grupos: [...extra.antes, ...base.grupos, ...extra.despues], extras: base.extras };
+    // Lo de las ventanas del combo va junto, después de todo lo de la puerta
+    const todos = [...extra.antes, ...base.grupos, ...extra.despues];
+    return { medidas: base.medidas, grupos: [...todos.filter(g => !g.zona), ...todos.filter(g => g.zona)], extras: base.extras };
   }
-  // Un grupo condicional (ej. bloque solo si hay protección) se muestra y se guarda solo si aplica.
-  function grupoActivo(gr, s){ return !gr.si || !!s[gr.si]; }
+  // Un grupo condicional se muestra y se guarda solo si aplica.
+  function grupoActivo(gr, s){
+    if(!gr.si) return true;
+    if(typeof gr.si === 'string') return !!s[gr.si];
+    return s[gr.si.g] === gr.si.v;
+  }
 
   // Convierte lo elegido en pantalla a los mismos campos que usa el resto del sistema.
   function especificacionesDesdeEstado(tipo, s, modo){
@@ -145,6 +171,8 @@
     esq.grupos.forEach((gr)=>{
       const g = gr.g;
       if(!grupoActivo(gr, s)) return;
+      if(gr.tipo === 'medidas'){ gr.keys.forEach(k => { out[k] = numOrNull(s[k]); }); return; }
+      if(gr.tipo === 'texto'){ const t = String(s[g] || '').trim(); if(t) out[g] = t; return; }
       const v = s[g];
       if(DIRECTOS.includes(g)){ out[g] = v; return; }
       if(g === 'vidrio'){
@@ -172,7 +200,10 @@
       alto: e.alto != null ? e.alto : esq.medidas.alto,
       ancho: e.ancho != null ? e.ancho : esq.medidas.ancho
     };
-    esq.grupos.forEach(({g, def})=>{
+    esq.grupos.forEach((gr)=>{
+      const g = gr.g, def = gr.def;
+      if(gr.tipo === 'medidas'){ gr.keys.forEach((k, i) => { s[k] = e[k] != null ? e[k] : gr.def[i]; }); return; }
+      if(gr.tipo === 'texto'){ s[g] = e[g] || ''; return; }
       let v = def;
       if(g === 'vidrio' && e.vidrio_o_farquilla){
         v = e.vidrio_o_farquilla === 'Farquilla' ? 'Farquilla' : (e.color_vidrio || def);
@@ -203,13 +234,31 @@
     if(e.papel_ahumado === true) out.push({ t:'Ahumado ' + (e.color_ahumado || '').toLowerCase(), sw:SW_COLOR[e.color_ahumado] });
     else if(e.papel_ahumado === false) out.push({ t:'Sin ahumado' });
     if(e.manillon === true) out.push({ t:'Manillón ' + (e.manillon_tipo || '') });
+    if(e.cerradura) out.push({ t: e.cerradura === 'Personalizada' ? 'Cerradura: ' + (e.cerradura_detalle || 'personalizada') : e.cerradura });
     if(e.proteccion) out.push({ t:'Protección' });
+    if(e.proteccion_sentido) out.push({ t:'Protección abre a la ' + e.proteccion_sentido.toLowerCase() });
     if(e.marco_decorativo) out.push({ t: tipo === 'Ventana' ? 'Marco en protección' : 'Marco decorativo' });
     if(e.mas_hojas) out.push({ t:'Más de 2 hojas' });
     if(e.sentido) out.push({ t:'Abre a la ' + e.sentido.toLowerCase() });
     if(e.posicion) out.push({ t:(tipo === 'Portón' ? 'Instalación ' : 'Apertura ') + e.posicion.toLowerCase() });
     if(e.bloque) out.push({ t:'Bloque ' + e.bloque });
+    if(e.ventanas_alto && e.ventanas_ancho) out.push({ t:`Ventanas ${fmt.format(e.ventanas_alto)} × ${fmt.format(e.ventanas_ancho)} m` });
+    if(e.ventanas_color) out.push({ t:'Ventanas ' + e.ventanas_color.toLowerCase(), sw:SW_COLOR[e.ventanas_color] });
     return out;
+  }
+
+  // ¿La pieza lleva protección pero la foto que se muestra es la del modelo sin protección?
+  function llevaProteccion(tipo, e){
+    e = e || {};
+    return tipo === 'Combo' ? e.variante === 'Con protección en puerta' : !!e.proteccion;
+  }
+  function avisoFotoProteccion(p, m){
+    if(!p || p.foto || !m) return '';
+    const pieza = llevaProteccion(m.tipo, p.especificaciones);
+    const modelo = llevaProteccion(m.tipo, m.especificaciones_base);
+    if(pieza && !modelo) return 'Lleva protección (no sale en la foto)';
+    if(!pieza && modelo) return 'Sin protección (la foto sí la muestra)';
+    return '';
   }
   function medidas(e){
     if(!e || !e.alto || !e.ancho) return '';
@@ -316,7 +365,7 @@
   });
 
   window.AH = {
-    TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo,
+    TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
     fotoModelo, fotoPieza, esc, numOrNull, fmt, dinero, specChipsHtml, toast,
     abrirHoja, cerrarHoja, hojaAbierta, alCerrar
