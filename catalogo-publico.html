@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Herrería Artesanos — Catálogo</title>
+<link rel="stylesheet" href="assets/css/base.css">
+<style>
+  .content{padding:16px 18px 40px;max-width:640px;margin:0 auto}
+  .grid-publico{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .card-foto{position:relative;aspect-ratio:1/1;background:linear-gradient(135deg,#EFE8D8,#E4DCCB);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .card-foto img{width:100%;height:100%;object-fit:cover}
+  .badge{position:absolute;top:8px;left:8px;background:var(--ink);color:var(--paper);font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px}
+  .card-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .card-nombre{font-size:13.5px;font-weight:600;line-height:1.25;min-height:34px}
+  .card-precio{font-family:Georgia,serif;font-size:17px;font-weight:700;color:var(--accent)}
+  .wa-btn{
+    margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px;
+    background:var(--ink);color:var(--paper);text-decoration:none;font-size:12.5px;font-weight:600;
+    padding:9px 0;border-radius:10px;
+  }
+  .empty-state{text-align:center;padding:60px 20px;color:var(--ink-soft)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-mark"><span>HA</span></div>
+  <div class="topbar-title serif" style="font-size:16px">Herrería Artesanos</div>
+</div>
+
+<div class="content">
+  <div class="search-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6459" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input type="text" id="buscador" placeholder="Buscar puertas, ventanas...">
+  </div>
+  <div class="chips" id="chips" style="margin-top:12px"></div>
+  <div class="grid-publico" id="grid">
+    <div class="empty-state" style="grid-column:1/-1">Cargando catálogo...</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script>
+const NUMERO_WHATSAPP = ''; // TODO: pon aquí el número, ej. '584121234567'
+let modelos = [];
+let categoriaActiva = 'Todos';
+
+async function cargar(){
+  const { data, error } = await supabase.from('catalogo').select('*').order('id', { ascending:false });
+  if(error){ document.getElementById('grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1">No se pudo cargar el catálogo.</div>'; return; }
+  modelos = data || [];
+  pintarChips();
+  pintar();
+}
+
+function pintarChips(){
+  const tipos = ['Todos', ...new Set(modelos.map(m=>m.tipo))];
+  const cont = document.getElementById('chips');
+  cont.innerHTML = tipos.map(t=>`<button class="chip ${t===categoriaActiva?'active':''}" data-t="${t}">${t}</button>`).join('');
+  cont.querySelectorAll('.chip').forEach(el=>{
+    el.onclick = ()=>{ categoriaActiva = el.dataset.t; pintarChips(); pintar(); };
+  });
+}
+
+function pintar(){
+  const q = document.getElementById('buscador').value.trim().toLowerCase();
+  const filtrados = modelos.filter(m=>{
+    const pasaCat = categoriaActiva==='Todos' || m.tipo===categoriaActiva;
+    const pasaBusq = !q || m.nombre.toLowerCase().includes(q);
+    return pasaCat && pasaBusq;
+  });
+  const grid = document.getElementById('grid');
+  if(filtrados.length===0){
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Todavía no hay nada que mostrar aquí.</div>';
+    return;
+  }
+  grid.innerHTML = filtrados.map(m=>{
+    const foto = m.fotos && Object.values(m.fotos)[0];
+    const msg = encodeURIComponent(`Hola, quiero información sobre: ${m.nombre}`);
+    const link = NUMERO_WHATSAPP ? `https://wa.me/${NUMERO_WHATSAPP}?text=${msg}` : `https://wa.me/?text=${msg}`;
+    return `
+      <div class="card">
+        <div class="card-foto">
+          ${foto ? `<img src="${foto}">` : `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#B8AF9C" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>`}
+          ${m.badge ? `<span class="badge">${m.badge}</span>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-nombre">${m.nombre}</div>
+          <div class="card-precio">$${Number(m.precio_base).toFixed(2)}</div>
+          <a class="wa-btn" href="${link}" target="_blank" rel="noopener">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#F7F3EC"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.18-1.77 1.24-.45.06-1.02.09-1.65-.1-.38-.12-.87-.28-1.5-.55-2.64-1.14-4.37-3.8-4.5-3.98-.13-.18-1.08-1.43-1.08-2.73 0-1.3.68-1.93.92-2.2.24-.26.53-.33.7-.33h.5c.16 0 .38-.06.6.45.22.53.75 1.83.82 1.96.07.13.11.29.02.47-.09.18-.13.29-.26.44-.13.16-.27.35-.39.47-.13.13-.26.27-.11.53.15.26.67 1.1 1.44 1.78 1 .88 1.83 1.15 2.09 1.28.26.13.42.11.57-.07.16-.18.65-.76.82-1.02.18-.26.35-.22.59-.13.24.09 1.5.71 1.76.84.26.13.43.2.5.31.07.13.07.71-.15 1.33z"/></svg>
+            Pedir por WhatsApp
+          </a>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+document.getElementById('buscador').oninput = pintar;
+cargar();
+</script>
+</body>
+</html>
