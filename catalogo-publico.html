@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=14">
+<link rel="stylesheet" href="assets/css/base.css?v=15">
 <style>
   /* Letra más grande: lo usan clientes de todas las edades */
   body{font-size:16px}
@@ -156,9 +156,9 @@
   <div class="sheet-foot" id="detalleFoot"></div>
 </section>
 
-<script src="assets/vendor/supabase.js?v=14"></script>
-<script src="assets/js/supabase-client.js?v=14"></script>
-<script src="assets/js/comun.js?v=14"></script>
+<script src="assets/vendor/supabase.js?v=15"></script>
+<script src="assets/js/supabase-client.js?v=15"></script>
+<script src="assets/js/comun.js?v=15"></script>
 <script>
 (function(){
   'use strict';
@@ -373,7 +373,7 @@
     if(sede) lineas.push(`• Está en: Sede ${sede}`);
     lineas.push(`• Precio: *${dinero(p.precio)}* (entrega inmediata)`);
     lineas.push(`Ref: P-${p.id}`, '', '¿Sigue disponible?');
-    if(foto) lineas.push(`Foto: ${foto}`);
+    if(foto) lineas.push('', `Foto: ${foto}`);
     const texto = lineas.join('\n');
     pintarVista(`
       <div ${heroAttrs(foto)}>
@@ -435,11 +435,9 @@
       '',
       `*${m.nombre}* · ${m.tipo}`,
       `• Desde ${dinero(m.precio_base)}`,
-      `Ref: M-${m.id}`,
-      '',
-      'Las medidas de mi espacio son: ___ alto × ___ ancho'
+      `Ref: M-${m.id}`
     ];
-    if(fotoM) lineasM.push(`Foto: ${fotoM}`);
+    if(fotoM) lineasM.push('', `Foto: ${fotoM}`);
     const texto = lineasM.join('\n');
     pintarVista(html, `<a class="btn-wa" href="${linkWa(texto)}" target="_blank" rel="noopener">${ICON_WA}Consultar por WhatsApp</a>`, false);
   }
