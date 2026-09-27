@@ -340,3 +340,103 @@ textarea.input{height:auto;min-height:88px;padding:12px 14px;resize:vertical}
   font-size:13.5px;font-weight:700;color:var(--accent);transition:transform 140ms var(--ease-out);
 }
 .link-btn:active{transform:scale(0.95)}
+
+/* ---------- Hoja estilo tienda: foto de borde a borde, X flotante ---------- */
+.sheet{overflow:hidden}
+.sheet.sheet-hero .sheet-body{padding-top:0}
+.sheet.sheet-hero > .sheet-handle{position:absolute;top:0;left:50%;margin-left:-20px;z-index:3;background:rgba(255,255,255,0.85);box-shadow:0 1px 3px rgba(0,0,0,0.15)}
+.sheet-x{
+  position:absolute;top:14px;right:14px;z-index:3;width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,0.94);box-shadow:var(--shadow-md);
+  display:flex;align-items:center;justify-content:center;color:var(--ink);
+  transition:transform 140ms var(--ease-out);
+}
+.sheet-x:active{transform:scale(0.92)}
+.sheet-back{
+  position:absolute;top:14px;left:14px;z-index:3;height:40px;padding:0 14px 0 10px;border-radius:999px;
+  background:rgba(255,255,255,0.94);box-shadow:var(--shadow-md);
+  display:flex;align-items:center;gap:4px;font-weight:700;font-size:14.5px;color:var(--ink);
+  transition:transform 140ms var(--ease-out);
+}
+.sheet-back:active{transform:scale(0.95)}
+.hero{
+  position:relative;margin:0 -18px;aspect-ratio:4/3;background:var(--surface-2);overflow:hidden;
+  display:flex;align-items:center;justify-content:center;color:var(--ink-faint);
+}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity 220ms var(--ease-out)}
+.hero img.off{opacity:0}
+.hero .card-badge{top:auto;bottom:12px;left:12px}
+.vista{animation:vistaIn 260ms var(--ease-out)}
+@keyframes vistaIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+.vista-head{padding:62px 0 4px}
+.vista-head.con-foto{padding-top:0}
+
+/* Ficha */
+.det-name{font-size:24px;font-weight:800;letter-spacing:-0.4px;line-height:1.15;margin:18px 0 4px}
+.det-type{font-size:14px;color:var(--ink-soft)}
+.det-price{font-size:22px;font-weight:800;color:var(--accent);margin-top:10px;letter-spacing:-0.3px}
+.det-section{margin-top:22px}
+.det-label{font-size:13px;font-weight:700;color:var(--ink-soft);margin-bottom:10px}
+.spec-chips{display:flex;flex-wrap:wrap;gap:8px}
+.spec-chip{height:34px;padding:0 13px;border-radius:999px;background:var(--surface-2);display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600}
+.spec-chip .swatch{width:12px;height:12px}
+.feat-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.feat-list li{display:flex;align-items:flex-start;gap:10px;font-size:14.5px}
+.feat-list svg{flex-shrink:0;margin-top:2px;color:var(--accent)}
+.det-desc{font-size:14.5px;line-height:1.5;color:var(--ink)}
+.det-where{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;margin-top:12px}
+.det-where svg{color:var(--accent);flex-shrink:0}
+
+/* Etiquetas en tarjetas */
+.tag-disp{
+  position:absolute;left:8px;bottom:8px;display:inline-flex;align-items:center;gap:5px;
+  padding:5px 10px;border-radius:999px;background:var(--accent);color:#fff;font-size:11.5px;font-weight:800;
+  box-shadow:0 2px 8px rgba(31,95,115,0.3);
+}
+.tag-disp::before{content:'';width:6px;height:6px;border-radius:50%;background:#7FE3C4}
+.tag-agotado{
+  position:absolute;left:8px;bottom:8px;padding:5px 10px;border-radius:999px;
+  background:rgba(255,255,255,0.94);color:var(--ink-soft);font-size:11.5px;font-weight:700;
+}
+
+/* Líneas de piezas disponibles */
+.lineas{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden}
+.linea{
+  display:flex;align-items:center;gap:12px;padding:12px;text-align:left;width:100%;background:var(--surface);
+  transition:background-color 160ms var(--ease-out);
+}
+.linea + .linea{border-top:1px solid var(--line)}
+.linea:active{background:var(--surface-2)}
+.linea-foto{width:60px;height:60px;border-radius:12px;overflow:hidden;background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+.linea-foto img{width:100%;height:100%;object-fit:cover}
+.linea-txt{flex:1;min-width:0}
+.linea-t1{display:flex;align-items:center;gap:7px;font-size:15.5px;font-weight:700}
+.linea-t2{font-size:13px;color:var(--ink-soft);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.linea-precio{font-size:16px;font-weight:800;color:var(--accent);white-space:nowrap}
+.linea-chev{color:var(--ink-faint);flex-shrink:0}
+.linea-cant{font-size:11.5px;font-weight:700;color:var(--ink-soft);background:var(--surface-2);padding:2px 7px;border-radius:999px}
+.row-link{
+  display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 4px;
+  font-size:15px;font-weight:700;color:var(--accent);border-bottom:1px solid var(--line);
+}
+.row-link:last-child{border-bottom:none}
+
+/* Botón de WhatsApp */
+.btn-wa{
+  width:100%;height:56px;border-radius:var(--radius-md);background:#1FA855;color:#fff;text-decoration:none;
+  font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:transform 140ms var(--ease-out);
+}
+.btn-wa:active{transform:scale(0.98)}
+
+/* Opciones de sede y cantidad en el formulario */
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line-strong);border-radius:var(--radius-sm);overflow:hidden}
+.stepper button{width:50px;height:48px;font-size:22px;font-weight:600;color:var(--accent)}
+.stepper button:active{background:var(--surface-2)}
+.stepper span{min-width:44px;text-align:center;font-size:17px;font-weight:800}
+.det-foot{display:flex;gap:10px}
+.det-foot .btn-secondary{flex:0 0 auto;height:54px;color:var(--danger);border-color:var(--line-strong)}
+.det-foot .btn-primary{flex:1;min-width:0}
+/* Una hoja cerrada nunca se ve ni recibe toques */
+.sheet{visibility:hidden;transition:transform 320ms var(--ease-out),visibility 0s linear 320ms}
+.sheet.open{visibility:visible;transition:transform 320ms var(--ease-out),visibility 0s}

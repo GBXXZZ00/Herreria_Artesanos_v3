@@ -4,104 +4,305 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FFFFFF">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=5">
+<link rel="stylesheet" href="assets/css/base.css?v=6">
 <style>
-  .page{padding-bottom:40px;max-width:900px;margin:0 auto}
-  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px 18px 0}
+  /* Letra más grande: lo usan clientes de todas las edades */
+  body{font-size:16px}
+  .page{padding-bottom:48px;max-width:900px;margin:0 auto}
+  .sec-title{font-size:19px;font-weight:800;letter-spacing:-0.3px;padding:22px 18px 0;margin:0}
+  .sec-sub{font-size:14px;color:var(--ink-soft);padding:4px 18px 0}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px 18px 0}
   @media (min-width:620px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-  .card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 8px 10px;box-shadow:var(--shadow-sm)}
+  .card{width:100%;text-align:left;display:flex;flex-direction:column;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 8px 12px;box-shadow:var(--shadow-sm);transition:transform 150ms var(--ease-out)}
+  .card:active{transform:scale(0.97)}
   .card-photo{position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
   .card-photo img{width:100%;height:100%;object-fit:cover}
-  .card-badge{position:absolute;top:8px;left:8px;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,0.94);font-size:11px;font-weight:800}
-  .card-name{font-size:15px;font-weight:700;line-height:1.25;margin:10px 4px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .card-price{font-size:16.5px;font-weight:800;color:var(--accent);margin:6px 4px 10px}
-  .wa-btn{margin-top:auto;height:42px;border-radius:12px;background:var(--ink);color:#fff;text-decoration:none;font-size:13.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform 140ms var(--ease-out)}
-  .wa-btn:active{transform:scale(0.97)}
-  .state{grid-column:1/-1;text-align:center;padding:48px 24px;color:var(--ink-soft)}
+  .card-badge{position:absolute;top:8px;left:8px;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,0.94);font-size:11.5px;font-weight:800;color:var(--ink)}
+  .card-name{font-size:16.5px;font-weight:700;line-height:1.25;margin:10px 4px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .card-price{font-size:18px;font-weight:800;color:var(--accent);margin:auto 4px 0;padding-top:6px}
+  .tag-disp,.tag-agotado{font-size:12.5px;padding:6px 11px}
+  .state{grid-column:1/-1;text-align:center;padding:48px 24px;color:var(--ink-soft);font-size:16px}
+  .sk{background:var(--surface-2);border-radius:12px;aspect-ratio:3/4;animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  /* Hoja con letra grande */
+  .sheet .det-name{font-size:26px}
+  .sheet .det-type{font-size:16px}
+  .sheet .det-price{font-size:26px}
+  .sheet .spec-chip{height:38px;font-size:15px;padding:0 14px}
+  .sheet .det-where{font-size:16.5px}
+  .sheet .det-desc,.sheet .feat-list li{font-size:16px}
+  .sheet .linea{padding:14px 12px}
+  .sheet .linea-foto{width:68px;height:68px}
+  .sheet .linea-t1{font-size:17px}
+  .sheet .linea-t2{font-size:14.5px}
+  .sheet .linea-precio{font-size:18px}
+  .sheet-back{font-size:16px;height:44px}
+  .ayuda{font-size:15px;color:var(--ink-soft);margin-top:4px}
 </style>
 </head>
 <body>
-<header class="topbar">
+<header class="topbar" id="topbar">
   <div class="logo-mark">HA</div>
-  <div class="topbar-text"><div class="topbar-title" style="font-size:19px">Herrería Artesanos</div></div>
+  <div class="topbar-text">
+    <div class="topbar-title" style="font-size:20px">Herrería Artesanos</div>
+    <div class="topbar-sub" style="font-size:14px">Puertas, ventanas y portones</div>
+  </div>
 </header>
+
 <main class="page">
   <div class="chips" id="chips"></div>
   <label class="search-box">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <input type="search" id="buscador" placeholder="Buscar puertas, ventanas" autocomplete="off" aria-label="Buscar">
   </label>
-  <section class="grid" id="grid"><div class="state">Cargando catálogo</div></section>
+  <div id="contenido">
+    <div class="grid"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+  </div>
 </main>
 
-<script src="assets/vendor/supabase.js?v=5"></script>
-<script src="assets/js/supabase-client.js?v=5"></script>
+<div class="sheet-scrim" id="scrimDetalle" data-cerrar="sheetDetalle"></div>
+<section class="sheet sheet-hero" id="sheetDetalle" role="dialog" aria-modal="true" aria-label="Detalle">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetDetalle" aria-label="Cerrar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div id="detalleVolver"></div>
+  <div class="sheet-body" id="detalleBody"></div>
+  <div class="sheet-foot" id="detalleFoot"></div>
+</section>
+
+<script src="assets/vendor/supabase.js?v=6"></script>
+<script src="assets/js/supabase-client.js?v=6"></script>
+<script src="assets/js/comun.js?v=6"></script>
 <script>
 (function(){
   'use strict';
   const db = window.db;
-  const NUMERO_WHATSAPP = ''; // Pendiente: número del negocio, ej. '584121234567'
-  let modelos = [];
-  let filtro = 'Todos';
   const $ = (id) => document.getElementById(id);
-  const esc = (t) => String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const fmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+  const { TIPOS, iconoTipo, acabados, resumenSpecs, medidas, fotoModelo, fotoPieza, esc, dinero, specChipsHtml, abrirHoja, SW_COLOR } = window.AH;
 
-  function foto(m){
-    const f = m.fotos || {};
-    return f.Blanco || f.Negro || f.Principal || Object.values(f).find(Boolean) || null;
+  const NUMERO_WHATSAPP = ''; // Pendiente: número del negocio, ej. '584121234567'
+  const ICON_WA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.18-1.77 1.24-.45.06-1.02.09-1.65-.1-.38-.12-.87-.28-1.5-.55-2.64-1.14-4.37-3.8-4.5-3.98-.13-.18-1.08-1.43-1.08-2.73s.68-1.93.92-2.2c.24-.26.53-.33.7-.33h.5c.16 0 .38-.06.6.45.22.53.75 1.83.82 1.96.07.13.11.29.02.47-.09.18-.13.29-.26.44-.13.16-.27.35-.39.47-.13.13-.26.27-.11.53.15.26.67 1.1 1.44 1.78 1 .88 1.83 1.15 2.09 1.28.26.13.42.11.57-.07.16-.18.65-.76.82-1.02.18-.26.35-.22.59-.13.24.09 1.5.71 1.76.84.26.13.43.2.5.31.07.13.07.71-.15 1.33z"/></svg>';
+  const ICON_CHEV = '<svg class="linea-chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+  const ICON_PIN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+  const ICON_BACK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>';
+  const ICON_CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+
+  let modelos = [], piezas = [], sedes = [];
+  let filtro = 'Todos';
+  let actual = null; // modelo abierto en la hoja
+
+  const piezasDe = (m) => piezas.filter(p => p.catalogo_id === m.id);
+  const totalDisp = (m) => piezasDe(m).reduce((a, p) => a + (p.cantidad || 0), 0);
+  const nombreSede = (id) => (sedes.find(s => s.id === id) || {}).nombre || '';
+  function linkWa(texto){
+    const t = encodeURIComponent(texto);
+    return NUMERO_WHATSAPP ? `https://wa.me/${NUMERO_WHATSAPP}?text=${t}` : `https://wa.me/?text=${t}`;
   }
 
   function pintarChips(){
-    const tipos = ['Todos', ...new Set(modelos.map(m => m.tipo))];
-    $('chips').innerHTML = tipos.map(t => `<button class="chip ${t === filtro ? 'active' : ''}" data-t="${esc(t)}">${esc(t)}</button>`).join('');
+    const tipos = TIPOS.filter(t => modelos.some(m => m.tipo === t));
+    const cats = [...(piezas.length ? ['Disponibles'] : []), 'Todos', ...tipos];
+    $('chips').innerHTML = cats.map(c => `<button class="chip ${c === filtro ? 'active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  }
+
+  function tarjeta(m){
+    const n = totalDisp(m);
+    const foto = fotoModelo(m);
+    const ps = piezasDe(m);
+    let precio = `Desde ${dinero(m.precio_base)}`;
+    if(n){
+      const min = Math.min(...ps.map(p => Number(p.precio) || 0));
+      precio = ps.length === 1 ? dinero(min) : `Desde ${dinero(min)}`;
+    }
+    return `
+      <button class="card" data-id="${m.id}">
+        <div class="card-photo">
+          ${foto ? `<img src="${esc(foto)}" alt="${esc(m.nombre)}" loading="lazy">` : iconoTipo(m.tipo, 36)}
+          ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
+          ${n ? `<span class="tag-disp">Disponible · ${n}</span>` : `<span class="tag-agotado">Por encargo</span>`}
+        </div>
+        <div class="card-name">${esc(m.nombre)}</div>
+        <div class="card-price">${precio}</div>
+      </button>`;
   }
 
   function pintar(){
     const q = $('buscador').value.trim().toLowerCase();
-    const lista = modelos.filter(m => (filtro === 'Todos' || m.tipo === filtro) && (!q || (m.nombre || '').toLowerCase().includes(q)));
-    if(!lista.length){ $('grid').innerHTML = '<div class="state">Todavía no hay nada que mostrar aquí.</div>'; return; }
-    $('grid').innerHTML = lista.map(m => {
-      const f = foto(m);
-      const msg = encodeURIComponent(`Hola, quiero información sobre: ${m.nombre}`);
-      const link = NUMERO_WHATSAPP ? `https://wa.me/${NUMERO_WHATSAPP}?text=${msg}` : `https://wa.me/?text=${msg}`;
-      return `
-        <article class="card">
-          <div class="card-photo">
-            ${f ? `<img src="${esc(f)}" alt="${esc(m.nombre)}" loading="lazy">` : `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>`}
-            ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
-          </div>
-          <div class="card-name">${esc(m.nombre)}</div>
-          <div class="card-price">Desde $${fmt.format(Number(m.precio_base) || 0)}</div>
-          <a class="wa-btn" href="${link}" target="_blank" rel="noopener">Pedir por WhatsApp</a>
-        </article>`;
-    }).join('');
-  }
-
-  async function cargar(){
-    try{
-      if(!db) throw new Error('sin conexión');
-      const { data, error } = await db.from('catalogo').select('*').order('id', { ascending:false });
-      if(error) throw error;
-      modelos = data || [];
-      pintarChips();
-      pintar();
-    } catch(err){
-      $('grid').innerHTML = '<div class="state">No se pudo cargar el catálogo. Revisa tu conexión e intenta de nuevo.</div>';
+    const base = modelos.filter(m =>
+      (filtro === 'Todos' || filtro === 'Disponibles' || m.tipo === filtro) &&
+      (!q || (m.nombre || '').toLowerCase().includes(q))
+    );
+    const disp = base.filter(m => totalDisp(m));
+    const encargo = filtro === 'Disponibles' ? [] : base.filter(m => !totalDisp(m));
+    if(!disp.length && !encargo.length){
+      $('contenido').innerHTML = `<div class="grid"><div class="state">${q ? 'No encontramos ese modelo.' : 'Todavía no hay nada que mostrar aquí.'}</div></div>`;
+      return;
     }
+    let html = '';
+    if(disp.length){
+      html += `<h2 class="sec-title">Disponibles para entrega inmediata</h2>
+               <div class="sec-sub">Ya están hechos. Toca uno para ver los detalles.</div>
+               <div class="grid">${disp.map(tarjeta).join('')}</div>`;
+    }
+    if(encargo.length){
+      html += `<h2 class="sec-title">Por encargo</h2>
+               <div class="sec-sub">Te lo hacemos a la medida.</div>
+               <div class="grid">${encargo.map(tarjeta).join('')}</div>`;
+    }
+    $('contenido').innerHTML = html;
   }
 
+  // ---------------- Hoja de detalle ----------------
+  function pintarVista(html, foot, volver){
+    $('detalleVolver').innerHTML = volver ? `<button class="sheet-back" data-ir="lista">${ICON_BACK}Volver</button>` : '';
+    $('detalleBody').innerHTML = `<div class="vista">${html}</div>`;
+    $('detalleFoot').innerHTML = foot || '';
+    $('detalleFoot').classList.toggle('hidden', !foot);
+    $('detalleBody').scrollTop = 0;
+  }
+
+  function vistaLista(m){
+    const ps = piezasDe(m);
+    const n = totalDisp(m);
+    const lineas = ps.map(p => {
+      const foto = fotoPieza(p, m);
+      const t1 = [p.color, medidas(p.especificaciones)].filter(Boolean).join(' · ') || m.tipo;
+      return `
+        <button class="linea" data-pieza="${p.id}">
+          <span class="linea-foto">${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 26)}</span>
+          <span class="linea-txt">
+            <span class="linea-t1">${p.color ? `<span class="swatch ${SW_COLOR[p.color] || ''}"></span>` : ''}${esc(t1)}</span>
+            <span class="linea-t2" style="display:block">Está en ${esc(nombreSede(p.sede_id))}</span>
+          </span>
+          <span class="linea-precio">${dinero(p.precio)}</span>
+          ${ICON_CHEV}
+        </button>`;
+    }).join('');
+    pintarVista(`
+      <div class="vista-head">
+        <div class="det-name" style="margin-top:0">${esc(m.nombre)}</div>
+        <div class="ayuda">${n === 1 ? 'Hay 1 disponible.' : `Hay ${n} disponibles.`} Toca una para verla.</div>
+      </div>
+      <div class="det-section" style="margin-top:16px"><div class="lineas">${lineas}</div></div>`, '', false);
+  }
+
+  function vistaPieza(p, m){
+    const e = p.especificaciones || {};
+    const foto = fotoPieza(p, m);
+    const specs = resumenSpecs(m.tipo, e);
+    const sede = nombreSede(p.sede_id);
+    const texto = [
+      'Hola, me interesa esta pieza disponible:',
+      `${m.nombre} (${m.tipo})`,
+      p.color ? `Color: ${p.color}` : '',
+      medidas(e) ? `Medidas: ${medidas(e)}` : '',
+      resumenSpecs(m.tipo, e, true).map(s => s.t).join(', '),
+      sede ? `Está en: ${sede}` : '',
+      `Precio: ${dinero(p.precio)}`
+    ].filter(Boolean).join('\n');
+    pintarVista(`
+      <div class="hero">
+        ${foto ? `<img src="${esc(foto)}" alt="${esc(m.nombre)}">` : iconoTipo(m.tipo, 60)}
+        <span class="tag-disp" style="bottom:12px;left:12px">Disponible</span>
+      </div>
+      <div class="det-name">${esc(m.nombre)}</div>
+      <div class="det-type">${esc([m.tipo, p.color].filter(Boolean).join(' · '))}</div>
+      <div class="det-price">${dinero(p.precio)}</div>
+      ${sede ? `<div class="det-where">${ICON_PIN}Está en ${esc(sede)}</div>` : ''}
+      ${specs.length ? `<div class="det-section"><div class="det-label">Detalles</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}`,
+      `<a class="btn-wa" href="${linkWa(texto)}" target="_blank" rel="noopener">${ICON_WA}Me interesa</a>`,
+      true);
+  }
+
+  function vistaEncargo(m){
+    const f = m.fotos || {};
+    const conFoto = acabados(m.tipo).filter(a => f[a.key]);
+    const specs = resumenSpecs(m.tipo, m.especificaciones_base);
+    const cars = Array.isArray(m.caracteristicas) ? m.caracteristicas : [];
+    let html = `
+      <div class="hero">
+        ${conFoto.length
+          ? conFoto.map((a, i) => `<img src="${esc(f[a.key])}" alt="${esc(m.nombre)} ${esc(a.label)}" data-acabado-img="${esc(a.key)}" class="${i ? 'off' : ''}">`).join('')
+          : iconoTipo(m.tipo, 60)}
+        <span class="tag-agotado" style="bottom:12px;left:12px">Por encargo</span>
+      </div>`;
+    if(conFoto.length > 1){
+      html += `<div class="opts" style="--cols:${conFoto.length};margin-top:12px">
+        ${conFoto.map((a, i) => `<button type="button" class="opt ${i ? '' : 'selected'}" data-acabado="${esc(a.key)}"><span class="swatch ${a.sw}"></span>${esc(a.label)}</button>`).join('')}
+      </div>`;
+    }
+    html += `
+      <div class="det-name">${esc(m.nombre)}</div>
+      <div class="det-type">${esc(m.tipo)}</div>
+      <div class="det-price">Desde ${dinero(m.precio_base)}</div>
+      <div class="ayuda">Te lo hacemos a la medida. Escríbenos y te decimos el precio exacto.</div>
+      ${m.descripcion_publica ? `<div class="det-section"><div class="det-desc">${esc(m.descripcion_publica)}</div></div>` : ''}
+      ${specs.length ? `<div class="det-section"><div class="det-label">Detalles</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}
+      ${cars.length ? `<div class="det-section"><ul class="feat-list">${cars.map(c => `<li>${ICON_CHECK}${esc(c)}</li>`).join('')}</ul></div>` : ''}`;
+    const texto = `Hola, quiero información sobre: ${m.nombre} (${m.tipo}), desde ${dinero(m.precio_base)}.`;
+    pintarVista(html, `<a class="btn-wa" href="${linkWa(texto)}" target="_blank" rel="noopener">${ICON_WA}Consultar por WhatsApp</a>`, false);
+  }
+
+  function abrirModelo(m){
+    actual = m;
+    if(totalDisp(m)) vistaLista(m); else vistaEncargo(m);
+    abrirHoja('sheetDetalle');
+  }
+
+  $('contenido').addEventListener('click', (e)=>{
+    const c = e.target.closest('.card');
+    if(!c) return;
+    const m = modelos.find(x => String(x.id) === c.dataset.id);
+    if(m) abrirModelo(m);
+  });
+  $('sheetDetalle').addEventListener('click', (e)=>{
+    if(e.target.closest('[data-ir="lista"]') && actual){ vistaLista(actual); return; }
+    const l = e.target.closest('[data-pieza]');
+    if(l && actual){ const p = piezas.find(x => String(x.id) === l.dataset.pieza); if(p) vistaPieza(p, actual); return; }
+    const a = e.target.closest('[data-acabado]');
+    if(a){
+      const key = a.dataset.acabado;
+      $('detalleBody').querySelectorAll('[data-acabado]').forEach(x => x.classList.toggle('selected', x === a));
+      $('detalleBody').querySelectorAll('[data-acabado-img]').forEach(img => img.classList.toggle('off', img.dataset.acabadoImg !== key));
+    }
+  });
   $('chips').addEventListener('click', (e)=>{
     const b = e.target.closest('.chip');
     if(!b) return;
-    filtro = b.dataset.t;
+    filtro = b.dataset.cat;
     pintarChips();
     pintar();
   });
   $('buscador').addEventListener('input', pintar);
+  window.addEventListener('scroll', ()=> $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
+
+  async function cargar(){
+    try{
+      if(!db) throw new Error('sin conexión');
+      const [rc, rp, rs] = await Promise.all([
+        db.from('catalogo').select('*').order('id', { ascending:false }),
+        db.from('disponibles').select('*').eq('estado', 'disponible').gt('cantidad', 0).order('precio', { ascending:true }),
+        db.from('sedes').select('*').eq('activa', true).order('orden', { ascending:true })
+      ]);
+      const err = rc.error || rp.error || rs.error;
+      if(err) throw err;
+      modelos = rc.data || [];
+      piezas = rp.data || [];
+      sedes = rs.data || [];
+      filtro = piezas.length ? 'Disponibles' : 'Todos';
+      pintarChips();
+      pintar();
+    } catch(err){
+      $('contenido').innerHTML = '<div class="grid"><div class="state">No se pudo cargar el catálogo. Revisa tu conexión e intenta de nuevo.</div></div>';
+    }
+  }
   cargar();
 })();
 </script>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
