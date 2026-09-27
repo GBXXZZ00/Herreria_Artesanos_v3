@@ -7,7 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const { TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA,
           especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
-          fotoModelo, fotoPieza, esc, dinero, specChipsHtml, toast, abrirHoja, cerrarHoja, hojaAbierta, SW_COLOR } = window.AH;
+          fotoModelo, fotoPieza, esc, dinero, specChipsHtml, toast, abrirHoja, cerrarHoja, hojaAbierta, SW_COLOR, esquema, grupoActivo } = window.AH;
 
   const ICON_CHEV = '<svg class="linea-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
   const ICON_PIN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
@@ -509,8 +509,10 @@
       </div>`;
   }
 
+  const modoEsquema = () => modoForm === 'pieza' ? 'pedido' : 'modelo';
+
   function pintarSpecs(){
-    const esq = ESQUEMA[tipoActual];
+    const esq = esquema(tipoActual, modoEsquema());
     let html = `
       <div class="field">
         <span class="field-label">${esc(modoForm === 'pieza' ? 'Medidas de esta pieza' : (esq.medidas.label || 'Medidas típicas'))}</span>
@@ -526,7 +528,10 @@
         </div>
         <div class="field-hint">En metros</div>
       </div>`;
-    esq.grupos.forEach(g => { html += optsHtml(g, estado[g.g]); });
+    // Los extras van antes de los grupos que dependen de ellos (ej. bloque de la protección)
+    const sueltos = esq.grupos.filter(g => !g.si);
+    const condicionados = esq.grupos.filter(g => g.si);
+    sueltos.forEach(g => { html += optsHtml(g, estado[g.g]); });
     if(esq.extras.length){
       html += `
         <div class="field">
@@ -540,6 +545,7 @@
           </div>
         </div>`;
     }
+    condicionados.forEach(g => { if(grupoActivo(g, estado)) html += optsHtml(g, estado[g.g]); });
     $('specs').innerHTML = html;
   }
 
@@ -655,7 +661,7 @@
     piezaEditId = p ? p.id : null;
     editandoId = null;
     tipoActual = m.tipo;
-    estado = estadoDesdeEspecificaciones(tipoActual, p ? p.especificaciones : m.especificaciones_base);
+    estado = estadoDesdeEspecificaciones(tipoActual, p ? p.especificaciones : m.especificaciones_base, 'pedido');
     fotosExistentes = p && p.foto ? { Pieza: p.foto } : {};
     limpiarFotosNuevas();
     const f = m.fotos || {};
@@ -694,7 +700,8 @@
         if(k === 'marco_decorativo' && estado.marco_decorativo) estado.proteccion = true;
         if(k === 'proteccion' && !estado.proteccion) estado.marco_decorativo = false;
       }
-      pintarExtras();
+      const depende = esquema(tipoActual, modoEsquema()).grupos.some(g => g.si);
+      if(depende) pintarSpecs(); else pintarExtras();
     }
   });
   $('specs').addEventListener('input', (e)=>{
@@ -789,7 +796,7 @@
         catalogo_id: m.id,
         sede_id: sedePieza,
         color: tieneColores(m.tipo) ? colorPieza : null,
-        especificaciones: especificacionesDesdeEstado(m.tipo, estado),
+        especificaciones: especificacionesDesdeEstado(m.tipo, estado, 'pedido'),
         foto,
         cantidad: cantidadPieza,
         precio,

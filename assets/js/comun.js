@@ -83,12 +83,70 @@
     }
   };
 
+  // Lo que se decide por pieza física o por pedido, no por modelo (igual que la app original:
+  // el modelo de catálogo no lleva sentido, posición ni bloque).
+  const OPC_SENTIDO  = [{v:'Derecha'},{v:'Izquierda'}];
+  const OPC_POSICION = [{v:'Adentro'},{v:'Afuera'}];
+  const OPC_BLOQUE   = [{v:'10'},{v:'15'},{v:'Tubo'}];
+  const OPC_ALUMINIO = [{v:'Panorámica'},{v:'Ecobel'}];
+  const PEDIDO = {
+    'Ventana': {
+      antes:[ { g:'aluminio', label:'Aluminio', opts:OPC_ALUMINIO, def:'Panorámica' } ],
+      despues:[ { g:'bloque', label:'Tipo de bloque (protección)', opts:OPC_BLOQUE, def:'15', si:'proteccion' } ]
+    },
+    'Portón': {
+      antes:[],
+      despues:[
+        { g:'sentido', label:'Sentido de apertura', opts:OPC_SENTIDO, def:'Derecha' },
+        { g:'posicion', label:'Posición de instalación', opts:OPC_POSICION, def:'Afuera' },
+        { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'15' }
+      ]
+    },
+    'Puerta Multilock': {
+      antes:[],
+      despues:[
+        { g:'sentido', label:'Sentido de apertura', opts:OPC_SENTIDO, def:'Derecha' },
+        { g:'posicion', label:'Posición de apertura', opts:OPC_POSICION, def:'Afuera' },
+        { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'15' }
+      ]
+    },
+    'Combo': {
+      antes:[],
+      despues:[
+        { g:'sentido', label:'Sentido de apertura', opts:OPC_SENTIDO, def:'Derecha' },
+        { g:'posicion', label:'Posición de apertura', opts:OPC_POSICION, def:'Afuera' },
+        { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'10' }
+      ]
+    },
+    'Puerta de Madera': {
+      antes:[],
+      despues:[
+        { g:'sentido', label:'Sentido de apertura', opts:OPC_SENTIDO, def:'Derecha' },
+        { g:'posicion', label:'Posición de apertura', opts:OPC_POSICION, def:'Afuera' }
+      ]
+    }
+  };
+  const DIRECTOS = ['sentido', 'posicion', 'bloque', 'aluminio'];
+
+  // Esquema según dónde se usa: 'modelo' (catálogo) o 'pedido' (pieza disponible / venta).
+  function esquema(tipo, modo){
+    const base = ESQUEMA[tipo] || ESQUEMA['Puerta Multilock'];
+    if(modo !== 'pedido') return base;
+    const extra = PEDIDO[tipo] || { antes:[], despues:[] };
+    return { medidas: base.medidas, grupos: [...extra.antes, ...base.grupos, ...extra.despues], extras: base.extras };
+  }
+  // Un grupo condicional (ej. bloque solo si hay protección) se muestra y se guarda solo si aplica.
+  function grupoActivo(gr, s){ return !gr.si || !!s[gr.si]; }
+
   // Convierte lo elegido en pantalla a los mismos campos que usa el resto del sistema.
-  function especificacionesDesdeEstado(tipo, s){
+  function especificacionesDesdeEstado(tipo, s, modo){
     const out = { alto: numOrNull(s.alto), ancho: numOrNull(s.ancho) };
-    const esq = ESQUEMA[tipo];
-    esq.grupos.forEach(({g})=>{
+    const esq = esquema(tipo, modo);
+    esq.grupos.forEach((gr)=>{
+      const g = gr.g;
+      if(!grupoActivo(gr, s)) return;
       const v = s[g];
+      if(DIRECTOS.includes(g)){ out[g] = v; return; }
       if(g === 'vidrio'){
         if(v === 'Farquilla') out.vidrio_o_farquilla = 'Farquilla';
         else { out.vidrio_o_farquilla = 'Vidrio'; out.color_vidrio = v; }
@@ -107,9 +165,9 @@
   }
 
   // Lo contrario: a partir de campos guardados, lo que se ve en pantalla.
-  function estadoDesdeEspecificaciones(tipo, e){
+  function estadoDesdeEspecificaciones(tipo, e, modo){
     e = e || {};
-    const esq = ESQUEMA[tipo];
+    const esq = esquema(tipo, modo);
     const s = {
       alto: e.alto != null ? e.alto : esq.medidas.alto,
       ancho: e.ancho != null ? e.ancho : esq.medidas.ancho
@@ -124,6 +182,8 @@
         v = e.papel_ahumado ? (e.color_ahumado || 'Espejo') : 'Sin';
       } else if(g === 'variante' && e.variante){
         v = e.variante;
+      } else if(DIRECTOS.includes(g) && e[g]){
+        v = e[g];
       }
       s[g] = v;
     });
@@ -136,6 +196,7 @@
     e = e || {};
     const out = [];
     if(!sinMedidas && e.alto && e.ancho) out.push({ t:medidas(e) });
+    if(e.aluminio) out.push({ t:'Aluminio ' + e.aluminio });
     if(e.variante) out.push({ t:e.variante });
     if(e.vidrio_o_farquilla === 'Farquilla') out.push({ t:'Farquilla' });
     else if(e.vidrio_o_farquilla === 'Vidrio') out.push({ t:'Vidrio ' + (e.color_vidrio || '').toLowerCase(), sw:SW_COLOR[e.color_vidrio] });
@@ -145,6 +206,9 @@
     if(e.proteccion) out.push({ t:'Protección' });
     if(e.marco_decorativo) out.push({ t: tipo === 'Ventana' ? 'Marco en protección' : 'Marco decorativo' });
     if(e.mas_hojas) out.push({ t:'Más de 2 hojas' });
+    if(e.sentido) out.push({ t:'Abre a la ' + e.sentido.toLowerCase() });
+    if(e.posicion) out.push({ t:(tipo === 'Portón' ? 'Instalación ' : 'Apertura ') + e.posicion.toLowerCase() });
+    if(e.bloque) out.push({ t:'Bloque ' + e.bloque });
     return out;
   }
   function medidas(e){
@@ -252,7 +316,7 @@
   });
 
   window.AH = {
-    TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR,
+    TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
     fotoModelo, fotoPieza, esc, numOrNull, fmt, dinero, specChipsHtml, toast,
     abrirHoja, cerrarHoja, hojaAbierta, alCerrar
