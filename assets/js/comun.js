@@ -383,7 +383,58 @@
     document.querySelectorAll('.sheet').forEach(activarDeslizar);
   });
 
+  // ---------------------------------------------------------------------------
+  // Foto principal (hero): fondo difuminado y visor a pantalla completa
+  // ---------------------------------------------------------------------------
+  const ICON_ZOOM = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></svg>';
+  function heroAttrs(url){
+    return url ? `class="hero" style="--bg:url('${esc(url)}')"` : 'class="hero sin-foto"';
+  }
+  function heroZoom(url){ return url ? `<span class="zoom-hint">${ICON_ZOOM}</span>` : ''; }
+  // Al cambiar Blanco/Negro, el fondo difuminado sigue a la foto visible
+  function actualizarFondoHero(hero){
+    if(!hero) return;
+    const img = hero.querySelector('img:not(.off)');
+    if(img) hero.style.setProperty('--bg', `url('${img.getAttribute('src')}')`);
+  }
+  let visor = null;
+  function verFoto(src){
+    if(!visor){
+      visor = document.createElement('div');
+      visor.className = 'visor';
+      visor.innerHTML = `<div class="visor-scroll"><img alt=""></div>
+        <button class="visor-x" aria-label="Cerrar foto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <div class="visor-ayuda">Toca la foto para acercar</div>`;
+      document.body.appendChild(visor);
+      visor.querySelector('.visor-x').addEventListener('click', ()=>{ visor.classList.remove('open', 'zoom'); });
+      visor.querySelector('img').addEventListener('click', (e)=>{
+        const sc = visor.querySelector('.visor-scroll');
+        const r = e.target.getBoundingClientRect();
+        const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+        const acercar = !visor.classList.contains('zoom');
+        visor.classList.toggle('zoom', acercar);
+        visor.querySelector('.visor-ayuda').textContent = acercar ? 'Toca de nuevo para alejar' : 'Toca la foto para acercar';
+        if(acercar){
+          requestAnimationFrame(()=>{
+            const im = e.target;
+            sc.scrollLeft = fx * im.offsetWidth - sc.clientWidth / 2;
+            sc.scrollTop = fy * im.offsetHeight - sc.clientHeight / 2;
+          });
+        }
+      });
+    }
+    visor.querySelector('img').src = src;
+    visor.classList.remove('zoom');
+    visor.querySelector('.visor-ayuda').textContent = 'Toca la foto para acercar';
+    requestAnimationFrame(()=> visor.classList.add('open'));
+  }
+  document.addEventListener('click', (e)=>{
+    const img = e.target.closest('.hero img');
+    if(img && !img.classList.contains('off')) verFoto(img.getAttribute('src'));
+  });
+
   window.AH = {
+    heroAttrs, heroZoom, actualizarFondoHero, verFoto,
     TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
     fotoModelo, fotoPieza, esc, numOrNull, fmt, dinero, specChipsHtml, toast,

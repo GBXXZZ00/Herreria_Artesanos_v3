@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=13">
+<link rel="stylesheet" href="assets/css/base.css?v=14">
 <style>
   /* Letra más grande: lo usan clientes de todas las edades */
   body{font-size:16px}
@@ -156,15 +156,15 @@
   <div class="sheet-foot" id="detalleFoot"></div>
 </section>
 
-<script src="assets/vendor/supabase.js?v=13"></script>
-<script src="assets/js/supabase-client.js?v=13"></script>
-<script src="assets/js/comun.js?v=13"></script>
+<script src="assets/vendor/supabase.js?v=14"></script>
+<script src="assets/js/supabase-client.js?v=14"></script>
+<script src="assets/js/comun.js?v=14"></script>
 <script>
 (function(){
   'use strict';
   const db = window.db;
   const $ = (id) => document.getElementById(id);
-  const { TIPOS, iconoTipo, acabados, resumenSpecs, medidas, fotoModelo, fotoPieza, esc, dinero, specChipsHtml, abrirHoja, SW_COLOR, avisoFotoProteccion } = window.AH;
+  const { TIPOS, iconoTipo, acabados, resumenSpecs, medidas, fotoModelo, fotoPieza, esc, dinero, specChipsHtml, abrirHoja, SW_COLOR, avisoFotoProteccion, heroAttrs, heroZoom, actualizarFondoHero } = window.AH;
 
   const NUMERO_WHATSAPP = '584220167079';
   const ICON_WA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.18-1.77 1.24-.45.06-1.02.09-1.65-.1-.38-.12-.87-.28-1.5-.55-2.64-1.14-4.37-3.8-4.5-3.98-.13-.18-1.08-1.43-1.08-2.73s.68-1.93.92-2.2c.24-.26.53-.33.7-.33h.5c.16 0 .38-.06.6.45.22.53.75 1.83.82 1.96.07.13.11.29.02.47-.09.18-.13.29-.26.44-.13.16-.27.35-.39.47-.13.13-.26.27-.11.53.15.26.67 1.1 1.44 1.78 1 .88 1.83 1.15 2.09 1.28.26.13.42.11.57-.07.16-.18.65-.76.82-1.02.18-.26.35-.22.59-.13.24.09 1.5.71 1.76.84.26.13.43.2.5.31.07.13.07.71-.15 1.33z"/></svg>';
@@ -362,21 +362,24 @@
   function vistaPieza(p, m){
     const e = p.especificaciones || {};
     const foto = fotoPieza(p, m);
-    const specs = resumenSpecs(m.tipo, e);
+    const specs = soloLoQueTiene(resumenSpecs(m.tipo, e));
     const sede = nombreSede(p.sede_id);
-    const detalles = resumenSpecs(m.tipo, e, true).map(s => s.t).join(', ');
-    const lineas = ['Hola, me interesa esta pieza de *entrega inmediata*:', '', `*${m.nombre}* (${m.tipo})`];
-    if(p.color) lineas.push(`• Color: ${p.color}`);
-    if(medidas(e)) lineas.push(`• Medidas: ${medidas(e)}`);
-    if(detalles) lineas.push(`• ${detalles}`);
-    if(sede) lineas.push(`• Está en: ${sede}`);
-    lineas.push(`• Precio: *${dinero(p.precio)}*`);
-    if(foto) lineas.push('', `Foto: ${foto}`);
+    const partes = soloLoQueTiene(resumenSpecs(m.tipo, e, true)).map(x => x.t);
+    const lineas = ['Hola, vi esta pieza en el catálogo de Herrería Artesanos y me interesa:', '', `*${m.nombre}* · ${m.tipo}`];
+    if(p.color && medidas(e)) lineas.push(`• ${p.color} · ${medidas(e)}`);
+    else if(p.color) lineas.push(`• Color: ${p.color}`);
+    else if(medidas(e)) lineas.push(`• Medidas: ${medidas(e)}`);
+    if(partes.length) lineas.push(`• ${partes.join(' · ')}`);
+    if(sede) lineas.push(`• Está en: Sede ${sede}`);
+    lineas.push(`• Precio: *${dinero(p.precio)}* (entrega inmediata)`);
+    lineas.push(`Ref: P-${p.id}`, '', '¿Sigue disponible?');
+    if(foto) lineas.push(`Foto: ${foto}`);
     const texto = lineas.join('\n');
     pintarVista(`
-      <div class="hero">
+      <div ${heroAttrs(foto)}>
         ${foto ? `<img src="${esc(foto)}" alt="${esc(m.nombre)}">` : iconoTipo(m.tipo, 60)}
         <span class="tag-disp" style="bottom:12px;left:12px">Entrega inmediata</span>
+        ${heroZoom(foto)}
       </div>
       <div class="det-name">${esc(m.nombre)}</div>
       <div class="det-type">${esc([m.tipo, p.color].filter(Boolean).join(' · '))}</div>
@@ -388,17 +391,29 @@
       true);
   }
 
+  // Para el cliente: solo lo que el modelo SÍ tiene
+  const soloLoQueTiene = (lista) => lista.filter(x => !/^Sin /.test(x.t));
+  const COLORES_VIDRIO = [{ t:'Azul', sw:'sw-azul' }, { t:'Espejo', sw:'sw-espejo' }, { t:'Negro', sw:'sw-negro' }];
+  function coloresVidrioHtml(m){
+    const e = m.especificaciones_base || {};
+    const llevaVidrio = e.vidrio_o_farquilla ? e.vidrio_o_farquilla === 'Vidrio' : ['Puerta Multilock', 'Portón', 'Combo'].includes(m.tipo);
+    if(!llevaVidrio) return '';
+    return `<div class="det-section"><div class="det-label">Color del vidrio</div>
+      <div class="colores-vidrio">${COLORES_VIDRIO.map(c => `<span class="color-vidrio"><span class="swatch ${c.sw}"></span>${c.t}</span>`).join('')}</div></div>`;
+  }
+
   function vistaEncargo(m){
     const f = m.fotos || {};
     const conFoto = acabados(m.tipo).filter(a => f[a.key]);
-    const specs = resumenSpecs(m.tipo, m.especificaciones_base);
+    const specs = soloLoQueTiene(resumenSpecs(m.tipo, m.especificaciones_base, true)).filter(x => !/^Vidrio /.test(x.t));
     const cars = Array.isArray(m.caracteristicas) ? m.caracteristicas : [];
     let html = `
-      <div class="hero">
+      <div ${heroAttrs(conFoto.length ? f[conFoto[0].key] : null)}>
         ${conFoto.length
           ? conFoto.map((a, i) => `<img src="${esc(f[a.key])}" alt="${esc(m.nombre)} ${esc(a.label)}" data-acabado-img="${esc(a.key)}" class="${i ? 'off' : ''}">`).join('')
           : iconoTipo(m.tipo, 60)}
         <span class="tag-agotado" style="bottom:12px;left:12px">Por encargo</span>
+        ${heroZoom(conFoto.length)}
       </div>`;
     if(conFoto.length > 1){
       html += `<div class="opts" style="--cols:${conFoto.length};margin-top:12px">
@@ -409,13 +424,22 @@
       <div class="det-name">${esc(m.nombre)}</div>
       <div class="det-type">${esc(m.tipo)}</div>
       <div class="det-price">Desde ${dinero(m.precio_base)}</div>
-      <div class="ayuda">Te lo hacemos a la medida. Escríbenos y te decimos el precio exacto.</div>
+      <div class="ayuda">Lo fabricamos a la medida de tu espacio. Pídenos tu cotización sin compromiso.</div>
       ${m.descripcion_publica ? `<div class="det-section"><div class="det-desc">${esc(m.descripcion_publica)}</div></div>` : ''}
       ${specs.length ? `<div class="det-section"><div class="det-label">Detalles</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}
+      ${coloresVidrioHtml(m)}
       ${cars.length ? `<div class="det-section"><ul class="feat-list">${cars.map(c => `<li>${ICON_CHECK}${esc(c)}</li>`).join('')}</ul></div>` : ''}`;
     const fotoM = fotoModelo(m);
-    const lineasM = ['Hola, quiero información sobre este modelo:', '', `*${m.nombre}* (${m.tipo})`, `• Desde ${dinero(m.precio_base)}`];
-    if(fotoM) lineasM.push('', `Foto: ${fotoM}`);
+    const lineasM = [
+      'Hola, vi este modelo en el catálogo de Herrería Artesanos y quiero una cotización:',
+      '',
+      `*${m.nombre}* · ${m.tipo}`,
+      `• Desde ${dinero(m.precio_base)}`,
+      `Ref: M-${m.id}`,
+      '',
+      'Las medidas de mi espacio son: ___ alto × ___ ancho'
+    ];
+    if(fotoM) lineasM.push(`Foto: ${fotoM}`);
     const texto = lineasM.join('\n');
     pintarVista(html, `<a class="btn-wa" href="${linkWa(texto)}" target="_blank" rel="noopener">${ICON_WA}Consultar por WhatsApp</a>`, false);
   }
@@ -441,6 +465,7 @@
       const key = a.dataset.acabado;
       $('detalleBody').querySelectorAll('[data-acabado]').forEach(x => x.classList.toggle('selected', x === a));
       $('detalleBody').querySelectorAll('[data-acabado-img]').forEach(img => img.classList.toggle('off', img.dataset.acabadoImg !== key));
+      actualizarFondoHero($('detalleBody').querySelector('.hero'));
     }
   });
   $('chips').addEventListener('click', (e)=>{

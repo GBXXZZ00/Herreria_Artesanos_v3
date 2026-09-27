@@ -360,11 +360,21 @@ textarea.input{height:auto;min-height:88px;padding:12px 14px;resize:vertical}
 }
 .sheet-back:active{transform:scale(0.95)}
 .hero{
-  position:relative;margin:0 -18px;aspect-ratio:4/3;background:var(--surface-2);overflow:hidden;
+  position:relative;margin:0 -18px;aspect-ratio:1/1;background:#2a2723;overflow:hidden;
   display:flex;align-items:center;justify-content:center;color:var(--ink-faint);
 }
-.hero img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transition:opacity 220ms var(--ease-out)}
-.hero img.off{opacity:0}
+/* Fondo: la misma foto difuminada, para que la foto completa no deje bordes blancos */
+.hero::before{
+  content:'';position:absolute;top:-30px;left:-30px;right:-30px;bottom:-30px;
+  background-image:var(--bg, none);background-size:cover;background-position:center;
+  filter:blur(26px) brightness(0.85) saturate(1.1);transform:scale(1.08);
+}
+.hero.sin-foto{background:var(--surface-2)}
+.hero.sin-foto::before{display:none}
+.hero img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:1;cursor:zoom-in;transition:opacity 220ms var(--ease-out)}
+.hero img.off{opacity:0;pointer-events:none}
+.hero .card-badge,.hero .tag-disp,.hero .tag-agotado{z-index:2}
+.hero .zoom-hint{position:absolute;right:12px;bottom:12px;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;color:var(--ink);pointer-events:none}
 .hero .card-badge{top:auto;bottom:12px;left:12px}
 .vista{animation:vistaIn 260ms var(--ease-out)}
 @keyframes vistaIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
@@ -456,3 +466,17 @@ textarea.input{height:auto;min-height:88px;padding:12px 14px;resize:vertical}
 /* Logo de la marca */
 .logo-mark.con-img{background:#fff;border:1px solid var(--line);overflow:hidden;padding:3px}
 .logo-mark.con-img img{width:100%;height:100%;object-fit:contain}
+
+/* Visor de foto a pantalla completa */
+.visor{position:fixed;top:0;left:0;right:0;bottom:0;z-index:95;background:rgba(10,10,10,0.96);opacity:0;pointer-events:none;transition:opacity 220ms var(--ease-out)}
+.visor.open{opacity:1;pointer-events:auto}
+.visor-scroll{position:absolute;top:0;left:0;right:0;bottom:0;overflow:auto;display:flex;align-items:center;justify-content:center;-webkit-overflow-scrolling:touch}
+.visor img{max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;transition:transform 200ms var(--ease-out)}
+.visor.zoom .visor-scroll{display:block}
+.visor.zoom img{max-width:none;max-height:none;width:240%;cursor:zoom-out}
+.visor-x{position:absolute;top:calc(14px + var(--safe-t));right:14px;z-index:2;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.94);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.visor-ayuda{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));padding:8px 14px;border-radius:999px;background:rgba(0,0,0,0.6);color:#fff;font-size:14px;white-space:nowrap;pointer-events:none}
+/* Colores de vidrio disponibles */
+.colores-vidrio{display:flex;gap:16px;flex-wrap:wrap}
+.color-vidrio{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+.color-vidrio .swatch{width:22px;height:22px}

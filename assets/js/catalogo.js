@@ -7,7 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const { TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA,
           especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
-          fotoModelo, fotoPieza, esc, dinero, specChipsHtml, toast, abrirHoja, cerrarHoja, hojaAbierta, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion, antesDeCerrar, clavesGrupo, numOrNull } = window.AH;
+          fotoModelo, fotoPieza, esc, dinero, specChipsHtml, toast, abrirHoja, cerrarHoja, hojaAbierta, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion, antesDeCerrar, clavesGrupo, numOrNull, heroAttrs, heroZoom, actualizarFondoHero } = window.AH;
 
   const ICON_CHEV = '<svg class="linea-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
   const ICON_PIN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
@@ -337,11 +337,12 @@
     const n = totalDisp(m);
 
     let html = `
-      <div class="hero">
+      <div ${heroAttrs(conFoto.length ? f[conFoto[0].key] : null)}>
         ${conFoto.length
           ? conFoto.map((a, i) => `<img src="${esc(f[a.key])}" alt="${esc(m.nombre)} ${esc(a.label)}" data-acabado-img="${esc(a.key)}" class="${i ? 'off' : ''}">`).join('')
           : iconoTipo(m.tipo, 56)}
         ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
+        ${heroZoom(conFoto.length)}
       </div>`;
     if(conFoto.length > 1){
       html += `
@@ -383,8 +384,9 @@
     const foto = fotoPieza(p, m);
     const specs = resumenSpecs(m.tipo, e);
     const html = `
-      <div class="hero">
+      <div ${heroAttrs(foto)}>
         ${foto ? `<img src="${esc(foto)}" alt="${esc(m.nombre)}">` : iconoTipo(m.tipo, 56)}
+        ${heroZoom(foto)}
         <span class="tag-disp" style="bottom:12px;left:12px">Disponible${p.cantidad > 1 ? ' · ' + p.cantidad : ''}</span>
       </div>
       <div class="det-name">${esc(m.nombre)}</div>
@@ -419,6 +421,7 @@
       const key = ac.dataset.acabado;
       $('detalleBody').querySelectorAll('[data-acabado]').forEach(x => { const s = x === ac; x.classList.toggle('selected', s); x.setAttribute('aria-pressed', s); });
       $('detalleBody').querySelectorAll('[data-acabado-img]').forEach(img => img.classList.toggle('off', img.dataset.acabadoImg !== key));
+      actualizarFondoHero($('detalleBody').querySelector('.hero'));
       return;
     }
     const a = e.target.closest('[data-accion]');
