@@ -1,0 +1,148 @@
+const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
+const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
+const now=Math.floor(Date.now()/1000);
+const jwt=b64({alg:'HS256',typ:'JWT'})+'.'+b64({sub:'u3',exp:now+3600,role:'authenticated',aud:'authenticated'})+'.sig';
+const user={id:'u3',aud:'authenticated',role:'authenticated',email:'yulimar@artesanos.app',user_metadata:{}};
+const sesion={access_token:jwt,token_type:'bearer',expires_in:3600,expires_at:now+3600,refresh_token:'r1',user};
+const GIF='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+const modelos=[{id:4,nombre:'Lineal',tipo:'Puerta Multilock',fotos:{Blanco:GIF,Negro:GIF},especificaciones_base:{vidrio_o_farquilla:'Vidrio',color_vidrio:'Negro',manillon:false,marco_decorativo:true,proteccion:false},precio_base:200},
+ {id:6,nombre:'Ventana Clásica',tipo:'Ventana',fotos:{Blanco:GIF},especificaciones_base:{papel_ahumado:true,color_ahumado:'Espejo',proteccion:false},precio_base:0}];
+modelos.push({id:8,nombre:'Combo Imperial',tipo:'Combo',fotos:{Negro:GIF},especificaciones_base:{variante:'Sin protección en puerta'},precio_base:500});
+const piezas=[{id:9,catalogo_id:4,cantidad:2,estado:'disponible',precio:250,sede_id:1,color:'Blanco',especificaciones:{sentido:'Derecha'}}];
+const H='http://127.0.0.1:8765/';
+const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+(x!==undefined?'  → '+JSON.stringify(x):''));if(!c)fallas++;};
+(async()=>{ const b=await chromium.launch(); try{
+ const ctx=await b.newContext({...devices['iPhone 13']});const err=[];let rpc=null;let subido=null;
+ await ctx.route('**/*.supabase.co/**',async r=>{const req=r.request();const u=req.url();const j=(x,st=200)=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'content-range','content-range':'0-1/2'},body:JSON.stringify(x)});
+  if(u.includes('/auth/v1/token'))return j(sesion);
+  if(u.includes('/auth/v1/user'))return j(user);
+  if(u.includes('/rpc/crear_venta')){rpc=JSON.parse(req.postData());return j({id:7,estado:rpc.p.venta.confirmar?'confirmada':'cotizacion',total:1462,cliente_id:3});}
+  if(u.includes('/storage/v1/object/comprobantes')){subido=u;return j({Key:'comprobantes/x.jpg'});}
+  if(u.includes('/clientes')){ if(/cedula=eq.V12345678(&|$)/.test(u)||/telefono=eq.584141234567(&|$)/.test(u))return j({id:3,nombre:'María González',telefono:'584141234567',cedula:'V12345678'}); return j(null); }
+  if(u.includes('/perfiles')){ if(u.includes('id=eq'))return j({id:'u3',usuario:'yulimar',nombre:'Yulimar',rol:'vendedor',sede_id:1}); return j([{usuario:'yulimar',nombre:'Yulimar',rol:'vendedor',orden:3}]);}
+  if(u.includes('/catalogo'))return j(modelos);
+  if(u.includes('/disponibles'))return j(piezas);
+  if(u.includes('/sedes'))return j([{id:1,nombre:'Cumbres de Maracaibo',orden:1,activa:true},{id:2,nombre:'Avenida Universidad',orden:2,activa:true}]);
+  return j([]);});
+ const p=await ctx.newPage();p.on('pageerror',e=>err.push(e.message));p.on('dialog',d=>d.accept());
+ const w=ms=>p.waitForTimeout(ms||400);
+ await p.goto(H+'index.html');await p.waitForSelector('.quien-btn');await p.click('.quien-btn');
+ for(const d of '333333') await p.click(`#pinTeclado [data-t="${d}"]`);
+ await p.waitForSelector('#vInicio.entra');await w(500);await p.screenshot({path:'shots4/v0-inicio.png'});
+ await p.click('#btnNuevaVenta');await p.waitForURL('**/venta.html');await w(900);
+ ok('Sede por defecto de Yulimar = Cumbres',await p.textContent('#optsSede .opt.selected')==='Cumbres de Maracaibo');
+ await p.screenshot({path:'shots4/v1-vacio.png'});
+ // Validación vacía
+ await p.click('#btnGuardar');await w(300);
+ ok('Sin datos marca errores',(await p.$$('.field.invalid')).length>=4,(await p.$$('.field.invalid')).length);
+ ok('Cédula va primero',await p.evaluate(()=>{const a=document.getElementById('cCedula'),b=document.getElementById('cTel');return !!(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING)}));
+ ok('Sin dirección de instalación',!(await p.$('#cDir')));
+ // Cliente existente
+ await p.fill('#cCedula','12.345.678');await w(900);
+ const antes=await p.inputValue('#cNombre');
+ await p.fill('#cCedula','12.345.6789');await w(900);
+ ok('Cédula distinta que no existe limpia lo llenado',(await p.inputValue('#cNombre'))===''&&(await p.inputValue('#cTel'))==='',[antes,await p.inputValue('#cNombre'),await p.inputValue('#cTel')]);
+ await p.fill('#cCedula','12.345.678');await w(900);
+ ok('Por cédula: cliente existente se llena solo',(await p.inputValue('#cNombre'))==='María González'&&(await p.inputValue('#cTel'))==='04141234567',[await p.inputValue('#cNombre'),await p.inputValue('#cTel')]);
+ // Producto de catálogo: puerta con manillón y protección
+ await p.click('#btnAgregar');await w();await p.click('[data-origen="catalogo"]');await w();
+ await p.click('[data-modelo="4"]');await w(500);
+ ok('Precio sugerido del modelo',(await p.inputValue('#pPrecio'))==='200',await p.inputValue('#pPrecio'));
+ ok('Marco decorativo viene marcado del catálogo',await p.$eval('.tchip[data-k="marco_decorativo"]',x=>x.classList.contains('on')));
+ await p.click('.opt[data-g="manillon"][data-v="H"]');await w(200);
+ ok('Manillón suma $20',(await p.inputValue('#pPrecio'))==='220',await p.inputValue('#pPrecio'));
+ await p.click('.tchip[data-k="proteccion"]');await w(200);
+ await p.click('#btnProdListo');await w(300);
+ ok('Protección sin monto pide el monto',await p.$eval('#campoProt',x=>x.classList.contains('invalid')));
+ await p.fill('#pProt','80');await w(200);
+ ok('Protección suma su monto',(await p.inputValue('#pPrecio'))==='300',await p.inputValue('#pPrecio'));
+ await p.screenshot({path:'shots4/v2-producto.png'});
+ await p.click('#btnProdListo');await w(500);
+ // Ventana por m²
+ await p.click('#btnAgregar');await w();await p.click('[data-origen="catalogo"]');await w();
+ await p.click('[data-modelo="6"]');await w(500);
+ const inputs=await p.$$('#prodBody [data-mkey]');await inputs[0].fill('1,2');await inputs[1].fill('1.5');await w(200);
+ ok('Ventana: 1.8 m² × $90',(await p.inputValue('#pPrecio'))==='162',await p.inputValue('#pPrecio'));
+ await p.click('.tchip[data-k="proteccion"]');await w(200);await p.click('.opt[data-g="aluminio"][data-v="Ecobel"]');await w(200);
+ ok('Ventana Ecobel con protección: 1.8 × $220',(await p.inputValue('#pPrecio'))==='396',await p.inputValue('#pPrecio'));
+ await p.click('#prodBody [data-cant="1"]');await w(100);
+ await p.click('#btnProdListo');await w(500);
+ // Entrega inmediata
+ await p.click('#btnAgregar');await w();await p.click('[data-origen="pieza"]');await w();await p.click('[data-pieza="9"]');await w(400);
+ await p.click('#prodBody [data-cant="1"]');await p.click('#prodBody [data-cant="1"]');await w(100);
+ ok('No deja pedir más piezas de las que hay',(await p.textContent('#pCant'))==='2');
+ await p.click('#prodBody [data-cant="-1"]');await p.click('#btnProdListo');await w(500);
+ // Combo: bloques y color de ventanas
+ await p.click('#btnAgregar');await w();await p.click('[data-origen="catalogo"]');await w();await p.click('[data-modelo="8"]');await w(500);
+ const zonas=await p.$$eval('#prodBody .zona',x=>x.map(z=>z.textContent.trim()));ok('Combo separa Puerta y Ventanas',zonas.join()==='Puerta,Ventanas',zonas);
+ ok('Ventanas del color de la puerta (Negro)',await p.$eval('.opt[data-g="ventanas_color"].selected',x=>x.dataset.v)==='Negro');
+ await p.click('.opt[data-g="__color"][data-v="Blanco"]');await w(200);
+ ok('Cambia el color de la puerta y las ventanas lo siguen',await p.$eval('.opt[data-g="ventanas_color"].selected',x=>x.dataset.v)==='Blanco');
+ await p.screenshot({path:'shots4/v6-combo.png',fullPage:false});
+ await p.evaluate(()=>{const b=document.getElementById('prodBody');b.scrollTop=b.scrollHeight;});await w(200);await p.screenshot({path:'shots4/v6b-combo.png'});
+ await p.click('#sheetProducto .icon-btn[data-cerrar]');await w(500);
+ // A medida
+ await p.click('#btnAgregar');await w();await p.click('[data-origen="medida"]');await w(400);
+ ok('A medida: primero se elige el tipo',(await p.$$('.opt[data-g="__tipo"]')).length===6&&!(await p.$('#pPrecio')));
+ await p.click('#btnProdListo');await w(200);ok('Sin tipo no deja agregar',await p.$eval('#campoMedTipo',x=>x.classList.contains('invalid')));
+ await p.click('.opt[data-g="__tipo"][data-v="Ventana"]');await w(300);
+ ok('Ventana a medida: mismas especificaciones que el catálogo',!!(await p.$('[data-mkey="alto"]'))&&!!(await p.$('.opt[data-g="aluminio"]'))&&!!(await p.$('.opt[data-g="__color"]')));
+ await p.fill('[data-mkey="alto"]','1');await p.fill('[data-mkey="ancho"]','2');await w(200);
+ const pv=await p.inputValue('#pPrecio');ok('Ventana a medida: precio por m²',Number(pv)>0&&(await p.textContent('#desglose')).includes('2 m²'),[pv,await p.textContent('#desglose')]);
+ await p.screenshot({path:'shots4/v8-medida-ventana.png'});
+ await p.click('.opt[data-g="__tipo"][data-v="Portón"]');await w(300);
+ ok('Portón a medida: precio manual (sin sugerido)',!(await p.$('#desglose'))&&(await p.inputValue('#pPrecio'))==='');
+ await p.click('.opt[data-g="__tipo"][data-v="Otro"]');await w(300);
+ ok('Otro: pide qué es',!!(await p.$('#campoMedNombre')));
+ await p.fill('#pNombre','Reja para ventana');await p.fill('#pPrecio','1.000');await p.click('#btnProdListo');await w(400);
+ ok('"1.000" se entiende como mil',(await p.textContent('#pieTotal')).includes('2,342'),await p.textContent('#pieTotal'));
+ await p.click('#items [data-editar="3"]');await w(400);await p.fill('#pPrecio','100');await p.click('#btnProdListo');await w(500);
+ ok('4 productos en la venta',(await p.$$('#items .item')).length===4);
+ ok('Descuento en su propia casilla, siempre visible',!(await p.$eval('#campoDesc',x=>x.classList.contains('hidden')))&&!(await p.$('[data-extra="desc"]')));
+ ok('Instalación y traslado ocultos hasta tocarlos',await p.$eval('#campoInst',x=>x.classList.contains('hidden'))&&await p.$eval('#campoTras',x=>x.classList.contains('hidden')));
+ await p.click('[data-extra="inst"]');await p.click('[data-extra="tras"]');await w(200);
+ await p.fill('#vDesc','10');await p.fill('#vInst','20');await p.fill('#vTras','10');await w(200);
+ ok('Resumen con instalación y traslado separados',(await p.textContent('#resumen')).includes('Instalación$20')&&(await p.textContent('#resumen')).includes('Traslado$10'),await p.textContent('#resumen'));
+ ok('Total = 300 + 792 + 250 + 100 - 10 + 30 = 1462',(await p.textContent('#pieTotal'))==='$1,462',await p.textContent('#pieTotal'));
+ await p.evaluate(()=>window.scrollTo(0,99999));await w(300);await p.screenshot({path:'shots4/v3-cierre.png'});
+ await p.evaluate(()=>window.scrollTo(0,0));
+ await p.screenshot({path:'shots4/v3b-lista.png',fullPage:true});
+ // Borrador: salir y volver
+ await p.goBack({waitUntil:'commit'});await p.waitForSelector('#vInicio.entra');await w(500);
+ ok('Atrás desde Nueva venta → Inicio',p.url().endsWith('index.html'));
+ await p.click('#btnNuevaVenta');await p.waitForURL('**/venta.html');await w(1000);
+ ok('Al volver se recupera lo que llevaba',(await p.$$('#items .item')).length===4&&(await p.textContent('#pieTotal'))==='$1,462',await p.textContent('#pieTotal'));
+ // Confirmar venta
+ await p.click('#btnGuardar');await w(500);
+ ok('Guardar pregunta cotización o venta',await p.isVisible('#optVenta')&&await p.isVisible('#optCotizacion'));
+ await p.screenshot({path:'shots4/v7-elegir.png'});
+ await p.click('#optVenta');await w(600);
+ ok('Por encargo: pago parcial 50% por defecto',(await p.inputValue('#aMonto'))==='731'&&await p.$eval('[data-modo-pago="parcial"]',x=>x.classList.contains('selected')),await p.inputValue('#aMonto'));
+ await p.click('[data-modo-pago="completo"]');await w(200);ok('Pago completo oculta el monto',await p.$eval('#campoAbono',x=>x.classList.contains('hidden')));
+ await p.click('[data-modo-pago="parcial"]');await w(200);
+ await p.fill('#aMonto','500');await w(200);
+ ok('Aviso de pago menor al 50%',(await p.textContent('.aviso-50')).includes('Pago menor'));
+ ok('Sin tasa ni bolívares',!(await p.$('#aTasa')));
+ const f=await p.inputValue('#aFecha');const esperada=await p.evaluate(()=>{const d=new Date();let k=0;while(k<20){d.setDate(d.getDate()+1);if(d.getDay()%6)k++;}return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');});
+ ok('Fecha = 20 días hábiles',f===esperada,[f,esperada]);
+ await p.click('#btnConfListo');await w(300);
+ ok('Pide cómo pagó',await p.$eval('#campoMetodo',x=>x.classList.contains('invalid')));
+ ok('Comprobante obligatorio',await p.$eval('#campoComp',x=>x.classList.contains('invalid')));
+ await p.click('[data-metodo="Zelle"]');
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==','base64');
+ await p.setInputFiles('#aComprobante',{name:'c.png',mimeType:'image/png',buffer:png});await w(700);
+ ok('Comprobante cargado',!!(await p.$('#confBody .photo-box.filled')));
+ await p.screenshot({path:'shots4/v4-confirmar.png'});
+ await p.click('#btnConfListo');await p.waitForSelector('.listo');await w(500);
+ const P=rpc&&rpc.p;
+ ok('Se envía teléfono normalizado',P&&P.cliente.telefono==='584141234567',P&&P.cliente.telefono);
+ ok('Clave anti-duplicado enviada',P&&/^[0-9a-f-]{36}$/.test(P.clave)&&/^[0-9a-f-]{36}$/.test(P.abono.clave));
+ ok('Abono y comprobante enviados',P&&P.abono.monto===500&&P.abono.metodo==='Zelle'&&/^\d{4}-\d{2}\//.test(P.abono.comprobante||'')&&!!subido,P&&P.abono);
+ ok('Instalación y traslado enviados por separado',P&&P.venta.instalacion===20&&P.venta.traslado===10&&P.venta.descuento===10,P&&P.venta);
+ ok('Cédula normalizada',P&&P.cliente.cedula==='V12345678',P&&P.cliente);
+ ok('Items: pieza, a medida, specs',P&&P.items.length===4&&P.items[2].pieza_id===9&&P.items[3].a_medida===true&&P.items[0].especificaciones.manillon===true&&P.items[0].especificaciones.monto_proteccion===80&&P.items[1].cantidad===2,P&&P.items.map(i=>[i.nombre,i.precio_unitario,i.cantidad]));
+ ok('Borrador borrado al terminar',await p.evaluate(()=>localStorage.getItem('ah_borrador_venta'))===null);
+ ok('Botones de mensaje y PDF presentes',!!(await p.$('#btnMsj'))&&!!(await p.$('#btnPdf')));
+ await p.click('#btnIrInicio');await p.waitForSelector('#vInicio.entra');ok('Volver a Inicio',p.url().endsWith('index.html'));
+ console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
+ }catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();
