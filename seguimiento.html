@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <title>Tu pedido · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=28">
+<link rel="stylesheet" href="assets/css/base.css?v=29">
 <style>
   body{background:var(--surface-2)}
   .seg{max-width:560px;margin:0 auto;padding:calc(18px + var(--safe-t)) 16px calc(32px + var(--safe-b))}
@@ -34,6 +34,21 @@
   .l-paso.hecho .l-dot{background:var(--accent);border-color:var(--accent)}
   .l-paso.actual .l-dot{border-color:var(--accent);box-shadow:0 0 0 5px var(--accent-soft)}
   .l-paso.actual .l-dot::before{content:'';width:10px;height:10px;border-radius:50%;background:var(--accent)}
+  /* El paso actual pulsa suavemente */
+  .l-paso.actual .l-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--accent);opacity:0;animation:pulso 1.8s var(--ease-out) infinite}
+  @keyframes pulso{0%{transform:scale(0.9);opacity:.55}100%{transform:scale(1.7);opacity:0}}
+  .estado-grande .ico{position:relative}
+  .estado-grande.vivo .ico::after{content:'';position:absolute;inset:-3px;border-radius:16px;border:2px solid var(--accent);opacity:0;animation:pulso 1.8s var(--ease-out) infinite}
+  @media (prefers-reduced-motion: reduce){.l-paso.actual .l-dot::after,.estado-grande.vivo .ico::after{animation:none}}
+  /* Avance de cada producto */
+  .prod-av{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .prod-seg{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;flex:1;max-width:120px}
+  .prod-seg i{height:5px;border-radius:3px;background:var(--line)}
+  .prod-seg i.on{background:var(--accent)}
+  .prod-seg i.ahora{background:var(--accent);animation:parpadeo 1.6s ease-in-out infinite}
+  @keyframes parpadeo{50%{opacity:.4}}
+  @media (prefers-reduced-motion: reduce){.prod-seg i.ahora{animation:none}}
+  .prod-est{font-size:12.5px;font-weight:800;color:var(--accent)}
   .l-t{font-size:15.5px;font-weight:800;padding-top:3px}
   .l-paso:not(.hecho):not(.actual) .l-t{color:var(--ink-faint)}
   .l-s{font-size:13px;color:var(--ink-soft);margin-top:1px}
@@ -73,10 +88,10 @@
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=28"></script>
-<script src="assets/js/supabase-client.js?v=28"></script>
-<script src="assets/js/comun.js?v=28"></script>
-<script src="assets/js/ventas-comun.js?v=28"></script>
+<script src="assets/vendor/supabase.js?v=29"></script>
+<script src="assets/js/supabase-client.js?v=29"></script>
+<script src="assets/js/comun.js?v=29"></script>
+<script src="assets/js/ventas-comun.js?v=29"></script>
 <script>
 (function(){
   'use strict';
@@ -122,7 +137,7 @@
     else {
       const info = { confirmada:[ICONOS.ok, 'Pedido confirmado', 'Ya recibimos tu abono'], en_produccion:[ICONOS.herr, 'En fabricación', 'Estamos trabajando en tu pedido'],
         lista:[ICONOS.caja, '¡Tu pedido está listo!', 'Escríbenos para coordinar la entrega'], entregada:[ICONOS.casa, 'Entregado', 'Gracias por confiar en nosotros'] }[v.estado];
-      estadoHtml = `<div class="estado-grande"><span class="ico">${info[0]}</span><div><b>${info[1]}</b><span>${info[2]}</span></div></div>`;
+      estadoHtml = `<div class="estado-grande ${v.estado !== 'entregada' ? 'vivo' : ''}"><span class="ico">${info[0]}</span><div><b>${info[1]}</b><span>${info[2]}</span></div></div>`;
     }
     let html = `<section class="tarjeta" style="--i:${i++}">
       <h1 class="hola">Hola, ${esc(nombre)}</h1>
@@ -163,12 +178,16 @@
       <p class="num" style="font-size:12.5px;margin-top:10px">Montos en dólares (USD).</p>
     </section>`;
 
-    html += `<section class="tarjeta" style="--i:${i++}"><p class="t-tit">Tus productos</p>
+    // Avance de cada producto (por ahora todos avanzan con el pedido; con el módulo de Producción irá por producto)
+    const kp = ['confirmada', 'en_produccion', 'lista', 'entregada'].indexOf(v.estado);
+    const NOM = ['Confirmado', 'En fabricación', 'Listo', 'Entregado'];
+    const avance = (!cot && kp >= 0) ? `<div class="prod-av"><span class="prod-seg">${[0,1,2,3].map(n => `<i class="${n < kp || (n === kp && v.estado === 'entregada') ? 'on' : n === kp ? 'ahora' : ''}"></i>`).join('')}</span><span class="prod-est">${NOM[kp]}</span></div>` : '';
+    html += `<section class="tarjeta" style="--i:${i++}"><p class="t-tit">${v.items.length > 1 ? 'Tus productos (' + v.items.length + ')' : 'Tu producto'}</p>
       ${v.items.map(it => `<div class="prod">
         <div class="prod-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="" loading="lazy">` : iconoTipo(it.tipo, 26)}</div>
         <div style="flex:1;min-width:0"><div class="prod-t">${esc(it.nombre)}</div>
           <div class="prod-d">${esc(AV.detalleItem(it))}</div>
-          <div class="prod-p">${it.cantidad} × ${dinero(it.precio_unitario)}</div></div>
+          <div class="prod-p">${it.cantidad} × ${dinero(it.precio_unitario)}</div>${avance}</div>
       </div>`).join('')}
     </section>`;
 
