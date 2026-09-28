@@ -179,10 +179,16 @@
   function prepararPDF(v){
     const clave = v.id + '|' + v.actualizado_en + '|' + (v.abonos || []).length + '|' + v.estado;
     if(pdf && pdf.clave === clave) return;
-    pdf = { clave, blob:null, promesa:null };
+    pdf = { clave, blob:null, png:null, listo:false, promesa:null };
     const este = pdf;
-    este.promesa = AV.crearPDF(v).then(b => { este.blob = b; if(pdf === este) pintarPie(); return b; })
-      .catch(() => { if(pdf === este){ pdf = null; pintarPie(); } });
+    // Se prepara el PDF y su imagen de una vez, para que al tocar "Enviar" todo pase en el mismo toque
+    este.promesa = AV.crearPDF(v).then(async b => {
+      este.blob = b;
+      try{ este.png = await AV.imagenDePDF(b); } catch(e){ este.png = null; }
+      este.listo = true;
+      if(pdf === este) pintarPie();
+      return b;
+    }).catch(() => { if(pdf === este){ pdf = null; pintarPie(); } });
   }
 
   let fichaSeq = 0;
@@ -276,7 +282,7 @@
       if(editable(v)) links.push(`<a class="f-link" href="venta.html?editar=${v.id}" data-sub>${cot ? 'Editar cotización' : 'Editar venta'}${ICON_CHEV}</a>`);
       else links.push(`<span class="f-link" aria-disabled="true">Ya no se puede editar (${esc(AV.ESTADOS[v.estado].t.toLowerCase())})</span>`);
     }
-    links.push(`<a class="f-link" href="${esc(AV.linkWhatsApp(v))}" target="_blank" rel="noopener">Mandar resumen por WhatsApp${ICON_CHEV}</a>`);
+    links.push(`<button type="button" class="f-link" data-accion="pdf">Compartir PDF${ICON_CHEV}</button>`);
     links.push(`<button type="button" class="f-link" data-accion="descargar">Descargar PDF${ICON_CHEV}</button>`);
     if(v.estado !== 'cancelada' && v.estado !== 'entregada') links.push(`<button type="button" class="f-link peligro" data-accion="cancelar">${cot ? 'Descartar cotización' : 'Cancelar venta'}</button>`);
     html += `<div class="f-links">${links.join('')}</div>`;
@@ -288,14 +294,14 @@
     const v = actual;
     if(!v) return;
     const cot = AV.esCotizacion(v);
-    const listo = pdf && pdf.blob;
-    const btnPdf = `<button class="btn-secondary" type="button" data-accion="pdf" ${listo ? '' : 'disabled'}>${listo ? 'Enviar PDF' : '<span class="spinner" style="border-color:rgba(0,0,0,.15);border-top-color:var(--accent)"></span>PDF'}</button>`;
+    const listo = pdf && pdf.listo;
+    const btnPdf = `<button class="btn-secondary btn-enviar" type="button" data-accion="enviar" ${listo ? '' : 'disabled'}>${listo ? ICON_WA + 'Enviar' : '<span class="spinner" style="border-color:rgba(0,0,0,.15);border-top-color:var(--accent)"></span>Enviar'}</button>`;
     let principal = '';
     if(cot && v.estado === 'cotizacion') principal = `<button class="btn-primary" type="button" data-accion="convertir">Convertir en venta</button>`;
     else if(!cot && v.estado !== 'cancelada' && AV.resta(v) > 0) principal = `<button class="btn-primary" type="button" data-accion="abono">Registrar abono</button>`;
     $('fichaFoot').innerHTML = principal
       ? `<div class="f-foot">${btnPdf}${principal}</div>`
-      : `<button class="btn-primary" type="button" data-accion="pdf" ${listo ? '' : 'disabled'}>${listo ? 'Enviar PDF' : '<span class="spinner"></span>Preparando PDF'}</button>`;
+      : `<button class="btn-primary btn-enviar" type="button" data-accion="enviar" ${listo ? '' : 'disabled'}>${listo ? ICON_WA + 'Enviar al cliente' : '<span class="spinner"></span>Preparando'}</button>`;
   }
 
   // Acciones de la ficha
@@ -324,8 +330,16 @@
     const b = e.target.closest('[data-accion]');
     if(!b || !actual) return;
     const a = b.dataset.accion;
+    if(a === 'enviar'){
+      if(!pdf || !pdf.listo) return;
+      AV.enviarAlCliente(actual, pdf.png, (r) => {
+        if(r === 'ok') toast('Imagen copiada. En el chat mantén presionado y toca Pegar');
+        else toast('No se pudo copiar la imagen. Usa "Compartir PDF"', 'error');
+      });
+      return;
+    }
     if(a === 'pdf'){
-      if(!pdf || !pdf.blob) return;
+      if(!pdf || !pdf.blob){ toast('Preparando el PDF'); return; }
       const r = await AV.compartirPDF(pdf.blob, actual);
       if(r === 'descargado') toast('PDF descargado');
     }

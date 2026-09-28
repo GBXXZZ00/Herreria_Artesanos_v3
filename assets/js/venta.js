@@ -796,8 +796,6 @@
     const esVenta = !!abono;
     $('pie').classList.add('hidden');
     $('subVenta').textContent = esVenta ? 'Venta confirmada' : 'Cotización guardada';
-    const texto = mensajeCliente(res, p, abono);
-    const wa = `https://wa.me/${p.cliente.telefono}?text=${encodeURIComponent(texto)}`;
     $('pagina').innerHTML = `
       <div class="listo">
         <div class="listo-ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>
@@ -814,7 +812,7 @@
       </div>
       <div class="listo-btns">
         <button class="btn-wa" type="button" id="btnPdf" disabled><span class="spinner"></span>Preparando PDF</button>
-        <a class="link-simple" href="${esc(wa)}" target="_blank" rel="noopener" style="text-align:center;margin-top:0">Mandar solo el resumen en texto</a>
+        <button class="link-simple" type="button" id="btnCompartir" style="margin-top:0">Compartir PDF</button>
         <button class="btn-secondary" type="button" id="btnOtra" style="height:54px">Hacer otra venta</button>
         <button class="link-simple" type="button" id="btnIrInicio">Volver a Inicio</button>
       </div>`;
@@ -825,19 +823,27 @@
     });
     $('btnIrInicio').addEventListener('click', () => window.Sesion.irInicio());
     // El PDF se prepara de una vez para que al tocar "Enviar" se abra WhatsApp enseguida
-    let blob = null, venta = null;
+    let blob = null, png = null, venta = null;
     (async () => {
       try{
         venta = await window.AV.cargarVenta(res.id);
         blob = await window.AV.crearPDF(venta);
+        try{ png = await window.AV.imagenDePDF(blob); } catch(e){ png = null; }
         const b = $('btnPdf'); if(!b) return;
-        b.disabled = false; b.innerHTML = `${ICON_WA}Enviar PDF al cliente`;
+        b.disabled = false; b.innerHTML = `${ICON_WA}Enviar al cliente`;
       } catch(e){
-        const b = $('btnPdf'); if(b){ b.innerHTML = 'No se pudo preparar el PDF'; }
+        const b = $('btnPdf'); if(b){ b.innerHTML = 'No se pudo preparar el documento'; }
       }
     })();
-    $('btnPdf').addEventListener('click', async () => {
-      if(!blob) return;
+    $('btnPdf').addEventListener('click', () => {
+      if(!venta) return;
+      window.AV.enviarAlCliente(venta, png, (r) => {
+        if(r === 'ok') toast('Imagen copiada. En el chat mantén presionado y toca Pegar');
+        else toast('No se pudo copiar la imagen. Usa "Compartir PDF"', 'error');
+      });
+    });
+    $('btnCompartir').addEventListener('click', async () => {
+      if(!blob){ toast('Preparando el PDF'); return; }
       const r = await window.AV.compartirPDF(blob, venta);
       if(r === 'descargado') toast('PDF descargado');
     });

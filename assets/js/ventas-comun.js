@@ -274,6 +274,94 @@
     setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
 
+  // ---------------------------------------------------------------------------
+  // Imagen del documento (para pegarla en el chat: el iPhone no deja copiar PDF)
+  // ---------------------------------------------------------------------------
+  let pdfjsCarga = null;
+  function cargarPdfjs(){
+    if(window.pdfjsLib) return Promise.resolve();
+    if(!pdfjsCarga) pdfjsCarga = new Promise((ok, mal) => {
+      const s = document.createElement('script');
+      s.src = 'assets/vendor/pdfjs.js';
+      s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/vendor/pdfjs.worker.js'; ok(); };
+      s.onerror = () => { pdfjsCarga = null; mal(new Error('No se pudo preparar la imagen')); };
+      document.head.appendChild(s);
+    });
+    return pdfjsCarga;
+  }
+  // Recorta el blanco de abajo de cada página para que la imagen no sea larguísima
+  function ultimaFilaConTinta(ctx, w, h){
+    const d = ctx.getImageData(0, 0, w, h).data;
+    for(let y = h - 1; y > 0; y -= 2){
+      const fila = y * w * 4;
+      for(let x = 0; x < w; x += 3){ const i = fila + x * 4; if(d[i] < 235 || d[i + 1] < 235 || d[i + 2] < 235) return y; }
+    }
+    return h;
+  }
+  async function imagenDePDF(blob){
+    await cargarPdfjs();
+    const pdfDoc = await window.pdfjsLib.getDocument({ data: await blob.arrayBuffer() }).promise;
+    const paginas = [];
+    for(let n = 1; n <= pdfDoc.numPages; n++){
+      const page = await pdfDoc.getPage(n);
+      const vp = page.getViewport({ scale: 2 });
+      const c = document.createElement('canvas');
+      c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+      const g = c.getContext('2d');
+      g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+      await page.render({ canvasContext: g, viewport: vp }).promise;
+      // En la última página se recorta hasta el pie; en las demás se deja completa
+      let alto = c.height;
+      if(n === pdfDoc.numPages){
+        // se busca la tinta sin contar el pie (que está abajo del todo)
+        const pie = Math.round(c.height * 0.955);
+        const g2 = document.createElement('canvas'); g2.width = c.width; g2.height = pie;
+        g2.getContext('2d').drawImage(c, 0, 0);
+        const fin = ultimaFilaConTinta(g2.getContext('2d'), c.width, pie);
+        alto = Math.min(c.height, fin + 60);
+      }
+      paginas.push({ c, alto });
+    }
+    const W = paginas[0].c.width;
+    const H = paginas.reduce((a, p) => a + p.alto, 0) + (paginas.length - 1) * 16;
+    const out = document.createElement('canvas');
+    out.width = W; out.height = H;
+    const g = out.getContext('2d');
+    g.fillStyle = '#E9E7E3'; g.fillRect(0, 0, W, H);
+    let y = 0;
+    paginas.forEach(p => { g.drawImage(p.c, 0, 0, W, p.alto, 0, y, W, p.alto); y += p.alto + 16; });
+    return await new Promise((ok, mal) => out.toBlob(b => b ? ok(b) : mal(new Error('No se pudo crear la imagen')), 'image/png'));
+  }
+
+  // Mensaje corto (los detalles van en la imagen)
+  function mensajeCorto(v){
+    const nombre = (v.cliente.nombre || '').split(' ')[0];
+    if(esCotizacion(v)){
+      return `Hola ${nombre}, te saluda Herrería Artesanos. Te envío tu cotización N° ${v.id} por ${dinero(v.total)}. Los precios son válidos hasta el ${fechaLarga(v.vence_en)}. Cualquier duda, aquí estamos.`;
+    }
+    const l = [`Hola ${nombre}, te saluda Herrería Artesanos. Te envío tu nota de pedido N° ${v.id}.`, '',
+      `Total: ${dinero(v.total)}`, `Abonado: ${dinero(pagado(v.abonos))}`, `Resta por pagar: ${dinero(resta(v))}`];
+    if(v.fecha_entrega && v.estado !== 'cancelada' && v.estado !== 'entregada') l.push(`Fecha de entrega: ${fechaLarga(v.fecha_entrega)}`);
+    l.push('', 'Gracias por preferirnos.');
+    return l.join('\n');
+  }
+
+  // Un toque: copia la imagen y abre el chat del cliente con el mensaje escrito.
+  // Todo se llama en el mismo toque (el iPhone lo exige para copiar y para abrir WhatsApp).
+  function enviarAlCliente(v, png, avisar){
+    const url = `https://wa.me/${v.cliente.telefono}?text=${encodeURIComponent(mensajeCorto(v))}`;
+    let copia = null;
+    try{
+      if(png && navigator.clipboard && window.ClipboardItem){
+        copia = navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+      }
+    } catch(e){ copia = null; }
+    const w = window.open(url, '_blank');
+    if(!w) location.href = url;
+    if(copia) copia.then(() => avisar && avisar('ok')).catch(() => avisar && avisar('sin-copia'));
+    else if(avisar) avisar('sin-copia');
+  }
+
   window.AV = { ESTADOS, METODOS, pagado, resta, esCotizacion, diasHasta, diasDesde, fechaCorta, fechaLarga, fechaNum, hace, habiles, iso,
-    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, linkWhatsApp, crearPDF, compartirPDF, descargarPDF, nombrePDF, SELECT_VENTA, esc };
+    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, linkWhatsApp, crearPDF, imagenDePDF, enviarAlCliente, compartirPDF, descargarPDF, nombrePDF, SELECT_VENTA, esc };
 })();
