@@ -840,6 +840,7 @@
       if(!blob) return;
       const r = await window.AV.compartirPDF(blob, venta);
       if(r === 'descargado') toast('PDF descargado');
+      else if(r !== 'cancelado') toast(`Teléfono copiado (${window.AV.telBonito(venta)}). Pégalo en el buscador de WhatsApp si no ves el chat`);
     });
   }
 

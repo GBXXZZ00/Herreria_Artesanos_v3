@@ -326,8 +326,10 @@
     const a = b.dataset.accion;
     if(a === 'pdf'){
       if(!pdf || !pdf.blob) return;
-      const r = await AV.compartirPDF(pdf.blob, actual);
+      const v0 = actual;
+      const r = await AV.compartirPDF(pdf.blob, v0);
       if(r === 'descargado') toast('PDF descargado');
+      else if(r !== 'cancelado') toast(`Teléfono copiado (${window.AV.telBonito(v0)}). Pégalo en el buscador de WhatsApp si no ves el chat`);
     }
     if(a === 'descargar'){
       if(pdf && pdf.blob){ AV.descargarPDF(pdf.blob, actual); toast('PDF descargado'); }

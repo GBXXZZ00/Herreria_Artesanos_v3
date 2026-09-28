@@ -256,12 +256,40 @@
     return `${esCotizacion(v) ? 'Cotizacion' : 'Pedido'}-${v.id}-${n}.pdf`;
   }
 
-  // Compartir el PDF (en el iPhone se abre el menú para elegir WhatsApp); si no se puede, se descarga
+  // Mensaje corto que acompaña al PDF (los detalles van en el PDF)
+  function mensajeCorto(v){
+    const nombre = (v.cliente.nombre || '').split(' ')[0];
+    if(esCotizacion(v)){
+      return `Hola ${nombre}, te saluda Herrería Artesanos. Te envío tu cotización N° ${v.id} por ${dinero(v.total)}. Los precios son válidos hasta el ${fechaLarga(v.vence_en)}. Cualquier duda, aquí estamos.`;
+    }
+    const l = [`Hola ${nombre}, te saluda Herrería Artesanos. Te envío tu nota de pedido N° ${v.id}.`, '',
+      `Total: ${dinero(v.total)}`, `Abonado: ${dinero(pagado(v.abonos))}`, `Resta por pagar: ${dinero(resta(v))}`];
+    if(v.fecha_entrega && !['cancelada', 'entregada'].includes(v.estado)) l.push(`Fecha de entrega: ${fechaLarga(v.fecha_entrega)}`);
+    l.push('', 'Gracias por preferirnos.');
+    return l.join('\n');
+  }
+  // Teléfono para buscar en WhatsApp: los 10 números (414…), que coinciden como sea que esté guardado
+  const telBuscar = (v) => String(v.cliente.telefono || '').replace(/^58/, '');
+  const telBonito = (v) => telBuscar(v).replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3');
+
+  // Compartir el PDF con el mensaje (en el iPhone se elige WhatsApp y el chat del cliente).
+  // En el mismo toque se copia el teléfono del cliente para pegarlo en el buscador.
+  // Todo se llama sin esperar nada antes: el iPhone solo lo permite dentro del toque.
   async function compartirPDF(blob, v){
+    let copiado = false;
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(telBuscar(v)).then(() => { copiado = true; }).catch(() => {});
+      }
+    } catch(e){}
     const file = new File([blob], nombrePDF(v), { type:'application/pdf' });
-    if(navigator.canShare && navigator.canShare({ files:[file] })){
-      try{ await navigator.share({ files:[file] }); return 'compartido'; }
-      catch(e){ if(e && e.name === 'AbortError') return 'cancelado'; }
+    const datos = { files:[file], text: mensajeCorto(v) };
+    const puede = (d) => { try{ return navigator.canShare && navigator.canShare(d); } catch(e){ return false; } };
+    if(navigator.share && (puede(datos) || puede({ files:[file] }))){
+      try{
+        await navigator.share(puede(datos) ? datos : { files:[file] });
+        return copiado ? 'compartido-copiado' : 'compartido';
+      } catch(e){ if(e && e.name === 'AbortError') return 'cancelado'; }
     }
     descargarPDF(blob, v);
     return 'descargado';
@@ -275,5 +303,5 @@
   }
 
   window.AV = { ESTADOS, METODOS, pagado, resta, esCotizacion, diasHasta, diasDesde, fechaCorta, fechaLarga, fechaNum, hace, habiles, iso,
-    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, linkWhatsApp, crearPDF, compartirPDF, descargarPDF, nombrePDF, SELECT_VENTA, esc };
+    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, telBonito, linkWhatsApp, crearPDF, compartirPDF, descargarPDF, nombrePDF, SELECT_VENTA, esc };
 })();
