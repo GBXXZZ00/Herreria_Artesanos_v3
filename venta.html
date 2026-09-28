@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Nueva venta · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=20">
+<style>
+  .page{padding:4px 18px calc(150px + var(--safe-b))}
+  .sec{margin-top:22px}
+  .sec-head{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+  .sec-num{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:13.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .sec-title{font-size:19px;font-weight:800;letter-spacing:-0.3px;margin:0}
+  .aviso-cliente{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:700;margin:-4px 0 14px}
+  .borrador{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:14px;background:var(--surface-2);font-size:14px;margin-top:12px}
+  .borrador button{font-weight:800;color:var(--accent);font-size:14px;white-space:nowrap}
+
+  /* Productos */
+  .items{display:flex;flex-direction:column;gap:10px}
+  .item{display:flex;gap:12px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);opacity:0;transform:translateY(8px);animation:itemIn 320ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms)}
+  @keyframes itemIn{to{opacity:1;transform:none}}
+  .item-foto{width:64px;height:64px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .item-foto img{width:100%;height:100%;object-fit:cover}
+  .item-txt{flex:1;min-width:0}
+  .item-nombre{font-size:15.5px;font-weight:800;line-height:1.25}
+  .item-det{font-size:12.5px;color:var(--ink-soft);margin-top:2px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .item-pie{display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:8px}
+  .item-cant{font-size:13px;color:var(--ink-soft)}
+  .item-precio{font-size:15.5px;font-weight:800;color:var(--accent)}
+  .item-acc{display:flex;flex-direction:column;gap:6px}
+  .item-acc button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);transition:transform 120ms var(--ease-out)}
+  .item-acc button:active{transform:scale(0.92)}
+  .item-acc .quitar{color:var(--danger)}
+  .vacio-items{border:1.5px dashed var(--line-strong);border-radius:var(--radius);padding:22px 16px;text-align:center;color:var(--ink-soft);font-size:14.5px}
+  .btn-agregar{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:52px;margin-top:10px;border-radius:14px;border:1.5px solid var(--accent);color:var(--accent);font-size:16px;font-weight:800;background:var(--surface);transition:transform 140ms var(--ease-out)}
+  .btn-agregar:active{transform:scale(0.98)}
+  .field.invalid .vacio-items{border-color:var(--danger)}
+
+  /* Resumen */
+  .resumen{margin-top:16px;padding:14px 16px;border-radius:var(--radius);background:var(--surface-2)}
+  .res-fila{display:flex;justify-content:space-between;font-size:15px;padding:3px 0;color:var(--ink-soft)}
+  .res-fila b{color:var(--ink);font-weight:700}
+  .res-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;padding-top:10px;border-top:1px solid var(--line)}
+  .res-total span{font-size:16px;font-weight:800}
+  .res-total b{font-size:26px;font-weight:800;color:var(--accent);letter-spacing:-0.5px}
+
+  /* Pie fijo */
+  .foot-venta{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:12px 18px calc(12px + var(--safe-b));background:rgba(255,255,255,0.96);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+  .foot-total{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;color:var(--ink-soft);margin-bottom:10px}
+  .foot-total b{font-size:18px;color:var(--ink);font-weight:800}
+  .foot-btns{display:flex;gap:10px}
+  .foot-btns .btn-secondary{flex:0 0 auto;padding:0 16px;height:54px}
+  .foot-btns .btn-primary{flex:1;min-width:0}
+
+  /* Hoja: elegir origen */
+  .origenes{display:flex;flex-direction:column;gap:10px}
+  .origen{display:flex;align-items:center;gap:14px;width:100%;padding:14px;border:1px solid var(--line);border-radius:var(--radius);text-align:left;transition:transform 140ms var(--ease-out)}
+  .origen:active{transform:scale(0.98)}
+  .origen .ini-ico{width:48px;height:48px;border-radius:14px}
+  .origen-t{display:block;font-size:16.5px;font-weight:800}
+  .origen-s{display:block;font-size:13.5px;color:var(--ink-soft);margin-top:2px}
+
+  /* Listas para elegir modelo o pieza */
+  .elegir-lista{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .elegir{display:flex;align-items:center;gap:12px;width:100%;padding:8px;border-radius:14px;text-align:left;transition:transform 130ms var(--ease-out),background-color 130ms var(--ease-out)}
+  .elegir:active{transform:scale(0.98);background:var(--surface-2)}
+  .elegir .item-foto{width:58px;height:58px}
+  .elegir-t{display:block;font-size:15.5px;font-weight:800}
+  .elegir-s{display:block;font-size:13px;color:var(--ink-soft);margin-top:1px}
+  .elegir-p{margin-left:auto;font-size:15px;font-weight:800;color:var(--accent);white-space:nowrap;padding-left:8px}
+  #sheetModelos .chips{padding:0;margin:10px -18px 0;padding-left:18px}
+
+  /* Hoja del producto */
+  .prod-cab{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+  .prod-cab .item-foto{width:76px;height:76px;border-radius:14px}
+  .prod-nombre{font-size:19px;font-weight:800;letter-spacing:-0.3px}
+  .prod-tipo{font-size:13.5px;color:var(--ink-soft);margin-top:2px}
+  .precio-caja{padding:14px;border-radius:var(--radius);background:var(--surface-2);margin-top:6px}
+  .precio-caja .field{margin:0}
+  .desglose{font-size:13px;color:var(--ink-soft);margin-top:8px;line-height:1.45}
+  .desglose b{color:var(--accent)}
+  .usar-sugerido{font-size:13px;font-weight:800;color:var(--accent);margin-top:6px}
+
+  /* Confirmar */
+  .conf-total{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px;border-radius:var(--radius);background:var(--surface-2);margin-bottom:6px}
+  .conf-total span{font-size:15px;color:var(--ink-soft)}
+  .conf-total b{font-size:24px;font-weight:800}
+  .aviso-50{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#8A5A00;background:#FFF4DC;padding:9px 12px;border-radius:12px;margin-top:8px}
+  .resta{font-size:14px;color:var(--ink-soft);margin-top:8px}
+  .resta b{color:var(--ink)}
+
+  /* Resultado */
+  .listo{padding:36px 4px 20px;text-align:center}
+  .listo-ico{width:72px;height:72px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;transform:scale(0.95);opacity:0;animation:pop 360ms var(--ease-out) forwards}
+  @keyframes pop{to{transform:none;opacity:1}}
+  .listo h1{font-size:26px;font-weight:800;letter-spacing:-0.5px;margin:0 0 6px}
+  .listo p{font-size:15.5px;color:var(--ink-soft);margin:0}
+  .listo-datos{margin:22px 0 18px;text-align:left}
+  .listo-btns{display:flex;flex-direction:column;gap:10px}
+  .btn-wa{display:flex;align-items:center;justify-content:center;gap:10px;height:54px;border-radius:14px;background:#1FA855;color:#fff;font-size:16.5px;font-weight:800;text-decoration:none;transition:transform 140ms var(--ease-out)}
+  .btn-wa:active{transform:scale(0.98)}
+</style>
+</head>
+<body data-requiere-sesion="si">
+
+<header class="topbar" id="topbar">
+  <button class="icon-btn" id="btnSalirVenta" aria-label="Volver a Inicio">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+  </button>
+  <div class="topbar-text">
+    <div class="topbar-title">Nueva venta</div>
+    <div class="topbar-sub" id="subVenta">Cotización o venta</div>
+  </div>
+</header>
+
+<main class="page" id="pagina">
+  <div id="avisoBorrador"></div>
+
+  <!-- 1. Cliente -->
+  <section class="sec">
+    <div class="sec-head"><span class="sec-num">1</span><h2 class="sec-title">Cliente</h2></div>
+    <div class="field" id="campoTel">
+      <label class="field-label" for="cTel">Teléfono (WhatsApp)</label>
+      <input class="input" id="cTel" type="tel" inputmode="tel" autocomplete="off" placeholder="0414 123 4567">
+      <div class="field-error">Escribe un teléfono válido</div>
+    </div>
+    <div id="avisoCliente"></div>
+    <div class="field" id="campoNombreC">
+      <label class="field-label" for="cNombre">Nombre y apellido</label>
+      <input class="input" id="cNombre" type="text" autocomplete="off" autocapitalize="words">
+      <div class="field-error">Falta el nombre</div>
+    </div>
+    <div class="field" id="campoDir">
+      <label class="field-label" for="cDir">Dirección de instalación</label>
+      <textarea class="input" id="cDir" rows="2" placeholder="Sector, calle, casa y punto de referencia"></textarea>
+      <div class="field-error">Falta la dirección</div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="cCedula">Cédula o RIF (opcional)</label>
+      <input class="input" id="cCedula" type="text" autocomplete="off" inputmode="text">
+    </div>
+  </section>
+
+  <!-- 2. Productos -->
+  <section class="sec">
+    <div class="sec-head"><span class="sec-num">2</span><h2 class="sec-title">Productos</h2></div>
+    <div class="field" id="campoItems">
+      <div class="items" id="items"></div>
+      <button class="btn-agregar" type="button" id="btnAgregar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Agregar producto
+      </button>
+      <div class="field-error">Agrega al menos un producto</div>
+    </div>
+  </section>
+
+  <!-- 3. Cierre -->
+  <section class="sec">
+    <div class="sec-head"><span class="sec-num">3</span><h2 class="sec-title">Cierre</h2></div>
+    <div class="input-row">
+      <div class="field" style="flex:1" id="campoDesc">
+        <label class="field-label" for="vDesc">Descuento</label>
+        <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vDesc" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+        <div class="field-error">Es mayor que el total</div>
+      </div>
+      <div class="field" style="flex:1">
+        <label class="field-label" for="vInst">Instalación o traslado</label>
+        <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vInst" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="field">
+      <span class="field-label">Sede de la venta</span>
+      <div class="opts" style="--cols:2" id="optsSede"></div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="vNotas">Notas (opcional)</label>
+      <textarea class="input" id="vNotas" rows="2" placeholder="Lo que haga falta recordar de esta venta"></textarea>
+    </div>
+    <div class="resumen" id="resumen"></div>
+  </section>
+</main>
+
+<div class="foot-venta" id="pie">
+  <div class="foot-total"><span>Total</span><b id="pieTotal">$0</b></div>
+  <div class="foot-btns">
+    <button class="btn-secondary" type="button" id="btnCotizacion">Guardar cotización</button>
+    <button class="btn-primary" type="button" id="btnConfirmar">Confirmar venta</button>
+  </div>
+</div>
+
+<div class="hidden" id="menuModulos" data-activo="venta"></div>
+
+<!-- Elegir de dónde viene el producto -->
+<div class="sheet-scrim" id="scrimAgregar" data-cerrar="sheetAgregar"></div>
+<section class="sheet sheet-auto" id="sheetAgregar" role="dialog" aria-modal="true" aria-labelledby="agregarTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="agregarTitulo">¿Qué producto es?</h2>
+    <button class="icon-btn" data-cerrar="sheetAgregar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="origenes">
+      <button class="origen" type="button" data-origen="catalogo">
+        <span class="ini-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/></svg></span>
+        <span><span class="origen-t">Del catálogo</span><span class="origen-s">Se fabrica con sus especificaciones</span></span>
+      </button>
+      <button class="origen" type="button" data-origen="pieza" id="origenPieza">
+        <span class="ini-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span>
+        <span><span class="origen-t">Entrega inmediata</span><span class="origen-s" id="origenPiezaSub">Piezas listas en tienda</span></span>
+      </button>
+      <button class="origen" type="button" data-origen="medida">
+        <span class="ini-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
+        <span><span class="origen-t">A medida</span><span class="origen-s">Lo que trae el cliente en foto</span></span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Elegir modelo del catálogo -->
+<div class="sheet-scrim scrim-top" id="scrimModelos" data-cerrar="sheetModelos"></div>
+<section class="sheet sheet-top" id="sheetModelos" role="dialog" aria-modal="true" aria-labelledby="modelosTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="modelosTitulo">Elige el modelo</h2>
+    <button class="icon-btn" data-cerrar="sheetModelos" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <label class="search-box" style="margin:0">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="buscaModelo" placeholder="Buscar modelo" autocomplete="off" aria-label="Buscar modelo">
+    </label>
+    <div class="chips" id="chipsModelos"></div>
+    <div class="elegir-lista" id="listaModelos"></div>
+  </div>
+</section>
+
+<!-- Elegir pieza de entrega inmediata -->
+<div class="sheet-scrim scrim-top" id="scrimPiezas" data-cerrar="sheetPiezas"></div>
+<section class="sheet sheet-top" id="sheetPiezas" role="dialog" aria-modal="true" aria-labelledby="piezasTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="piezasTitulo">Entrega inmediata</h2>
+    <button class="icon-btn" data-cerrar="sheetPiezas" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body"><div class="elegir-lista" id="listaPiezas" style="margin-top:0"></div></div>
+</section>
+
+<!-- Producto: especificaciones, cantidad y precio -->
+<div class="sheet-scrim" id="scrimProducto" data-cerrar="sheetProducto" style="z-index:55"></div>
+<section class="sheet" id="sheetProducto" role="dialog" aria-modal="true" aria-labelledby="prodTitulo" style="z-index:56">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="prodTitulo">Producto</h2>
+    <button class="icon-btn" data-cerrar="sheetProducto" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="prodBody"></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnProdListo">Agregar a la venta</button></div>
+</section>
+
+<!-- Confirmar venta: abono -->
+<div class="sheet-scrim" id="scrimConfirmar" data-cerrar="sheetConfirmar"></div>
+<section class="sheet sheet-auto" id="sheetConfirmar" role="dialog" aria-modal="true" aria-labelledby="confTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="confTitulo">Confirmar venta</h2>
+    <button class="icon-btn" data-cerrar="sheetConfirmar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="confBody"></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnConfListo">Confirmar venta</button></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/vendor/supabase.js?v=20"></script>
+<script src="assets/js/supabase-client.js?v=20"></script>
+<script src="assets/js/img-compress.js?v=20"></script>
+<script src="assets/js/comun.js?v=20"></script>
+<script src="assets/js/sesion.js?v=20"></script>
+<script src="assets/js/venta.js?v=20"></script>
+</body>
+</html>

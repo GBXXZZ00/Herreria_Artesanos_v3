@@ -80,6 +80,12 @@
   const enModulo = activo && activo !== 'inicio';
   function guardarFlag(){ try{ sessionStorage.setItem(FLAG, '1'); }catch(e){} }
 
+  // Regresa a Inicio sin apilar pasos (Inicio siempre queda debajo del módulo)
+  function irInicio(){
+    const n = (window.AH && AH.profundidad) ? AH.profundidad() : 0;
+    history.go(-(n + 1));
+  }
+
   if(enModulo){
     const st = history.state || {};
     if(!st.modulo){
@@ -101,11 +107,7 @@
       e.preventDefault();
       const id = (MODULOS.find(m => m.href === a.getAttribute('href')) || {}).id;
       if(id === activo){ window.scrollTo({ top:0, behavior:'smooth' }); return; }
-      if(id === 'inicio'){
-        const n = (window.AH && AH.profundidad) ? AH.profundidad() : 0;
-        history.go(-(n + 1));
-        return;
-      }
+      if(id === 'inicio'){ irInicio(); return; }
       guardarFlag();
       location.replace(a.getAttribute('href'));
     });
@@ -115,14 +117,14 @@
       const a = e.target.closest('a[href]');
       if(!a) return;
       const href = a.getAttribute('href');
-      const m = MODULOS.find(x => x.href === href);
+      const m = MODULOS.find(x => x.href === href) || (a.hasAttribute('data-modulo') ? { id:'otro' } : null);
       if(!m) return;
       if(m.id === 'inicio'){ e.preventDefault(); window.scrollTo({ top:0, behavior:'smooth' }); return; }
       guardarFlag();
     });
   }
 
-  window.Sesion = { MODULOS, iconoModulo, pintarMenu, sesionActual, perfil, requerir, entrar, salir, cambiarPin };
+  window.Sesion = { irInicio, MODULOS, iconoModulo, pintarMenu, sesionActual, perfil, requerir, entrar, salir, cambiarPin };
 
   pintarMenu();
   if(document.body.dataset.requiereSesion === 'si') requerir();

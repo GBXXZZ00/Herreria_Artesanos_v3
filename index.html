@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=19">
+<link rel="stylesheet" href="assets/css/base.css?v=20">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -98,10 +98,10 @@
       <h1 class="ini-title" id="saludo">Hola</h1>
       <p class="ini-fecha" id="fecha"></p>
 
-      <button class="ini-cta" id="btnNuevaVenta" disabled>
+      <a class="ini-cta" id="btnNuevaVenta" href="venta.html" data-modulo>
         <span class="ini-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-        <span><span class="ini-nombre">Nueva venta</span><span class="ini-cuenta">Muy pronto</span></span>
-      </button>
+        <span><span class="ini-nombre">Nueva venta</span><span class="ini-cuenta">Cotización o venta</span></span>
+      </a>
 
       <div class="ini-grid" id="modulos"></div>
     </section>
@@ -147,10 +147,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=19"></script>
-<script src="assets/js/supabase-client.js?v=19"></script>
-<script src="assets/js/comun.js?v=19"></script>
-<script src="assets/js/sesion.js?v=19"></script>
+<script src="assets/vendor/supabase.js?v=20"></script>
+<script src="assets/js/supabase-client.js?v=20"></script>
+<script src="assets/js/comun.js?v=20"></script>
+<script src="assets/js/sesion.js?v=20"></script>
 <script>
 (function(){
   'use strict';
