@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=17">
+<link rel="stylesheet" href="assets/css/base.css?v=18">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -147,10 +147,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=17"></script>
-<script src="assets/js/supabase-client.js?v=17"></script>
-<script src="assets/js/comun.js?v=17"></script>
-<script src="assets/js/sesion.js?v=17"></script>
+<script src="assets/vendor/supabase.js?v=18"></script>
+<script src="assets/js/supabase-client.js?v=18"></script>
+<script src="assets/js/comun.js?v=18"></script>
+<script src="assets/js/sesion.js?v=18"></script>
 <script>
 (function(){
   'use strict';
@@ -317,9 +317,9 @@
       if(rc.error || rp.error) throw (rc.error || rp.error);
       const n = rc.count || 0;
       const d = (rp.data || []).reduce((a, x) => a + (x.cantidad || 0), 0);
-      el.innerHTML = `${n} ${n === 1 ? 'modelo' : 'modelos'}` + (d ? ` · <span class="num">${d} ${d === 1 ? 'disponible' : 'disponibles'}</span>` : '');
+      el.innerHTML = `${n} ${n === 1 ? 'modelo' : 'modelos'}` + (d ? ` · <span class="num">${d} de entrega inmediata</span>` : '');
     } catch(e){
-      el.textContent = 'Modelos y disponibles';
+      el.textContent = 'Modelos y entrega inmediata';
     }
   }
 
@@ -408,6 +408,9 @@
     if(tecladoNuevo.activo()) tecladoNuevo.tecla(t);
     else if(tecladoAcceso.activo()) tecladoAcceso.tecla(t);
   });
+
+  // Al volver a Inicio desde un módulo (página guardada por el navegador), refresca los números
+  window.addEventListener('pageshow', (e) => { if(e.persisted && !$('vInicio').classList.contains('hidden')) contarCatalogo(); });
 
   window.addEventListener('scroll', () => $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
 

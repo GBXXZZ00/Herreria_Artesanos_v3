@@ -319,15 +319,48 @@
   const pila = [];
   const alCerrar = {};
   const antesDeCerrar = {}; // id -> función que devuelve false para impedir el cierre
+
+  // ---- Historial: cada hoja abierta (y el visor de fotos) ocupa un paso de "atrás".
+  // Así, deslizar hacia atrás en el iPhone cierra la hoja en vez de salir de la página.
+  // Cada paso guarda { ah: n } con su profundidad. capas[] refleja esos pasos.
+  const capas = [];          // { id } para hojas, { visor:true } para el visor; .muerta si ya se cerró
+  let base = (history.state && typeof history.state.ah === 'number') ? history.state.ah : 0;
+  let pendiente = 0;         // pasos por quitar del historial (se quitan juntos, un instante después)
+  let ignorar = false;       // el próximo popstate lo provocamos nosotros
+  const prof = () => base + capas.length;
+  function empujarCapa(c){
+    capas.push(c);
+    const st = Object.assign({}, history.state || {}, { ah: prof() });
+    delete st.ahBase;
+    // Si justo se cerró otra hoja, se reutiliza su paso en vez de agregar uno nuevo
+    if(pendiente > 0){ pendiente--; history.replaceState(st, ''); }
+    else history.pushState(st, '');
+  }
+  function soltarCapas(){
+    let k = 0;
+    while(capas.length && capas[capas.length - 1].muerta){ capas.pop(); k++; }
+    if(!k) return;
+    pendiente += k;
+    setTimeout(() => {
+      if(pendiente > 0){ const n = pendiente; pendiente = 0; ignorar = true; history.go(-n); }
+    }, 0);
+  }
+  function marcarMuerta(pred){
+    for(let i = capas.length - 1; i >= 0; i--){ if(!capas[i].muerta && pred(capas[i])){ capas[i].muerta = true; break; } }
+    soltarCapas();
+  }
+
   function abrirHoja(id){
     const s = document.getElementById(id);
     s.style.transform = '';
+    const yaAbierta = s.classList.contains('open');
     s.classList.add('open');
     document.getElementById(id.replace('sheet', 'scrim')).classList.add('open');
     if(!pila.includes(id)) pila.push(id);
     document.body.style.overflow = 'hidden';
+    if(!yaAbierta) empujarCapa({ id });
   }
-  function cerrarHoja(id, forzar){
+  function cerrarInterno(id, forzar){
     if(!forzar && antesDeCerrar[id] && antesDeCerrar[id]() === false){
       const s0 = document.getElementById(id);
       s0.style.transition = ''; s0.style.transform = '';
@@ -343,6 +376,37 @@
     if(alCerrar[id]) alCerrar[id]();
     return true;
   }
+  function cerrarHoja(id, forzar){
+    const abierta = document.getElementById(id).classList.contains('open');
+    const ok = cerrarInterno(id, forzar);
+    if(ok && abierta) marcarMuerta(c => c.id === id);
+    return ok;
+  }
+
+  window.addEventListener('popstate', (e) => {
+    if(ignorar){ ignorar = false; return; }
+    const st = e.state || {};
+    // Paso de "Inicio" debajo de un módulo abierto directamente
+    if(st.ahBase){ location.replace('index.html'); return; }
+    const d = typeof st.ah === 'number' ? st.ah : 0;
+    const actual = prof();
+    if(d > actual){ ignorar = true; history.go(actual - d); return; } // adelante: pasos viejos, no aplican
+    if(d < base){ base = d; capas.length = 0; return; }             // pasos de antes de recargar
+    let n = actual - d;
+    while(n-- > 0){
+      const c = capas.pop();
+      if(!c || c.muerta) continue;
+      if(c.visor){ cerrarVisorInterno(); continue; }
+      const sheet = document.getElementById(c.id);
+      if(!sheet || !sheet.classList.contains('open')) continue;
+      // Si la hoja tiene "Volver", atrás regresa a la vista anterior dentro de la hoja
+      const volver = n === 0 && sheet.querySelector('.sheet-back');
+      if(volver){ volver.click(); capas.push(c); history.pushState(Object.assign({}, st, { ah: prof() }), ''); continue; }
+      if(!cerrarInterno(c.id, false)){ capas.push(c); history.pushState(Object.assign({}, st, { ah: prof() }), ''); }
+    }
+    // Si arriba quedó un paso de una hoja ya cerrada, se salta
+    if(capas.length && capas[capas.length - 1].muerta) soltarCapas();
+  });
   function hojaAbierta(){ return pila.length > 0; }
 
   function activarDeslizar(sheet){
@@ -406,7 +470,11 @@
         <button class="visor-x" aria-label="Cerrar foto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         <div class="visor-ayuda">Toca la foto para acercar</div>`;
       document.body.appendChild(visor);
-      visor.querySelector('.visor-x').addEventListener('click', ()=>{ visor.classList.remove('open', 'zoom'); });
+      visor.querySelector('.visor-x').addEventListener('click', ()=>{
+        if(!visor.classList.contains('open')) return;
+        cerrarVisorInterno();
+        marcarMuerta(c => c.visor);
+      });
       visor.querySelector('img').addEventListener('click', (e)=>{
         const sc = visor.querySelector('.visor-scroll');
         const r = e.target.getBoundingClientRect();
@@ -426,8 +494,10 @@
     visor.querySelector('img').src = src;
     visor.classList.remove('zoom');
     visor.querySelector('.visor-ayuda').textContent = 'Toca la foto para acercar';
+    if(!visor.classList.contains('open')) empujarCapa({ visor:true });
     requestAnimationFrame(()=> visor.classList.add('open'));
   }
+  function cerrarVisorInterno(){ if(visor) visor.classList.remove('open', 'zoom'); }
   document.addEventListener('click', (e)=>{
     const img = e.target.closest('.hero img');
     if(img && !img.classList.contains('off')) verFoto(img.getAttribute('src'));
@@ -438,6 +508,7 @@
     TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
     fotoModelo, fotoPieza, esc, numOrNull, fmt, dinero, specChipsHtml, toast,
-    abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo
+    abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo,
+    profundidad: prof
   };
 })();

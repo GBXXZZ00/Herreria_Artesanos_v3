@@ -59,7 +59,7 @@
   function pintarChips(){
     const nRevisar = gruposRevisar().reduce((a, g) => a + g.length, 0);
     if(filtro === 'Revisar' && !nRevisar) filtro = 'Todos';
-    const cats = ['Disponibles', 'Todos', ...TIPOS, ...(nRevisar ? ['Revisar'] : [])];
+    const cats = ['Entrega inmediata', 'Todos', ...TIPOS, ...(nRevisar ? ['Revisar'] : [])];
     $('chips').innerHTML = cats.map(c =>
       `<button class="chip ${c === filtro ? 'active' : ''} ${c === 'Revisar' ? 'chip-revisar' : ''}" role="tab" aria-selected="${c === filtro}" data-cat="${esc(c)}">${c === 'Revisar' ? `Revisar repetidos · ${nRevisar}` : esc(c)}</button>`
     ).join('');
@@ -68,7 +68,7 @@
   function actualizarSubtitulo(){
     const n = modelos.length;
     const d = piezas.reduce((a, p) => a + (p.cantidad || 0), 0);
-    $('subtitulo').textContent = `${n === 1 ? '1 modelo' : n + ' modelos'} · ${d === 1 ? '1 disponible' : d + ' disponibles'}`;
+    $('subtitulo').textContent = `${n === 1 ? '1 modelo' : n + ' modelos'} · ${d} de entrega inmediata`;
   }
 
   function pintarEsqueleto(){
@@ -110,7 +110,7 @@
     const f = m.fotos || {};
     const dots = acabados(m.tipo).filter(a => a.sw && f[a.key]);
     const n = totalDisp(m);
-    const etiqueta = m._estado ? '' : (n ? `<span class="tag-disp">Disponible · ${n}</span>` : `<span class="tag-agotado">Agotado</span>`);
+    const etiqueta = m._estado ? '' : (n ? `<span class="tag-disp">Entrega inmediata · ${n}</span>` : `<span class="tag-agotado">Agotado</span>`);
     return `
       <div class="card-wrap" style="--i:${Math.min(i, 12)}">
         <div class="card" role="button" tabindex="0" data-id="${esc(m.id)}">
@@ -151,17 +151,17 @@
     if(filtro === 'Revisar'){ pintarRevisar(q); return; }
     const lista = modelos.filter(m => {
       if(m._estado) return true; // guardando o con error: siempre visible para poder reintentar
-      if(filtro === 'Disponibles' && !totalDisp(m)) return false;
-      if(filtro !== 'Todos' && filtro !== 'Disponibles' && m.tipo !== filtro) return false;
+      if(filtro === 'Entrega inmediata' && !totalDisp(m)) return false;
+      if(filtro !== 'Todos' && filtro !== 'Entrega inmediata' && m.tipo !== filtro) return false;
       return !q || (m.nombre || '').toLowerCase().includes(q);
     });
 
     if(lista.length === 0){
       let titulo = 'Aún no hay modelos', texto = 'Toca el botón + para agregar el primero.', boton = '';
       if(q){ titulo = 'Nada por aquí'; texto = 'Ningún modelo coincide con la búsqueda.'; }
-      else if(filtro === 'Disponibles'){
-        titulo = 'No hay piezas disponibles';
-        texto = 'Abre un modelo y toca "Marcar disponible" cuando tengas una pieza lista en tienda.';
+      else if(filtro === 'Entrega inmediata'){
+        titulo = 'Nada de entrega inmediata';
+        texto = 'Abre un modelo y toca "Entrega inmediata" cuando tengas una pieza lista en tienda.';
         boton = `<button class="btn-secondary" data-accion="ver-todos">Ver todos los modelos</button>`;
       } else if(filtro !== 'Todos'){
         titulo = 'Nada por aquí'; texto = 'Toca el botón + para agregar el primero.';
@@ -212,7 +212,7 @@
       piezas = rp.data || [];
       sedes = rs.data || [];
       if(primeraCarga){
-        filtro = piezas.length ? 'Disponibles' : 'Todos';
+        filtro = piezas.length ? 'Entrega inmediata' : 'Todos';
         primeraCarga = false;
       }
       pintarChips();
@@ -316,14 +316,14 @@
     pintarVista(`
       <div class="vista-head">
         <div class="det-name" style="margin-top:0">${esc(m.nombre)}</div>
-        <div class="det-type">${n === 1 ? '1 disponible' : n + ' disponibles'} · ${esc(m.tipo)}</div>
+        <div class="det-type">${n === 1 ? '1 de entrega inmediata' : n + ' de entrega inmediata'} · ${esc(m.tipo)}</div>
       </div>
       <div class="det-section" style="margin-top:16px">
         <div class="lineas">${lineas}</div>
       </div>`, `
       <div class="det-foot">
         <button class="btn-secondary" type="button" data-ir="modelo">Ver modelo</button>
-        <button class="btn-primary" type="button" data-accion="marcar">Marcar otra disponible</button>
+        <button class="btn-primary" type="button" data-accion="marcar">Agregar otra pieza</button>
       </div>`, null);
   }
 
@@ -357,7 +357,7 @@
       <div class="det-price">Desde ${dinero(m.precio_base)}</div>
       <div class="det-section" style="margin-top:14px">
         ${n
-          ? `<button class="row-link" data-ir="lista"><span><span class="tag-disp" style="position:static">Disponible · ${n}</span></span>${ICON_CHEV}</button>`
+          ? `<button class="row-link" data-ir="lista"><span><span class="tag-disp" style="position:static">Entrega inmediata · ${n}</span></span>${ICON_CHEV}</button>`
           : `<div class="row-link" style="color:var(--ink-soft);cursor:default">Agotado · sin piezas en tienda</div>`}
       </div>`;
     if(specs.length){
@@ -373,7 +373,7 @@
       <div class="det-foot">
         <button class="btn-icon danger" type="button" data-accion="eliminar-modelo" aria-label="Eliminar modelo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>
         <button class="btn-secondary" type="button" data-accion="editar-modelo">Editar</button>
-        <button class="btn-primary" type="button" data-accion="marcar">Marcar disponible</button>
+        <button class="btn-primary" type="button" data-accion="marcar">Entrega inmediata</button>
       </div>`;
     pintarVista(html, foot, desdeLista ? 'lista' : null);
   }
@@ -388,7 +388,7 @@
       <div ${heroAttrs(foto)}>
         ${foto ? `<img src="${esc(foto)}" alt="${esc(m.nombre)}">` : iconoTipo(m.tipo, 56)}
         ${heroZoom(foto)}
-        <span class="tag-disp" style="bottom:12px;left:12px">Disponible${p.cantidad > 1 ? ' · ' + p.cantidad : ''}</span>
+        <span class="tag-disp" style="bottom:12px;left:12px">Entrega inmediata${p.cantidad > 1 ? ' · ' + p.cantidad : ''}</span>
       </div>
       <div class="det-name">${esc(m.nombre)}</div>
       <div class="det-type">${esc([m.tipo, p.color].filter(Boolean).join(' · '))}</div>
@@ -441,7 +441,7 @@
   async function eliminarModelo(m, btn, desdeHoja = true){
     if(!db) return;
     const n = totalDisp(m);
-    const aviso = n ? `\n\nTambién se quitarán sus ${n} piezas disponibles.` : '';
+    const aviso = n ? `\n\nTambién se quitarán sus ${n} piezas de entrega inmediata.` : '';
     if(!confirm(`¿Eliminar "${m.nombre}" del catálogo?${aviso}`)) return;
     btn.disabled = true;
     const { error } = await db.from('catalogo').delete().eq('id', m.id);
@@ -462,7 +462,7 @@
     const quedan = (p.cantidad || 1) - 1;
     const pregunta = quedan > 0
       ? `¿Ya no está una de estas piezas? Quedarán ${quedan}.`
-      : '¿Esta pieza ya no está disponible? (se vendió o se retiró)';
+      : '¿Esta pieza ya no está en tienda? (se vendió o se retiró)';
     if(!confirm(pregunta)) return;
     btn.disabled = true;
     const cambios = quedan > 0
@@ -474,7 +474,7 @@
     if(quedan > 0) p.cantidad = quedan; else piezas = piezas.filter(x => x !== p);
     actualizarSubtitulo();
     pintarLista();
-    toast(quedan > 0 ? `Quedan ${quedan}` : 'Pieza quitada de disponibles');
+    toast(quedan > 0 ? `Quedan ${quedan}` : 'Pieza quitada de entrega inmediata');
     if(quedan > 0) mostrarPieza(p, m); else irA('lista');
   }
 
@@ -701,7 +701,7 @@
     $('precioPreviewFila').classList.toggle('hidden', pieza);
     $('fotosLabel').textContent = pieza ? 'Foto de la pieza' : 'Fotos';
     $('precioLabel').textContent = pieza ? 'Precio de esta pieza' : 'Precio base';
-    $('btnGuardar').textContent = pieza ? (piezaEditId ? 'Guardar cambios' : 'Marcar disponible') : 'Guardar modelo';
+    $('btnGuardar').textContent = pieza ? (piezaEditId ? 'Guardar cambios' : 'Guardar pieza') : 'Guardar modelo';
   }
 
   function cambiarTipo(t){
@@ -786,7 +786,7 @@
       else estado.ventanas_color = colorPieza || 'Blanco';
     }
 
-    $('formTitulo').textContent = p ? 'Editar pieza' : 'Marcar disponible';
+    $('formTitulo').textContent = p ? 'Editar pieza' : 'Entrega inmediata';
     $('formSub').textContent = m.nombre;
     $('fPrecio').value = p ? p.precio : (Number(m.precio_base) || '');
     limpiarErrores();
@@ -951,7 +951,7 @@
       actualizarSubtitulo();
       pintarChips();
       pintarLista();
-      toast(editId != null ? 'Pieza actualizada' : 'Marcada como disponible');
+      toast(editId != null ? 'Pieza actualizada' : 'Agregada a entrega inmediata');
       // Solo se cierra el formulario y se muestra la pieza si el usuario sigue en este mismo formulario
       if(seq === formSeq){
         limpiarFotosNuevas();
@@ -1040,7 +1040,7 @@
     } else {
       modelos.unshift(vista);
     }
-    if(filtro === 'Disponibles' && editandoId == null){ filtro = 'Todos'; pintarChips(); }
+    if(filtro === 'Entrega inmediata' && editandoId == null){ filtro = 'Todos'; pintarChips(); }
 
     formSucio = false;
     cerrarHoja('sheetForm', true);

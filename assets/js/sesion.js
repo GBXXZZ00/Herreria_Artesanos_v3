@@ -70,6 +70,58 @@
     if(error) throw error;
   }
 
+  // ---------------------------------------------------------------------------
+  // Navegación: Inicio es el tope. Desde Inicio se entra a un módulo; "atrás" en un
+  // módulo siempre regresa a Inicio; cambiar de módulo reemplaza (no apila).
+  // ---------------------------------------------------------------------------
+  const FLAG = 'ah_desdeInicio';
+  const cont = document.getElementById('menuModulos');
+  const activo = cont ? cont.dataset.activo : null;
+  const enModulo = activo && activo !== 'inicio';
+  function guardarFlag(){ try{ sessionStorage.setItem(FLAG, '1'); }catch(e){} }
+
+  if(enModulo){
+    const st = history.state || {};
+    if(!st.modulo){
+      let desdeInicio = false;
+      try{ desdeInicio = sessionStorage.getItem(FLAG) === '1'; sessionStorage.removeItem(FLAG); }catch(e){}
+      if(desdeInicio){
+        history.replaceState(Object.assign({}, st, { modulo:true, ah:0 }), '');
+      } else {
+        // Se abrió el módulo directo: se pone Inicio debajo para que "atrás" lleve allí
+        const url = location.href;
+        history.replaceState({ ahBase:true }, '', 'index.html');
+        history.pushState({ modulo:true, ah:0 }, '', url);
+      }
+    }
+    // Menú de abajo dentro de un módulo
+    if(cont) cont.addEventListener('click', (e) => {
+      const a = e.target.closest('a.nav-item');
+      if(!a) return;
+      e.preventDefault();
+      const id = (MODULOS.find(m => m.href === a.getAttribute('href')) || {}).id;
+      if(id === activo){ window.scrollTo({ top:0, behavior:'smooth' }); return; }
+      if(id === 'inicio'){
+        const n = (window.AH && AH.profundidad) ? AH.profundidad() : 0;
+        history.go(-(n + 1));
+        return;
+      }
+      guardarFlag();
+      location.replace(a.getAttribute('href'));
+    });
+  } else {
+    // En Inicio: al entrar a un módulo se marca que Inicio queda debajo
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href]');
+      if(!a) return;
+      const href = a.getAttribute('href');
+      const m = MODULOS.find(x => x.href === href);
+      if(!m) return;
+      if(m.id === 'inicio'){ e.preventDefault(); window.scrollTo({ top:0, behavior:'smooth' }); return; }
+      guardarFlag();
+    });
+  }
+
   window.Sesion = { MODULOS, iconoModulo, pintarMenu, sesionActual, perfil, requerir, entrar, salir, cambiarPin };
 
   pintarMenu();
