@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Producción · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=37">
+<style>
+  .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
+  .p-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+  .p-item:last-child{margin-bottom:0}
+  .p-item-cab{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+  .p-item-foto{width:48px;height:48px;border-radius:12px;background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint);overflow:hidden}
+  .p-item-foto img{width:100%;height:100%;object-fit:cover}
+  .p-item-nom{font-size:15.5px;font-weight:800}
+  .p-item-cant{font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .e-rama-tit{font-size:11.5px;font-weight:800;letter-spacing:.3px;color:var(--ink-faint);text-transform:uppercase;margin:16px 0 8px}
+  .p-item-cab + .e-rama-tit{margin-top:0}
+  .etapa{display:flex;gap:12px;position:relative;padding-bottom:18px}
+  .etapa:last-child{padding-bottom:0}
+  .etapa:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;bottom:2px;width:2px;background:var(--line)}
+  .etapa.hecha:not(:last-child)::after{background:var(--accent)}
+  .e-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--line-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;position:relative;z-index:1}
+  .etapa.hecha .e-dot{background:var(--accent);border-color:var(--accent)}
+  .etapa.actual .e-dot{border-color:var(--accent);box-shadow:0 0 0 5px var(--accent-soft)}
+  .etapa.actual .e-dot::before{content:'';width:10px;height:10px;border-radius:50%;background:var(--accent)}
+  .e-cuerpo{flex:1;padding-top:2px;min-width:0}
+  .e-nom{font-size:15px;font-weight:800}
+  .etapa:not(.hecha):not(.actual) .e-nom{color:var(--ink-faint)}
+  .e-fila{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+  .e-chip{display:flex;align-items:center;gap:7px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--surface-2);font-size:13px;font-weight:700;flex-shrink:0}
+  .e-chip .ini{width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;flex-shrink:0}
+  .e-asignar{padding:6px 14px;border-radius:999px;border:1px solid var(--line-strong);background:none;font-size:13px;font-weight:700;color:var(--ink-soft)}
+  .e-terminar{padding:7px 14px;border-radius:10px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:800;border:0;transition:transform 130ms var(--ease-out)}
+  .e-terminar:active{transform:scale(0.96)}
+  .e-hecha-info{font-size:12px;color:var(--ink-faint)}
+
+  .lista-t{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .fila-t{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-align:left;transition:transform 130ms var(--ease-out),border-color 160ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .fila-t:active{transform:scale(0.98)}
+  .fila-t.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .fila-t .u-avatar{width:38px;height:38px;font-size:14px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+  .fila-t .nom{font-size:15px;font-weight:800;display:block}
+  .fila-t .esp{font-size:12.5px;color:var(--ink-soft);margin-top:1px;display:block}
+
+  .foto-opc{display:flex;align-items:center;gap:12px;margin-top:4px}
+  .foto-prev{width:56px;height:56px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .foto-prev img{width:100%;height:100%;object-fit:cover}
+  .foto-btn{flex:1;height:44px;border:1px solid var(--line-strong);border-radius:12px;background:none;font-size:13.5px;font-weight:700;color:var(--ink-soft)}
+</style>
+</head>
+<body data-requiere-sesion="si" data-modo="produccion">
+
+<header class="topbar" id="topbar">
+  <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+  <div class="topbar-text">
+    <div class="topbar-title">Producción</div>
+    <div class="topbar-sub" id="subtitulo">Cargando</div>
+  </div>
+  <button class="icon-btn" id="btnActualizar" aria-label="Actualizar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+  </button>
+</header>
+
+<main class="page">
+  <div class="chips" id="chips" role="tablist"></div>
+  <section class="vlista" id="lista" aria-live="polite">
+    <div class="sk-vcard"></div><div class="sk-vcard"></div><div class="sk-vcard"></div>
+  </section>
+</main>
+
+<div class="hidden" id="menuModulos" data-activo="produccion"></div>
+
+<!-- Ficha del pedido: productos y sus etapas -->
+<div class="sheet-scrim" id="scrimFicha" data-cerrar="sheetFicha"></div>
+<section class="sheet sheet-auto" id="sheetFicha" role="dialog" aria-modal="true" aria-label="Pedido">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetFicha" aria-label="Cerrar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sheet-body" id="fichaBody" style="padding-top:18px"></div>
+</section>
+
+<!-- Asignar trabajador a una etapa -->
+<div class="sheet-scrim scrim-top" id="scrimAsignar" data-cerrar="sheetAsignar"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetAsignar" role="dialog" aria-modal="true" aria-labelledby="asignarTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="asignarTitulo">Asignar</h2>
+    <button class="icon-btn" data-cerrar="sheetAsignar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="field-label" id="asignarSub" style="margin-bottom:10px"></p>
+    <div class="lista-t" id="listaTrabajadores"></div>
+  </div>
+</section>
+
+<!-- Marcar etapa como terminada -->
+<div class="sheet-scrim scrim-top" id="scrimTerminar" data-cerrar="sheetTerminar"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetTerminar" role="dialog" aria-modal="true" aria-labelledby="terminarTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="terminarTitulo">Marcar terminado</h2>
+    <button class="icon-btn" data-cerrar="sheetTerminar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <label class="field-label">Foto (opcional)</label>
+    <div class="foto-opc">
+      <div class="foto-prev" id="terminarFotoPrev"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/></svg></div>
+      <button type="button" class="foto-btn" id="btnTerminarFoto">Tomar foto</button>
+      <input type="file" accept="image/*" capture="environment" id="terminarFotoInput" class="hidden">
+    </div>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnConfirmarTerminar">Marcar terminado</button></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/vendor/supabase.js?v=37"></script>
+<script src="assets/js/supabase-client.js?v=37"></script>
+<script src="assets/js/img-compress.js?v=37"></script>
+<script src="assets/js/comun.js?v=37"></script>
+<script src="assets/js/avisos.js?v=37"></script>
+<script src="assets/js/sesion.js?v=37"></script>
+<script src="assets/js/ventas-comun.js?v=37"></script>
+<script src="assets/js/produccion.js?v=37"></script>
+</body>
+</html>

@@ -15,7 +15,7 @@
       icon:'<path d="M6 2l1.5 4h9L18 2"/><rect x="3" y="6" width="18" height="15" rx="2"/><path d="M8 11a4 4 0 0 0 8 0"/>' },
     { id:'catalogo',     nombre:'Catálogo',     href:'catalogo.html', listo:true,
       icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/>' },
-    { id:'produccion',   nombre:'Producción',   href:null,            listo:false,
+    { id:'produccion',   nombre:'Producción',   href:'produccion.html', listo:true,
       icon:'<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>' }
   ];
   function iconoModulo(m, size){
@@ -41,12 +41,21 @@
     const { data } = await db.auth.getSession();
     return data && data.session ? data.session : null;
   }
+  // Producción solo lo usan los administradores (Gualfredo/Ray): al resto no se le
+  // muestra el botón del menú de abajo.
+  function ocultarProduccionSiNoAdmin(p){
+    if(!p || p.rol === 'admin') return;
+    const cont = document.getElementById('menuModulos');
+    const item = cont && cont.querySelector('a.nav-item[href="produccion.html"]');
+    if(item) item.remove();
+  }
   async function perfil(){
-    if(perfilActual) return perfilActual;
+    if(perfilActual){ ocultarProduccionSiNoAdmin(perfilActual); return perfilActual; }
     const s = await sesionActual();
     if(!s) return null;
     const { data } = await db.from('perfiles').select('*').eq('id', s.user.id).maybeSingle();
     perfilActual = data || { nombre: (s.user.user_metadata || {}).nombre || 'Usuario', rol: (s.user.user_metadata || {}).rol || 'vendedor' };
+    ocultarProduccionSiNoAdmin(perfilActual);
     return perfilActual;
   }
   // En los módulos: si no hay sesión, vuelve a la pantalla de acceso
