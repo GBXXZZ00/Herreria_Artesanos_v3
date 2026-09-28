@@ -8,255 +8,417 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
-<title>Catálogo · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=15">
+<title>Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=17">
 <style>
-  #scrimForm{z-index:45} #sheetForm{z-index:46}
-  .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
-
-  /* Cuadrícula de modelos */
-  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px 18px 0}
-  @media (min-width:620px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-  .card-wrap{opacity:0;transform:translateY(10px);animation:cardIn 380ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms)}
-  @keyframes cardIn{to{opacity:1;transform:none}}
-  .card{
-    width:100%;height:100%;text-align:left;display:flex;flex-direction:column;cursor:pointer;
-    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:8px 8px 12px;box-shadow:var(--shadow-sm);
-    transition:transform 150ms var(--ease-out);
-  }
-  .card:active{transform:scale(0.97)}
-  .card-photo{
-    position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface-2);
-    display:flex;align-items:center;justify-content:center;color:var(--ink-faint);
-  }
-  .card-photo img{width:100%;height:100%;object-fit:cover}
-  .card-badge{
-    position:absolute;top:8px;left:8px;padding:4px 9px;border-radius:999px;
-    background:rgba(255,255,255,0.94);font-size:11px;font-weight:800;color:var(--ink);
-  }
-  .card-dots{position:absolute;right:8px;bottom:8px;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,0.94)}
-  .card-dots .swatch{width:12px;height:12px}
-  .card-overlay{
-    position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-    background:rgba(255,255,255,0.78);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
-    font-size:13px;font-weight:700;color:var(--ink);text-align:center;padding:10px;
-  }
-  .card-overlay .spinner{border-color:rgba(23,85,92,0.25);border-top-color:var(--accent)}
-  .card-overlay.err{color:var(--danger)}
-  .card-overlay .link-btn{color:var(--danger)}
-  .card-name{font-size:15px;font-weight:700;line-height:1.25;margin:10px 4px 0;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .card-type{font-size:12.5px;color:var(--ink-soft);margin:3px 4px 0}
-  .card-price{font-size:16.5px;font-weight:800;color:var(--accent);margin:auto 4px 0;padding-top:6px;letter-spacing:-0.2px}
-
-  /* Esqueleto de carga */
-  .sk{background:var(--surface-2);border-radius:10px;animation:pulse 1.2s ease-in-out infinite}
+  .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
+  .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
+  .vista.entra{opacity:1;transform:none}
+  .topbar .avatar{border:0;width:40px;height:40px;font-size:15px;transition:transform 140ms var(--ease-out)}
+  .topbar .avatar:active{transform:scale(0.94)}
+  .ini-fecha{font-size:15px;color:var(--ink-soft);margin:0 0 18px}
+  .acceso-marca img{display:block;margin:0 auto}
+  .ini-tile.ancho{grid-column:1 / -1;flex-direction:row;align-items:center}
+  .ini-tile.ancho .flecha{margin-left:auto;color:var(--accent)}
+  .ini-tile.pronto{gap:10px}
+  .ini-tile.pronto .ini-ico{width:44px;height:44px;border-radius:13px}
+  .ini-tile.pronto .ini-nombre{font-size:16.5px}
+  .ini-grid .ini-tile .pill-pronto{position:absolute;top:14px;right:14px;font-size:11.5px;font-weight:700;color:var(--ink-soft);background:#fff;border-radius:999px;padding:3px 9px}
+  .ini-cuenta .num{color:var(--accent);font-weight:800}
+  .sk-linea{height:14px;border-radius:7px;background:var(--surface-2);animation:pulse 1.2s ease-in-out infinite}
   @keyframes pulse{50%{opacity:.55}}
-  .sk-card{border:1px solid var(--line);border-radius:var(--radius);padding:8px 8px 12px}
-  .sk-photo{aspect-ratio:1/1;border-radius:12px}
-  .sk-line{height:12px;margin:12px 4px 0}
-
-  /* Estados vacío y error */
-  .state{grid-column:1/-1;text-align:center;padding:48px 24px 24px;color:var(--ink-soft)}
-  .state-icon{width:64px;height:64px;border-radius:20px;background:var(--surface-2);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
-  .state-title{font-size:17px;font-weight:800;color:var(--ink);margin-bottom:6px}
-  .state-text{font-size:14px;max-width:280px;margin:0 auto}
-  .state .btn-secondary{margin-top:18px}
-
-  /* Jalar para actualizar (solo con la app anclada a la pantalla de inicio) */
-  .ptr{
-    position:fixed;left:50%;top:calc(76px + var(--safe-t));z-index:15;
-    width:38px;height:38px;margin-left:-19px;border-radius:50%;background:var(--surface);
-    box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center;color:var(--accent);
-    opacity:0;transform:translateY(-40px);pointer-events:none;
-  }
-  .ptr.anim{transition:transform 260ms var(--ease-out),opacity 200ms var(--ease-out)}
-
-  .precio-preview{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);margin-top:8px}
-  .precio-preview b{color:var(--accent);font-weight:800}
-
+  .quien .sk-quien{height:76px;border-radius:var(--radius);background:var(--surface-2);animation:pulse 1.2s ease-in-out infinite}
+  .acceso-err{text-align:center;padding:20px 8px;color:var(--ink-soft);font-size:15px;line-height:1.5}
+  .acceso-err .btn-secundario{margin-top:12px}
+  .btn-secundario{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:15.5px;color:var(--ink);transition:transform 140ms var(--ease-out)}
+  .btn-secundario:active{transform:scale(0.97)}
+  .pin-paso{display:flex;flex-direction:column}
+  .pin-cargando .teclado{opacity:.45;pointer-events:none}
+  .cuenta-cab{display:flex;align-items:center;gap:14px;padding:6px 0 18px}
+  .cuenta-cab .avatar{width:54px;height:54px;font-size:21px}
+  .cuenta-op{display:flex;align-items:center;gap:14px;width:100%;padding:16px 4px;font-size:16.5px;font-weight:700;color:var(--ink);text-align:left;transition:transform 140ms var(--ease-out)}
+  .cuenta-op:active{transform:scale(0.98)}
+  .cuenta-op + .cuenta-op{border-top:1px solid var(--line)}
+  .cuenta-op .op-ico{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0}
+  .cuenta-op.salir{color:var(--danger)}
+  .cuenta-op.salir .op-ico{color:var(--danger)}
+  #sheetPin .sheet-body{padding-bottom:calc(24px + var(--safe-b))}
+  #sheetPin .pin-cab{margin-top:4px}
 </style>
 </head>
 <body>
 
-<header class="topbar" id="topbar">
-  <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
-  <div class="topbar-text">
-    <div class="topbar-title">Catálogo</div>
-    <div class="topbar-sub" id="subtitulo">Cargando modelos</div>
-  </div>
-  <button class="icon-btn" id="btnActualizar" aria-label="Actualizar">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
-  </button>
-</header>
+<!-- ============ Acceso ============ -->
+<div class="vista hidden" id="vAcceso">
+  <div class="acceso">
+    <div class="acceso-marca">
+      <img src="assets/img/icon-192.png" alt="">
+      <h1>Herrería Artesanos</h1>
+      <div class="eslogan">Creando con distinción</div>
+    </div>
 
-<div class="ptr" id="ptr" aria-hidden="true">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+    <div id="pasoQuien">
+      <h2 class="acceso-titulo">¿Quién eres?</h2>
+      <div class="quien" id="listaQuien">
+        <div class="sk-quien"></div><div class="sk-quien"></div><div class="sk-quien"></div>
+      </div>
+    </div>
+
+    <div class="pin-paso hidden" id="pasoPin">
+      <div class="pin-cab">
+        <div class="avatar" id="pinAvatar"></div>
+        <h2 id="pinNombre"></h2>
+        <p>Escribe tu PIN de 6 números</p>
+      </div>
+      <div class="pin-puntos" id="pinPuntos" aria-hidden="true"></div>
+      <div class="pin-msg" id="pinMsg" role="alert"></div>
+      <div class="teclado" id="pinTeclado"></div>
+      <button class="link-simple" id="btnNoSoyYo">No soy yo</button>
+    </div>
+  </div>
 </div>
 
-<main class="page">
-  <div class="chips" id="chips" role="tablist" aria-label="Filtrar por tipo"></div>
-  <label class="search-box">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <input type="search" id="buscador" placeholder="Buscar modelo" autocomplete="off" aria-label="Buscar modelo">
-  </label>
-  <section class="grid" id="grid" aria-live="polite"></section>
-</main>
-
-<button class="fab" id="btnNuevo" aria-label="Nuevo modelo">
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-</button>
-
-<div class="bottom-nav-wrap">
-  <nav class="bottom-nav" aria-label="Módulos">
-    <button class="nav-item disabled" disabled aria-label="Ventas, próximamente">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>
-      <span>Ventas</span>
-    </button>
-    <button class="nav-item active" aria-current="page">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/></svg>
-      <span>Catálogo</span>
-    </button>
-    <button class="nav-item disabled" disabled aria-label="Producción, próximamente">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/></svg>
-      <span>Producción</span>
-    </button>
-    <button class="nav-item disabled" disabled aria-label="Nómina, próximamente">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
-      <span>Nómina</span>
-    </button>
-  </nav>
-</div>
-
-<!-- Ficha: lista de disponibles, ficha del modelo y ficha de una pieza -->
-<div class="sheet-scrim" id="scrimDetalle" data-cerrar="sheetDetalle"></div>
-<section class="sheet sheet-hero" id="sheetDetalle" role="dialog" aria-modal="true" aria-label="Detalle">
-  <div class="sheet-handle"></div>
-  <button class="sheet-x" data-cerrar="sheetDetalle" aria-label="Cerrar">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-  </button>
-  <div id="detalleVolver"></div>
-  <div class="sheet-body" id="detalleBody"></div>
-  <div class="sheet-foot" id="detalleFoot"></div>
-</section>
-
-<!-- Formulario: nuevo / editar modelo -->
-<div class="sheet-scrim" id="scrimForm" data-cerrar="sheetForm"></div>
-<section class="sheet" id="sheetForm" role="dialog" aria-modal="true" aria-labelledby="formTitulo">
-  <div class="sheet-handle"></div>
-  <div class="sheet-head">
-    <div>
-      <h2 class="sheet-title" id="formTitulo">Nuevo modelo</h2>
-      <div class="topbar-sub" id="formSub"></div>
+<!-- ============ Inicio ============ -->
+<div class="vista hidden" id="vInicio">
+  <header class="topbar" id="topbar">
+    <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+    <div class="topbar-text">
+      <div class="topbar-title">Artesanos</div>
+      <div class="topbar-sub eslogan" style="font-size:13.5px">Creando con distinción</div>
     </div>
-    <button class="icon-btn" data-cerrar="sheetForm" aria-label="Cerrar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-    </button>
-  </div>
+    <button class="avatar" id="btnCuenta" aria-label="Mi cuenta"></button>
+  </header>
 
-  <div class="sheet-body" id="formBody">
-    <div class="type-row" id="tipoFila"></div>
+  <main class="page">
+    <section class="ini">
+      <h1 class="ini-title" id="saludo">Hola</h1>
+      <p class="ini-fecha" id="fecha"></p>
 
-    <div class="field">
-      <span class="field-label" id="fotosLabel">Fotos</span>
-      <div class="photos" id="fotos"></div>
-      <div class="field-hint hidden" id="fotosHint">Si no tomas foto, se usa la del modelo en ese color.</div>
-    </div>
-
-    <div class="field hidden" id="campoColor">
-      <span class="field-label">Color</span>
-      <div class="opts" style="--cols:2" id="optsColor"></div>
-    </div>
-
-    <div class="field hidden" id="campoSede">
-      <span class="field-label">¿En qué sede está?</span>
-      <div class="opts" style="--cols:1" id="optsSede"></div>
-    </div>
-
-    <div class="field" id="campoNombre">
-      <label class="field-label" for="fNombre">Nombre del modelo</label>
-      <input class="input" id="fNombre" type="text" autocomplete="off" placeholder="Ej: Lineal con bitral">
-      <div class="field-error">Ponle un nombre al modelo</div>
-    </div>
-
-    <div id="specs"></div>
-
-    <div class="field" id="campoPrecio">
-      <label class="field-label" for="fPrecio" id="precioLabel">Precio base</label>
-      <div class="input-affix">
-        <span class="affix">$</span>
-        <input class="input" id="fPrecio" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
-      </div>
-      <div class="precio-preview" id="precioPreviewFila">En el catálogo se verá: <b id="precioPreview">Desde $0</b></div>
-      <div class="field-error">Ingresa un precio mayor a 0</div>
-    </div>
-
-    <div class="field hidden" id="campoCantidad">
-      <span class="field-label">Cantidad</span>
-      <div class="stepper">
-        <button type="button" data-cant="-1" aria-label="Una menos">−</button>
-        <span id="cantValor">1</span>
-        <button type="button" data-cant="1" aria-label="Una más">+</button>
-      </div>
-      <div class="field-hint">Piezas idénticas en la misma sede.</div>
-    </div>
-
-    <div class="fold" id="foldPublico">
-      <button class="fold-head" type="button" id="foldPublicoBtn" aria-expanded="false">
-        <span>Para el catálogo público<span class="muted" id="foldResumen">Etiqueta, descripción y características</span></span>
-        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      <button class="ini-cta" id="btnNuevaVenta" disabled>
+        <span class="ini-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span><span class="ini-nombre">Nueva venta</span><span class="ini-cuenta">Muy pronto</span></span>
       </button>
-      <div class="fold-body">
-        <div class="field">
-          <label class="field-label" for="fBadge">Etiqueta (opcional)</label>
-          <input class="input" id="fBadge" type="text" autocomplete="off" placeholder="Ej: Nuevo, Más vendido">
-        </div>
-        <div class="field">
-          <label class="field-label" for="fDescripcion">Descripción (opcional)</label>
-          <textarea class="input" id="fDescripcion" placeholder="Lo que verá el cliente, en palabras sencillas"></textarea>
-        </div>
-        <div class="field">
-          <label class="field-label" for="fCaracteristica">Características (opcional)</label>
-          <div class="tags" id="tags"></div>
-          <div class="input-row">
-            <input class="input" id="fCaracteristica" type="text" autocomplete="off" placeholder="Ej: Lámina calibre 16">
-            <button class="btn-secondary" type="button" id="btnAgregarCar" style="flex:0 0 auto">Agregar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="sheet-foot">
-    <button class="btn-primary" type="button" id="btnGuardar">Guardar modelo</button>
+      <div class="ini-grid" id="modulos"></div>
+    </section>
+  </main>
+
+  <div class="bottom-nav-wrap" id="menuModulos" data-activo="inicio"></div>
+</div>
+
+<!-- Mi cuenta -->
+<div class="sheet-scrim" id="scrimCuenta" data-cerrar="sheetCuenta"></div>
+<section class="sheet sheet-auto" id="sheetCuenta" role="dialog" aria-modal="true" aria-label="Mi cuenta">
+  <div class="sheet-handle"></div>
+  <div class="sheet-body">
+    <div class="cuenta-cab">
+      <div class="avatar" id="cuentaAvatar"></div>
+      <div><div class="quien-nombre" id="cuentaNombre"></div><div class="quien-rol" id="cuentaRol"></div></div>
+    </div>
+    <button class="cuenta-op" id="btnCambiarPin">
+      <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+      Cambiar mi PIN
+    </button>
+    <button class="cuenta-op salir" id="btnSalir">
+      <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></svg></span>
+      Salir
+    </button>
   </div>
 </section>
 
-<!-- Selector de tipo (encima de todo) -->
-<div class="sheet-scrim scrim-top" id="scrimTipo" data-cerrar="sheetTipo"></div>
-<section class="sheet sheet-auto sheet-top" id="sheetTipo" role="dialog" aria-modal="true" aria-labelledby="tipoTitulo">
+<!-- Cambiar PIN -->
+<div class="sheet-scrim scrim-top" id="scrimPin" data-cerrar="sheetPin"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetPin" role="dialog" aria-modal="true" aria-label="Cambiar PIN">
   <div class="sheet-handle"></div>
-  <div class="sheet-head">
-    <h2 class="sheet-title" id="tipoTitulo">¿Qué vas a agregar?</h2>
-    <button class="icon-btn" data-cerrar="sheetTipo" aria-label="Cerrar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-    </button>
-  </div>
   <div class="sheet-body">
-    <div class="type-grid" id="tipoGrid"></div>
+    <div class="pin-cab">
+      <h2 id="nuevoTitulo">Nuevo PIN</h2>
+      <p id="nuevoSub">Escribe 6 números que recuerdes</p>
+    </div>
+    <div class="pin-puntos" id="nuevoPuntos" aria-hidden="true"></div>
+    <div class="pin-msg" id="nuevoMsg" role="alert"></div>
+    <div class="teclado" id="nuevoTeclado"></div>
   </div>
 </section>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=15"></script>
-<script src="assets/js/supabase-client.js?v=15"></script>
-<script src="assets/js/img-compress.js?v=15"></script>
-<script src="assets/js/comun.js?v=15"></script>
-<script src="assets/js/catalogo.js?v=15"></script>
+<script src="assets/vendor/supabase.js?v=17"></script>
+<script src="assets/js/supabase-client.js?v=17"></script>
+<script src="assets/js/comun.js?v=17"></script>
+<script src="assets/js/sesion.js?v=17"></script>
+<script>
+(function(){
+  'use strict';
+  const db = window.db;
+  const { esc, toast, abrirHoja, cerrarHoja } = window.AH;
+  const S = window.Sesion;
+  const $ = (id) => document.getElementById(id);
+  const LARGO = 6;
+
+  const inicial = (n) => (String(n || '?').trim()[0] || '?').toUpperCase();
+  const nombreRol = (r) => r === 'admin' ? 'Administrador' : 'Vendedor';
+
+  function mostrar(vista){
+    ['vAcceso', 'vInicio'].forEach(id => {
+      const el = $(id);
+      if(id === vista){
+        el.classList.remove('hidden');
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('entra')));
+      } else {
+        el.classList.add('hidden'); el.classList.remove('entra');
+      }
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Teclado numérico reutilizable (acceso y cambio de PIN)
+  // ---------------------------------------------------------------------------
+  const ICON_BORRAR = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M17 9l-6 6M11 9l6 6"/></svg>';
+  function crearTeclado(opc){
+    const puntos = $(opc.puntos), teclado = $(opc.teclado), msg = $(opc.msg);
+    let valor = '', bloqueado = false;
+    puntos.innerHTML = '<span></span>'.repeat(LARGO);
+    const teclas = ['1','2','3','4','5','6','7','8','9','', '0', 'x'];
+    teclado.innerHTML = teclas.map(t =>
+      t === '' ? '<span class="tecla vacia"></span>'
+      : t === 'x' ? `<button class="tecla borrar" data-t="x" aria-label="Borrar">${ICON_BORRAR}</button>`
+      : `<button class="tecla" data-t="${t}">${t}</button>`).join('');
+    function pintar(){
+      [...puntos.children].forEach((s, i) => s.classList.toggle('lleno', i < valor.length));
+    }
+    function tecla(t){
+      if(bloqueado) return;
+      if(t === 'x'){ valor = valor.slice(0, -1); pintar(); return; }
+      if(valor.length >= LARGO) return;
+      if(msg.textContent){ msg.textContent = ''; puntos.classList.remove('error'); }
+      valor += t; pintar();
+      if(valor.length === LARGO){
+        const v = valor;
+        setTimeout(() => opc.alCompletar(v), 120); // deja ver el último punto
+      }
+    }
+    teclado.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-t]');
+      if(b) tecla(b.dataset.t);
+    });
+    return {
+      tecla,
+      limpiar(){ valor = ''; this.bloquear(false); msg.textContent = ''; puntos.classList.remove('error'); pintar(); },
+      error(texto){
+        valor = ''; this.bloquear(false); pintar();
+        msg.textContent = texto;
+        puntos.classList.remove('error'); void puntos.offsetWidth; puntos.classList.add('error');
+        if(navigator.vibrate) navigator.vibrate(60);
+      },
+      bloquear(si){ bloqueado = si; teclado.parentElement.classList.toggle('pin-cargando', si); },
+      activo(){ return !teclado.closest('.hidden') && (!teclado.closest('.sheet') || teclado.closest('.sheet').classList.contains('open')); }
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Acceso
+  // ---------------------------------------------------------------------------
+  let perfiles = [];
+  let elegido = null;
+
+  async function cargarPerfiles(){
+    $('listaQuien').innerHTML = '<div class="sk-quien"></div><div class="sk-quien"></div><div class="sk-quien"></div>';
+    try{
+      if(!db) throw new Error('sin conexión');
+      const { data, error } = await db.from('perfiles').select('usuario,nombre,rol,orden').eq('activo', true).order('orden', { ascending:true });
+      if(error) throw error;
+      perfiles = data || [];
+      $('listaQuien').innerHTML = perfiles.length ? perfiles.map((p, i) => `
+        <button class="quien-btn" data-usuario="${esc(p.usuario)}" style="--i:${i}">
+          <span class="avatar">${esc(inicial(p.nombre))}</span>
+          <span><span class="quien-nombre" style="display:block">${esc(p.nombre)}</span><span class="quien-rol">${nombreRol(p.rol)}</span></span>
+        </button>`).join('')
+        : '<div class="acceso-err">No hay usuarios activos.</div>';
+    } catch(e){
+      $('listaQuien').innerHTML = `<div class="acceso-err">No se pudo conectar. Revisa tu internet.<br><button class="btn-secundario" id="btnReintentar">Reintentar</button></div>`;
+    }
+  }
+  $('listaQuien').addEventListener('click', (e) => {
+    if(e.target.closest('#btnReintentar')){ cargarPerfiles(); return; }
+    const b = e.target.closest('[data-usuario]');
+    if(!b) return;
+    elegido = perfiles.find(p => p.usuario === b.dataset.usuario);
+    if(!elegido) return;
+    $('pinAvatar').textContent = inicial(elegido.nombre);
+    $('pinNombre').textContent = 'Hola, ' + elegido.nombre;
+    tecladoAcceso.limpiar();
+    $('pasoQuien').classList.add('hidden');
+    $('pasoPin').classList.remove('hidden');
+  });
+  $('btnNoSoyYo').addEventListener('click', () => {
+    elegido = null;
+    $('pasoPin').classList.add('hidden');
+    $('pasoQuien').classList.remove('hidden');
+  });
+
+  const tecladoAcceso = crearTeclado({
+    puntos:'pinPuntos', teclado:'pinTeclado', msg:'pinMsg',
+    async alCompletar(pin){
+      if(!elegido) return;
+      tecladoAcceso.bloquear(true);
+      try{
+        await S.entrar(elegido.usuario, pin);
+        tecladoAcceso.bloquear(false);
+        await abrirInicio();
+      } catch(err){
+        const m = String((err && err.message) || '').toLowerCase();
+        tecladoAcceso.error(
+          m.includes('invalid') ? 'PIN incorrecto'
+          : m.includes('rate') || m.includes('too many') ? 'Muchos intentos. Espera un minuto'
+          : m.includes('fetch') || m.includes('network') ? 'Sin conexión. Intenta de nuevo'
+          : 'No se pudo entrar. Intenta de nuevo');
+      }
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Inicio
+  // ---------------------------------------------------------------------------
+  const ICON_NOMINA = '<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>';
+
+  function pintarModulos(p){
+    const mods = S.MODULOS.filter(m => m.id !== 'inicio');
+    if(p && p.rol === 'admin') mods.push({ id:'nomina', nombre:'Nómina', href:null, listo:false, icon:ICON_NOMINA });
+    // Primero los módulos que ya funcionan, a lo ancho; luego los que vienen
+    const listos = mods.filter(m => m.listo), pronto = mods.filter(m => !m.listo);
+    let i = 0;
+    $('modulos').innerHTML = listos.map(m => `
+      <a class="ini-tile ancho" href="${m.href}" style="--i:${i++}">
+        <span class="ini-ico">${S.iconoModulo(m, 28)}</span>
+        <span><span class="ini-nombre">${m.nombre}</span><span class="ini-cuenta" id="cuenta-${m.id}"><span class="sk-linea" style="display:block;width:140px;margin-top:4px"></span></span></span>
+        <svg class="flecha" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>`).join('') + pronto.map(m => `
+      <div class="ini-tile pronto" style="--i:${i++}" aria-disabled="true">
+        <span class="pill-pronto">Pronto</span>
+        <span class="ini-ico">${S.iconoModulo(m, 22)}</span>
+        <span><span class="ini-nombre">${m.nombre}</span><span class="ini-cuenta">En construcción</span></span>
+      </div>`).join('');
+  }
+
+  async function contarCatalogo(){
+    const el = $('cuenta-catalogo');
+    if(!el) return;
+    try{
+      const [rc, rp] = await Promise.all([
+        db.from('catalogo').select('id', { count:'exact', head:true }),
+        db.from('disponibles').select('cantidad').eq('estado', 'disponible').gt('cantidad', 0)
+      ]);
+      if(rc.error || rp.error) throw (rc.error || rp.error);
+      const n = rc.count || 0;
+      const d = (rp.data || []).reduce((a, x) => a + (x.cantidad || 0), 0);
+      el.innerHTML = `${n} ${n === 1 ? 'modelo' : 'modelos'}` + (d ? ` · <span class="num">${d} ${d === 1 ? 'disponible' : 'disponibles'}</span>` : '');
+    } catch(e){
+      el.textContent = 'Modelos y disponibles';
+    }
+  }
+
+  let perfilActual = null;
+  async function abrirInicio(){
+    const p = await S.perfil();
+    perfilActual = p;
+    const nombre = (p && p.nombre) || '';
+    $('saludo').textContent = nombre ? `Hola, ${nombre}` : 'Hola';
+    const f = new Date().toLocaleDateString('es-VE', { weekday:'long', day:'numeric', month:'long' });
+    $('fecha').textContent = f.charAt(0).toUpperCase() + f.slice(1);
+    $('btnCuenta').textContent = inicial(nombre);
+    $('cuentaAvatar').textContent = inicial(nombre);
+    $('cuentaNombre').textContent = nombre;
+    $('cuentaRol').textContent = nombreRol(p && p.rol);
+    pintarModulos(p);
+    mostrar('vInicio');
+    contarCatalogo();
+  }
+
+  $('btnCuenta').addEventListener('click', () => abrirHoja('sheetCuenta'));
+  $('btnSalir').addEventListener('click', async () => {
+    cerrarHoja('sheetCuenta', true);
+    await S.salir();
+    elegido = null;
+    $('pasoPin').classList.add('hidden');
+    $('pasoQuien').classList.remove('hidden');
+    mostrar('vAcceso');
+    cargarPerfiles();
+  });
+
+  // Cambiar PIN: se escribe dos veces
+  let primerPin = null;
+  function reiniciarNuevo(){
+    primerPin = null;
+    $('nuevoTitulo').textContent = 'Nuevo PIN';
+    $('nuevoSub').textContent = 'Escribe 6 números que recuerdes';
+    tecladoNuevo.limpiar();
+  }
+  const tecladoNuevo = crearTeclado({
+    puntos:'nuevoPuntos', teclado:'nuevoTeclado', msg:'nuevoMsg',
+    async alCompletar(pin){
+      if(primerPin === null){
+        if(/^(\d)\1{5}$/.test(pin) || pin === '123456' || pin === '654321'){
+          tecladoNuevo.error('Muy fácil de adivinar. Usa otro');
+          return;
+        }
+        primerPin = pin;
+        $('nuevoTitulo').textContent = 'Repite tu nuevo PIN';
+        $('nuevoSub').textContent = 'Para confirmar';
+        tecladoNuevo.limpiar();
+        return;
+      }
+      if(pin !== primerPin){
+        primerPin = null;
+        $('nuevoTitulo').textContent = 'Nuevo PIN';
+        $('nuevoSub').textContent = 'Escribe 6 números que recuerdes';
+        tecladoNuevo.error('No coinciden. Empieza de nuevo');
+        return;
+      }
+      tecladoNuevo.bloquear(true);
+      try{
+        await S.cambiarPin(pin);
+        tecladoNuevo.bloquear(false);
+        cerrarHoja('sheetPin', true);
+        toast('Listo, tu PIN cambió');
+      } catch(err){
+        tecladoNuevo.bloquear(false);
+        primerPin = null;
+        $('nuevoTitulo').textContent = 'Nuevo PIN';
+        const m = String((err && err.message) || '').toLowerCase();
+        tecladoNuevo.error(m.includes('same') || m.includes('different') ? 'Ese ya es tu PIN actual' : 'No se pudo cambiar. Intenta de nuevo');
+      }
+    }
+  });
+  $('btnCambiarPin').addEventListener('click', () => {
+    cerrarHoja('sheetCuenta', true);
+    reiniciarNuevo();
+    abrirHoja('sheetPin');
+  });
+
+  // Teclado físico (computadora)
+  document.addEventListener('keydown', (e) => {
+    const t = /^\d$/.test(e.key) ? e.key : e.key === 'Backspace' ? 'x' : null;
+    if(!t) return;
+    if(tecladoNuevo.activo()) tecladoNuevo.tecla(t);
+    else if(tecladoAcceso.activo()) tecladoAcceso.tecla(t);
+  });
+
+  window.addEventListener('scroll', () => $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
+
+  // Arranque: si ya hay sesión guardada, directo al inicio
+  (async function(){
+    let s = null;
+    try{ s = await S.sesionActual(); } catch(e){}
+    if(s){ await abrirInicio(); }
+    else { mostrar('vAcceso'); cargarPerfiles(); }
+  })();
+})();
+</script>
 </body>
 </html>

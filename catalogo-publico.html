@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=15">
+<link rel="stylesheet" href="assets/css/base.css?v=17">
 <style>
   /* Letra más grande: lo usan clientes de todas las edades */
   body{font-size:16px}
@@ -87,6 +87,10 @@
   .ini-todo{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:14px;padding:18px 16px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);font-size:17px;font-weight:800;color:var(--ink);transition:transform 140ms var(--ease-out)}
   .ini-todo:active{transform:scale(0.98)}
   .ini-todo svg{color:var(--accent)}
+  a.ini-todo{text-decoration:none}
+  .preg-txt{display:flex;flex-direction:column;gap:2px;text-align:left}
+  .preg-s{font-size:14px;font-weight:600;color:var(--ink-soft)}
+  .preg-ico{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0}
   /* Marca */
   .marca{display:flex;justify-content:center;padding:18px 18px 4px}
   .marca img{width:min(78%, 340px);height:auto}
@@ -125,9 +129,10 @@
     <div class="ini-grid" id="iniGrid">
       <div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>
     </div>
-    <button class="ini-todo hidden" id="btnVerTodo">Ver todo el catálogo
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
-    </button>
+    <a class="ini-todo pregunta hidden" id="btnPregunta" target="_blank" rel="noopener">
+      <span class="preg-txt"><span class="preg-t">¿Tienes alguna pregunta?</span><span class="preg-s">Escríbenos por WhatsApp</span></span>
+      <span class="preg-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.6-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg></span>
+    </a>
     <div class="sedes hidden" id="sedes">
       <h2>Visítanos en Maracaibo</h2>
       <div class="sedes-grid" id="sedesLista"></div>
@@ -156,9 +161,9 @@
   <div class="sheet-foot" id="detalleFoot"></div>
 </section>
 
-<script src="assets/vendor/supabase.js?v=15"></script>
-<script src="assets/js/supabase-client.js?v=15"></script>
-<script src="assets/js/comun.js?v=15"></script>
+<script src="assets/vendor/supabase.js?v=17"></script>
+<script src="assets/js/supabase-client.js?v=17"></script>
+<script src="assets/js/comun.js?v=17"></script>
 <script>
 (function(){
   'use strict';
@@ -240,7 +245,7 @@
         </button>`;
     });
     $('iniGrid').innerHTML = html || '<div class="state">Todavía no hay nada que mostrar aquí.</div>';
-    $('btnVerTodo').classList.toggle('hidden', !html);
+    $('btnPregunta').classList.remove('hidden');
     pintarSedes();
   }
 
@@ -479,7 +484,7 @@
     const t = e.target.closest('[data-ver]');
     if(t) ir(t.dataset.ver);
   });
-  $('btnVerTodo').addEventListener('click', ()=> ir('Todos'));
+  $('btnPregunta').href = linkWa('Hola, vi el catálogo de Herrería Artesanos y tengo una pregunta: ');
   $('btnInicio').addEventListener('click', ()=>{ if(vinoDeInicio){ vinoDeInicio = false; history.back(); } else ir(null); });
   window.addEventListener('hashchange', mostrarRuta);
   $('buscador').addEventListener('input', pintar);
