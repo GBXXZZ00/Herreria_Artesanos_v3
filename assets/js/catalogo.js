@@ -110,7 +110,7 @@
     const f = m.fotos || {};
     const dots = acabados(m.tipo).filter(a => a.sw && f[a.key]);
     const n = totalDisp(m);
-    const etiqueta = m._estado ? '' : (n ? `<span class="tag-disp">Entrega inmediata · ${n}</span>` : `<span class="tag-agotado">Agotado</span>`);
+    const etiqueta = m._estado ? '' : (n ? `<div class="card-disp">${n} de entrega inmediata</div>` : `<div class="card-disp agotado">Agotado</div>`);
     return `
       <div class="card-wrap" style="--i:${Math.min(i, 12)}">
         <div class="card" role="button" tabindex="0" data-id="${esc(m.id)}">
@@ -118,12 +118,12 @@
             ${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 34)}
             ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
             ${dots.length > 1 ? `<span class="card-dots">${dots.map(d => `<span class="swatch ${d.sw}"></span>`).join('')}</span>` : ''}
-            ${etiqueta}
             ${conBorrar ? `<button class="card-del" data-borrar="${esc(m.id)}" aria-label="Eliminar ${esc(m.nombre)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>` : ''}
             ${overlayHtml(m)}
           </div>
           <div class="card-name">${esc(m.nombre)}</div>
           <div class="card-type">${esc(m.tipo)}</div>
+          ${etiqueta}
           <div class="card-price">Desde ${dinero(m.precio_base)}</div>
         </div>
       </div>`;
@@ -291,6 +291,7 @@
     $('detalleFoot').innerHTML = foot || '';
     $('detalleFoot').classList.toggle('hidden', !foot);
     $('detalleBody').scrollTop = 0;
+    window.AH.vistaInterna('sheetDetalle', !!volver);
   }
 
   function mostrarLista(m){

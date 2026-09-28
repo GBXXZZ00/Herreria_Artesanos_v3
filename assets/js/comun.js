@@ -379,9 +379,35 @@
   function cerrarHoja(id, forzar){
     const abierta = document.getElementById(id).classList.contains('open');
     const ok = cerrarInterno(id, forzar);
-    if(ok && abierta) marcarMuerta(c => c.id === id);
+    if(ok && abierta){
+      capas.forEach(c => { if(c.id === id || c.sub === id) c.muerta = true; });
+      soltarCapas();
+    }
     return ok;
   }
+
+  // Las hojas con varias vistas avisan cuando muestran una vista con "Volver" (un paso más)
+  // o regresan a la vista principal (se quita ese paso).
+  let desdeHistorial = false;
+  function vistaInterna(id, conVolver){
+    const top = capas[capas.length - 1];
+    const enSub = top && !top.muerta && top.sub === id;
+    if(conVolver && !enSub){
+      const sh = document.getElementById(id);
+      if(sh && sh.classList.contains('open')) empujarCapa({ sub:id });
+    } else if(!conVolver && enSub && !desdeHistorial){
+      top.muerta = true; soltarCapas();
+    }
+  }
+  // Tocar "Volver" es lo mismo que ir atrás: así el historial y la vista siempre coinciden
+  document.addEventListener('click', (e) => {
+    if(desdeHistorial) return;
+    const b = e.target.closest('.sheet-back');
+    if(!b) return;
+    const sh = b.closest('.sheet');
+    const top = capas[capas.length - 1];
+    if(sh && top && !top.muerta && top.sub === sh.id){ e.preventDefault(); e.stopPropagation(); history.back(); }
+  }, true);
 
   window.addEventListener('popstate', (e) => {
     if(ignorar){ ignorar = false; return; }
@@ -397,11 +423,15 @@
       const c = capas.pop();
       if(!c || c.muerta) continue;
       if(c.visor){ cerrarVisorInterno(); continue; }
+      if(c.sub){
+        // Vista interna de una hoja (ej. una pieza dentro de la lista): vuelve a la vista anterior
+        const sh = document.getElementById(c.sub);
+        const b = sh && sh.classList.contains('open') && sh.querySelector('.sheet-back');
+        if(b){ desdeHistorial = true; try{ b.click(); } finally { desdeHistorial = false; } }
+        continue;
+      }
       const sheet = document.getElementById(c.id);
       if(!sheet || !sheet.classList.contains('open')) continue;
-      // Si la hoja tiene "Volver", atrás regresa a la vista anterior dentro de la hoja
-      const volver = n === 0 && sheet.querySelector('.sheet-back');
-      if(volver){ volver.click(); capas.push(c); history.pushState(Object.assign({}, st, { ah: prof() }), ''); continue; }
       if(!cerrarInterno(c.id, false)){ capas.push(c); history.pushState(Object.assign({}, st, { ah: prof() }), ''); }
     }
     // Si arriba quedó un paso de una hoja ya cerrada, se salta
@@ -509,6 +539,6 @@
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
     fotoModelo, fotoPieza, esc, numOrNull, fmt, dinero, specChipsHtml, toast,
     abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo,
-    profundidad: prof
+    profundidad: prof, vistaInterna
   };
 })();

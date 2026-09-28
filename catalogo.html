@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Catálogo · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=18">
+<link rel="stylesheet" href="assets/css/base.css?v=19">
 <style>
   #scrimForm{z-index:45} #sheetForm{z-index:46}
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
@@ -51,6 +51,9 @@
   .card-name{font-size:15px;font-weight:700;line-height:1.25;margin:10px 4px 0;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .card-type{font-size:12.5px;color:var(--ink-soft);margin:3px 4px 0}
+  .card-disp{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--accent);margin:5px 4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.1px}
+  .card-disp::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+  .card-disp.agotado{color:var(--ink-faint);font-weight:600}
   .card-price{font-size:16.5px;font-weight:800;color:var(--accent);margin:auto 4px 0;padding-top:6px;letter-spacing:-0.2px}
 
   /* Esqueleto de carga */
@@ -234,11 +237,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=18"></script>
-<script src="assets/js/supabase-client.js?v=18"></script>
-<script src="assets/js/img-compress.js?v=18"></script>
-<script src="assets/js/comun.js?v=18"></script>
-<script src="assets/js/sesion.js?v=18"></script>
-<script src="assets/js/catalogo.js?v=18"></script>
+<script src="assets/vendor/supabase.js?v=19"></script>
+<script src="assets/js/supabase-client.js?v=19"></script>
+<script src="assets/js/img-compress.js?v=19"></script>
+<script src="assets/js/comun.js?v=19"></script>
+<script src="assets/js/sesion.js?v=19"></script>
+<script src="assets/js/catalogo.js?v=19"></script>
 </body>
 </html>
