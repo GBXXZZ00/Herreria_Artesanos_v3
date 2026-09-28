@@ -278,6 +278,7 @@
       if(editable(v)) links.push(`<a class="f-link" href="venta.html?editar=${v.id}" data-sub>${cot ? 'Editar cotización' : 'Editar venta'}${ICON_CHEV}</a>`);
       else links.push(`<span class="f-link" aria-disabled="true">Ya no se puede editar (${esc(AV.ESTADOS[v.estado].t.toLowerCase())})</span>`);
     }
+    links.push(`<a class="f-link" href="${esc(AV.urlSeguimiento(v))}" target="_blank" rel="noopener">Ver el seguimiento como lo ve el cliente${ICON_CHEV}</a>`);
     links.push(`<button type="button" class="f-link" data-accion="copiar-enlace">Copiar enlace de seguimiento${ICON_CHEV}</button>`);
     links.push(`<button type="button" class="f-link" data-accion="descargar">Descargar PDF${ICON_CHEV}</button>`);
     if(v.estado !== 'cancelada' && v.estado !== 'entregada') links.push(`<button type="button" class="f-link peligro" data-accion="cancelar">${cot ? 'Descartar cotización' : 'Cancelar venta'}</button>`);
