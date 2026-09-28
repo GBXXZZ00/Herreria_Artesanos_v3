@@ -31,8 +31,12 @@ self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   const url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((ventanas) => {
-    for (const w of ventanas) {
-      if ('focus' in w) { return w.focus().then((f) => (f && 'navigate' in f ? f.navigate(url) : null)); }
+    const scope = self.registration.scope;
+    const w = ventanas.find((x) => x.url.startsWith(scope)) || ventanas[0];
+    if (w && 'focus' in w) {
+      return w.focus()
+        .then((f) => (f && 'navigate' in f ? f.navigate(url) : self.clients.openWindow(url)))
+        .catch(() => self.clients.openWindow(url));
     }
     return self.clients.openWindow(url);
   }));

@@ -299,8 +299,8 @@
     links.push(opcion(`<a class="f-link" href="${esc(AV.urlSeguimiento(v))}" target="_blank" rel="noopener">`, 'Ver seguimiento', 'Así lo ve el cliente', '</a>'));
     links.push(opcion('<button type="button" class="f-link" data-accion="copiar-enlace">', 'Copiar enlace de seguimiento', 'Para mandarlo por otro lado', '</button>'));
     links.push(opcion('<button type="button" class="f-link" data-accion="descargar">', 'Descargar PDF', 'Guardarlo en el teléfono', '</button>'));
-    const k = PASOS.indexOf(v.estado);
-    if(esAdmin && k > 0) links.push(opcion(`<button type="button" class="f-link" data-retro="${PASOS[k - 1]}">`, `Devolver a "${AV.ESTADOS[PASOS[k - 1]].t}"`, 'Solo si se marcó por error', '</button>'));
+    const pv = pasosDe(v), k = pv.indexOf(v.estado);
+    if(esAdmin && k > 0) links.push(opcion(`<button type="button" class="f-link" data-retro="${pv[k - 1]}">`, `Devolver a "${AV.ESTADOS[pv[k - 1]].t}"`, 'Solo si se marcó por error', '</button>'));
     if(v.estado !== 'cancelada' && v.estado !== 'entregada') links.push(opcion('<button type="button" class="f-link peligro" data-accion="cancelar">', cot ? 'Descartar cotización' : 'Cancelar venta', cot ? 'El cliente no la quiere' : 'Si pagó algo, se registra la devolución', '</button>'));
     html += acordeon('mas', 'Más opciones', 'Editar, PDF, seguimiento, cancelar', `<div class="f-links" style="margin-top:0;border-top:0">${links.join('')}</div>`);
 
@@ -326,6 +326,9 @@
 
   // Estados en orden (no se saltan pasos)
   const PASOS = ['confirmada', 'en_produccion', 'lista', 'entregada'];
+  // Si todo es de entrega inmediata (ya está en tienda) no pasa por producción
+  const soloInmediata = (v) => (v.items || []).length > 0 && v.items.every(it => it.pieza_id);
+  const pasosDe = (v) => soloInmediata(v) ? PASOS.filter(p => p !== 'en_produccion') : PASOS;
   const SIGUIENTE = {
     confirmada:    { t:'Pasar a En producción', s:'El pedido entra a fabricación' },
     en_produccion: { t:'Marcar como Lista', s:'Ya está fabricado y listo para entregar' },
@@ -333,11 +336,12 @@
   };
   function estadoBloque(v){
     if(v.estado === 'cancelada') return '';
-    const k = PASOS.indexOf(v.estado);
-    let html = `<div class="estados">${PASOS.map((p, i) => `
+    const PV = pasosDe(v);
+    const k = PV.indexOf(v.estado);
+    let html = `<div class="estados" style="grid-template-columns:repeat(${PV.length},minmax(0,1fr))">${PV.map((p, i) => `
       <div class="est-i ${i < k || (i === k && v.estado === 'entregada') ? 'hecho' : ''} ${i === k && v.estado !== 'entregada' ? 'actual' : ''}">
         <span class="est-dot">${i < k || (i === k && v.estado === 'entregada') ? ICON_OK : ''}</span><span class="est-l">${esc(AV.ESTADOS[p].t)}</span></div>`).join('')}</div>`;
-    const sig = PASOS[k + 1];
+    const sig = PV[k + 1];
     if(!sig) return html + '<div class="f-nota" style="text-align:center">Pedido entregado. ¡Listo!</div>';
     if(sig === 'en_produccion' && !esAdmin){
       html += v.produccion_pedida_en
@@ -345,7 +349,7 @@
         : `<button type="button" class="btn-guia" data-accion="pedir-produccion"><span class="bg-t">Pedir a producción</span><span class="bg-s">Le llega un aviso al administrador para que lo pase</span></button>`;
       return html;
     }
-    const info = SIGUIENTE[v.estado];
+    const info = sig === 'lista' && v.estado === 'confirmada' ? { t:'Marcar como Lista', s:'Ya está en tienda, lista para entregar' } : SIGUIENTE[v.estado];
     const extra = sig === 'en_produccion' && v.produccion_pedida_en ? ` · Te lo pidió ${esc(nombres[v.produccion_pedida_por] || '')}` : '';
     return html + `<button type="button" class="btn-guia" data-estado="${sig}"><span class="bg-t">${esc(info.t)}</span><span class="bg-s">${esc(info.s)}${extra}</span></button>`;
   }
@@ -474,8 +478,8 @@
       : nuevo === 'en_produccion' ? `¿Pasar el pedido N° ${v.id} a producción?` : `¿Marcar el pedido N° ${v.id} como "${nombre}"?`;
     if(nuevo === 'entregada' && AV.resta(v) > 0) pregunta = `Todavía debe ${dinero(AV.resta(v))}. ¿Marcarlo como entregado igual?`;
     if(!confirm(pregunta)) return;
-    const { error } = await db.rpc('cambiar_estado_venta', { vid: v.id, nuevo });
-    if(error){ toast(error.message, 'error'); return; }
+    const { error } = await db.rpc('cambiar_estado_venta', { vid: v.id, nuevo, desde: v.estado });
+    if(error){ toast(error.message, 'error'); await Promise.all([recargarFicha(), cargar()]); return; }
     toast(`Pedido N° ${v.id}: ${nombre}`);
     await Promise.all([recargarFicha(), cargar()]);
   }

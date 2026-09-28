@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <title>Tu pedido · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=29">
+<link rel="stylesheet" href="assets/css/base.css?v=30">
 <style>
   body{background:var(--surface-2)}
   .seg{max-width:560px;margin:0 auto;padding:calc(18px + var(--safe-t)) 16px calc(32px + var(--safe-b))}
@@ -88,10 +88,10 @@
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=29"></script>
-<script src="assets/js/supabase-client.js?v=29"></script>
-<script src="assets/js/comun.js?v=29"></script>
-<script src="assets/js/ventas-comun.js?v=29"></script>
+<script src="assets/vendor/supabase.js?v=30"></script>
+<script src="assets/js/supabase-client.js?v=30"></script>
+<script src="assets/js/comun.js?v=30"></script>
+<script src="assets/js/ventas-comun.js?v=30"></script>
 <script>
 (function(){
   'use strict';
@@ -146,13 +146,14 @@
     </section>`;
 
     if(!cot && v.estado !== 'cancelada'){
+      const inmediata = v.items.length && v.items.every(it => it.pieza_id);
       const pasos = [
         ['confirmada', 'Confirmado', v.confirmada_en],
         ['en_produccion', 'En fabricación', v.produccion_en],
         ['lista', 'Listo para entregar', v.lista_en],
         ['entregada', 'Entregado', v.entregada_en]
-      ];
-      const k = ['confirmada', 'en_produccion', 'lista', 'entregada'].indexOf(v.estado);
+      ].filter(p => !(inmediata && p[0] === 'en_produccion'));
+      const k = pasos.map(p => p[0]).indexOf(v.estado);
       html += `<section class="tarjeta" style="--i:${i++}"><p class="t-tit">Cómo va tu pedido</p><div class="avance">
         ${pasos.map((p, n) => {
           const hecho = n < k || (n === k && v.estado === 'entregada');
@@ -179,9 +180,11 @@
     </section>`;
 
     // Avance de cada producto (por ahora todos avanzan con el pedido; con el módulo de Producción irá por producto)
-    const kp = ['confirmada', 'en_produccion', 'lista', 'entregada'].indexOf(v.estado);
-    const NOM = ['Confirmado', 'En fabricación', 'Listo', 'Entregado'];
-    const avance = (!cot && kp >= 0) ? `<div class="prod-av"><span class="prod-seg">${[0,1,2,3].map(n => `<i class="${n < kp || (n === kp && v.estado === 'entregada') ? 'on' : n === kp ? 'ahora' : ''}"></i>`).join('')}</span><span class="prod-est">${NOM[kp]}</span></div>` : '';
+    const inm = v.items.length && v.items.every(it => it.pieza_id);
+    const EST = inm ? ['confirmada', 'lista', 'entregada'] : ['confirmada', 'en_produccion', 'lista', 'entregada'];
+    const kp = EST.indexOf(v.estado);
+    const NOM = inm ? ['Confirmado', 'Listo', 'Entregado'] : ['Confirmado', 'En fabricación', 'Listo', 'Entregado'];
+    const avance = (!cot && kp >= 0) ? `<div class="prod-av"><span class="prod-seg" style="grid-template-columns:repeat(${EST.length},1fr)">${EST.map((_, n) => `<i class="${n < kp || (n === kp && v.estado === 'entregada') ? 'on' : n === kp ? 'ahora' : ''}"></i>`).join('')}</span><span class="prod-est">${NOM[kp]}</span></div>` : '';
     html += `<section class="tarjeta" style="--i:${i++}"><p class="t-tit">${v.items.length > 1 ? 'Tus productos (' + v.items.length + ')' : 'Tu producto'}</p>
       ${v.items.map(it => `<div class="prod">
         <div class="prod-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="" loading="lazy">` : iconoTipo(it.tipo, 26)}</div>
