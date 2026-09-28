@@ -265,16 +265,21 @@
     return `${esCotizacion(v) ? 'Cotizacion' : 'Pedido'}-${v.id}-${n}.pdf`;
   }
 
-  // Mensaje corto que acompaña al PDF (los detalles van en el PDF)
+  // Mensaje corto que acompaña al PDF (los detalles van en el PDF).
+  // Cotización: sin enlace de seguimiento (la cotización no lo tiene).
+  // Nota de pedido: aquí nace el enlace de seguimiento, la primera vez que se manda como venta.
   function mensajeCorto(v){
     const nombre = (v.cliente.nombre || '').split(' ')[0];
     if(esCotizacion(v)){
-      return `Hola ${nombre}, te saluda Herrería Artesanos. Te envío tu cotización N° ${v.id} por ${dinero(v.total)}. Los precios son válidos hasta el ${fechaLarga(v.vence_en)}. Cualquier duda, aquí estamos.`;
+      return [`Hola ${nombre}, te saluda Herrería Artesanos.`, '',
+        `Aquí tienes tu cotización N° ${v.id} por ${dinero(v.total)}.`, '',
+        `Cotización válida hasta el ${fechaLarga(v.vence_en)}.`, '',
+        'Cualquier duda, aquí estamos.'].join('\n');
     }
-    const l = [`Hola ${nombre}, te saluda Herrería Artesanos. Te envío tu nota de pedido N° ${v.id}.`, '',
+    const l = [`Hola ${nombre}, te saluda Herrería Artesanos.`, '', `Te envío tu nota de pedido N° ${v.id}.`, '',
       `Total: ${dinero(v.total)}`, `Pagado: ${dinero(pagado(v.abonos))}`, `Resta por pagar: ${dinero(resta(v))}`];
     if(v.fecha_entrega && !['cancelada', 'entregada'].includes(v.estado)) l.push(`Fecha de entrega: ${fechaLarga(v.fecha_entrega)}`);
-    l.push('', 'Gracias por preferirnos.');
+    l.push('', 'Puedes seguir tu pedido aquí:', '', urlSeguimiento(v), '', 'Gracias por preferirnos.');
     return l.join('\n');
   }
   // Teléfono para buscar en WhatsApp: los 10 números (414…), que coinciden como sea que esté guardado

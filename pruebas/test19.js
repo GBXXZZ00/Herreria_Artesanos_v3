@@ -12,8 +12,9 @@ const v3={id:3,cliente_id:3,estado:'confirmada',sede_id:1,vendedor_id:'u3',descu
  items:[{id:9,nombre:'Imperial',tipo:'Puerta Multilock',especificaciones:{},foto:GIF,precio_unitario:150,cantidad:1,orden:0}],
  abonos:[{id:5,monto:150,metodo:'Zelle',tipo:'abono',estado:'por_confirmar',registrado_por:'u3',fecha:new Date().toISOString()}]};
 // v4: mensaje ya enviado, pero DESPUÉS se confirmó un pago → el paso "Mensaje" debe verse pendiente
-const v4={id:4,cliente_id:3,estado:'confirmada',sede_id:1,vendedor_id:'u3',descuento:0,instalacion:0,subtotal:200,total:200,vence_en:dia(-5),fecha_entrega:dia(20),confirmada_en:new Date(Date.now()-2*864e5).toISOString(),creado_en:new Date(Date.now()-2*864e5).toISOString(),actualizado_en:new Date().toISOString(),token_seguimiento:'aaaaaaaa-bbbb-4ccc-8ddd-000000000004',produccion_pedida_en:null,
+const v4={id:4,cliente_id:3,estado:'confirmada',sede_id:1,vendedor_id:'u3',descuento:0,instalacion:0,subtotal:200,total:200,vence_en:dia(-5),fecha_entrega:dia(20),confirmada_en:new Date(Date.now()-2*864e5).toISOString(),creado_en:new Date(Date.now()-2*864e5).toISOString(),actualizado_en:new Date(Date.now()-2*864e5).toISOString(),token_seguimiento:'aaaaaaaa-bbbb-4ccc-8ddd-000000000004',produccion_pedida_en:null,
  mensaje_en:new Date(Date.now()-2*864e5).toISOString(),mensaje_estado:'confirmada',
+ pdf_en:new Date(Date.now()-2*864e5).toISOString(),pdf_por:'u2',
  items:[{id:9,nombre:'Imperial',tipo:'Puerta Multilock',especificaciones:{},foto:GIF,precio_unitario:200,cantidad:1,orden:0}],
  abonos:[{id:7,monto:200,metodo:'Zelle',tipo:'abono',estado:'confirmado',registrado_por:'u3',confirmado_en:new Date(Date.now()-3600e3).toISOString(),fecha:new Date(Date.now()-2*864e5).toISOString()}]};
 const VENTAS={3:v3,4:v4};
@@ -61,10 +62,10 @@ async function entrar(page){
  await entrar(p3);
  await p3.goto('http://127.0.0.1:8765/ventas.html?abrir=4');
  await p3.waitForSelector('#sheetFicha.open');await p3.waitForTimeout(1200);
- ok('Paso "Mensaje" pendiente tras confirmar un pago nuevo',!(await p3.$eval('#fichaBody .paso3[data-accion="mensaje"]',x=>x.classList.contains('hecho'))));
- ok('Resaltado se aplica al llegar desde el aviso',await p3.$eval('#fichaBody .paso3[data-accion="mensaje"]',x=>x.classList.contains('resaltar')));
+ ok('Botón "Avisar por WhatsApp" pendiente tras confirmar un pago nuevo',!!(await p3.$('#fichaBody .avisar-wrap [data-accion="mensaje"]')));
+ ok('Resaltado se aplica al llegar desde el aviso',await p3.$eval('#fichaBody .avisar-wrap [data-accion="mensaje"]',x=>x.classList.contains('resaltar')));
  await p3.waitForTimeout(1800);
- ok('Resaltado se quita solo después de un rato',!(await p3.$eval('#fichaBody .paso3[data-accion="mensaje"]',x=>x.classList.contains('resaltar'))));
+ ok('Resaltado se quita solo después de un rato',!(await p3.$eval('#fichaBody .avisar-wrap [data-accion="mensaje"]',x=>x.classList.contains('resaltar'))));
 
  // Más opciones: cuadrícula de botones en vez de lista de texto
  await p3.click('#fichaBody details[data-sec="mas"] summary');await p3.waitForTimeout(300);

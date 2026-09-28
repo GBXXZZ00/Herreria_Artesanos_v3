@@ -547,17 +547,10 @@ a.nav-item{text-decoration:none}
 .link-simple{display:block;margin:18px auto 0;font-size:15px;font-weight:700;color:var(--accent);padding:8px}
 a.ini-cta{text-decoration:none}
 
-/* Paso suave entre pantallas (iPhone con iOS 18.2 o más nuevo; en los demás, cambio normal) */
-@view-transition{navigation:auto}
-::view-transition-old(root){animation:vtSale 160ms var(--ease-out) both}
-::view-transition-new(root){animation:vtEntra 280ms var(--ease-out) both}
-@keyframes vtSale{to{opacity:0}}
-@keyframes vtEntra{from{opacity:0;transform:translateY(14px)}}
-@media (prefers-reduced-motion: reduce){::view-transition-old(root),::view-transition-new(root){animation:none}}
-/* La barra de abajo se queda quieta mientras cambia la pantalla */
-.bottom-nav-wrap{view-transition-name:barra}
-::view-transition-old(barra),::view-transition-new(barra){animation:none}
-::view-transition-group(barra){animation-duration:0s}
+/* Nota: se quitó el paso animado entre pantallas (view-transition). Cruzaba la pantalla
+   vieja con la nueva mientras esta recién cargaba (esqueleto, luego caché, luego datos
+   reales), y esa mezcla se sentía como un parpadeo doble al cambiar de módulo o abrir
+   una ficha. Sin animación, el cambio es instantáneo y limpio. */
 
 /* ---------- Ventas y cotizaciones (listas y ficha) ---------- */
 .estado{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:800;white-space:nowrap}
@@ -605,10 +598,11 @@ a.btn-primary{text-decoration:none;display:inline-flex;align-items:center;justif
 .paso3.hecho .p3-num{background:var(--accent);color:#fff}
 .paso3:not(.hecho):not([disabled]) .p3-num{background:var(--accent);color:#fff}
 /* Brillo breve al llegar desde un aviso, para que salte a la vista el paso pendiente */
-.paso3.resaltar{position:relative;animation:paso3Pulso 700ms var(--ease-out) 2}
+.paso3.resaltar,.btn-guia.resaltar{position:relative;animation:paso3Pulso 700ms var(--ease-out) 2}
 @keyframes paso3Pulso{0%{transform:scale(1)}50%{transform:scale(1.045)}100%{transform:scale(1)}}
-.paso3.resaltar::after{content:'';position:absolute;inset:-3px;border-radius:16px;border:2px solid var(--accent);opacity:0;pointer-events:none;animation:paso3Anillo 1400ms var(--ease-out) 2}
+.paso3.resaltar::after,.btn-guia.resaltar::after{content:'';position:absolute;inset:-3px;border-radius:16px;border:2px solid var(--accent);opacity:0;pointer-events:none;animation:paso3Anillo 1400ms var(--ease-out) 2}
 @keyframes paso3Anillo{0%{opacity:.85}100%{opacity:0}}
+.btn-guia[disabled]{opacity:.6}
 .plazo.ok{background:#E3F4EA;color:#1C6B3A}
 .f-abono.rech .f-abono-m{text-decoration:line-through;color:var(--ink-faint)}
 

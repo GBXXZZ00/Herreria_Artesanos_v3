@@ -92,6 +92,5 @@ const ventaEd={id:30,estado:'cotizacion',cliente_id:3,sede_id:1,vendedor_id:'u3'
  await p.reload();await w(1500);
  const claves=await p.evaluate(async()=>{const c=await caches.open('ah-archivos-v1');return (await c.keys()).map(k=>k.url);});
  ok('Service worker guarda css/js con versión',claves.some(u=>/base\.css\?v=/.test(u))&&claves.some(u=>/comun\.js\?v=/.test(u))&&!claves.some(u=>/\.html/.test(u)),claves.length);
- ok('Barra fija durante el cambio de pantalla',await p.$eval('.bottom-nav-wrap',x=>getComputedStyle(x).viewTransitionName)==='barra');
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

@@ -75,21 +75,18 @@ const rpcs=[];
  await p.fill('#buscador','');await p.click('.chip[data-f="abiertas"]');await w(300);
  await p.click('.vcard[data-id="2"]');await w(1500);
  ok('Ficha de cotización',(await p.textContent('.f-num')).includes('Cotización N° 2'));
- await p.waitForSelector('#fichaBody .paso3[data-accion="pdf"]:not([disabled])',{timeout:20000});
+ await p.waitForSelector('#fichaBody .avisar-wrap [data-accion="pdf"]:not([disabled])',{timeout:20000});
  ok('PDF listo en la ficha',true);
  await p.screenshot({path:'shots4/l2-ficha-cot.png'});
- ok('Avisar al cliente: 2 botones con explicación',(await p.$$('#fichaBody .pasos3.dos .paso3')).length===2&&(await p.textContent('#fichaBody .pasos3')).includes('enlace de su seguimiento'));
+ ok('Avisar al cliente: cotización es un solo botón (PDF, sin enlace)',(await p.$$('#fichaBody .avisar-wrap [data-accion]')).length===1&&(await p.textContent('#fichaBody .avisar-wrap')).includes('Enviar cotización'));
  ok('Cotización: botón guía Convertir en venta',(await p.textContent('#fichaBody .btn-guia[data-accion="convertir"]')).includes('Cuando el cliente pague'));
  ok('Menús: Pagos/Precio abierto, Más opciones cerrado',await p.$eval('#fichaBody details[data-sec="precio"]',x=>x.open)&&!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open)));
- const [pop1]=await Promise.all([ctx.waitForEvent('page',{timeout:10000}),p.click('#fichaBody .paso3[data-accion="mensaje"]')]);
- const u1=decodeURIComponent(pop1.url());await pop1.close();await w(800);
- ok('① Mensaje abre el chat con el enlace de seguimiento',u1.startsWith('https://wa.me/584141234567?text=Hola María')&&u1.includes('seguimiento.html?t=aaaaaaaa-bbbb-4ccc-8ddd-000000000002'),u1.slice(0,200));
- ok('① queda marcado con ✓',await p.$eval('#fichaBody .paso3[data-accion="mensaje"]',x=>x.classList.contains('hecho'))&&rpcs.some(x=>x[0]==='marcar_paso'&&x[1].paso==='mensaje'));
- // Enviar PDF (menú de compartir simulado)
- await p.click('#fichaBody .paso3[data-accion="pdf"]');await w(800);
- ok('② PDF queda marcado con ✓',rpcs.some(x=>x[0]==='marcar_paso'&&x[1].paso==='pdf'));
+ // Enviar PDF de la cotización (menú de compartir simulado)
+ await p.click('#fichaBody .avisar-wrap [data-accion="pdf"]');await w(800);
+ ok('PDF queda marcado con ✓',rpcs.some(x=>x[0]==='marcar_paso'&&x[1].paso==='pdf'));
  const sh=await p.evaluate(()=>({s:window.__share,c:window.__clip,t:document.getElementById('toast').textContent}));
- ok('Comparte PDF + mensaje y copia el teléfono',sh.s&&sh.s.files[0][0]==='Cotizacion-2-Maria-Gonzalez.pdf'&&sh.s.files[0][1]==='application/pdf'&&sh.s.text.startsWith('Hola María')&&sh.s.text.includes('cotización N° 2')&&sh.c==='4141234567'&&sh.t.includes('414 123 4567'),sh);
+ ok('Comparte PDF + mensaje (sin enlace de seguimiento) y copia el teléfono',sh.s&&sh.s.files[0][0]==='Cotizacion-2-Maria-Gonzalez.pdf'&&sh.s.files[0][1]==='application/pdf'&&sh.s.text.startsWith('Hola María')&&sh.s.text.includes('cotización N° 2')&&!sh.s.text.includes('seguimiento.html')&&sh.c==='4141234567'&&sh.t.includes('414 123 4567'),sh);
+ ok('Después de enviarlo se ve "Cliente avisado"',(await p.textContent('#fichaBody .avisar-wrap')).includes('Cliente avisado'));
  // Descargar PDF
  await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);
  const [dl]=await Promise.all([p.waitForEvent('download',{timeout:15000}),p.click('[data-accion="descargar"]')]);
