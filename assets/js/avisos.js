@@ -59,6 +59,29 @@
     } catch(e){}
   }
 
+  // Aviso dentro de la app cuando llega una notificación con la app abierta
+  function mostrarBanner(m){
+    let b = document.getElementById('bannerAviso');
+    if(!b){
+      b = document.createElement('button');
+      b.id = 'bannerAviso'; b.type = 'button'; b.className = 'banner-aviso';
+      document.body.appendChild(b);
+      b.addEventListener('click', () => { const u = b.dataset.url; b.classList.remove('ver'); if(u) location.href = u; });
+    }
+    b.dataset.url = m.url || '';
+    b.innerHTML = `<span class="ba-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><span class="ba-txt"><b></b><span></span></span>`;
+    b.querySelector('b').textContent = m.titulo || 'Aviso';
+    b.querySelector('.ba-txt span').textContent = m.cuerpo || '';
+    requestAnimationFrame(() => b.classList.add('ver'));
+    if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('ver'), 7000);
+  }
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.addEventListener('message', (e) => { if(e.data && e.data.tipo === 'aviso') mostrarBanner(e.data); });
+  }
+
   registrar();
+  // Si hay una versión nueva del service worker, se instala al abrir la app
+  registrar().then(r => { if(r && r.update) r.update().catch(() => {}); });
   window.Avisos = { estado, activar, olvidar, instalada, esIOS };
 })();
