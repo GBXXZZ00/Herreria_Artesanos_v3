@@ -23,8 +23,8 @@
   let todas = [];
   let cargadoUnaVez = false;
   const FILTROS = COT
-    ? [ { id:'abiertas', t:'Abiertas' }, { id:'vencidas', t:'Vencidas' }, { id:'descartadas', t:'Descartadas' } ]
-    : [ { id:'activas', t:'Activas' }, { id:'confirmar', t:'Pagos por confirmar', soloSiHay:true }, { id:'cobrar', t:'Por cobrar' }, { id:'entregadas', t:'Entregadas' }, { id:'canceladas', t:'Canceladas' } ];
+    ? [ { id:'abiertas', t:'Abiertas' }, { id:'avisar', t:'Por avisar', soloSiHay:true }, { id:'vencidas', t:'Vencidas' }, { id:'descartadas', t:'Descartadas' } ]
+    : [ { id:'activas', t:'Activas' }, { id:'avisar', t:'Por avisar', soloSiHay:true }, { id:'confirmar', t:'Pagos por confirmar', soloSiHay:true }, { id:'cobrar', t:'Por cobrar' }, { id:'entregadas', t:'Entregadas' }, { id:'canceladas', t:'Canceladas' } ];
   let filtro = FILTROS[0].id;
   { const f = new URLSearchParams(location.search).get('filtro'); if(f && FILTROS.some(x => x.id === f)) filtro = f; }
 
@@ -32,6 +32,7 @@
   // Filtros y orden
   // ---------------------------------------------------------------------------
   function enFiltro(v, f){
+    if(f === 'avisar') return porAvisar(v);
     if(COT){
       if(f === 'descartadas') return v.estado === 'cancelada';
       if(v.estado !== 'cotizacion') return false;
@@ -50,8 +51,22 @@
     if(filtro === 'abiertas') return lista.sort((a, b) => t(b.creado_en) - t(a.creado_en));
     if(filtro === 'vencidas') return lista.sort((a, b) => (b.vence_en || '').localeCompare(a.vence_en || ''));
     if(filtro === 'activas' || filtro === 'cobrar' || filtro === 'confirmar') return lista.sort(porEntrega);
+    if(filtro === 'avisar') return COT ? lista.sort((a, b) => t(b.creado_en) - t(a.creado_en)) : lista.sort(porEntrega);
     if(filtro === 'entregadas') return lista.sort((a, b) => t(b.actualizado_en) - t(a.actualizado_en));
     return lista.sort((a, b) => t(b.cancelada_en) - t(a.cancelada_en));
+  }
+
+  // Si a esta venta o cotización le falta avisar algo al cliente (para el chip "Por avisar").
+  // Misma idea que el botón de la ficha, sin depender del PDF ya preparado en memoria (eso
+  // solo existe mientras la ficha está abierta).
+  function porAvisar(v){
+    if(v.estado === 'cancelada') return false;
+    const pdfHecho = !!(v.pdf_en && new Date(v.pdf_en) >= new Date(v.actualizado_en));
+    if(AV.esCotizacion(v)) return !pdfHecho;
+    if(!pdfHecho) return true;
+    const ultimaConf = ultimaConfirmacionMs(v);
+    const msjHecho = !!(v.mensaje_en && v.mensaje_estado === v.estado && (!ultimaConf || new Date(v.mensaje_en).getTime() >= ultimaConf));
+    return !msjHecho;
   }
 
   // ---------------------------------------------------------------------------
@@ -175,7 +190,7 @@
   async function cargar(){
     try{
       const [r, ps] = await Promise.all([
-        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,produccion_pedida_en,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(id,monto,tipo,estado)').order('creado_en', { ascending:false }).limit(2000),
+        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,produccion_pedida_en,mensaje_en,mensaje_estado,pdf_en,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(id,monto,tipo,estado,confirmado_en)').order('creado_en', { ascending:false }).limit(2000),
         AV.perfiles()
       ]);
       if(r.error) throw r.error;

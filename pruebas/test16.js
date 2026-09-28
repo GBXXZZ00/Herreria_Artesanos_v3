@@ -66,7 +66,7 @@ const rpcs=[];
  await p.screenshot({path:'shots4/l0-inicio.png'});
  // Cotizaciones
  await p.click('a.ini-tile[href="cotizaciones.html"]');await p.waitForSelector('.vcard');await w(500);
- ok('Chips de cotizaciones',(await p.$$eval('.chip',x=>x.map(c=>c.textContent))).join('|')==='Abiertas · 1|Vencidas · 1|Descartadas',await p.$$eval('.chip',x=>x.map(c=>c.textContent)));
+ ok('Chips de cotizaciones',(await p.$$eval('.chip',x=>x.map(c=>c.textContent))).join('|')==='Abiertas · 1|Por avisar · 2|Vencidas · 1|Descartadas',await p.$$eval('.chip',x=>x.map(c=>c.textContent)));
  ok('Etiqueta de vencimiento',(await p.textContent('.vcard .plazo')).includes('Vence en 12 días'));
  await p.screenshot({path:'shots4/l1-cot.png'});
  await p.click('.chip[data-f="vencidas"]');await w(300);
@@ -105,7 +105,7 @@ const rpcs=[];
  await p.goBack({waitUntil:'commit'});await p.waitForSelector('#vInicio.entra');ok('Atrás desde Cotizaciones → Inicio',p.url().endsWith('index.html'));
  // Ventas
  await p.click('a.ini-tile[href="ventas.html"]');await p.waitForSelector('.vcard');await w(500);
- ok('Chips de ventas',(await p.$$eval('.chip',x=>x.map(c=>c.textContent))).join('|')==='Activas · 2|Por cobrar · 2|Entregadas · 1|Canceladas',await p.$$eval('.chip',x=>x.map(c=>c.textContent)));
+ ok('Chips de ventas',(await p.$$eval('.chip',x=>x.map(c=>c.textContent))).join('|')==='Activas · 2|Por avisar · 3|Por cobrar · 2|Entregadas · 1|Canceladas',await p.$$eval('.chip',x=>x.map(c=>c.textContent)));
  ok('Orden por fecha de entrega (la más cercana primero)',(await p.$$eval('.vcard',x=>x.map(c=>c.dataset.id))).join()==='1,2',await p.$$eval('.vcard',x=>x.map(c=>c.dataset.id)));
  await p.screenshot({path:'shots4/l3-ventas.png'});
  await p.click('.vcard[data-id="1"]');await w(1500);
