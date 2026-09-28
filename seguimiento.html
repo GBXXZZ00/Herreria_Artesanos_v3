@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <title>Tu pedido · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=30">
+<link rel="stylesheet" href="assets/css/base.css?v=31">
 <style>
   body{background:var(--surface-2)}
   .seg{max-width:560px;margin:0 auto;padding:calc(18px + var(--safe-t)) 16px calc(32px + var(--safe-b))}
@@ -88,10 +88,10 @@
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=30"></script>
-<script src="assets/js/supabase-client.js?v=30"></script>
-<script src="assets/js/comun.js?v=30"></script>
-<script src="assets/js/ventas-comun.js?v=30"></script>
+<script src="assets/vendor/supabase.js?v=31"></script>
+<script src="assets/js/supabase-client.js?v=31"></script>
+<script src="assets/js/comun.js?v=31"></script>
+<script src="assets/js/ventas-comun.js?v=31"></script>
 <script>
 (function(){
   'use strict';
@@ -135,7 +135,7 @@
     if(v.estado === 'cancelada') estadoHtml = `<div class="estado-grande rojo"><span class="ico">${ICONOS.x}</span><div><b>${cot ? 'Cotización descartada' : 'Pedido cancelado'}</b><span>${esc(fechaHora(v.cancelada_en))}</span></div></div>`;
     else if(cot) estadoHtml = `<div class="estado-grande"><span class="ico">${ICONOS.doc}</span><div><b>Cotización</b><span>Válida hasta el ${esc(AV.fechaLarga(v.vence_en))}</span></div></div>`;
     else {
-      const info = { confirmada:[ICONOS.ok, 'Pedido confirmado', 'Ya recibimos tu abono'], en_produccion:[ICONOS.herr, 'En fabricación', 'Estamos trabajando en tu pedido'],
+      const info = { confirmada:[ICONOS.ok, 'Pedido confirmado', 'Ya recibimos tu pago'], en_produccion:[ICONOS.herr, 'En fabricación', 'Estamos trabajando en tu pedido'],
         lista:[ICONOS.caja, '¡Tu pedido está listo!', 'Escríbenos para coordinar la entrega'], entregada:[ICONOS.casa, 'Entregado', 'Gracias por confiar en nosotros'] }[v.estado];
       estadoHtml = `<div class="estado-grande ${v.estado !== 'entregada' ? 'vivo' : ''}"><span class="ico">${info[0]}</span><div><b>${info[1]}</b><span>${info[2]}</span></div></div>`;
     }
@@ -169,12 +169,13 @@
     html += `<section class="tarjeta" style="--i:${i++}"><p class="t-tit">${cot ? 'Resumen' : 'Pagos'}</p>
       <div class="fila"><span>Productos</span><b>${dinero(v.subtotal)}</b></div>
       ${Number(v.descuento) ? `<div class="fila"><span>Descuento</span><b>- ${dinero(v.descuento)}</b></div>` : ''}
-      ${Number(v.instalacion) ? `<div class="fila"><span>Instalación o traslado</span><b>${dinero(v.instalacion)}</b></div>` : ''}
+      ${Number(v.instalacion) ? `<div class="fila"><span>Instalación</span><b>${dinero(v.instalacion)}</b></div>` : ''}
+      ${Number(v.traslado) ? `<div class="fila"><span>Traslado</span><b>${dinero(v.traslado)}</b></div>` : ''}
       <div class="total"><span>Total</span><b>${dinero(v.total)}</b></div>
       ${cot ? '' : `
         <div class="barra" style="margin-top:14px"><i style="transform:scaleX(${Number(v.total) ? Math.max(0, Math.min(1, pag / v.total)) : 0})"></i></div>
         <div class="barra-txt"><span>Pagado <b>${dinero(pag)}</b></span><span>${r > 0 ? 'Resta <b>' + dinero(r) + '</b>' : '<b>Pagado completo</b>'}</span></div>
-        ${v.abonos.length ? `<div style="margin-top:12px">${v.abonos.map(a => `<div class="fila" style="font-size:14px"><span>${a.tipo === 'devolucion' ? 'Devolución' : 'Abono'} · ${esc(AV.fechaNum(a.fecha))} · ${esc(a.metodo)}${a.estado === 'por_confirmar' ? ' <span class="plazo pronto" style="font-size:11px">En revisión</span>' : ''}</span><b>${a.tipo === 'devolucion' ? '- ' : ''}${dinero(a.monto)}</b></div>`).join('')}</div>` : ''}
+        ${v.abonos.length ? `<div style="margin-top:12px">${v.abonos.map(a => `<div class="fila" style="font-size:14px"><span>${a.tipo === 'devolucion' ? 'Devolución' : 'Pago'} · ${esc(AV.fechaNum(a.fecha))} · ${esc(a.metodo)}${a.estado === 'por_confirmar' ? ' <span class="plazo pronto" style="font-size:11px">En revisión</span>' : ''}</span><b>${a.tipo === 'devolucion' ? '- ' : ''}${dinero(a.monto)}</b></div>`).join('')}</div>` : ''}
         ${AV.porConfirmar(v.abonos).length ? `<div class="aviso-50" style="margin-top:10px">Estamos revisando tu pago. Cuando lo confirmemos se actualiza aquí; vuelve a revisar más tarde.</div>` : ''}`}
       <p class="num" style="font-size:12.5px;margin-top:10px">Montos en dólares (USD).</p>
     </section>`;

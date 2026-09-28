@@ -64,6 +64,7 @@
   async function salir(){
     if(window.Avisos) await window.Avisos.olvidar();
     perfilActual = null;
+    try{ Object.keys(localStorage).filter(k => k.startsWith('ah_cache_')).forEach(k => localStorage.removeItem(k)); } catch(e){}
     try{ await db.auth.signOut(); } catch(e){}
   }
   async function cambiarPin(pin){

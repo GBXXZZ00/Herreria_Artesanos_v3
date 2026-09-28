@@ -42,11 +42,12 @@
   // Texto corto de un producto guardado
   function detalleItem(it){
     const e = it.especificaciones || {};
-    if(it.a_medida) return e.descripcion || 'Trabajo a medida';
     const partes = [];
+    if(it.a_medida && !window.AH.TIPOS.includes(it.tipo)) return e.descripcion || 'Trabajo a medida';
     if(it.pieza_id) partes.push('Entrega inmediata');
     if(e.color && tieneColores(it.tipo)) partes.push(e.color);
     resumenSpecs(it.tipo, e).forEach(s => partes.push(s.t));
+    if(it.a_medida && e.descripcion) partes.push(e.descripcion);
     return partes.join(' · ');
   }
   function resumenProductos(items){
@@ -80,11 +81,12 @@
     const cot = esCotizacion(v);
     const l = [`Hola ${nombre}, te saluda Herrería Artesanos.`, cot ? `Esta es tu cotización N° ${v.id}:` : `Tu pedido N° ${v.id}:`, ''];
     v.items.forEach(it => { const d = detalleItem(it); l.push(`• ${it.cantidad > 1 ? it.cantidad + ' × ' : ''}*${it.nombre}*${d ? ' (' + d + ')' : ''}: ${dinero(it.precio_unitario * it.cantidad)}`); });
-    if(Number(v.instalacion)) l.push(`• Instalación o traslado: ${dinero(v.instalacion)}`);
+    if(Number(v.instalacion)) l.push(`• Instalación: ${dinero(v.instalacion)}`);
+    if(Number(v.traslado)) l.push(`• Traslado: ${dinero(v.traslado)}`);
     if(Number(v.descuento)) l.push(`• Descuento: -${dinero(v.descuento)}`);
     l.push('', `*Total: ${dinero(v.total)}*`);
     if(!cot){
-      l.push(`Abonado: ${dinero(pagado(v.abonos))}`, `Resta por pagar: ${dinero(resta(v))}`);
+      l.push(`Pagado: ${dinero(pagado(v.abonos))}`, `Resta por pagar: ${dinero(resta(v))}`);
       if(v.fecha_entrega) l.push('', `Fecha de entrega: ${fechaLarga(v.fecha_entrega)}`);
     } else {
       l.push('', `Precios válidos hasta el ${fechaLarga(v.vence_en)}.`);
@@ -200,7 +202,7 @@
       else { doc.setFillColor(FONDO[0], FONDO[1], FONDO[2]); doc.roundedRect(C.foto, y - 1, 16, 16, 2, 2, 'F'); }
       color(TINTA); doc.text(nom, C.prod, y + 3);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7.8); color(GRIS);
-      doc.text(it.a_medida ? 'A medida' : (it.tipo || ''), C.prod, y + 3 + nom.length * 4);
+      doc.text(it.a_medida ? (window.AH.TIPOS.includes(it.tipo) ? it.tipo + ' a medida' : 'A medida') : (it.tipo || ''), C.prod, y + 3 + nom.length * 4);
       doc.setFontSize(8.2); color(TINTA); doc.text(desc, C.desc, y + 3, { lineHeightFactor:1.25 });
       doc.setFontSize(9); doc.text(dinero(it.precio_unitario), C.precio, y + 3, { align:'right' });
       doc.text(String(it.cantidad), C.cant, y + 3, { align:'center' });
@@ -225,14 +227,15 @@
     const yNotas = y;
     fila('Productos', dinero(v.subtotal));
     if(Number(v.descuento)) fila('Descuento', '- ' + dinero(v.descuento));
-    if(Number(v.instalacion)) fila('Instalación o traslado', dinero(v.instalacion));
+    if(Number(v.instalacion)) fila('Instalación', dinero(v.instalacion));
+    if(Number(v.traslado)) fila('Traslado', dinero(v.traslado));
     y += 1;
     doc.setFillColor(TEAL[0], TEAL[1], TEAL[2]); doc.roundedRect(X - 3, y - 5, D - X + 3, 9.5, 2, 2, 'F');
     doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.setTextColor(255, 255, 255);
     doc.text('Monto total', X, y + 1.3); doc.text(dinero(v.total), D - 2, y + 1.3, { align:'right' });
     y += 11;
     if(!cot){
-      abonos.forEach(a => fila(`${a.tipo === 'devolucion' ? 'Devolución' : 'Abono'} ${fechaNum(a.fecha)} · ${a.metodo}${a.estado === 'por_confirmar' ? ' (por confirmar)' : ''}`, (a.tipo === 'devolucion' ? '- ' : '') + dinero(a.monto)));
+      abonos.forEach(a => fila(`${a.tipo === 'devolucion' ? 'Devolución' : 'Pago'} ${fechaNum(a.fecha)} · ${a.metodo}${a.estado === 'por_confirmar' ? ' (por confirmar)' : ''}`, (a.tipo === 'devolucion' ? '- ' : '') + dinero(a.monto)));
       fila('Resta por pagar', dinero(resta(v)), true, resta(v) > 0 ? TEAL : TINTA);
     }
 
@@ -242,7 +245,7 @@
     const notas = ['Precios en dólares (USD).'];
     if(cot) notas.push(`Cotización válida hasta el ${fechaLarga(v.vence_en)}.`);
     if(!cot && abonos.length){ const ult = abonos.filter(a => a.tipo === 'abono').pop(); if(ult) notas.push(`Método de pago: ${ult.metodo}.`); }
-    if(!cot && pendientes) notas.push(pendientes === 1 ? 'Hay un abono pendiente por confirmar. Al confirmarlo se actualiza en tu seguimiento.' : 'Hay abonos pendientes por confirmar. Al confirmarlos se actualizan en tu seguimiento.');
+    if(!cot && pendientes) notas.push(pendientes === 1 ? 'Hay un pago pendiente por confirmar. Al confirmarlo se actualiza en tu seguimiento.' : 'Hay pagos pendientes por confirmar. Al confirmarlos se actualizan en tu seguimiento.');
     if(v.notas) notas.push('Nota: ' + v.notas);
     notas.forEach(t => { const ls = doc.splitTextToSize(t, X - M - 10); doc.text(ls, M, yn); yn += ls.length * 3.8 + 1.5; });
 
@@ -269,7 +272,7 @@
       return `Hola ${nombre}, te saluda Herrería Artesanos. Te envío tu cotización N° ${v.id} por ${dinero(v.total)}. Los precios son válidos hasta el ${fechaLarga(v.vence_en)}. Cualquier duda, aquí estamos.`;
     }
     const l = [`Hola ${nombre}, te saluda Herrería Artesanos. Te envío tu nota de pedido N° ${v.id}.`, '',
-      `Total: ${dinero(v.total)}`, `Abonado: ${dinero(pagado(v.abonos))}`, `Resta por pagar: ${dinero(resta(v))}`];
+      `Total: ${dinero(v.total)}`, `Pagado: ${dinero(pagado(v.abonos))}`, `Resta por pagar: ${dinero(resta(v))}`];
     if(v.fecha_entrega && !['cancelada', 'entregada'].includes(v.estado)) l.push(`Fecha de entrega: ${fechaLarga(v.fecha_entrega)}`);
     l.push('', 'Gracias por preferirnos.');
     return l.join('\n');
@@ -318,7 +321,7 @@
     const cot = esCotizacion(v);
     let t;
     if(v.estado === 'cotizacion') t = `Hola ${n}, te saluda Herrería Artesanos. Aquí tienes tu cotización N° ${v.id} por ${dinero(v.total)}, válida hasta el ${fechaLarga(v.vence_en)}. Puedes verla y descargarla aquí:\n${url}\n\nCualquier duda, aquí estamos.`;
-    else if(v.estado === 'confirmada') t = `Hola ${n}, recibimos tu abono. Tu pedido N° ${v.id} está confirmado${entrega ? ' y la entrega estimada es el ' + entrega : ''}.${porConfirmar(v.abonos).length ? ' Tu pago está en revisión: cuando lo confirmemos lo verás actualizado en tu seguimiento.' : ''} Aquí puedes seguir tu pedido y descargar tu nota:\n${url}`;
+    else if(v.estado === 'confirmada') t = `Hola ${n}, recibimos tu pago. Tu pedido N° ${v.id} está confirmado${entrega ? ' y la entrega estimada es el ' + entrega : ''}.${porConfirmar(v.abonos).length ? ' Tu pago está en revisión: cuando lo confirmemos lo verás actualizado en tu seguimiento.' : ''} Aquí puedes seguir tu pedido y descargar tu nota:\n${url}`;
     else if(v.estado === 'en_produccion') t = `Hola ${n}, tu pedido N° ${v.id} ya está en fabricación.${entrega ? ' Entrega estimada: ' + entrega + '.' : ''} Síguelo aquí:\n${url}`;
     else if(v.estado === 'lista') t = `Hola ${n}, ¡tu pedido N° ${v.id} está listo!${resta(v) > 0 ? ' Resta por pagar ' + dinero(resta(v)) + '.' : ''} Escríbenos para coordinar la entrega. Detalles aquí:\n${url}`;
     else if(v.estado === 'entregada') t = `Hola ${n}, gracias por confiar en Herrería Artesanos. Aquí puedes descargar tu nota de pedido final (disponible por 3 días):\n${url}`;
@@ -327,6 +330,23 @@
   }
   const linkSeguimientoWA = (v) => `https://wa.me/${v.cliente.telefono}?text=${encodeURIComponent(mensajeSeguimiento(v))}`;
 
-  window.AV = { porConfirmar, ESTADOS, METODOS, pagado, resta, esCotizacion, diasHasta, diasDesde, fechaCorta, fechaLarga, fechaNum, hace, habiles, iso,
+  // Formulario de pago compartido: completo o parcial, y comprobante obligatorio
+  const COMPROBANTE = { lado:1280, calidad:0.7 };   // ~150 KB, se lee bien
+  function modoPagoHtml(modo, etiquetaCompleto){
+    const op = [['completo', etiquetaCompleto || 'Pago completo'], ['parcial', 'Pago parcial']];
+    return `<div class="field"><span class="field-label">¿Cuánto pagó?</span><div class="opts" style="--cols:2">${op.map(([k, t]) =>
+      `<button type="button" class="opt ${k === modo ? 'selected' : ''}" data-modo-pago="${k}" aria-pressed="${k === modo}">${t}</button>`).join('')}</div></div>`;
+  }
+  function comprobanteHtml(foto){
+    return `<div class="field" id="campoComp"><span class="field-label">Comprobante</span>
+      <div class="photos single"><label class="photo-box ${foto ? 'filled' : ''}" style="aspect-ratio:3/1">
+        ${foto ? `<img src="${esc(foto)}" alt=""><span class="photo-tag">Cambiar comprobante</span>` : `<span class="plus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span>Foto o captura del pago</span>`}
+        <input type="file" accept="image/*" id="aComprobante" aria-label="Comprobante del pago"></label></div>
+      <div class="field-hint">Obligatorio, también en efectivo (foto del dinero o del recibo).</div>
+      <div class="field-error">Sube la foto o captura del pago</div></div>`;
+  }
+  const soloInmediata = (items) => !!(items && items.length && items.every(it => it.pieza_id || it.origen === 'pieza'));
+
+  window.AV = { porConfirmar, COMPROBANTE, modoPagoHtml, comprobanteHtml, soloInmediata, ESTADOS, METODOS, pagado, resta, esCotizacion, diasHasta, diasDesde, fechaCorta, fechaLarga, fechaNum, hace, habiles, iso,
     detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, telBonito, linkWhatsApp, urlSeguimiento, mensajeSeguimiento, linkSeguimientoWA, crearPDF, compartirPDF, descargarPDF, nombrePDF, SELECT_VENTA, esc };
 })();

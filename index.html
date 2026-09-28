@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=30">
+<link rel="stylesheet" href="assets/css/base.css?v=31">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -168,11 +168,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=30"></script>
-<script src="assets/js/supabase-client.js?v=30"></script>
-<script src="assets/js/comun.js?v=30"></script>
-<script src="assets/js/avisos.js?v=30"></script>
-<script src="assets/js/sesion.js?v=30"></script>
+<script src="assets/vendor/supabase.js?v=31"></script>
+<script src="assets/js/supabase-client.js?v=31"></script>
+<script src="assets/js/comun.js?v=31"></script>
+<script src="assets/js/avisos.js?v=31"></script>
+<script src="assets/js/sesion.js?v=31"></script>
 <script>
 (function(){
   'use strict';
@@ -360,7 +360,7 @@
       if(ev) ev.innerHTML = activas || porCobrar ? `${activas} ${activas === 1 ? 'activa' : 'activas'}${porCobrar ? ` · <span class="num">${porCobrar} por cobrar</span>` : ''}` : 'Ninguna activa';
     } catch(e){
       if(ec) ec.textContent = 'Clientes que preguntaron';
-      if(ev) ev.textContent = 'Pedidos con abono';
+      if(ev) ev.textContent = 'Pedidos con pago';
     }
   }
 
@@ -391,7 +391,7 @@
           const total = data.reduce((a, x) => a + Number(x.monto), 0);
           html += `<a class="aviso-card urgente" href="ventas.html?abrir=${data.length === 1 ? data[0].venta_id : ''}${data.length > 1 ? '&filtro=confirmar' : ''}" data-modulo>
             <span class="ini-ico">${ICON_DINERO}</span>
-            <span><span class="aviso-t">${data.length === 1 ? '1 abono por confirmar' : data.length + ' abonos por confirmar'}</span>
+            <span><span class="aviso-t">${data.length === 1 ? '1 pago por confirmar' : data.length + ' pagos por confirmar'}</span>
             <span class="aviso-s">${window.AH.dinero(total)} en total · toca para revisarlos</span></span>
           </a>`;
         }
@@ -417,7 +417,7 @@
     $('btnPrueba').classList.toggle('hidden', estadoNotif !== 'activo');
     if(estadoNotif === 'inactivo'){
       html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>
-        <span><span class="aviso-t">Recibe avisos en tu teléfono</span><span class="aviso-s">${admin ? 'Ventas nuevas, abonos y pedidos a producción.' : 'Te avisamos si un abono no llegó.'}</span></span>
+        <span><span class="aviso-t">Recibe avisos en tu teléfono</span><span class="aviso-s">${admin ? 'Ventas nuevas, pagos y pedidos a producción.' : 'Te avisamos si un pago no llegó.'}</span></span>
         <button class="aviso-btn" type="button" data-activar-notif>Activar</button></div>`;
     } else if(estadoNotif === 'instalar'){
       html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>

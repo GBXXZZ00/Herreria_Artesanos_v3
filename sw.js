@@ -1,7 +1,29 @@
-// Service worker: muestra las notificaciones y abre la app al tocarlas.
-// No guarda nada en caché, para que la app siempre cargue la versión nueva.
+// Service worker: muestra las notificaciones, abre la app al tocarlas y guarda en el
+// teléfono los archivos con versión (?v=N) para que abran al instante.
+// Las páginas (HTML) y los datos siempre vienen de internet: nunca se ve una versión vieja.
+const CACHE = 'ah-archivos-v1';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  // Solo archivos propios con versión: css, js, librerías
+  if (url.origin !== self.location.origin || !url.searchParams.has('v') || !/\/assets\//.test(url.pathname)) return;
+  e.respondWith(caches.open(CACHE).then(async (c) => {
+    const guardado = await c.match(req);
+    if (guardado) return guardado;
+    const r = await fetch(req);
+    if (r.ok) {
+      e.waitUntil(c.put(req, r.clone()).then(() => c.keys()).then((ks) => Promise.all(ks
+        // Se borran las versiones anteriores del mismo archivo
+        .filter((k) => { const u = new URL(k.url); return u.pathname === url.pathname && u.search !== url.search; })
+        .map((k) => c.delete(k)))).catch(() => {}));
+    }
+    return r;
+  }).catch(() => fetch(req)));
+});
 
 self.addEventListener('push', (e) => {
   let d = {};

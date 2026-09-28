@@ -3,6 +3,8 @@
 // Todo queda en window.AH para no chocar con nombres globales de librerías.
 (function(){
   'use strict';
+  // En iPhone, el efecto de "presionado" (:active) solo aparece al instante si la página escucha toques
+  document.addEventListener('touchstart', () => {}, { passive:true });
 
   // ---------------------------------------------------------------------------
   // Tipos de producto

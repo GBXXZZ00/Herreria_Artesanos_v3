@@ -16,7 +16,7 @@
   let modelos = [], piezas = [], sedes = [], perfil = null;
   let items = [];           // productos de la venta
   let sedeId = null;
-  const extras = { desc:false, inst:false };   // descuento e instalación: opcionales
+  const extras = { inst:false, tras:false };   // instalación y traslado: opcionales, cada uno con su monto
   let clienteExistente = null;
   let guardando = false;
   let terminado = false;
@@ -62,16 +62,18 @@
   function subtotalItem(it){ return r2((montoOrNull(it.precio) || 0) * (it.cantidad || 1)); }
   function totales(){
     const sub = r2(items.reduce((a, it) => a + subtotalItem(it), 0));
-    const desc = extras.desc ? (montoOrNull($('vDesc').value) || 0) : 0;
+    const desc = montoOrNull($('vDesc').value) || 0;
     const inst = extras.inst ? (montoOrNull($('vInst').value) || 0) : 0;
-    return { sub, desc, inst, total: r2(sub - desc + inst) };
+    const tras = extras.tras ? (montoOrNull($('vTras').value) || 0) : 0;
+    return { sub, desc, inst, tras, total: r2(sub - desc + inst + tras) };
   }
   function pintarResumen(){
     const t = totales();
     $('resumen').innerHTML = `
       <div class="res-fila"><span>Productos</span><b>${dinero(t.sub)}</b></div>
       ${t.desc ? `<div class="res-fila"><span>Descuento</span><b>- ${dinero(t.desc)}</b></div>` : ''}
-      ${t.inst ? `<div class="res-fila"><span>Instalación o traslado</span><b>${dinero(t.inst)}</b></div>` : ''}
+      ${t.inst ? `<div class="res-fila"><span>Instalación</span><b>${dinero(t.inst)}</b></div>` : ''}
+      ${t.tras ? `<div class="res-fila"><span>Traslado</span><b>${dinero(t.tras)}</b></div>` : ''}
       <div class="res-total"><span>Total</span><b>${dinero(t.total)}</b></div>`;
     $('pieTotal').textContent = dinero(t.total);
     $('campoDesc').classList.toggle('invalid', t.total < 0);
@@ -82,7 +84,14 @@
   // ---------------------------------------------------------------------------
   function detalleItem(it){
     const partes = [];
-    if(it.origen === 'medida') return it.descripcion || 'Trabajo a medida';
+    if(it.origen === 'medida'){
+      if(!conSpecs(it)) return it.descripcion || 'Trabajo a medida';
+      const p = [];
+      if(it.color && tieneColores(it.tipo)) p.push(it.color);
+      resumenSpecs(it.tipo, it.especificaciones).forEach(x => p.push(x.t));
+      if(it.descripcion) p.push(it.descripcion);
+      return p.join(' · ');
+    }
     if(it.color && tieneColores(it.tipo)) partes.push(it.color);
     resumenSpecs(it.tipo, it.especificaciones).forEach(s => partes.push(s.t));
     if(it.origen === 'pieza') partes.unshift('Entrega inmediata');
@@ -139,7 +148,7 @@
     cerrarHoja('sheetAgregar', true);
     if(o === 'catalogo'){ filtroModelo = 'Todos'; $('buscaModelo').value = ''; pintarModelos(); abrirHoja('sheetModelos'); }
     if(o === 'pieza'){ pintarPiezas(); abrirHoja('sheetPiezas'); }
-    if(o === 'medida') abrirProducto({ origen:'medida', tipo:'A medida', nombre:'', descripcion:'', precio:'', cantidad:1, foto:null }, null);
+    if(o === 'medida') abrirProducto({ origen:'medida', tipo:null, nombre:'', descripcion:'', precio:'', precioManual:false, cantidad:1, foto:null, estado:{}, color:null }, null);
   });
 
   // Modelos del catálogo
@@ -211,6 +220,10 @@
 
   function modeloDe(it){ return modelos.find(x => x.id === it.catalogo_id) || null; }
   function base(it){ const m = modeloDe(it); return (m && m.especificaciones_base) || {}; }
+  // A medida con tipo del catálogo: lleva las mismas especificaciones. "Otro" solo lleva descripción.
+  function conSpecs(it){ return it.origen !== 'medida' || TIPOS.includes(it.tipo); }
+  // Precio sugerido: catálogo siempre; a medida solo la ventana (por m²)
+  function llevaCalculo(it){ return it.origen === 'catalogo' || (it.origen === 'medida' && it.tipo === 'Ventana'); }
 
   // ¿Cuánto cuesta según lo elegido? Devuelve el precio y cómo se calculó.
   function calcular(it){
@@ -237,6 +250,7 @@
     return { total: r2(total), texto: partes.join(' + ') };
   }
   function pideMontoProteccion(it){
+    if(it.origen === 'medida') return false;   // a medida: el precio escrito ya lo incluye todo
     const s = it.estado || {}, b = base(it);
     if(it.tipo === 'Puerta Multilock') return !!s.proteccion && !b.proteccion;
     if(it.tipo === 'Combo') return s.variante === 'Con protección en puerta' && b.variante !== 'Con protección en puerta';
@@ -306,7 +320,7 @@
       ${max ? `<div class="field-hint">Hay ${max} en tienda.</div>` : ''}</div>`;
   }
   function precioHtml(){
-    const conCalculo = prod.origen === 'catalogo';
+    const conCalculo = llevaCalculo(prod);
     const c = conCalculo ? calcular(prod) : null;
     const valor = conCalculo && !prod.precioManual ? c.total : prod.precio;
     return `<div class="precio-caja">
@@ -324,18 +338,28 @@
     let html = '';
     if(prod.origen === 'medida'){
       $('prodTitulo').textContent = prodIndex == null ? 'Trabajo a medida' : 'Editar trabajo';
-      html = `
+      const elegido = prod.tipo === 'A medida' ? 'Otro' : prod.tipo;
+      html = `<div class="field" id="campoMedTipo">${optsHtml({ g:'__tipo', label:'¿Qué vas a fabricar?', cols:2, opts:[...TIPOS, 'Otro'].map(t => ({ v:t })) }, elegido).replace(/^<div class="field">|<\/div>$/g, '')}
+        <div class="field-error">Elige qué vas a fabricar</div></div>`;
+      if(!prod.tipo){ html += '<div class="field-hint" style="margin-top:-6px">Así se piden las mismas medidas y detalles que en el catálogo.</div>'; }
+      else {
+      const otro = !conSpecs(prod);
+      if(!otro) html += specsHtml();
+      html += `
         <div class="field"><span class="field-label">Foto que trae el cliente</span>
           <div class="photos single"><label class="photo-box ${prod.foto ? 'filled' : ''}">
             ${prod.foto ? `<img src="${esc(prod.foto)}" alt=""><span class="photo-tag">Cambiar foto</span>` : `<span class="plus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span>Tomar o elegir foto</span>`}
             <input type="file" accept="image/*" id="pFoto" aria-label="Foto del trabajo"></label></div>
           <div class="field-hint">Opcional. No se guarda en el catálogo.</div></div>
-        <div class="field" id="campoMedNombre"><label class="field-label" for="pNombre">Qué es</label>
-          <input class="input" id="pNombre" type="text" autocomplete="off" value="${esc(prod.nombre)}" placeholder="Reja para ventana, portón de 2 hojas">
-          <div class="field-error">Escribe qué es</div></div>
+        ${otro ? `<div class="field" id="campoMedNombre"><label class="field-label" for="pNombre">Qué es</label>
+          <input class="input" id="pNombre" type="text" autocomplete="off" value="${esc(prod.nombre)}" placeholder="Reja para ventana, escalera">
+          <div class="field-error">Escribe qué es</div></div>`
+        : `<div class="field"><label class="field-label" for="pNombre">Nombre (opcional)</label>
+          <input class="input" id="pNombre" type="text" autocomplete="off" value="${esc(prod.nombre)}" placeholder="${esc(prod.tipo)} a medida"></div>`}
         <div class="field"><label class="field-label" for="pDesc">Detalles (opcional)</label>
-          <textarea class="input" id="pDesc" rows="3" placeholder="Medidas, color y lo que pidió el cliente">${esc(prod.descripcion || '')}</textarea></div>
+          <textarea class="input" id="pDesc" rows="3" placeholder="${otro ? 'Medidas, color y lo que pidió el cliente' : 'Lo que pidió el cliente y no aparece arriba'}">${esc(prod.descripcion || '')}</textarea></div>
         ${cantidadHtml()}${precioHtml()}`;
+      }
     } else {
       const m = modeloDe(prod);
       const foto = prod.origen === 'pieza' ? prod.foto : fotoModelo(m, prod.color);
@@ -360,7 +384,7 @@
 
   // Solo se actualiza el precio (sin repintar todo, para no perder el foco del teclado)
   function refrescarPrecio(){
-    if(prod.origen !== 'catalogo') return;
+    if(!llevaCalculo(prod)) return;
     const c = calcular(prod);
     if(!prod.precioManual && $('pPrecio')) $('pPrecio').value = c.total;
     const d = $('desglose');
@@ -382,6 +406,21 @@
     const o = e.target.closest('.opt[data-g]');
     if(o){
       prodSucio = true;
+      if(o.dataset.g === '__tipo'){
+        const t = o.dataset.v;
+        prod.tipo = t === 'Otro' ? 'A medida' : t;
+        prod.precioManual = false;
+        prod.precio = '';                                              // el precio de otro tipo no sirve
+        if(/ a medida$/.test(prod.nombre || '')) prod.nombre = '';     // nombre automático del tipo anterior
+        if(t !== 'Otro'){
+          prod.estado = estadoDesdeEspecificaciones(t, {}, 'pedido');
+          const col = acabados(t).find(a => a.sw);
+          prod.color = tieneColores(t) && col ? col.key : null;
+          if(t === 'Combo' && prod.color) prod.estado.ventanas_color = prod.color;
+        } else { prod.estado = {}; prod.color = null; }
+        $('campoMedTipo').classList.remove('invalid');
+        pintarProducto(); return;
+      }
       if(o.dataset.g === '__color'){
         prod.color = o.dataset.v;
         if(prod.tipo === 'Combo') prod.estado.ventanas_color = o.dataset.v;  // las ventanas van del mismo color
@@ -408,7 +447,7 @@
     if(el.dataset.texto){ prod.estado[el.dataset.texto] = el.value; return; }
     if(el.id === 'pProt'){ prod.extraProteccion = el.value; $('campoProt').classList.remove('invalid'); refrescarPrecio(); return; }
     if(el.id === 'pPrecio'){ prod.precio = el.value; prod.precioManual = true; $('campoPrecio').classList.remove('invalid'); return; }
-    if(el.id === 'pNombre'){ prod.nombre = el.value; $('campoMedNombre').classList.remove('invalid'); return; }
+    if(el.id === 'pNombre'){ prod.nombre = el.value; if($('campoMedNombre')) $('campoMedNombre').classList.remove('invalid'); return; }
     if(el.id === 'pDesc'){ prod.descripcion = el.value; }
   });
   $('prodBody').addEventListener('change', async (e) => {
@@ -424,7 +463,8 @@
 
   $('btnProdListo').addEventListener('click', () => {
     let ok = true;
-    if(prod.origen === 'medida' && !String(prod.nombre || '').trim()){ $('campoMedNombre').classList.add('invalid'); ok = false; }
+    if(prod.origen === 'medida' && !prod.tipo){ $('campoMedTipo').classList.add('invalid'); $('campoMedTipo').scrollIntoView({ block:'center', behavior:'smooth' }); return; }
+    if($('campoMedNombre') && !String(prod.nombre || '').trim()){ $('campoMedNombre').classList.add('invalid'); ok = false; }
     if($('campoProt') && !(montoOrNull(prod.extraProteccion) > 0)){ $('campoProt').classList.add('invalid'); ok = false; }
     const precio = montoOrNull($('pPrecio').value);
     if(!(precio > 0)){ $('campoPrecio').classList.add('invalid'); ok = false; }
@@ -434,7 +474,10 @@
       prod.especificaciones = especificacionesDesdeEstado(prod.tipo, prod.estado, 'pedido');
       prod.foto = fotoModelo(modeloDe(prod), prod.color) || prod.foto || null;
     }
-    if(prod.origen === 'medida') prod.nombre = prod.nombre.trim();
+    if(prod.origen === 'medida'){
+      prod.nombre = String(prod.nombre || '').trim() || prod.tipo + ' a medida';
+      prod.especificaciones = conSpecs(prod) ? especificacionesDesdeEstado(prod.tipo, prod.estado, 'pedido') : {};
+    }
     if(prodIndex == null) items.push(prod); else items[prodIndex] = prod;
     prodSucio = false;
     cerrarHoja('sheetProducto', true);
@@ -489,15 +532,15 @@
     const f = $(id).closest('.field'); if(f) f.classList.remove('invalid');
     guardarBorrador();
   }));
-  ['vDesc', 'vInst'].forEach(id => $(id).addEventListener('input', () => { pintarResumen(); guardarBorrador(); }));
+  ['vDesc', 'vInst', 'vTras'].forEach(id => $(id).addEventListener('input', () => { pintarResumen(); guardarBorrador(); }));
 
-  // Descuento e instalación: se activan tocando el botón y ahí aparece el monto
+  // Instalación y traslado: se activan tocando el botón y ahí aparece su monto
   function pintarExtrasCierre(enfocar){
     document.querySelectorAll('[data-extra]').forEach(b => { const on = extras[b.dataset.extra]; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-    $('campoDesc').classList.toggle('hidden', !extras.desc);
     $('campoInst').classList.toggle('hidden', !extras.inst);
-    if(enfocar === 'desc' && extras.desc) $('vDesc').focus();
+    $('campoTras').classList.toggle('hidden', !extras.tras);
     if(enfocar === 'inst' && extras.inst) $('vInst').focus();
+    if(enfocar === 'tras' && extras.tras) $('vTras').focus();
     pintarResumen();
   }
   document.querySelector('[data-extra]').parentElement.addEventListener('click', (e) => {
@@ -523,7 +566,7 @@
       if(!hayDatos()){ localStorage.removeItem(BORRADOR); return; }
       localStorage.setItem(BORRADOR, JSON.stringify({
         tel:$('cTel').value, nombre:$('cNombre').value, cedula:$('cCedula').value,
-        desc:$('vDesc').value, inst:$('vInst').value, notas:$('vNotas').value, sedeId, extras,
+        desc:$('vDesc').value, inst:$('vInst').value, tras:$('vTras').value, notas:$('vNotas').value, sedeId, extras,
         items: items.map(it => { const c = Object.assign({}, it); delete c.fotoBlob; if(c.origen === 'medida' && String(c.foto || '').startsWith('blob:')) c.foto = null; return c; })
       }));
     } catch(e){}
@@ -533,8 +576,8 @@
     try{ b = JSON.parse(localStorage.getItem(BORRADOR) || 'null'); } catch(e){}
     if(!b) return;
     $('cTel').value = b.tel || ''; $('cNombre').value = b.nombre || ''; $('cCedula').value = b.cedula || '';
-    if(b.extras){ extras.desc = !!b.extras.desc; extras.inst = !!b.extras.inst; }
-    $('vDesc').value = b.desc || ''; $('vInst').value = b.inst || ''; $('vNotas').value = b.notas || '';
+    if(b.extras){ extras.inst = !!b.extras.inst; extras.tras = !!b.extras.tras; if(b.extras.desc === false) b.desc = ''; }   // borradores viejos: descuento apagado no cuenta
+    $('vDesc').value = b.desc || ''; $('vInst').value = b.inst || ''; $('vTras').value = b.tras || ''; $('vNotas').value = b.notas || '';
     if(b.sedeId) sedeId = b.sedeId;
     // Las piezas de entrega inmediata que ya no están se quitan
     items = (b.items || []).filter(it => it.origen !== 'pieza' || piezas.some(p => p.id === it.pieza_id && p.cantidad >= it.cantidad));
@@ -547,8 +590,8 @@
   });
   function limpiarTodo(){
     try{ localStorage.removeItem(BORRADOR); }catch(e){}
-    ['cTel', 'cNombre', 'cCedula', 'vDesc', 'vInst', 'vNotas'].forEach(id => { $(id).value = ''; });
-    extras.desc = false; extras.inst = false; pintarExtrasCierre();
+    ['cTel', 'cNombre', 'cCedula', 'vDesc', 'vInst', 'vTras', 'vNotas'].forEach(id => { $(id).value = ''; });
+    extras.inst = false; extras.tras = false; pintarExtrasCierre();
     items = []; clienteExistente = null; ultimaBusqueda = '';
     sedeId = (perfil && perfil.sede_id) || (sedes[0] && sedes[0].id) || null;
     $('avisoCliente').innerHTML = ''; $('avisoBorrador').innerHTML = '';
@@ -587,7 +630,7 @@
     return {
       clave: claveVenta,
       cliente:{ telefono: normTel($('cTel').value), nombre: $('cNombre').value.trim(), cedula: normCed($('cCedula').value) },
-      venta:{ sede_id: sedeId, descuento: t.desc, instalacion: t.inst, notas: $('vNotas').value.trim(), confirmar,
+      venta:{ sede_id: sedeId, descuento: t.desc, instalacion: t.inst, traslado: t.tras, notas: $('vNotas').value.trim(), confirmar,
         fecha_entrega: abono ? abono.fecha : (editId && $('vFecha') && $('vFecha').value ? $('vFecha').value : null) },
       items: items.map(it => ({
         catalogo_id: it.origen === 'medida' ? null : it.catalogo_id,
@@ -596,7 +639,7 @@
         tipo: it.tipo,
         nombre: it.nombre,
         especificaciones: it.origen === 'medida'
-          ? { descripcion: it.descripcion || '' }
+          ? Object.assign({}, conSpecs(it) ? it.especificaciones : {}, conSpecs(it) && it.color ? { color: it.color } : {}, { descripcion: it.descripcion || '' })
           : Object.assign({}, it.especificaciones, it.color ? { color: it.color } : {},
               it.origen === 'catalogo' && pideMontoProteccion(it) ? { monto_proteccion: montoOrNull(it.extraProteccion) } : {}),
         foto: it.foto || null,
@@ -672,13 +715,16 @@
   $('optVenta').addEventListener('click', () => {
     cerrarHoja('sheetGuardar', true);
     const t = totales();
-    conf = { monto: String(Math.round(t.total * 0.5 * 100) / 100), metodo:null, fecha: habiles(20), comprobante:null, blob:null, clave: conf && conf.clave ? conf.clave : uuid() };
+    // Exhibición (todo de entrega inmediata): pago completo y se entrega hoy. Lo demás: 50%.
+    const inm = window.AV.soloInmediata(items);
+    const modo = inm ? 'completo' : 'parcial';
+    conf = { modo, monto: String(inm ? t.total : r2(t.total * 0.5)), metodo:null, fecha: inm ? hoyISO() : habiles(20), comprobante:null, blob:null, clave: conf && conf.clave ? conf.clave : uuid() };
     pintarConfirmar();
     abrirHoja('sheetConfirmar');
   });
 
   // ---------------------------------------------------------------------------
-  // Confirmar venta: abono, método y fecha de entrega
+  // Confirmar venta: pago (completo o parcial), método, comprobante y fecha de entrega
   // ---------------------------------------------------------------------------
   let conf = null;
   function iso(d){ const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); }
@@ -694,23 +740,20 @@
     const t = totales();
     $('confBody').innerHTML = `
       <div class="conf-total"><span>Total de la venta</span><b>${dinero(t.total)}</b></div>
-      <div class="field" id="campoAbono"><label class="field-label" for="aMonto">Abono en dólares</label>
+      ${window.AV.modoPagoHtml(conf.modo)}
+      <div class="field ${conf.modo === 'completo' ? 'hidden' : ''}" id="campoAbono"><label class="field-label" for="aMonto">Monto del pago en dólares</label>
         <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="aMonto" type="text" inputmode="decimal" autocomplete="off" value="${esc(conf.monto)}"></div>
-        <div class="field-error" id="errAbono">Escribe el abono</div>
+        <div class="field-error" id="errAbono">Escribe el monto</div>
         <div id="avisoAbono"></div>
       </div>
       <div class="field" id="campoMetodo"><span class="field-label">Cómo pagó</span>
         <div class="opts" style="--cols:2">${METODOS.map(x => `<button type="button" class="opt ${x === conf.metodo ? 'selected' : ''}" data-metodo="${x}" aria-pressed="${x === conf.metodo}">${x}</button>`).join('')}</div>
         <div class="field-error">Elige cómo pagó</div>
       </div>
-      <div class="field"><span class="field-label">Comprobante (opcional)</span>
-        <div class="photos single"><label class="photo-box ${conf.comprobante ? 'filled' : ''}" style="aspect-ratio:3/1">
-          ${conf.comprobante ? `<img src="${esc(conf.comprobante)}" alt=""><span class="photo-tag">Cambiar comprobante</span>` : `<span class="plus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span>Foto o captura del pago</span>`}
-          <input type="file" accept="image/*" id="aComprobante" aria-label="Comprobante de pago"></label></div>
-      </div>
+      ${window.AV.comprobanteHtml(conf.comprobante)}
       <div class="field" id="campoFecha"><label class="field-label" for="aFecha">Fecha de entrega</label>
         <input class="input" id="aFecha" type="date" min="${hoyISO()}" value="${esc(conf.fecha)}">
-        <div class="field-hint">20 días hábiles desde hoy, sin sábados ni domingos. La puedes cambiar.</div>
+        <div class="field-hint">${window.AV.soloInmediata(items) ? 'Es de entrega inmediata: hoy. La puedes cambiar.' : '20 días hábiles desde hoy, sin sábados ni domingos. La puedes cambiar.'}</div>
         <div class="field-error">Elige la fecha de entrega</div>
       </div>`;
     avisoAbono();
@@ -720,10 +763,10 @@
     const m = montoOrNull(conf.monto) || 0;
     let html = '';
     if(m > t) html = '';
-    else if(m > 0 && m < t * 0.5) html = `<div class="aviso-50">${ICON_ALERTA}Abono menor al 50%</div>`;
+    else if(m > 0 && m < t * 0.5) html = `<div class="aviso-50">${ICON_ALERTA}Pago menor al 50%</div>`;
     if(m > 0 && m <= t) html += `<div class="resta">Resta por pagar: <b>${dinero(r2(t - m))}</b></div>`;
     $('avisoAbono').innerHTML = html;
-    $('errAbono').textContent = m > t ? 'El abono es mayor que el total' : 'Escribe el abono';
+    $('errAbono').textContent = m > t ? 'Es mayor que el total' : 'Escribe el monto';
     $('campoAbono').classList.toggle('invalid', m > t);
   }
   $('confBody').addEventListener('input', (e) => {
@@ -734,13 +777,22 @@
     if(e.target.id === 'aFecha'){ conf.fecha = e.target.value; $('campoFecha').classList.remove('invalid'); }
     if(e.target.id === 'aComprobante' && e.target.files[0]){
       try{
-        conf.blob = await comprimirFoto(e.target.files[0], 1600, 0.8);
+        conf.blob = await comprimirFoto(e.target.files[0], window.AV.COMPROBANTE.lado, window.AV.COMPROBANTE.calidad);
         conf.comprobante = URL.createObjectURL(conf.blob);
         const scroll = $('confBody').scrollTop; pintarConfirmar(); $('confBody').scrollTop = scroll;
       } catch(err){ toast('No se pudo leer la foto', 'error'); }
     }
   });
   $('confBody').addEventListener('click', (e) => {
+    const mp = e.target.closest('[data-modo-pago]');
+    if(mp){
+      conf.modo = mp.dataset.modoPago;
+      const t = totales().total;
+      conf.monto = String(conf.modo === 'completo' ? t : r2(t * 0.5));
+      const scroll = $('confBody').scrollTop; pintarConfirmar(); $('confBody').scrollTop = scroll;
+      if(conf.modo === 'parcial') $('aMonto').focus();
+      return;
+    }
     const b = e.target.closest('[data-metodo]');
     if(!b) return;
     conf.metodo = b.dataset.metodo;
@@ -749,11 +801,12 @@
   });
   $('btnConfListo').addEventListener('click', (e) => {
     const t = totales().total;
-    const m = montoOrNull(conf.monto) || 0;
+    const m = conf.modo === 'completo' ? t : (montoOrNull(conf.monto) || 0);
     let primero = null;
     const marcar = (id, mal) => { $(id).classList.toggle('invalid', mal); if(mal && !primero) primero = $(id); };
     marcar('campoAbono', !(m > 0) || m > t);
     marcar('campoMetodo', !conf.metodo);
+    marcar('campoComp', !conf.blob);
     marcar('campoFecha', !conf.fecha || conf.fecha < hoyISO());
     if(primero){ primero.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     guardar(true, { monto: r2(m), metodo: conf.metodo, fecha: conf.fecha, comprobanteBlob: conf.blob, clave: conf.clave }, e.currentTarget);
@@ -775,15 +828,18 @@
     lineas.push(esVenta ? `Confirmamos tu pedido N° ${res.id}:` : `Esta es tu cotización N° ${res.id}:`);
     lineas.push('');
     items.forEach(it => {
-      const det = it.origen === 'medida' ? (it.descripcion || '') : detalleItem(it);
+      const det = it.origen === 'medida' && !conSpecs(it) ? (it.descripcion || '') : detalleItem(it);
       lineas.push(`• ${it.cantidad > 1 ? it.cantidad + ' × ' : ''}*${it.nombre}*${det ? ' (' + det + ')' : ''}: ${dinero(subtotalItem(it))}`);
     });
     const t = totales();
-    if(t.inst) lineas.push(`• Instalación o traslado: ${dinero(t.inst)}`);
+    if(t.inst) lineas.push(`• Instalación: ${dinero(t.inst)}`);
+    if(t.tras) lineas.push(`• Traslado: ${dinero(t.tras)}`);
     if(t.desc) lineas.push(`• Descuento: -${dinero(t.desc)}`);
     lineas.push('', `*Total: ${dinero(res.total)}*`);
     if(esVenta){
-      lineas.push(`Abono: ${dinero(abono.monto)} (${abono.metodo})`, `Resta por pagar: ${dinero(r2(res.total - abono.monto))}`);
+      const falta = r2(res.total - abono.monto);
+      lineas.push(`Pagó: ${dinero(abono.monto)} (${abono.metodo})`);
+      if(falta > 0) lineas.push(`Resta por pagar: ${dinero(falta)}`); else lineas.push('Pagado completo. ¡Gracias!');
       lineas.push('', `Fecha de entrega: ${fechaLarga(abono.fecha)}`);
     } else {
       const v = new Date(); v.setDate(v.getDate() + 20);
@@ -804,8 +860,8 @@
       </div>
       <div class="resumen listo-datos">
         <div class="res-fila"><span>Productos</span><b>${items.length}</b></div>
-        ${esVenta ? `<div class="res-fila"><span>Abono (${esc(abono.metodo)})</span><b>${dinero(abono.monto)}</b></div>
-          <div class="res-fila"><span>Resta por pagar</span><b>${dinero(r2(res.total - abono.monto))}</b></div>
+        ${esVenta ? `<div class="res-fila"><span>Pago (${esc(abono.metodo)})</span><b>${dinero(abono.monto)}</b></div>
+          ${r2(res.total - abono.monto) > 0 ? `<div class="res-fila"><span>Resta por pagar</span><b>${dinero(r2(res.total - abono.monto))}</b></div>` : '<div class="res-fila"><span>Pago</span><b>Completo</b></div>'}
           <div class="res-fila"><span>Entrega</span><b>${esc(fechaLarga(abono.fecha))}</b></div>`
           : `<div class="res-fila"><span>Válida por</span><b>20 días</b></div>`}
         <div class="res-total"><span>Total</span><b>${dinero(res.total)}</b></div>
@@ -889,15 +945,20 @@
     $('cTel').value = v.cliente.telefono ? '0' + String(v.cliente.telefono).replace(/^58/, '') : '';
     $('cNombre').value = v.cliente.nombre || '';
     $('vNotas').value = v.notas || '';
-    if(Number(v.descuento)){ extras.desc = true; $('vDesc').value = Number(v.descuento); }
+    if(Number(v.descuento)) $('vDesc').value = Number(v.descuento);
     if(Number(v.instalacion)){ extras.inst = true; $('vInst').value = Number(v.instalacion); }
+    if(Number(v.traslado)){ extras.tras = true; $('vTras').value = Number(v.traslado); }
     if(v.sede_id) sedeId = v.sede_id;
     clienteExistente = v.cliente;
     ultimaBusqueda = $('cCedula').value.trim() ? 'c' + normCed($('cCedula').value) : 't' + normTel($('cTel').value);
     items = v.items.map(it => {
       const e = it.especificaciones || {};
       const base = { tipo: it.tipo, nombre: it.nombre, foto: it.foto, precio: Number(it.precio_unitario), cantidad: it.cantidad };
-      if(it.a_medida) return Object.assign(base, { origen:'medida', descripcion: e.descripcion || '' });
+      if(it.a_medida){
+        const conTipo = TIPOS.includes(it.tipo);
+        return Object.assign(base, { origen:'medida', descripcion: e.descripcion || '', precioManual:true,
+          color: conTipo ? (e.color || null) : null, especificaciones: conTipo ? e : {}, estado: conTipo ? estadoDesdeEspecificaciones(it.tipo, e, 'pedido') : {} });
+      }
       if(it.pieza_id) return Object.assign(base, { origen:'pieza', pieza_id: it.pieza_id, catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e, precioManual:true, fijo: !cot });
       return Object.assign(base, { origen:'catalogo', catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e,
         estado: estadoDesdeEspecificaciones(it.tipo, e, 'pedido'), extraProteccion: e.monto_proteccion || '', precioManual:true });

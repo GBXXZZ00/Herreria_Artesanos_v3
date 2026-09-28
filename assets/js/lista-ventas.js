@@ -19,7 +19,7 @@
   let cargadoUnaVez = false;
   const FILTROS = COT
     ? [ { id:'abiertas', t:'Abiertas' }, { id:'vencidas', t:'Vencidas' }, { id:'descartadas', t:'Descartadas' } ]
-    : [ { id:'activas', t:'Activas' }, { id:'confirmar', t:'Abonos por confirmar', soloSiHay:true }, { id:'cobrar', t:'Por cobrar' }, { id:'entregadas', t:'Entregadas' }, { id:'canceladas', t:'Canceladas' } ];
+    : [ { id:'activas', t:'Activas' }, { id:'confirmar', t:'Pagos por confirmar', soloSiHay:true }, { id:'cobrar', t:'Por cobrar' }, { id:'entregadas', t:'Entregadas' }, { id:'canceladas', t:'Canceladas' } ];
   let filtro = FILTROS[0].id;
   { const f = new URLSearchParams(location.search).get('filtro'); if(f && FILTROS.some(x => x.id === f)) filtro = f; }
 
@@ -59,7 +59,7 @@
     return `<span class="plazo ${d <= 5 ? 'pronto' : ''}">Vence en ${d} ${d === 1 ? 'día' : 'días'}</span>`;
   }
   function plazoEntrega(v){
-    if(AV.porConfirmar(v.abonos).length) return '<span class="plazo pronto">Abono por confirmar</span>';
+    if(AV.porConfirmar(v.abonos).length) return '<span class="plazo pronto">Pago por confirmar</span>';
     if(v.estado === 'confirmada' && v.produccion_pedida_en) return '<span class="plazo pronto">Pedida a producción</span>';
     if(!v.fecha_entrega || !['confirmada', 'en_produccion', 'lista'].includes(v.estado)) return '';
     const d = AV.diasHasta(v.fecha_entrega);
@@ -149,6 +149,24 @@
   $('buscador').addEventListener('input', pintar);
   $('lista').addEventListener('click', (e) => { const c = e.target.closest('.vcard'); if(c) abrirFicha(+c.dataset.id); });
 
+  // Copia local: la lista aparece al instante con lo último que se vio y luego se actualiza
+  const CACHE = 'ah_cache_ventas';
+  let firmaDatos = '';
+  function aplicar(data, ps){
+    nombres = ps || nombres;
+    todas = (data || []).filter(v => COT ? AV.esCotizacion(v) : !AV.esCotizacion(v));
+    cargadoUnaVez = true;
+    subtitulo();
+    pintar();
+  }
+  function desdeCache(){
+    try{
+      const c = JSON.parse(localStorage.getItem(CACHE) || 'null');
+      if(!c || !Array.isArray(c.data) || Date.now() - c.t > 3 * 864e5) return;
+      firmaDatos = JSON.stringify(c.data);
+      aplicar(c.data, c.ps);
+    } catch(e){}
+  }
   async function cargar(){
     try{
       const [r, ps] = await Promise.all([
@@ -156,11 +174,10 @@
         AV.perfiles()
       ]);
       if(r.error) throw r.error;
-      nombres = ps;
-      todas = (r.data || []).filter(v => COT ? AV.esCotizacion(v) : !AV.esCotizacion(v));
-      cargadoUnaVez = true;
-      subtitulo();
-      pintar();
+      const firma = JSON.stringify(r.data || []);
+      if(firma !== firmaDatos){ firmaDatos = firma; aplicar(r.data, ps); }   // sin cambios no se repinta (sin parpadeo)
+      else { nombres = ps; subtitulo(); }
+      try{ localStorage.setItem(CACHE, JSON.stringify({ t: Date.now(), data: r.data || [], ps })); } catch(e){}
     } catch(err){
       $('subtitulo').textContent = 'Sin conexión';
       if(!cargadoUnaVez) $('lista').innerHTML = `<div class="vacio"><div class="vacio-ico">${ICON_ALERTA}</div><h3>No se pudo cargar</h3><p>Revisa tu internet.</p><button class="btn-secondary" type="button" id="btnReintentar" style="width:auto;padding:0 22px">Reintentar</button></div>`;
@@ -239,7 +256,7 @@
     // Estado: en orden, uno al lado del otro, y un solo botón con el siguiente paso
     if(!cot) html += estadoBloque(v);
     else if(v.estado === 'cotizacion') html += `<button type="button" class="btn-guia" data-accion="convertir">
-        <span class="bg-t">Convertir en venta</span><span class="bg-s">Cuando el cliente dé su abono. Pasa a Ventas.</span></button>`;
+        <span class="bg-t">Convertir en venta</span><span class="bg-s">Cuando el cliente pague todo o una parte. Pasa a Ventas.</span></button>`;
 
     // Avisar al cliente: ① mensaje ② PDF
     if(v.estado !== 'cancelada') html += `<div class="f-tit" style="margin-top:20px">Avisar al cliente</div><div class="pasos3 dos">${avisarHtml(v)}</div>`;
@@ -248,7 +265,8 @@
     const totales = `
       <div class="t-fila"><span>Productos</span><b>${dinero(v.subtotal)}</b></div>
       ${Number(v.descuento) ? `<div class="t-fila"><span>Descuento</span><b>- ${dinero(v.descuento)}</b></div>` : ''}
-      ${Number(v.instalacion) ? `<div class="t-fila"><span>Instalación o traslado</span><b>${dinero(v.instalacion)}</b></div>` : ''}
+      ${Number(v.instalacion) ? `<div class="t-fila"><span>Instalación</span><b>${dinero(v.instalacion)}</b></div>` : ''}
+      ${Number(v.traslado) ? `<div class="t-fila"><span>Traslado</span><b>${dinero(v.traslado)}</b></div>` : ''}
       <div class="t-total"><span>Total</span><b>${dinero(v.total)}</b></div>`;
     if(cot){
       html += acordeon('precio', 'Precio', dinero(v.total), `<div class="totales">${totales}</div>`, true);
@@ -260,7 +278,7 @@
         const marca = pe ? '<span class="plazo pronto">Por confirmar</span>' : rech ? '<span class="plazo tarde">No llegó</span>' : (a.tipo === 'abono' ? '<span class="plazo ok">Confirmado</span>' : '');
         return `<button type="button" class="f-abono ${a.tipo === 'devolucion' ? 'dev' : ''} ${rech ? 'rech' : ''}" ${tocar}>
           <span class="f-abono-ico">${ICON_DINERO}</span>
-          <span style="min-width:0"><span class="f-abono-t" style="display:block">${a.tipo === 'devolucion' ? 'Devolución' : 'Abono'} · ${esc(a.metodo)} ${marca}</span>
+          <span style="min-width:0"><span class="f-abono-t" style="display:block">${a.tipo === 'devolucion' ? 'Devolución' : 'Pago'} · ${esc(a.metodo)} ${marca}</span>
             <span class="f-abono-s">${esc(AV.fechaNum(a.fecha))}${nombres[a.registrado_por] ? ' · ' + esc(nombres[a.registrado_por]) : ''}${pe && puedeConfirmar ? ' · <span class="ver">Toca para confirmar</span>' : a.comprobante ? ' · <span class="ver">Ver comprobante</span>' : ''}</span>
             ${a.nota_confirmacion ? `<span class="f-abono-s" style="display:block;color:var(--ink)">Nota de ${esc(nombres[a.confirmado_por] || 'Ray')}: ${esc(a.nota_confirmacion)}</span>` : ''}</span>
           <span class="f-abono-m">${a.tipo === 'devolucion' ? '- ' : ''}${dinero(a.monto)}</span>
@@ -269,9 +287,9 @@
           <div class="barra" style="margin-top:12px"><i style="transform:scaleX(${Number(v.total) ? Math.max(0, Math.min(1, pag / v.total)) : 0})"></i></div>
           <div class="barra-txt"><span>Pagado <b>${dinero(pag)}</b></span><span>${r > 0 ? 'Resta <b>' + dinero(r) + '</b>' : '<b>Pagado completo</b>'}</span></div></div>
         ${lista ? `<div style="margin-top:6px">${lista}</div>` : ''}
-        ${pend && puedeConfirmar ? '<div class="f-nota">Toca un abono "Por confirmar" para revisar que el dinero llegó.</div>' : ''}
+        ${pend && puedeConfirmar ? '<div class="f-nota">Toca un pago "Por confirmar" para revisar que el dinero llegó.</div>' : ''}
         ${v.estado !== 'cancelada' && r > 0 ? `<button type="button" class="btn-guia sec" data-accion="abono" style="margin-top:12px">
-          <span class="bg-t">Registrar abono</span><span class="bg-s">Cuando el cliente pague otra parte. Queda por confirmar.</span></button>` : ''}`;
+          <span class="bg-t">Registrar pago</span><span class="bg-s">Cuando el cliente pague lo que resta o una parte. Queda por confirmar.</span></button>` : ''}`;
       html += acordeon('pagos', 'Pagos', `${r > 0 ? 'Resta ' + dinero(r) : 'Pagado completo'}${pend ? ' · ' + pend + ' por confirmar' : ''}`, cuerpo, true);
     }
     html += acordeon('productos', 'Productos', `${v.items.length} ${v.items.length === 1 ? 'producto' : 'productos'}`,
@@ -485,7 +503,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Hoja de acción: convertir en venta, registrar abono, cancelar
+  // Hoja de acción: convertir en venta, registrar pago, confirmar pago, cancelar
   // ---------------------------------------------------------------------------
   let acc = null;
   function uuid(){
@@ -498,10 +516,15 @@
     const v = actual;
     const r = AV.resta(v);
     acc = { tipo, monto:'', metodo:null, fecha: AV.habiles(20), blob:null, foto:null, motivo:'', guardando:false, clave: uuid(), abono: tipo === 'confirmar' ? v.abonos.find(a => a.id === abonoId) : null, nota:'' };
-    if(tipo === 'convertir') acc.monto = String(Math.round(v.total * 50) / 100);
-    if(tipo === 'abono') acc.monto = String(r);
-    $('accionTitulo').textContent = tipo === 'confirmar' ? 'Confirmar abono' : tipo === 'convertir' ? 'Convertir en venta' : tipo === 'abono' ? 'Registrar abono' : (AV.esCotizacion(v) ? 'Descartar cotización' : 'Cancelar venta');
-    $('btnAccion').textContent = tipo === 'confirmar' ? 'Sí llegó, confirmar' : tipo === 'convertir' ? 'Guardar venta' : tipo === 'abono' ? 'Guardar abono' : (AV.esCotizacion(v) ? 'Descartar' : 'Cancelar venta');
+    if(tipo === 'convertir'){
+      const inm = AV.soloInmediata(v.items);   // exhibición: pago completo y entrega hoy
+      acc.modo = inm ? 'completo' : 'parcial';
+      acc.monto = String(inm ? Number(v.total) : Math.round(v.total * 50) / 100);
+      if(inm) acc.fecha = AV.iso(new Date());
+    }
+    if(tipo === 'abono'){ acc.modo = 'completo'; acc.monto = String(r); }
+    $('accionTitulo').textContent = tipo === 'confirmar' ? 'Confirmar pago' : tipo === 'convertir' ? 'Convertir en venta' : tipo === 'abono' ? 'Registrar pago' : (AV.esCotizacion(v) ? 'Descartar cotización' : 'Cancelar venta');
+    $('btnAccion').textContent = tipo === 'confirmar' ? 'Sí llegó, confirmar' : tipo === 'convertir' ? 'Guardar venta' : tipo === 'abono' ? 'Guardar pago' : (AV.esCotizacion(v) ? 'Descartar' : 'Cancelar venta');
     $('btnAccion').style.background = tipo === 'cancelar' ? 'var(--danger)' : '';
     pintarAccion();
     abrirHoja('sheetAccion');
@@ -516,7 +539,7 @@
     let html = '';
     if(acc.tipo === 'confirmar'){
       const a = acc.abono;
-      html = `<div class="conf-total"><span>Abono · ${esc(a.metodo)}</span><b>${dinero(a.monto)}</b></div>
+      html = `<div class="conf-total"><span>Pago · ${esc(a.metodo)}</span><b>${dinero(a.monto)}</b></div>
         <div class="f-nota" style="margin:0 0 12px">Pedido N° ${v.id} · ${esc(v.cliente.nombre)} · ${esc(AV.fechaNum(a.fecha))}${nombres[a.registrado_por] ? ' · registró ' + esc(nombres[a.registrado_por]) : ''}</div>
         ${a.comprobante ? `<button type="button" class="btn-secondary" data-ver-comprobante="${esc(a.comprobante)}" style="width:100%;height:48px;margin-bottom:14px">Ver comprobante</button>` : '<div class="f-nota" style="margin:0 0 12px">No subieron comprobante.</div>'}
         <div class="field"><label class="field-label" for="aNota">Tu nota (opcional)</label>
@@ -531,17 +554,15 @@
     } else {
       const base = acc.tipo === 'convertir' ? Number(v.total) : AV.resta(v);
       html = `<div class="conf-total"><span>${acc.tipo === 'convertir' ? 'Total de la venta' : 'Resta por pagar'}</span><b>${dinero(base)}</b></div>
-        <div class="field" id="campoMonto"><label class="field-label" for="aMonto">Abono en dólares</label>
+        ${AV.modoPagoHtml(acc.modo, acc.tipo === 'abono' ? 'Paga lo que resta' : 'Pago completo')}
+        <div class="field ${acc.modo === 'completo' ? 'hidden' : ''}" id="campoMonto"><label class="field-label" for="aMonto">Monto del pago en dólares</label>
           <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="aMonto" type="text" inputmode="decimal" autocomplete="off" value="${esc(acc.monto)}"></div>
           <div class="field-error" id="errMonto">Escribe el monto</div><div id="avisoMonto"></div></div>
         ${metodosHtml('Cómo pagó')}
-        <div class="field"><span class="field-label">Comprobante (opcional)</span>
-          <div class="photos single"><label class="photo-box ${acc.foto ? 'filled' : ''}" style="aspect-ratio:3/1">
-          ${acc.foto ? `<img src="${esc(acc.foto)}" alt=""><span class="photo-tag">Cambiar comprobante</span>` : `<span class="plus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span>Foto o captura del pago</span>`}
-          <input type="file" accept="image/*" id="aComprobante" aria-label="Comprobante"></label></div></div>
+        ${AV.comprobanteHtml(acc.foto)}
         ${acc.tipo === 'convertir' ? `<div class="field" id="campoFecha"><label class="field-label" for="aFecha">Fecha de entrega</label>
           <input class="input" id="aFecha" type="date" min="${AV.iso(new Date())}" value="${esc(acc.fecha)}">
-          <div class="field-hint">20 días hábiles desde hoy, sin sábados ni domingos. La puedes cambiar.</div>
+          <div class="field-hint">${AV.soloInmediata(v.items) ? 'Es de entrega inmediata: hoy. La puedes cambiar.' : '20 días hábiles desde hoy, sin sábados ni domingos. La puedes cambiar.'}</div>
           <div class="field-error">Elige la fecha de entrega</div></div>` : ''}`;
     }
     $('accionBody').innerHTML = html;
@@ -553,8 +574,8 @@
     const tope = acc.tipo === 'convertir' ? Number(v.total) : AV.resta(v);
     const m = numOrNull(acc.monto) || 0;
     let html = '';
-    if(acc.tipo === 'convertir' && m > 0 && m < v.total * 0.5) html += `<div class="aviso-50">${ICON_ALERTA}Abono menor al 50%</div>`;
-    if(m > 0 && m <= tope) html += `<div class="resta-t">${acc.tipo === 'convertir' ? 'Resta por pagar' : 'Después de este abono resta'}: <b>${dinero(Math.round((tope - m) * 100) / 100)}</b></div>`;
+    if(acc.tipo === 'convertir' && m > 0 && m < v.total * 0.5) html += `<div class="aviso-50">${ICON_ALERTA}Pago menor al 50%</div>`;
+    if(m > 0 && m <= tope) html += `<div class="resta-t">${acc.tipo === 'convertir' ? 'Resta por pagar' : 'Después de este pago resta'}: <b>${dinero(Math.round((tope - m) * 100) / 100)}</b></div>`;
     $('avisoMonto').innerHTML = html;
     $('errMonto').textContent = m > tope ? 'Es mayor que lo que falta por pagar' : 'Escribe el monto';
     $('campoMonto').classList.toggle('invalid', m > tope);
@@ -569,7 +590,7 @@
     if(e.target.id === 'aFecha'){ acc.fecha = e.target.value; $('campoFecha').classList.remove('invalid'); }
     if(e.target.id === 'aComprobante' && e.target.files[0]){
       try{
-        acc.blob = await comprimirFoto(e.target.files[0], 1600, 0.8);
+        acc.blob = await comprimirFoto(e.target.files[0], AV.COMPROBANTE.lado, AV.COMPROBANTE.calidad);
         acc.foto = URL.createObjectURL(acc.blob);
         const sc = $('accionBody').scrollTop; pintarAccion(); $('accionBody').scrollTop = sc;
       } catch(err){ toast('No se pudo leer la foto', 'error'); }
@@ -583,6 +604,16 @@
       return;
     }
     if(e.target.closest('[data-no-llego]')){ guardarConfirmacion(false); return; }
+    const mp = e.target.closest('[data-modo-pago]');
+    if(mp){
+      const v = actual;
+      acc.modo = mp.dataset.modoPago;
+      const tope = acc.tipo === 'convertir' ? Number(v.total) : AV.resta(v);
+      acc.monto = String(acc.modo === 'completo' ? tope : (acc.tipo === 'convertir' ? Math.round(v.total * 50) / 100 : ''));
+      const sc = $('accionBody').scrollTop; pintarAccion(); $('accionBody').scrollTop = sc;
+      if(acc.modo === 'parcial') $('aMonto').focus();
+      return;
+    }
     const b = e.target.closest('[data-metodo]');
     if(!b) return;
     acc.metodo = b.dataset.metodo;
@@ -601,14 +632,14 @@
   async function guardarConfirmacion(llego){
     if(!acc || acc.guardando) return;
     const v = actual, a = acc.abono;
-    if(!llego && !confirm(`¿Marcar que el abono de ${dinero(a.monto)} NO llegó? Dejará de contar y se le avisa a quien lo registró.`)) return;
+    if(!llego && !confirm(`¿Marcar que el pago de ${dinero(a.monto)} NO llegó? Dejará de contar y se le avisa a quien lo registró.`)) return;
     acc.guardando = true;
     const btn = $('btnAccion'); btn.disabled = true;
     try{
       const { error } = await db.rpc('confirmar_abono', { aid: a.id, llego, nota: acc.nota || null });
       if(error) throw new Error(error.message);
       cerrarHoja('sheetAccion', true);
-      toast(llego ? 'Abono confirmado' : 'Marcado como que no llegó');
+      toast(llego ? 'Pago confirmado' : 'Marcado como que no llegó');
       await Promise.all([recargarFicha(), cargar()]);
     } catch(err){ toast(err.message, 'error'); }
     finally { if(acc) acc.guardando = false; btn.disabled = false; }
@@ -626,9 +657,10 @@
       if(pag > 0) marcar('campoMetodo', !acc.metodo);
     } else {
       const tope = acc.tipo === 'convertir' ? Number(v.total) : AV.resta(v);
-      const m = numOrNull(acc.monto) || 0;
+      const m = acc.modo === 'completo' ? tope : (numOrNull(acc.monto) || 0);
       marcar('campoMonto', !(m > 0) || m > tope);
       marcar('campoMetodo', !acc.metodo);
+      marcar('campoComp', !acc.blob);
       if(acc.tipo === 'convertir') marcar('campoFecha', !acc.fecha || acc.fecha < AV.iso(new Date()));
     }
     if(primero){ primero.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
@@ -643,7 +675,8 @@
         res = await db.rpc('cancelar_venta', { vid: v.id, motivo: acc.motivo || null, metodo_devolucion: pag > 0 ? acc.metodo : null });
       } else {
         const comprobante = await subirComprobante();
-        const a = { monto: Math.round((numOrNull(acc.monto) || 0) * 100) / 100, metodo: acc.metodo, comprobante, clave: acc.clave };
+        const tope = acc.tipo === 'convertir' ? Number(v.total) : AV.resta(v);
+        const a = { monto: Math.round((acc.modo === 'completo' ? tope : (numOrNull(acc.monto) || 0)) * 100) / 100, metodo: acc.metodo, comprobante, clave: acc.clave };
         if(acc.tipo === 'convertir'){ a.fecha_entrega = acc.fecha; res = await db.rpc('convertir_en_venta', { vid: v.id, a }); }
         else res = await db.rpc('registrar_abono', { vid: v.id, a });
       }
@@ -654,7 +687,7 @@
         cerrarHoja('sheetFicha', true);
         await cargar();
       } else {
-        toast(acc.tipo === 'abono' ? 'Abono guardado. Queda por confirmar' : (AV.esCotizacion(v) ? 'Cotización descartada' : 'Venta cancelada'));
+        toast(acc.tipo === 'abono' ? 'Pago guardado. Queda por confirmar' : (AV.esCotizacion(v) ? 'Cotización descartada' : 'Venta cancelada'));
         await Promise.all([recargarFicha(), cargar()]);
       }
     } catch(err){
@@ -687,6 +720,7 @@
   });
 
   (async function(){
+    desdeCache();
     await cargar();
     const id = fichaPendiente();
     if(id) abrirFicha(id);

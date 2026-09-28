@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Nueva venta · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=30">
+<link rel="stylesheet" href="assets/css/base.css?v=31">
 <style>
   .page{padding:4px 18px calc(150px + var(--safe-b))}
   .sec{margin-top:22px}
@@ -172,20 +172,24 @@
   <section class="sec" style="--i:2">
     <div class="sec-head"><span class="sec-num">3</span><h2 class="sec-title">Cierre</h2></div>
     <div class="field">
-      <span class="field-label">¿Lleva algo más?</span>
+      <span class="field-label">Extras</span>
       <div class="toggles">
-        <button type="button" class="tchip" data-extra="desc" aria-pressed="false"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Descuento</button>
-        <button type="button" class="tchip" data-extra="inst" aria-pressed="false"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Instalación o traslado</button>
+        <button type="button" class="tchip" data-extra="inst" aria-pressed="false"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Instalación</button>
+        <button type="button" class="tchip" data-extra="tras" aria-pressed="false"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Traslado</button>
       </div>
     </div>
-    <div class="field hidden" id="campoDesc">
-      <label class="field-label" for="vDesc">Monto del descuento</label>
+    <div class="field hidden" id="campoInst">
+      <label class="field-label" for="vInst">Monto de la instalación</label>
+      <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vInst" type="text" inputmode="decimal" autocomplete="off"></div>
+    </div>
+    <div class="field hidden" id="campoTras">
+      <label class="field-label" for="vTras">Monto del traslado</label>
+      <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vTras" type="text" inputmode="decimal" autocomplete="off"></div>
+    </div>
+    <div class="field" id="campoDesc">
+      <label class="field-label" for="vDesc">Descuento en dólares (opcional)</label>
       <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vDesc" type="text" inputmode="decimal" autocomplete="off"></div>
       <div class="field-error">Es mayor que el total</div>
-    </div>
-    <div class="field hidden" id="campoInst">
-      <label class="field-label" for="vInst">Monto de instalación o traslado</label>
-      <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vInst" type="text" inputmode="decimal" autocomplete="off"></div>
     </div>
     <div class="field">
       <span class="field-label">Sede de la venta</span>
@@ -221,7 +225,7 @@
       </button>
       <button class="origen" type="button" id="optVenta">
         <span class="ini-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span>
-        <span><span class="origen-t">Venta</span><span class="origen-s">El cliente ya dio un abono</span></span>
+        <span><span class="origen-t">Venta</span><span class="origen-s">El cliente ya pagó todo o una parte</span></span>
       </button>
     </div>
   </div>
@@ -292,11 +296,11 @@
   <div class="sheet-foot"><button class="btn-primary" type="button" id="btnProdListo">Agregar a la venta</button></div>
 </section>
 
-<!-- Confirmar venta: abono -->
+<!-- Confirmar venta: pago -->
 <div class="sheet-scrim" id="scrimConfirmar" data-cerrar="sheetConfirmar"></div>
 <section class="sheet sheet-auto" id="sheetConfirmar" role="dialog" aria-modal="true" aria-labelledby="confTitulo">
   <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title" id="confTitulo">Abono</h2>
+  <div class="sheet-head"><h2 class="sheet-title" id="confTitulo">Pago</h2>
     <button class="icon-btn" data-cerrar="sheetConfirmar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="sheet-body" id="confBody"></div>
@@ -305,13 +309,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=30"></script>
-<script src="assets/js/supabase-client.js?v=30"></script>
-<script src="assets/js/img-compress.js?v=30"></script>
-<script src="assets/js/comun.js?v=30"></script>
-<script src="assets/js/avisos.js?v=30"></script>
-<script src="assets/js/sesion.js?v=30"></script>
-<script src="assets/js/ventas-comun.js?v=30"></script>
-<script src="assets/js/venta.js?v=30"></script>
+<script src="assets/vendor/supabase.js?v=31"></script>
+<script src="assets/js/supabase-client.js?v=31"></script>
+<script src="assets/js/img-compress.js?v=31"></script>
+<script src="assets/js/comun.js?v=31"></script>
+<script src="assets/js/avisos.js?v=31"></script>
+<script src="assets/js/sesion.js?v=31"></script>
+<script src="assets/js/ventas-comun.js?v=31"></script>
+<script src="assets/js/venta.js?v=31"></script>
 </body>
 </html>
