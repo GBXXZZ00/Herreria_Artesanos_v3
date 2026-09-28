@@ -2,13 +2,12 @@
 (function(){
   'use strict';
   const db = window.db;
-  const { TIPOS, iconoTipo, acabados, tieneColores, esquema, grupoActivo, especificacionesDesdeEstado,
-          estadoDesdeEspecificaciones, resumenSpecs, fotoModelo, fotoPieza, esc, numOrNull, dinero, toast,
+  const { TIPOS, iconoTipo, acabados, tieneColores, especificacionesDesdeEstado,
+          estadoDesdeEspecificaciones, resumenSpecs, fotoModelo, fotoPieza, esc, dinero, toast,
           abrirHoja, cerrarHoja, antesDeCerrar, montoOrNull } = window.AH;
   const $ = (id) => document.getElementById(id);
 
-  const TARIFA_VENTANA = { 'Panorámica':[90, 190], 'Ecobel':[120, 220] }; // $/m² sin y con protección
-  const PRECIO_MANILLON = 20;
+  const SP = window.SpecsProducto;   // especificaciones y precio sugerido (compartido con Producción)
   const METODOS = ['Binance', 'Zelle', 'Bolívares', 'Efectivo'];
   const BORRADOR = 'ah_borrador_venta';
   const NUMERO_NEGOCIO = '584220167079';
@@ -219,99 +218,16 @@
   let prodSucio = false;
 
   function modeloDe(it){ return modelos.find(x => x.id === it.catalogo_id) || null; }
-  function base(it){ const m = modeloDe(it); return (m && m.especificaciones_base) || {}; }
   // A medida con tipo del catálogo: lleva las mismas especificaciones. "Otro" solo lleva descripción.
   function conSpecs(it){ return it.origen !== 'medida' || TIPOS.includes(it.tipo); }
   // Precio sugerido: catálogo siempre; a medida solo la ventana (por m²)
   function llevaCalculo(it){ return it.origen === 'catalogo' || (it.origen === 'medida' && it.tipo === 'Ventana'); }
 
-  // ¿Cuánto cuesta según lo elegido? Devuelve el precio y cómo se calculó.
-  function calcular(it){
-    const m = modeloDe(it);
-    const s = it.estado || {};
-    const partes = [];
-    let total = 0;
-    if(it.tipo === 'Ventana'){
-      const alto = numOrNull(s.alto) || 0, ancho = numOrNull(s.ancho) || 0;
-      const area = r2(alto * ancho);
-      const tarifa = (TARIFA_VENTANA[s.aluminio] || TARIFA_VENTANA['Panorámica'])[s.proteccion ? 1 : 0];
-      total = r2(area * tarifa);
-      partes.push(`${area} m² × $${tarifa} (${s.aluminio || 'Panorámica'}${s.proteccion ? ' con protección' : ''})`);
-    } else {
-      total = Number(m && m.precio_base) || 0;
-      partes.push(`Modelo ${dinero(total)}`);
-    }
-    const b = base(it);
-    if(s.manillon && s.manillon !== 'Sin' && !b.manillon){ total += PRECIO_MANILLON; partes.push(`manillón ${dinero(PRECIO_MANILLON)}`); }
-    if(pideMontoProteccion(it)){
-      const x = montoOrNull(it.extraProteccion) || 0;
-      total += x; partes.push(`protección ${x ? dinero(x) : '(escribe el monto)'}`);
-    }
-    return { total: r2(total), texto: partes.join(' + ') };
-  }
-  function pideMontoProteccion(it){
-    if(it.origen === 'medida') return false;   // a medida: el precio escrito ya lo incluye todo
-    const s = it.estado || {}, b = base(it);
-    if(it.tipo === 'Puerta Multilock') return !!s.proteccion && !b.proteccion;
-    if(it.tipo === 'Combo') return s.variante === 'Con protección en puerta' && b.variante !== 'Con protección en puerta';
-    return false;
-  }
-
-  function optsHtml(grupo, sel){
-    const cols = grupo.cols || grupo.opts.length;
-    return `<div class="field"><span class="field-label">${esc(grupo.label)}</span>
-      <div class="opts" style="--cols:${cols}">${grupo.opts.map(o => `
-        <button type="button" class="opt ${o.v === sel ? 'selected' : ''}" data-g="${grupo.g}" data-v="${esc(o.v)}" aria-pressed="${o.v === sel}">${o.sw ? `<span class="swatch ${o.sw}"></span>` : ''}${esc(o.t || o.v)}</button>`).join('')}
-      </div></div>`;
-  }
-  function medidasHtml(label, kA, kB){
-    const s = prod.estado;
-    return `<div class="field"><span class="field-label">${esc(label)}</span>
-      <div class="input-row">
-        <div class="input-affix has-r"><input class="input" data-mkey="${kA}" type="text" inputmode="decimal" autocomplete="off" value="${esc(s[kA] == null ? '' : s[kA])}" aria-label="Alto en metros"><span class="affix affix-r">alto</span></div>
-        <div class="input-affix has-r"><input class="input" data-mkey="${kB}" type="text" inputmode="decimal" autocomplete="off" value="${esc(s[kB] == null ? '' : s[kB])}" aria-label="Ancho en metros"><span class="affix affix-r">ancho</span></div>
-      </div><div class="field-hint">En metros</div></div>`;
-  }
-  function grupoHtml(g){
-    if(g.tipo === 'medidas') return medidasHtml(g.label, g.keys[0], g.keys[1]);
-    if(g.tipo === 'texto') return `<div class="field"><label class="field-label">${esc(g.label)}</label><input class="input" type="text" data-texto="${g.g}" value="${esc(prod.estado[g.g] || '')}" placeholder="${esc(g.placeholder || '')}" autocomplete="off"></div>`;
-    return optsHtml(g, prod.estado[g.g]);
-  }
-  const ICON_PUERTA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="1.5"/><path d="M15 11v2.5"/></svg>';
-  const ICON_VENTANA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M12 4.5v15M3.5 12h17"/></svg>';
-  function specsHtml(){
-    const esq = esquema(prod.tipo, 'pedido');
-    const s = prod.estado;
-    const combo = prod.tipo === 'Combo';
-    let html = combo ? `<div class="zona">${ICON_PUERTA}Puerta</div>` : '';
-    html += medidasHtml(esq.medidas.label || 'Medidas', 'alto', 'ancho');
-    if(tieneColores(prod.tipo)){
-      html += optsHtml({ g:'__color', label: combo ? 'Color (puerta y ventanas)' : 'Color', opts: acabados(prod.tipo).filter(a => a.sw).map(a => ({ v:a.key, sw:a.sw })) }, prod.color);
-    }
-    const dependeDeGrupo = (g) => g.si && typeof g.si === 'object';
-    const dependeDeExtra = (g) => g.si && typeof g.si === 'string';
-    esq.grupos.filter(g => !g.si && !g.zona).forEach(g => {
-      html += grupoHtml(g);
-      esq.grupos.filter(h => dependeDeGrupo(h) && h.si.g === g.g && grupoActivo(h, s)).forEach(h => { html += grupoHtml(h); });
-    });
-    if(esq.extras.length){
-      html += `<div class="field"><span class="field-label">Extras</span><div class="toggles">${esq.extras.map(x => `
-        <button type="button" class="tchip ${s[x.k] ? 'on' : ''}" data-k="${x.k}" aria-pressed="${!!s[x.k]}"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>${esc(x.label)}</button>`).join('')}</div></div>`;
-    }
-    esq.grupos.filter(g => dependeDeExtra(g) && grupoActivo(g, s) && !g.zona).forEach(g => { html += grupoHtml(g); });
-    if(pideMontoProteccion(prod)){
-      html += `<div class="field" id="campoProt"><label class="field-label" for="pProt">Monto de la protección</label>
-        <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="pProt" data-precio-extra type="text" inputmode="decimal" autocomplete="off" value="${esc(prod.extraProteccion || '')}"></div>
-        <div class="field-error">Escribe cuánto cuesta la protección</div></div>`;
-    }
-    const zona = esq.grupos.filter(g => g.zona && grupoActivo(g, s));
-    if(zona.length){
-      html += `<div class="zona">${ICON_VENTANA}Ventanas</div>`;
-      zona.forEach(g => { html += grupoHtml(g); });
-      html += '<div class="zona-fin"></div>';
-    }
-    return html;
-  }
+  // Especificaciones y precio: el mismo motor que usa Producción (specs-producto.js)
+  const calcular = (it) => SP.calcular(it, modeloDe(it));
+  const pideMontoProteccion = (it) => SP.pideMontoProteccion(it, modeloDe(it));
+  const optsHtml = SP.optsHtml;
+  const specsHtml = () => SP.specsHtml(prod, modeloDe(prod));
 
   function cantidadHtml(max){
     if(prod.fijo) return `<div class="field"><span class="field-label">Cantidad</span><div class="f-fijo">${prod.cantidad} (ya vendida)</div></div>`;
@@ -421,15 +337,10 @@
         $('campoMedTipo').classList.remove('invalid');
         pintarProducto(); return;
       }
-      if(o.dataset.g === '__color'){
-        prod.color = o.dataset.v;
-        if(prod.tipo === 'Combo') prod.estado.ventanas_color = o.dataset.v;  // las ventanas van del mismo color
-      }
-      else prod.estado[o.dataset.g] = o.dataset.v;
+      SP.tocar(prod, o);
       pintarProducto(); return;
     }
-    const t = e.target.closest('.tchip[data-k]');
-    if(t){ prodSucio = true; prod.estado[t.dataset.k] = !prod.estado[t.dataset.k]; pintarProducto(); return; }
+    if(SP.tocar(prod, e.target)){ prodSucio = true; pintarProducto(); return; }
     const c = e.target.closest('[data-cant]');
     if(c){
       prodSucio = true;
@@ -443,9 +354,7 @@
   $('prodBody').addEventListener('input', (e) => {
     prodSucio = true;
     const el = e.target;
-    if(el.dataset.mkey){ prod.estado[el.dataset.mkey] = el.value; refrescarPrecio(); return; }
-    if(el.dataset.texto){ prod.estado[el.dataset.texto] = el.value; return; }
-    if(el.id === 'pProt'){ prod.extraProteccion = el.value; $('campoProt').classList.remove('invalid'); refrescarPrecio(); return; }
+    if(el.dataset.mkey || el.dataset.texto || el.id === 'pProt'){ if(SP.escribir(prod, el)) refrescarPrecio(); return; }
     if(el.id === 'pPrecio'){ prod.precio = el.value; prod.precioManual = true; $('campoPrecio').classList.remove('invalid'); return; }
     if(el.id === 'pNombre'){ prod.nombre = el.value; if($('campoMedNombre')) $('campoMedNombre').classList.remove('invalid'); return; }
     if(el.id === 'pDesc'){ prod.descripcion = el.value; }

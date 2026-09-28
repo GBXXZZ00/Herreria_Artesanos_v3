@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Nueva venta · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=39">
+<link rel="stylesheet" href="assets/css/base.css?v=40">
 <style>
   .page{padding:4px 18px calc(150px + var(--safe-b))}
   .sec{margin-top:22px}
@@ -63,10 +63,6 @@
   .sec{opacity:0;transform:translateY(10px);animation:secIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 60ms)}
   @keyframes secIn{to{opacity:1;transform:none}}
   /* Combos: qué es de la puerta y qué de las ventanas */
-  .zona{display:flex;align-items:center;gap:10px;margin:24px 0 12px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:14.5px;font-weight:800}
-  .zona:first-child{margin-top:4px}
-  .zona svg{flex-shrink:0}
-  .zona-fin{height:1px;background:var(--line);margin:22px 0 4px}
 
   /* Hoja: elegir origen */
   .origenes{display:flex;flex-direction:column;gap:10px}
@@ -91,11 +87,6 @@
   .prod-cab .item-foto{width:76px;height:76px;border-radius:14px}
   .prod-nombre{font-size:19px;font-weight:800;letter-spacing:-0.3px}
   .prod-tipo{font-size:13.5px;color:var(--ink-soft);margin-top:2px}
-  .precio-caja{padding:14px;border-radius:var(--radius);background:var(--surface-2);margin-top:6px}
-  .precio-caja .field{margin:0}
-  .desglose{font-size:13px;color:var(--ink-soft);margin-top:8px;line-height:1.45}
-  .desglose b{color:var(--accent)}
-  .usar-sugerido{font-size:13px;font-weight:800;color:var(--accent);margin-top:6px}
 
   /* Confirmar */
   .conf-total{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px;border-radius:var(--radius);background:var(--surface-2);margin-bottom:6px}
@@ -309,13 +300,14 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=39"></script>
-<script src="assets/js/supabase-client.js?v=39"></script>
-<script src="assets/js/img-compress.js?v=39"></script>
-<script src="assets/js/comun.js?v=39"></script>
-<script src="assets/js/avisos.js?v=39"></script>
-<script src="assets/js/sesion.js?v=39"></script>
-<script src="assets/js/ventas-comun.js?v=39"></script>
-<script src="assets/js/venta.js?v=39"></script>
+<script src="assets/vendor/supabase.js?v=40"></script>
+<script src="assets/js/supabase-client.js?v=40"></script>
+<script src="assets/js/img-compress.js?v=40"></script>
+<script src="assets/js/comun.js?v=40"></script>
+<script src="assets/js/avisos.js?v=40"></script>
+<script src="assets/js/sesion.js?v=40"></script>
+<script src="assets/js/ventas-comun.js?v=40"></script>
+<script src="assets/js/specs-producto.js?v=40"></script>
+<script src="assets/js/venta.js?v=40"></script>
 </body>
 </html>

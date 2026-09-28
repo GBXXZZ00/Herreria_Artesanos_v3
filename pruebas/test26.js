@@ -138,9 +138,12 @@ async function entrar(b,user,rol,nombre){
  const av=await a.textContent('#avisosAdmin');
  ok('Admin ve "1 vale por aprobar"',av.includes('1 vale por aprobar') && av.includes('Jesús'));
  ok('Admin ve "1 trabajo sin asignar"',av.includes('1 trabajo sin asignar'));
- ok('Admin ve "1 producto sin categoría de pago"',av.includes('1 producto sin categoría de pago'));
- ok('Admin ve "3 modelos sin categoría de pago"',av.includes('3 modelos sin categoría de pago'));
- ok('Los avisos llevan al lugar correcto',!!(await a.$('a.aviso-card[href="produccion.html?filtro=asignar"]')) && !!(await a.$('a.aviso-card[href="produccion.html?filtro=sincat"]')) && !!(await a.$('a.aviso-card[href="catalogo.html?filtro=sin-categoria"]')));
+ ok('Admin ve "1 producto sin categoría de pago"',av.includes('1 producto sin categoría'));
+ ok('Admin ve "3 modelos sin categoría de pago"',av.includes('3 modelos sin categoría'));
+ ok('Los avisos llevan al lugar correcto',!!(await a.$('a.pend-fila[href="produccion.html?filtro=asignar"]')) && !!(await a.$('a.pend-fila[href="produccion.html?filtro=sincat"]')) && !!(await a.$('a.pend-fila[href="catalogo.html?filtro=sin-categoria"]')));
+ ok('Los pendientes van en una sola caja con su contador',(await a.$$('#avisosAdmin .pend')).length===1 && (await a.textContent('.pend-n'))==='4');
+ ok('Cada pendiente tiene su color',!!(await a.$('.pend-ico.c-naranja')) && !!(await a.$('.pend-ico.c-verde')) && !!(await a.$('.pend-ico.c-teal')));
+ ok('El aviso de notificaciones va aparte',!!(await a.$('#avisosAdmin > .aviso-card.notif')));
  ok('Admin sigue viendo sus módulos',await a.isVisible('#modulos') && await a.isVisible('#btnNuevaVenta'));
  ok('La cajita Producción dice cuántos hay en taller',(await a.textContent('#cuenta-produccion'))==='1 en taller · 1 sin asignar',await a.textContent('#cuenta-produccion'));
  await a.screenshot({path:'shots5/t6-admin.png',fullPage:true});

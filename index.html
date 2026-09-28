@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=39">
+<link rel="stylesheet" href="assets/css/base.css?v=40">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -66,7 +66,25 @@
   .aviso-btn{margin-left:auto;flex-shrink:0;height:38px;padding:0 14px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800}
   #sheetPin .sheet-body{padding-bottom:calc(24px + var(--safe-b))}
   #sheetPin .pin-cab{margin-top:4px}
-  .aviso-card.suave .ini-ico{background:var(--accent-soft);color:var(--accent)}
+  /* Pendientes: una caja, una línea por cosa, color según qué es */
+  .pend{margin:0 0 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden;box-shadow:var(--shadow-sm)}
+  .pend-cab{display:flex;align-items:center;gap:8px;padding:12px 14px 4px;font-size:13px;font-weight:800;color:var(--ink-soft)}
+  .pend-n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#C2410C;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+  .pend-fila{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;text-align:left;color:var(--ink);text-decoration:none;transition:background-color 140ms var(--ease-out),transform 140ms var(--ease-out)}
+  .pend-fila:active{background:var(--surface-2);transform:scale(0.99)}
+  .pend-fila + .pend-fila{border-top:1px solid var(--line)}
+  .pend-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .pend-t{flex:1;min-width:0;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pend-t span{font-weight:600;color:var(--ink-soft)}
+  .pend-fila .chev{color:var(--ink-faint);flex-shrink:0}
+  .c-rojo{background:#FDE3E1;color:#B42318}
+  .c-naranja{background:#FFE7C2;color:#8A5A00}
+  .c-verde{background:#DDF2E6;color:#1B6B3A}
+  .c-teal{background:var(--accent-soft);color:var(--accent)}
+  .aviso-card.notif{padding:12px 14px}
+  .aviso-card.notif .ini-ico{width:38px;height:38px;border-radius:11px}
+  .aviso-card.notif .aviso-t{font-size:14.5px}
+  .aviso-card.notif .aviso-s{font-size:12.5px}
 
   /* Inicio del trabajador */
   .es-trabajador #btnNuevaVenta, .es-trabajador #modulos, .es-trabajador #menuModulos{display:none}
@@ -335,13 +353,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=39"></script>
-<script src="assets/js/supabase-client.js?v=39"></script>
-<script src="assets/js/img-compress.js?v=39"></script>
-<script src="assets/js/comun.js?v=39"></script>
-<script src="assets/js/avisos.js?v=39"></script>
-<script src="assets/js/sesion.js?v=39"></script>
-<script src="assets/js/mi-trabajo.js?v=39"></script>
+<script src="assets/vendor/supabase.js?v=40"></script>
+<script src="assets/js/supabase-client.js?v=40"></script>
+<script src="assets/js/img-compress.js?v=40"></script>
+<script src="assets/js/comun.js?v=40"></script>
+<script src="assets/js/avisos.js?v=40"></script>
+<script src="assets/js/sesion.js?v=40"></script>
+<script src="assets/js/mi-trabajo.js?v=40"></script>
 <script>
 (function(){
   'use strict';
@@ -537,79 +555,85 @@
   // Administradores: pedidos esperando producción y notificaciones del teléfono
   // ---------------------------------------------------------------------------
   const ICON_CAMPANA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
-  const ICON_DINERO = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/></svg>';
-  const ICON_LLAVE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/></svg>';
+  const svg = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const ICONOS = {
+    dinero: svg('<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/>'),
+    llave: svg('<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>'),
+    persona: svg('<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>'),
+    vale: svg('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'),
+    etiqueta: svg('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>')
+  };
+  const CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+  const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
+
+  // Un pendiente = una línea: color según qué es, título corto y detalle
+  // p = { color:'rojo'|'naranja'|'verde'|'teal', icono, titulo, detalle, href | vales:true }
+  function filaPendiente(p){
+    const dentro = `<span class="pend-ico c-${p.color}">${ICONOS[p.icono]}</span>
+      <span class="pend-t">${esc(p.titulo)}${p.detalle ? ` <span>· ${esc(p.detalle)}</span>` : ''}</span>${CHEV}`;
+    return p.vales ? `<button class="pend-fila" type="button" data-abrir-vales>${dentro}</button>`
+      : `<a class="pend-fila" href="${esc(p.href)}" data-modulo>${dentro}</a>`;
+  }
+
   let estadoNotif = null;
   async function pintarAvisosAdmin(p){
     const cont = $('avisosAdmin');
     const admin = p && p.rol === 'admin';
     $('btnNotif').classList.remove('hidden');
-    let html = '';
-    // Ray: abonos por confirmar
+    const pend = [];
+    // Ray: pagos por confirmar
     if(p && p.confirma_abonos){
       try{
         const { data } = await db.from('abonos').select('id,venta_id,monto,metodo').eq('estado', 'por_confirmar').eq('tipo', 'abono').order('fecha', { ascending:true });
         if(data && data.length){
           const total = data.reduce((a, x) => a + Number(x.monto), 0);
-          html += `<a class="aviso-card urgente" href="ventas.html?abrir=${data.length === 1 ? data[0].venta_id : ''}${data.length > 1 ? '&filtro=confirmar' : ''}" data-modulo>
-            <span class="ini-ico">${ICON_DINERO}</span>
-            <span><span class="aviso-t">${data.length === 1 ? '1 pago por confirmar' : data.length + ' pagos por confirmar'}</span>
-            <span class="aviso-s">${window.AH.dinero(total)} en total · toca para revisarlos</span></span>
-          </a>`;
+          pend.push({ color:'rojo', icono:'dinero', titulo: plural(data.length, '1 pago por confirmar', 'pagos por confirmar'), detalle: window.AH.dinero(total),
+            href: `ventas.html?abrir=${data.length === 1 ? data[0].venta_id : ''}${data.length > 1 ? '&filtro=confirmar' : ''}` });
         }
       } catch(e){}
     }
-    // Pedidos que Yulimar pidió enviar a producción
+    // Pedidos que la vendedora pidió enviar a producción
     if(admin) try{
       const { data } = await db.from('ventas').select('id,produccion_pedida_en,cliente:clientes(nombre)').eq('estado', 'confirmada').not('produccion_pedida_en', 'is', null).order('produccion_pedida_en', { ascending:true });
       if(data && data.length){
-        const primero = data[0];
-        html += `<a class="aviso-card urgente" href="ventas.html?abrir=${data.length === 1 ? primero.id : ''}" data-modulo>
-          <span class="ini-ico">${ICON_LLAVE}</span>
-          <span><span class="aviso-t">${data.length === 1 ? '1 pedido espera producción' : data.length + ' pedidos esperan producción'}</span>
-          <span class="aviso-s">${esc(data.map(v => 'N° ' + v.id + ' · ' + (v.cliente ? v.cliente.nombre : '')).slice(0, 2).join(' · '))}${data.length > 2 ? ' y más' : ''}</span></span>
-        </a>`;
+        pend.push({ color:'naranja', icono:'llave', titulo: data.length === 1 ? '1 pedido espera producción' : data.length + ' pedidos esperan producción',
+          detalle: data.map(v => 'N° ' + v.id).slice(0, 3).join(', ') + (data.length > 3 ? '…' : ''),
+          href: `ventas.html?abrir=${data.length === 1 ? data[0].id : ''}` });
       }
     } catch(e){}
-    if(admin) html += await avisosTaller();
-    // Notificaciones del teléfono
+    if(admin) pend.push(...await pendientesTaller());
+
+    let html = pend.length ? `<div class="pend" aria-label="Pendientes">
+      <div class="pend-cab">Pendientes <span class="pend-n">${pend.length}</span></div>
+      ${pend.map(filaPendiente).join('')}</div>` : '';
+
+    // Notificaciones del teléfono (aparte: no es un pendiente de trabajo)
     try{ estadoNotif = window.Avisos ? await window.Avisos.estado() : 'no-soportado'; } catch(e){ estadoNotif = 'no-soportado'; }
     $('notifCheck').classList.toggle('hidden', estadoNotif !== 'activo');
     $('btnPrueba').classList.toggle('hidden', estadoNotif !== 'activo');
     if(estadoNotif === 'inactivo'){
-      html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>
+      html += `<div class="aviso-card notif"><span class="ini-ico">${ICON_CAMPANA}</span>
         <span><span class="aviso-t">Recibe avisos en tu teléfono</span><span class="aviso-s">${admin ? 'Ventas nuevas, pagos y pedidos a producción.' : p && p.rol === 'trabajador' ? 'Te avisamos cuando te asignen un trabajo.' : 'Te avisamos si un pago no llegó.'}</span></span>
         <button class="aviso-btn" type="button" data-activar-notif>Activar</button></div>`;
     } else if(estadoNotif === 'instalar'){
-      html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>
+      html += `<div class="aviso-card notif"><span class="ini-ico">${ICON_CAMPANA}</span>
         <span><span class="aviso-t">Para recibir avisos en tu teléfono</span><span class="aviso-s">Abre la app desde su ícono en la pantalla de inicio (no desde Safari) y vuelve aquí.</span></span></div>`;
     } else if(estadoNotif === 'bloqueado'){
-      html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>
+      html += `<div class="aviso-card notif"><span class="ini-ico">${ICON_CAMPANA}</span>
         <span><span class="aviso-t">Los avisos están bloqueados</span><span class="aviso-s">Actívalos en Ajustes › Notificaciones › Artesanos.</span></span></div>`;
     }
     cont.innerHTML = html;
   }
+
   // Taller: vales por aprobar, trabajos sin asignar y lo que falta para calcular pagos
-  const ICON_ETIQUETA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>';
-  const ICON_PERSONA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>';
-  async function avisosTaller(){
-    let html = '';
-    const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
+  async function pendientesTaller(){
+    const pend = [];
     const [rVales, rProd, rCats, rMod] = await Promise.all([
       window.Trabajo.cargarVales().then(d => ({ data:d }), () => ({ data:[] })),
       db.from('ventas').select('id,items:venta_items(categoria_pago_id,etapas(rama,orden,estado,trabajador_id))').eq('estado', 'en_produccion'),
       db.from('categorias_pago').select('id', { count:'exact', head:true }),
       db.from('catalogo').select('id', { count:'exact', head:true }).is('categoria_pago_id', null)
-    ].map(p => Promise.resolve(p).catch(() => ({ data:null }))));
-    const vales = rVales.data || [];
-    if(vales.length){
-      const total = vales.reduce((a, v) => a + Number(v.monto), 0);
-      html += `<button class="aviso-card urgente" type="button" data-abrir-vales>
-        <span class="ini-ico">${ICON_DINERO}</span>
-        <span><span class="aviso-t">${plural(vales.length, '1 vale por aprobar', 'vales por aprobar')}</span>
-        <span class="aviso-s">${esc(vales.slice(0, 2).map(v => (v.trabajador || {}).nombre || '').join(' · '))} · ${window.AH.dinero(total)} en total</span></span>
-      </button>`;
-    }
+    ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
     let sinAsignar = 0, sinCat = 0;
     const enTaller = ((rProd && rProd.data) || []).length;
     ((rProd && rProd.data) || []).forEach(v => (v.items || []).forEach(it => {
@@ -626,38 +650,22 @@
     const ep = $('cuenta-produccion');
     if(ep) ep.innerHTML = !(rProd && rProd.data) ? 'Pedidos en fabricación'
       : enTaller ? `${enTaller} en taller${sinAsignar ? ` · <span class="num">${sinAsignar} sin asignar</span>` : ''}` : 'Taller libre';
-    if(sinAsignar){
-      html += `<a class="aviso-card urgente" href="produccion.html?filtro=asignar" data-modulo>
-        <span class="ini-ico">${ICON_PERSONA}</span>
-        <span><span class="aviso-t">${plural(sinAsignar, '1 trabajo sin asignar', 'trabajos sin asignar')}</span>
-        <span class="aviso-s">Nadie lo está haciendo. Toca para elegir quién.</span></span>
-      </a>`;
+    if(sinAsignar) pend.push({ color:'naranja', icono:'persona', titulo: plural(sinAsignar, '1 trabajo sin asignar', 'trabajos sin asignar'), href:'produccion.html?filtro=asignar' });
+    const vales = rVales.data || [];
+    if(vales.length){
+      const total = vales.reduce((a, v) => a + Number(v.monto), 0);
+      pend.push({ color:'verde', icono:'vale', vales:true, titulo: plural(vales.length, '1 vale por aprobar', 'vales por aprobar'),
+        detalle: (vales.length === 1 ? ((vales[0].trabajador || {}).nombre || '') + ' ' : '') + window.AH.dinero(total) });
     }
     const nCats = rCats && typeof rCats.count === 'number' ? rCats.count : null;
     if(nCats === 0){
-      html += `<a class="aviso-card suave" href="categorias-pago.html" data-modulo>
-        <span class="ini-ico">${ICON_ETIQUETA}</span>
-        <span><span class="aviso-t">Crea las categorías de pago</span>
-        <span class="aviso-s">Sin ellas no se sabe cuánto gana cada trabajador.</span></span>
-      </a>`;
+      pend.push({ color:'teal', icono:'etiqueta', titulo:'Crea las categorías de pago', detalle:'para calcular pagos', href:'categorias-pago.html' });
     } else if(nCats){
-      if(sinCat){
-        html += `<a class="aviso-card suave" href="produccion.html?filtro=sincat" data-modulo>
-          <span class="ini-ico">${ICON_ETIQUETA}</span>
-          <span><span class="aviso-t">${plural(sinCat, '1 producto sin categoría de pago', 'productos sin categoría de pago')}</span>
-          <span class="aviso-s">Está en producción. Asígnala para calcular lo que se paga.</span></span>
-        </a>`;
-      }
+      if(sinCat) pend.push({ color:'teal', icono:'etiqueta', titulo: plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'produccion.html?filtro=sincat' });
       const nMod = rMod && typeof rMod.count === 'number' ? rMod.count : 0;
-      if(nMod){
-        html += `<a class="aviso-card suave" href="catalogo.html?filtro=sin-categoria" data-modulo>
-          <span class="ini-ico">${ICON_ETIQUETA}</span>
-          <span><span class="aviso-t">${plural(nMod, '1 modelo sin categoría de pago', 'modelos sin categoría de pago')}</span>
-          <span class="aviso-s">Elige varios y asígnales la misma de una vez.</span></span>
-        </a>`;
-      }
+      if(nMod) pend.push({ color:'teal', icono:'etiqueta', titulo: plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), detalle:'catálogo', href:'catalogo.html?filtro=sin-categoria' });
     }
-    return html;
+    return pend;
   }
   document.addEventListener('click', (e) => { if(e.target.closest('[data-abrir-vales]')) window.Trabajo.abrirVales(); });
   window.Trabajo.onValesCambian(() => pintarAvisosAdmin(perfilActual));

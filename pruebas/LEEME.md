@@ -17,5 +17,5 @@ Simulan Supabase con datos falsos: no tocan la base real y los PIN son de mentir
 - test22: Categorías de pago (solo admin) — crear, editar, eliminar, fijo o por m²
 - test23: Catálogo — categoría de pago en el formulario del modelo
 - test24: Catálogo — elegir varios modelos y darles la misma categoría de pago
-- test25: Producción — categoría por producto, fabricar para exhibición (+), cancelar orden, abrir desde aviso
+- test25: Producción — sin categoría no se asigna, "Asignar" a la derecha, fabricar para exhibición (tipo, modelo, especificaciones, categoría), cancelar orden, abrir desde aviso
 - test26: Inicio del trabajador (empezar uno a la vez, terminar, pagos, vale) y avisos del admin (vales, sin asignar, sin categoría)

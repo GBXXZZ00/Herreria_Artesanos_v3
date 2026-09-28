@@ -16,22 +16,22 @@ const porId=id=>trabajadores.find(t=>t.id===id);
 
 let ventas=[
   {id:20,fecha_entrega:dia(-2),cliente:{nombre:'Carlos Pérez'},estado:'en_produccion',items:[
-    {id:101,nombre:'Puerta Multilock',tipo:'Puerta Multilock',foto:null,etapas:[
+    {id:101,nombre:'Puerta Multilock',tipo:'Puerta Multilock',foto:null,categoria_pago_id:1,etapas:[
       {id:1001,rama:'principal',nombre:'Hierro',orden:1,especialidad:'herrero',estado:'hecha',trabajador_id:'t1',trabajador:{nombre:'Jesús'},foto:null,terminada_en:new Date().toISOString()},
       {id:1002,rama:'principal',nombre:'Masilla y pintura',orden:2,especialidad:'masilla_pintura',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null},
       {id:1003,rama:'principal',nombre:'Detalles',orden:3,especialidad:'acabados',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null}
     ]},
-    {id:102,nombre:'Ventana a medida',tipo:'Ventana',foto:null,etapas:[
+    {id:102,nombre:'Ventana a medida',tipo:'Ventana',foto:null,categoria_pago_id:1,etapas:[
       {id:1004,rama:'principal',nombre:'Ensamblar',orden:1,especialidad:'ventanero',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null}
     ]}
   ]},
   {id:21,fecha_entrega:dia(5),cliente:{nombre:'Marisela Chávez'},estado:'en_produccion',items:[
-    {id:103,nombre:'Reja para ventana',tipo:'Ventana',foto:null,etapas:[
+    {id:103,nombre:'Reja para ventana',tipo:'Ventana',foto:null,categoria_pago_id:1,etapas:[
       {id:1005,rama:'principal',nombre:'Ensamblar',orden:1,especialidad:'ventanero',estado:'pendiente',trabajador_id:'t3',trabajador:{nombre:'Luis'},foto:null,terminada_en:null}
     ]}
   ]},
   {id:22,fecha_entrega:dia(10),cliente:{nombre:'Ana Belisario'},estado:'en_produccion',items:[
-    {id:104,nombre:'Combo Modelo Lineal',tipo:'Combo',foto:null,etapas:[
+    {id:104,nombre:'Combo Modelo Lineal',tipo:'Combo',foto:null,categoria_pago_id:1,etapas:[
       {id:1006,rama:'principal',nombre:'Hierro',orden:1,especialidad:'herrero',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null},
       {id:1007,rama:'principal',nombre:'Masilla y pintura',orden:2,especialidad:'masilla_pintura',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null},
       {id:1008,rama:'principal',nombre:'Detalles',orden:3,especialidad:'acabados',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null},
@@ -63,6 +63,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
     if(u.includes('id=eq')) return j({id:user,usuario:rol==='admin'?'raymundo':'yulimar',nombre:rol==='admin'?'Ray':'Yulimar',rol,sede_id:1,confirma_abonos:false});
     return j([{usuario:'raymundo',nombre:'Ray',rol,orden:1}]);
   }
+  if(u.includes('/categorias_pago')) return j([{id:1,nombre:'General'}]);
   if(u.includes('/ventas')){
     const activos=ventas.filter(v=>v.estado==='en_produccion');
     return j(activos);

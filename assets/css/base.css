@@ -651,3 +651,14 @@ a.btn-primary{text-decoration:none;display:inline-flex;align-items:center;justif
 .op-s{display:block;font-size:12.5px;font-weight:500;color:var(--ink-soft);margin-top:1px}
 .f-link.peligro .op-t{color:var(--danger)}
 .acord .f-link:last-child{border-bottom:0}
+
+/* ---------- Especificaciones de producto (Nueva venta y Producción) ---------- */
+.zona{display:flex;align-items:center;gap:10px;margin:24px 0 12px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:14.5px;font-weight:800}
+.zona:first-child{margin-top:4px}
+.zona svg{flex-shrink:0}
+.zona-fin{height:1px;background:var(--line);margin:22px 0 4px}
+.precio-caja{padding:14px;border-radius:var(--radius);background:var(--surface-2);margin-top:6px}
+.precio-caja .field{margin:0}
+.desglose{font-size:13px;color:var(--ink-soft);margin-top:8px;line-height:1.45}
+.desglose b{color:var(--accent)}
+.usar-sugerido{font-size:13px;font-weight:800;color:var(--accent);margin-top:6px}

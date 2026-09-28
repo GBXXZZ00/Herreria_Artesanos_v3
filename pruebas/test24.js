@@ -48,13 +48,15 @@ async function entrar(b,user,rol,pin){
  // Admin
  const a=await entrar(b,'u2','admin','222222');a.on('pageerror',e=>err.push('admin:'+e.message));
  await a.goto('http://127.0.0.1:8765/catalogo.html');await a.waitForSelector('.card');await a.waitForTimeout(400);
- ok('Admin ve el botón "Elegir varios"',await a.isVisible('#btnElegir'));
+ ok('Admin ve el botón "Elegir varios" con texto',await a.isVisible('#btnElegir') && (await a.textContent('#btnElegir')).includes('Elegir varios'));
+ await a.screenshot({path:'shots5/c3b-boton.png'});
  ok('Filtro "Sin categoría de pago · 3"',(await a.textContent('#chips')).includes('Sin categoría de pago · 3'));
  await a.click('.chip[data-cat="Sin categoría"]');await a.waitForTimeout(300);
  ok('El filtro muestra solo los 3 sin categoría',(await a.$$('.card')).length===3);
 
  // Modo elegir
  await a.click('#btnElegir');await a.waitForTimeout(300);
+ ok('El botón dice "Listo" mientras eliges',(await a.textContent('#btnElegir')).trim()==='Listo');
  ok('Aparece la barra y se esconde el menú',await a.evaluate(()=>document.body.classList.contains('eligiendo')));
  ok('Cada tarjeta muestra su casilla y "Sin categoría"',(await a.$$('.card-check')).length===3 && (await a.textContent('#grid')).includes('Sin categoría'));
  ok('"Dar categoría" desactivado sin elegir nada',await a.$eval('#btnSelAsignar',x=>x.disabled));

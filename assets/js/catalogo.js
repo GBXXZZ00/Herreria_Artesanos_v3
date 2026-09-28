@@ -596,6 +596,7 @@
     if(!si) elegidos.clear();
     document.body.classList.toggle('eligiendo', si);
     $('btnElegir').setAttribute('aria-pressed', String(si));
+    $('btnElegir').lastChild.textContent = si ? 'Listo' : 'Elegir varios';
     pintarSelBar();
   }
   function pintarSelBar(){

@@ -4,7 +4,8 @@
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, fotoModelo, acabados } = window.AH;
+  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, fotoModelo, acabados, tieneColores,
+          estadoDesdeEspecificaciones, especificacionesDesdeEstado } = window.AH;
   const AV = window.AV;
   const S = window.Sesion;
   const $ = (id) => document.getElementById(id);
@@ -165,11 +166,13 @@
     abrirHoja('sheetFicha');
   }
   function catHtml(it){
-    if(!categorias.length && !it.categoria_pago_id) return '';
-    if(it.categoria_pago_id){
-      return `<button class="p-cat" type="button" data-cat-item="${it.id}"><span>Pago: ${esc(nombreCategoria(it.categoria_pago_id) || 'Categoría')}</span></button>`;
-    }
-    return `<button class="p-cat falta" type="button" data-cat-item="${it.id}"><span>Sin categoría · toca para asignar</span></button>`;
+    if(!it.categoria_pago_id) return '';
+    return `<button class="p-cat" type="button" data-cat-item="${it.id}"><span>Pago: ${esc(nombreCategoria(it.categoria_pago_id) || 'Categoría')}</span></button>`;
+  }
+  // Sin categoría no se asigna: el aviso lleva directo a elegirla
+  function catFaltaHtml(it){
+    if(it.categoria_pago_id) return '';
+    return `<button class="cat-falta" type="button" data-cat-item="${it.id}"><b>Primero dale una categoría de pago.</b> Sin ella no se puede asignar. Toca aquí.</button>`;
   }
   function itemHtml(it){
     const grupos = ramas(it);
@@ -183,19 +186,23 @@
         const cls = e.estado === 'hecha' ? 'hecha' : (act && act.id === e.id) ? 'actual' : '';
         const dot = e.estado === 'hecha'
           ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : '';
-        let accion = '';
+        let derecha = '', abajo = '';
         if(e.estado === 'hecha'){
           const monto = e.monto != null ? ` · <span class="e-monto">${dinero(e.monto)}</span>` : '';
-          accion = `<span class="e-hecha-info">Terminó${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}${monto}</span>`;
+          abajo = `<span class="e-hecha-info">Terminó${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}${monto}</span>`;
         } else if(cls === 'actual'){
           if(e.trabajador_id){
             const nom = e.trabajador ? e.trabajador.nombre : '';
-            accion = `<button class="e-chip" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}" aria-label="Cambiar a quién está asignada"><span class="ini">${esc(inicial(nom))}</span>${esc(nom)}${e.iniciada_en ? ' · trabajando' : ''}</button><button class="e-terminar" data-terminar="${e.id}">Marcar terminado</button>`;
+            derecha = `<button class="e-chip" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}" aria-label="Cambiar a quién está asignada"><span class="ini">${esc(inicial(nom))}</span>${esc(nom)}</button>`;
+            abajo = `${e.iniciada_en ? '<span class="e-hecha-info">Trabajando en esto</span>' : ''}<button class="e-terminar" data-terminar="${e.id}">Marcar terminado</button>`;
+          } else if(!it.categoria_pago_id){
+            // Sin categoría no se asigna: el aviso de arriba es el que lleva a elegirla
+            derecha = '<span class="e-asignar off" aria-disabled="true">Asignar</span>';
           } else {
-            accion = `<button class="e-asignar" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}">Sin asignar · toca para asignar</button>`;
+            derecha = `<button class="e-asignar" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}">Asignar</button>`;
           }
         }
-        return `<div class="etapa ${cls}"><div class="e-dot">${dot}</div><div class="e-cuerpo"><div class="e-nom">${esc(e.nombre)}</div><div class="e-fila">${accion}</div></div></div>`;
+        return `<div class="etapa ${cls}"><div class="e-dot">${dot}</div><div class="e-cuerpo"><div class="e-linea"><div class="e-nom">${esc(e.nombre)}</div>${derecha}</div><div class="e-fila">${abajo}</div></div></div>`;
       }).join('') + '</div>';
     }).join('');
     return `<div class="p-item">
@@ -203,6 +210,7 @@
         <div class="p-item-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="">` : iconoTipo(it.tipo, 22)}</div>
         <div><div class="p-item-nom">${esc(it.nombre)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div><div class="p-item-cant">${esc(it.tipo || '')}</div>${catHtml(it)}</div>
       </div>
+      ${catFaltaHtml(it)}
       ${bloques}
     </div>`;
   }
@@ -353,16 +361,20 @@
   });
 
   // ---------------------------------------------------------------------------
-  // Fabricar para exhibición (sin cliente): al terminar queda en Entrega inmediata
+  // Fabricar para exhibición (sin cliente): igual que agregar un producto en Nueva
+  // venta. Primero el tipo, luego el modelo, luego sus especificaciones. Al terminar
+  // queda en Entrega inmediata con esas especificaciones.
   // ---------------------------------------------------------------------------
+  const SP = window.SpecsProducto;
   let modelosCat = null;
   let sedes = [];
-  const orden = { modelo:null, color:null, sede:null, cantidad:1 };
+  let orden = null;   // { tipo, modelo, prod, sede, cat }
+  let enviandoOrden = false;
 
   async function cargarModelos(){
     if(modelosCat) return modelosCat;
     const [rm, rs] = await Promise.all([
-      db.from('catalogo').select('id,nombre,tipo,fotos,precio_base,categoria_pago_id').in('tipo', TIPOS_PRODUCCION).order('nombre', { ascending:true }),
+      db.from('catalogo').select('id,nombre,tipo,fotos,precio_base,especificaciones_base,categoria_pago_id').in('tipo', TIPOS_PRODUCCION).order('nombre', { ascending:true }),
       db.from('sedes').select('id,nombre').eq('activa', true).order('orden', { ascending:true })
     ]);
     if(rm.error || rs.error) throw (rm.error || rs.error);
@@ -370,99 +382,169 @@
     sedes = rs.data || [];
     return modelosCat;
   }
-  function coloresDe(m){
-    const f = (m && m.fotos) || {};
-    return acabados(m && m.tipo).filter(a => a.sw && f[a.key]).map(a => a.key);
+  const tiposConModelos = () => TIPOS_PRODUCCION.filter(t => (modelosCat || []).some(m => m.tipo === t));
+  const fieldErr = (id, texto) => `<p class="field-error" id="${id}">${esc(texto)}</p>`;
+
+  function prodDesdeModelo(m){
+    const cols = acabados(m.tipo).filter(a => a.sw && (m.fotos || {})[a.key]);
+    const color = tieneColores(m.tipo) ? ((cols[0] && cols[0].key) || 'Blanco') : null;
+    return {
+      origen:'catalogo', catalogo_id:m.id, tipo:m.tipo, nombre:m.nombre, color,
+      estado: Object.assign(estadoDesdeEspecificaciones(m.tipo, m.especificaciones_base, 'pedido'), m.tipo === 'Combo' && color ? { ventanas_color: color } : {}),
+      extraProteccion:'', precio:'', precioManual:false, cantidad:1
+    };
   }
+
   function pintarOrden(){
-    const m = orden.modelo;
-    const foto = m ? fotoModelo(m, orden.color) : null;
-    $('modeloFoto').innerHTML = foto ? `<img src="${esc(foto)}" alt="">` : (m ? iconoTipo(m.tipo, 20) : '');
-    $('modeloNombre').textContent = m ? m.nombre : 'Elige un modelo';
-    $('modeloNombre').classList.toggle('ph', !m);
-    $('modeloSub').textContent = m ? m.tipo : '';
-    $('hintSinCat').classList.toggle('hidden', !m || !!m.categoria_pago_id);
-    const colores = coloresDe(m);
-    $('campoColor').classList.toggle('hidden', colores.length < 2);
-    $('optsColor').innerHTML = colores.map(c => `<button type="button" class="opt ${c === orden.color ? 'selected' : ''}" data-color="${esc(c)}">${esc(c)}</button>`).join('');
-    $('optsSede').innerHTML = sedes.map(s => `<button type="button" class="opt ${s.id === orden.sede ? 'selected' : ''}" data-sede="${s.id}">${esc(s.nombre)}</button>`).join('');
-    $('cantValor').textContent = orden.cantidad;
+    const cuerpo = $('ordenBody');
+    const scroll = cuerpo.scrollTop;
+    const o = orden;
+    let html = `<div class="field" id="campoOTipo">${SP.optsHtml({ g:'__otipo', label:'¿Qué vas a fabricar?', cols:2, opts: tiposConModelos().map(t => ({ v:t })) }, o.tipo).replace(/^<div class="field">|<\/div>$/g, '')}
+      ${fieldErr('eOTipo', 'Elige qué vas a fabricar')}</div>`;
+    if(o.tipo){
+      const m = o.modelo;
+      const foto = m ? fotoModelo(m, o.prod && o.prod.color) : null;
+      html += `<div class="field" id="campoModelo"><span class="field-label">Modelo</span>
+        <button class="f-link-box" type="button" id="btnModelo">
+          <span class="mini-foto">${foto ? `<img src="${esc(foto)}" alt="">` : (m ? iconoTipo(m.tipo, 20) : '')}</span>
+          <span style="min-width:0"><span class="mod-nom ${m ? '' : 'ph'}">${m ? esc(m.nombre) : 'Elige un modelo del catálogo'}</span>${m ? `<span class="mod-sub">${esc(m.tipo)}</span>` : ''}</span>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>${fieldErr('eModelo', 'Elige el modelo')}</div>`;
+    }
+    if(o.modelo){
+      if(!o.modelo.categoria_pago_id){
+        html += categorias.length
+          ? `<div class="field" id="campoOCat">${SP.optsHtml({ g:'__ocat', label:'Categoría de pago', cols:1, opts: categorias.map(c => ({ v:String(c.id), t:c.nombre })) }, o.cat == null ? null : String(o.cat)).replace(/^<div class="field">|<\/div>$/g, '')}
+              <p class="field-hint aviso">Este modelo no tiene. La que elijas queda guardada en el modelo.</p>${fieldErr('eOCat', 'Elige la categoría de pago')}</div>`
+          : `<div class="field"><p class="field-error" style="display:block">Este modelo no tiene categoría de pago y todavía no hay ninguna. Créalas en Mi cuenta › Categorías de pago.</p></div>`;
+      }
+      html += SP.specsHtml(o.prod, o.modelo);
+      html += `<div class="field" id="campoOSede">${SP.optsHtml({ g:'__osede', label:'Sede donde quedará', cols:2, opts: sedes.map(x => ({ v:String(x.id), t:x.nombre })) }, o.sede == null ? null : String(o.sede)).replace(/^<div class="field">|<\/div>$/g, '')}
+        ${fieldErr('eSede', 'Elige dónde quedará la pieza')}</div>`;
+      html += `<div class="field"><span class="field-label">Cantidad</span>
+        <div class="stepper"><button type="button" data-cant="-1" aria-label="Una menos">−</button><span id="cantValor">${o.prod.cantidad}</span><button type="button" data-cant="1" aria-label="Una más">+</button></div></div>`;
+      const c = SP.calcular(o.prod, o.modelo);
+      const valor = o.prod.precioManual ? o.prod.precio : c.total;
+      html += `<div class="precio-caja">
+        <div class="field" id="campoPrecio"><label class="field-label" for="fPrecio">Precio en exhibición (por unidad)</label>
+          <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="fPrecio" type="text" inputmode="decimal" autocomplete="off" value="${esc(valor === '' || valor == null ? '' : valor)}"></div>
+          ${fieldErr('ePrecio', 'Ingresa un precio mayor a 0')}
+        </div>
+        <div class="desglose" id="desglose">Sugerido: <b>${dinero(c.total)}</b> · ${esc(c.texto)}</div>
+        ${o.prod.precioManual && Number(montoOrNull(o.prod.precio)) !== c.total ? '<button type="button" class="usar-sugerido" id="usarSugerido">Usar el sugerido</button>' : ''}
+      </div>`;
+    }
+    cuerpo.innerHTML = html;
+    cuerpo.scrollTop = scroll;
+    $('btnCrearOrden').disabled = enviandoOrden || !!(o.modelo && !o.modelo.categoria_pago_id && !categorias.length);
   }
+  function refrescarPrecioOrden(){
+    const o = orden; if(!o || !o.modelo) return;
+    const c = SP.calcular(o.prod, o.modelo);
+    if(!o.prod.precioManual && $('fPrecio')) $('fPrecio').value = c.total;
+    if($('desglose')) $('desglose').innerHTML = `Sugerido: <b>${dinero(c.total)}</b> · ${esc(c.texto)}`;
+  }
+
   $('btnNuevaOrden').addEventListener('click', async () => {
     try{ await cargarModelos(); }
     catch(err){ toast('No se pudieron cargar los modelos: ' + ((err && err.message) || ''), 'error'); return; }
-    Object.assign(orden, { modelo:null, color:null, sede: sedes.length === 1 ? sedes[0].id : null, cantidad:1 });
-    $('fPrecio').value = '';
-    ['campoModelo'].forEach(id => $(id).classList.remove('invalid'));
-    $('eSede').closest('.field').classList.remove('invalid');
-    $('ePrecio').closest('.field').classList.remove('invalid');
+    if(!tiposConModelos().length){ toast('No hay modelos en el catálogo para fabricar', 'error'); return; }
+    orden = { tipo:null, modelo:null, prod:null, sede: sedes.length === 1 ? sedes[0].id : null, cat:null };
     pintarOrden();
+    $('ordenBody').scrollTop = 0;
     abrirHoja('sheetOrden');
   });
+
+  $('ordenBody').addEventListener('click', (e) => {
+    const o = orden; if(!o) return;
+    const op = e.target.closest('.opt[data-g]');
+    if(op && op.dataset.g === '__otipo'){
+      if(op.dataset.v !== o.tipo){ o.tipo = op.dataset.v; o.modelo = null; o.prod = null; o.cat = null; }
+      pintarOrden(); return;
+    }
+    if(op && op.dataset.g === '__ocat'){ o.cat = Number(op.dataset.v); pintarOrden(); return; }
+    if(op && op.dataset.g === '__osede'){ o.sede = Number(op.dataset.v); pintarOrden(); return; }
+    if(e.target.closest('#btnModelo')){
+      $('buscaModelo').value = '';
+      $('modelosTitulo').textContent = o.tipo;
+      pintarModelos();
+      abrirHoja('sheetModelos');
+      return;
+    }
+    if(o.prod && SP.tocar(o.prod, e.target)){ pintarOrden(); return; }
+    const c = e.target.closest('[data-cant]');
+    if(c && o.prod){
+      o.prod.cantidad = Math.min(50, Math.max(1, o.prod.cantidad + Number(c.dataset.cant)));
+      $('cantValor').textContent = o.prod.cantidad;
+      return;
+    }
+    if(e.target.closest('#usarSugerido')){ o.prod.precioManual = false; pintarOrden(); }
+  });
+  $('ordenBody').addEventListener('input', (e) => {
+    const o = orden; if(!o || !o.prod) return;
+    const el = e.target;
+    if(el.id === 'fPrecio'){ o.prod.precio = el.value; o.prod.precioManual = true; $('campoPrecio').classList.remove('invalid'); return; }
+    if(SP.escribir(o.prod, el)) refrescarPrecioOrden();
+  });
+
   function pintarModelos(){
     const q = $('buscaModelo').value.trim().toLowerCase();
-    const lista = (modelosCat || []).filter(m => !q || m.nombre.toLowerCase().includes(q) || m.tipo.toLowerCase().includes(q));
+    const lista = (modelosCat || []).filter(m => m.tipo === (orden && orden.tipo) && (!q || m.nombre.toLowerCase().includes(q)));
     $('listaModelos').innerHTML = lista.length ? lista.map(m => {
       const f = fotoModelo(m);
       return `<button class="fila-mod" type="button" data-mid="${m.id}">
         <span class="mini-foto">${f ? `<img src="${esc(f)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 20)}</span>
-        <span style="min-width:0"><span class="mod-nom">${esc(m.nombre)}</span><span class="mod-sub">${esc(m.tipo)} · ${dinero(m.precio_base)}</span></span>
+        <span style="min-width:0"><span class="mod-nom">${esc(m.nombre)}</span><span class="mod-sub">${m.tipo === 'Ventana' ? 'Por m²' : dinero(m.precio_base)}${m.categoria_pago_id ? '' : ' · sin categoría de pago'}</span></span>
       </button>`;
     }).join('') : '<div class="vacio" style="padding:28px 10px"><p>Ningún modelo coincide.</p></div>';
   }
-  $('btnModelo').addEventListener('click', () => {
-    $('buscaModelo').value = '';
-    pintarModelos();
-    abrirHoja('sheetModelos');
-  });
   $('buscaModelo').addEventListener('input', pintarModelos);
   $('listaModelos').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-mid]'); if(!b) return;
+    const b = e.target.closest('[data-mid]'); if(!b || !orden) return;
     const m = modelosCat.find(x => String(x.id) === b.dataset.mid); if(!m) return;
     orden.modelo = m;
-    const colores = coloresDe(m);
-    orden.color = colores[0] || null;
-    $('fPrecio').value = Number(m.precio_base) > 0 ? m.precio_base : '';
-    $('campoModelo').classList.remove('invalid');
-    if(Number(m.precio_base) > 0) $('ePrecio').closest('.field').classList.remove('invalid');
-    pintarOrden();
+    orden.prod = prodDesdeModelo(m);
+    orden.cat = null;
     cerrarHoja('sheetModelos');
-  });
-  $('optsColor').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-color]'); if(!b) return;
-    orden.color = b.dataset.color; pintarOrden();
-  });
-  $('optsSede').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-sede]'); if(!b) return;
-    orden.sede = Number(b.dataset.sede);
-    $('eSede').closest('.field').classList.remove('invalid');
     pintarOrden();
   });
-  $('sheetOrden').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-cant]'); if(!b) return;
-    orden.cantidad = Math.min(50, Math.max(1, orden.cantidad + Number(b.dataset.cant)));
-    $('cantValor').textContent = orden.cantidad;
-  });
-  $('fPrecio').addEventListener('input', () => $('ePrecio').closest('.field').classList.remove('invalid'));
+
   $('btnCrearOrden').addEventListener('click', async () => {
+    const o = orden; if(!o || enviandoOrden) return;
+    let primero = null;
+    const falla = (campo) => { const c = $(campo); if(!c) return; c.classList.add('invalid'); primero = primero || c; };
+    if(!o.tipo) falla('campoOTipo');
+    else if(!o.modelo) falla('campoModelo');
+    else {
+      if(!o.modelo.categoria_pago_id && o.cat == null) falla('campoOCat');
+      if(o.sede == null) falla('campoOSede');
+      if($('campoProt') && !(montoOrNull(o.prod.extraProteccion) > 0)) falla('campoProt');
+      if(!(montoOrNull($('fPrecio').value) > 0)) falla('campoPrecio');
+    }
+    if(primero){ primero.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     const precio = montoOrNull($('fPrecio').value);
-    let ok = true;
-    if(!orden.modelo){ $('eModelo').textContent = 'Elige qué se va a fabricar'; $('campoModelo').classList.add('invalid'); ok = false; }
-    if(!orden.sede){ $('eSede').textContent = 'Elige dónde quedará la pieza'; $('eSede').closest('.field').classList.add('invalid'); ok = false; }
-    if(!(precio > 0)){ $('ePrecio').textContent = 'Ingresa un precio mayor a 0'; $('ePrecio').closest('.field').classList.add('invalid'); ok = false; }
-    if(!ok) return;
+    const esp = Object.assign({}, especificacionesDesdeEstado(o.prod.tipo, o.prod.estado, 'pedido'),
+      o.prod.color ? { color: o.prod.color } : {},
+      SP.pideMontoProteccion(o.prod, o.modelo) ? { monto_proteccion: montoOrNull(o.prod.extraProteccion) } : {});
     const btn = $('btnCrearOrden');
+    enviandoOrden = true;
     btn.disabled = true;
     try{
-      const { data, error } = await db.rpc('crear_orden_exhibicion', { p: { catalogo_id: orden.modelo.id, color: orden.color, sede_id: orden.sede, cantidad: orden.cantidad, precio } });
+      const { data, error } = await db.rpc('crear_orden_exhibicion', { p: {
+        catalogo_id: o.modelo.id, sede_id: o.sede, cantidad: o.prod.cantidad, precio,
+        especificaciones: esp, categoria_pago_id: o.modelo.categoria_pago_id ? null : o.cat
+      } });
       if(error) throw error;
+      if(!o.modelo.categoria_pago_id) o.modelo.categoria_pago_id = o.cat;
       cerrarHoja('sheetOrden');
+      orden = null;
       toast('Listo, ya está en producción. Asigna quién la fabrica.');
       abrirAlCargar = data && data.id;
       await cargar();
     } catch(err){
       toast(err.message, 'error');
     } finally {
+      enviandoOrden = false;
       btn.disabled = false;
     }
   });
