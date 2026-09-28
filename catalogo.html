@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Catálogo · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=38">
+<link rel="stylesheet" href="assets/css/base.css?v=39">
 <style>
   #scrimForm{z-index:45} #sheetForm{z-index:46}
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
@@ -24,6 +24,27 @@
   .cat-fila-op{display:flex;align-items:center;justify-content:space-between;width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-align:left;font-size:15px;font-weight:700;transition:transform 130ms var(--ease-out),border-color 160ms var(--ease-out),background-color 160ms var(--ease-out)}
   .cat-fila-op:active{transform:scale(0.98)}
   .cat-fila-op.sel{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+  /* Elegir varios modelos para darles categoría de pago */
+  .card-check{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.94);border:1.5px solid var(--line-strong);display:flex;align-items:center;justify-content:center;color:#fff;transition:background-color 140ms var(--ease-out),border-color 140ms var(--ease-out)}
+  .card-check svg{opacity:0;transform:scale(0.95);transition:opacity 140ms var(--ease-out),transform 140ms var(--ease-out)}
+  .card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .card.sel .card-check{background:var(--accent);border-color:var(--accent)}
+  .card.sel .card-check svg{opacity:1;transform:none}
+  .card-cat{display:inline-block;max-width:100%;margin:6px 4px 0;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-cat.vacia{background:var(--surface-2);color:var(--ink-soft)}
+  .eligiendo .fab{opacity:0;pointer-events:none}
+  .sel-bar{position:fixed;left:16px;right:16px;bottom:calc(10px + var(--safe-b));z-index:26;max-width:440px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;border-radius:999px;background:rgba(255,255,255,0.96);-webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);border:1px solid var(--line);box-shadow:var(--shadow-lg);opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity 200ms var(--ease-out),transform 200ms var(--ease-out)}
+  .eligiendo .sel-bar{opacity:1;transform:none;pointer-events:auto}
+  .eligiendo #menuModulos{opacity:0;pointer-events:none}
+  #menuModulos{transition:opacity 180ms var(--ease-out)}
+  .sel-txt{flex:1;min-width:0;line-height:1.2}
+  .sel-n{display:block;font-size:14.5px;font-weight:800;white-space:nowrap}
+  .sel-todos{font-size:12.5px;font-weight:700;color:var(--accent);padding:2px 0}
+  .sel-bar .btn-asignar{height:44px;padding:0 16px;border-radius:999px;background:var(--accent);color:#fff;font-size:14.5px;font-weight:800;white-space:nowrap;flex-shrink:0;transition:transform 130ms var(--ease-out),opacity 160ms var(--ease-out)}
+  .sel-bar .btn-asignar:active{transform:scale(0.97)}
+  .sel-bar .btn-asignar:disabled{opacity:.45}
+  .sel-bar .icon-btn{border-radius:50%}
 
   /* Cuadrícula de modelos */
   .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px 18px 0}
@@ -100,6 +121,9 @@
     <div class="topbar-title">Catálogo</div>
     <div class="topbar-sub" id="subtitulo">Cargando modelos</div>
   </div>
+  <button class="icon-btn hidden" id="btnElegir" aria-label="Elegir varios modelos">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8 12l3 3 5-6"/></svg>
+  </button>
   <button class="icon-btn" id="btnActualizar" aria-label="Actualizar">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
   </button>
@@ -123,6 +147,18 @@
 </button>
 
 <div class="bottom-nav-wrap" id="menuModulos" data-activo="catalogo"></div>
+
+<!-- Barra al elegir varios modelos -->
+<div class="sel-bar" id="selBar" role="toolbar" aria-label="Modelos elegidos">
+  <button class="icon-btn" type="button" id="btnSelCancelar" aria-label="Terminar de elegir">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sel-txt">
+    <span class="sel-n" id="selN">Toca los modelos</span>
+    <button class="sel-todos" type="button" id="btnSelTodos">Elegir todos los que ves</button>
+  </div>
+  <button class="btn-asignar" type="button" id="btnSelAsignar" disabled>Dar categoría</button>
+</div>
 
 <!-- Ficha: lista de disponibles, ficha del modelo y ficha de una pieza -->
 <div class="sheet-scrim" id="scrimDetalle" data-cerrar="sheetDetalle"></div>
@@ -269,12 +305,12 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=38"></script>
-<script src="assets/js/supabase-client.js?v=38"></script>
-<script src="assets/js/img-compress.js?v=38"></script>
-<script src="assets/js/comun.js?v=38"></script>
-<script src="assets/js/avisos.js?v=38"></script>
-<script src="assets/js/sesion.js?v=38"></script>
+<script src="assets/vendor/supabase.js?v=39"></script>
+<script src="assets/js/supabase-client.js?v=39"></script>
+<script src="assets/js/img-compress.js?v=39"></script>
+<script src="assets/js/comun.js?v=39"></script>
+<script src="assets/js/avisos.js?v=39"></script>
+<script src="assets/js/sesion.js?v=39"></script>
 <script src="assets/js/catalogo.js?v=39"></script>
 </body>
 </html>

@@ -22,6 +22,9 @@
   let sedes = [];
   let categorias = []; // categorías de pago (solo las ve un admin, por RLS)
   let categoriaSeleccionada = null; // id de categoría elegida en el form del modelo
+  let eligiendo = false;            // modo "elegir varios" para darles categoría de pago
+  const elegidos = new Set();       // ids (texto) de los modelos elegidos
+  let selectorModo = 'form';        // el selector de categoría sirve al formulario o a los elegidos
   let filtro = 'Todos';
   let primeraCarga = true;
   let cargando = false;
@@ -58,12 +61,22 @@
     return Object.values(grupos).filter(g => g.length > 1).sort((a, b) => b.length - a.length);
   }
 
+  // Categoría de pago: solo la ve un administrador (las categorías llegan vacías para el resto)
+  const SIN_CAT = 'Sin categoría';
+  const verCategorias = () => categorias.length > 0;
+  const sinCategoria = () => modelos.filter(m => !m._estado && !m.categoria_pago_id);
+  const nombreCategoria = (id) => (categorias.find(c => c.id === id) || {}).nombre || '';
+
   function pintarChips(){
     const nRevisar = gruposRevisar().reduce((a, g) => a + g.length, 0);
     if(filtro === 'Revisar' && !nRevisar) filtro = 'Todos';
-    const cats = ['Entrega inmediata', 'Todos', ...TIPOS, ...(nRevisar ? ['Revisar'] : [])];
+    const nSinCat = verCategorias() ? sinCategoria().length : 0;
+    if(filtro === SIN_CAT && !verCategorias()) filtro = 'Todos';
+    const extra = [...(nRevisar ? ['Revisar'] : []), ...(nSinCat || filtro === SIN_CAT ? [SIN_CAT] : [])];
+    const cats = ['Entrega inmediata', 'Todos', ...TIPOS, ...extra];
+    const texto = (c) => c === 'Revisar' ? `Revisar repetidos · ${nRevisar}` : c === SIN_CAT ? `Sin categoría de pago · ${nSinCat}` : esc(c);
     $('chips').innerHTML = cats.map(c =>
-      `<button class="chip ${c === filtro ? 'active' : ''} ${c === 'Revisar' ? 'chip-revisar' : ''}" role="tab" aria-selected="${c === filtro}" data-cat="${esc(c)}">${c === 'Revisar' ? `Revisar repetidos · ${nRevisar}` : esc(c)}</button>`
+      `<button class="chip ${c === filtro ? 'active' : ''} ${c === 'Revisar' || c === SIN_CAT ? 'chip-revisar' : ''}" role="tab" aria-selected="${c === filtro}" data-cat="${esc(c)}">${texto(c)}</button>`
     ).join('');
   }
 
@@ -113,19 +126,23 @@
     const dots = acabados(m.tipo).filter(a => a.sw && f[a.key]);
     const n = totalDisp(m);
     const etiqueta = m._estado ? '' : (n ? `<div class="card-disp">${n} de entrega inmediata</div>` : `<div class="card-disp agotado">Agotado</div>`);
+    const elegible = eligiendo && !m._estado;
+    const sel = elegible && elegidos.has(String(m.id));
+    const cat = elegible ? (m.categoria_pago_id ? `<div><span class="card-cat">${esc(nombreCategoria(m.categoria_pago_id))}</span></div>` : '<div><span class="card-cat vacia">Sin categoría</span></div>') : '';
     return `
       <div class="card-wrap" style="--i:${Math.min(i, 12)}">
-        <div class="card" role="button" tabindex="0" data-id="${esc(m.id)}">
+        <div class="card ${sel ? 'sel' : ''}" role="button" tabindex="0" data-id="${esc(m.id)}" ${elegible ? `aria-pressed="${sel}"` : ''}>
           <div class="card-photo">
             ${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 34)}
             ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
-            ${dots.length > 1 ? `<span class="card-dots">${dots.map(d => `<span class="swatch ${d.sw}"></span>`).join('')}</span>` : ''}
-            ${conBorrar ? `<button class="card-del" data-borrar="${esc(m.id)}" aria-label="Eliminar ${esc(m.nombre)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>` : ''}
+            ${dots.length > 1 && !elegible ? `<span class="card-dots">${dots.map(d => `<span class="swatch ${d.sw}"></span>`).join('')}</span>` : ''}
+            ${conBorrar && !eligiendo ? `<button class="card-del" data-borrar="${esc(m.id)}" aria-label="Eliminar ${esc(m.nombre)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>` : ''}
+            ${elegible ? '<span class="card-check" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>' : ''}
             ${overlayHtml(m)}
           </div>
           <div class="card-name">${esc(m.nombre)}</div>
           <div class="card-type">${esc(m.tipo)}</div>
-          ${etiqueta}
+          ${elegible ? cat : etiqueta}
           <div class="card-price">Desde ${dinero(m.precio_base)}</div>
         </div>
       </div>`;
@@ -148,19 +165,30 @@
         ${g.map(m => tarjetaHtml(m, i++, true)).join('')}`).join('');
   }
 
+  function listaVisible(){
+    const q = $('buscador').value.trim().toLowerCase();
+    return modelos.filter(m => {
+      if(m._estado) return true; // guardando o con error: siempre visible para poder reintentar
+      if(filtro === 'Entrega inmediata' && !totalDisp(m)) return false;
+      if(filtro === SIN_CAT && m.categoria_pago_id) return false;
+      if(filtro !== 'Todos' && filtro !== 'Entrega inmediata' && filtro !== SIN_CAT && m.tipo !== filtro) return false;
+      return !q || (m.nombre || '').toLowerCase().includes(q);
+    });
+  }
+
   function pintarLista(){
     const q = $('buscador').value.trim().toLowerCase();
     if(filtro === 'Revisar'){ pintarRevisar(q); return; }
-    const lista = modelos.filter(m => {
-      if(m._estado) return true; // guardando o con error: siempre visible para poder reintentar
-      if(filtro === 'Entrega inmediata' && !totalDisp(m)) return false;
-      if(filtro !== 'Todos' && filtro !== 'Entrega inmediata' && m.tipo !== filtro) return false;
-      return !q || (m.nombre || '').toLowerCase().includes(q);
-    });
+    const lista = listaVisible();
 
     if(lista.length === 0){
       let titulo = 'Aún no hay modelos', texto = 'Toca el botón + para agregar el primero.', boton = '';
       if(q){ titulo = 'Nada por aquí'; texto = 'Ningún modelo coincide con la búsqueda.'; }
+      else if(filtro === SIN_CAT){
+        titulo = 'Todos tienen categoría';
+        texto = 'Cada modelo ya sabe cuánto se le paga a quien lo fabrica.';
+        boton = `<button class="btn-secondary" data-accion="ver-todos">Ver todos los modelos</button>`;
+      }
       else if(filtro === 'Entrega inmediata'){
         titulo = 'Nada de entrega inmediata';
         texto = 'Abre un modelo y toca "Entrega inmediata" cuando tengas una pieza lista en tienda.';
@@ -218,8 +246,15 @@
       sedes = rs.data || [];
       if(primeraCarga){
         filtro = piezas.length ? 'Entrega inmediata' : 'Todos';
+        // Desde el aviso de Inicio: directo a los modelos sin categoría, listo para elegir
+        if(new URLSearchParams(location.search).get('filtro') === 'sin-categoria' && verCategorias() && sinCategoria().length){
+          filtro = SIN_CAT;
+          ponerEligiendo(true);
+        }
         primeraCarga = false;
       }
+      $('btnElegir').classList.toggle('hidden', !verCategorias());
+      if(!verCategorias() && eligiendo) ponerEligiendo(false);
       pintarChips();
       actualizarSubtitulo();
       pintarLista();
@@ -240,8 +275,9 @@
     filtro = b.dataset.cat;
     pintarChips();
     pintarLista();
+    if(eligiendo) pintarSelBar();
   });
-  $('buscador').addEventListener('input', pintarLista);
+  $('buscador').addEventListener('input', () => { pintarLista(); if(eligiendo) pintarSelBar(); });
   $('btnActualizar').addEventListener('click', cargarDatos);
 
   $('grid').addEventListener('click', async (e)=>{
@@ -267,6 +303,15 @@
     if(!card) return;
     const m = buscarModelo(card.dataset.id);
     if(!m) return;
+    if(eligiendo){
+      if(m._estado) return;
+      const id = String(m.id);
+      if(elegidos.has(id)) elegidos.delete(id); else elegidos.add(id);
+      card.classList.toggle('sel', elegidos.has(id));
+      card.setAttribute('aria-pressed', String(elegidos.has(id)));
+      pintarSelBar();
+      return;
+    }
     if(m._estado === 'guardando'){ toast('Se está guardando, espera un momento'); return; }
     if(m._estado === 'error') return;
     abrirDetalle(m);
@@ -519,23 +564,86 @@
     $('categoriaTexto').textContent = c ? c.nombre : 'Sin categoría';
   }
 
-  function abrirSelectorCategoria(){
+  function abrirSelectorCategoria(modo){
+    selectorModo = modo === 'masivo' ? 'masivo' : 'form';
+    const actual = selectorModo === 'form' ? categoriaSeleccionada : undefined;
+    const n = elegidos.size;
+    $('categoriaTitulo').textContent = selectorModo === 'masivo' ? (n === 1 ? 'Categoría para 1 modelo' : `Categoría para ${n} modelos`) : 'Categoría de pago';
     $('listaCategorias').innerHTML = `
-      <button type="button" class="cat-fila-op ${categoriaSeleccionada == null ? 'sel' : ''}" data-cat="">Sin categoría</button>
-      ${categorias.map(c => `<button type="button" class="cat-fila-op ${c.id === categoriaSeleccionada ? 'sel' : ''}" data-cat="${c.id}">${esc(c.nombre)}</button>`).join('')}`;
+      ${categorias.map(c => `<button type="button" class="cat-fila-op ${c.id === actual ? 'sel' : ''}" data-cat="${c.id}">${esc(c.nombre)}</button>`).join('')}
+      <button type="button" class="cat-fila-op ${actual === null ? 'sel' : ''}" data-cat="">${selectorModo === 'masivo' ? 'Quitarles la categoría' : 'Sin categoría'}</button>`;
     abrirHoja('sheetCategoria');
   }
 
-  $('btnCategoria').addEventListener('click', abrirSelectorCategoria);
+  $('btnCategoria').addEventListener('click', () => abrirSelectorCategoria('form'));
 
   $('listaCategorias').addEventListener('click', (e)=>{
     const b = e.target.closest('[data-cat]');
     if(!b) return;
-    categoriaSeleccionada = b.dataset.cat ? Number(b.dataset.cat) : null;
+    const cid = b.dataset.cat ? Number(b.dataset.cat) : null;
+    if(selectorModo === 'masivo'){ asignarElegidos(cid, b); return; }
+    categoriaSeleccionada = cid;
     formSucio = true;
     pintarCategoriaTexto();
     cerrarHoja('sheetCategoria');
   });
+
+  // ---------------------------------------------------------------------------
+  // Elegir varios modelos y darles la misma categoría de pago
+  // ---------------------------------------------------------------------------
+  function ponerEligiendo(si){
+    eligiendo = si;
+    if(!si) elegidos.clear();
+    document.body.classList.toggle('eligiendo', si);
+    $('btnElegir').setAttribute('aria-pressed', String(si));
+    pintarSelBar();
+  }
+  function pintarSelBar(){
+    const n = elegidos.size;
+    $('selN').textContent = n ? (n === 1 ? '1 elegido' : n + ' elegidos') : 'Toca los modelos';
+    $('btnSelAsignar').disabled = n === 0;
+    const visibles = listaVisible().filter(m => !m._estado);
+    const todos = visibles.length > 0 && visibles.every(m => elegidos.has(String(m.id)));
+    $('btnSelTodos').textContent = todos ? 'Quitar todos' : 'Elegir todos los que ves';
+    $('btnSelTodos').classList.toggle('hidden', !visibles.length || filtro === 'Revisar');
+  }
+  $('btnElegir').addEventListener('click', () => {
+    ponerEligiendo(!eligiendo);
+    if(eligiendo && filtro === 'Revisar'){ filtro = 'Todos'; pintarChips(); }
+    pintarLista();
+  });
+  $('btnSelCancelar').addEventListener('click', () => { ponerEligiendo(false); pintarLista(); });
+  $('btnSelTodos').addEventListener('click', () => {
+    const visibles = listaVisible().filter(m => !m._estado);
+    const todos = visibles.every(m => elegidos.has(String(m.id)));
+    visibles.forEach(m => { if(todos) elegidos.delete(String(m.id)); else elegidos.add(String(m.id)); });
+    pintarLista();
+    pintarSelBar();
+  });
+  $('btnSelAsignar').addEventListener('click', () => { if(elegidos.size) abrirSelectorCategoria('masivo'); });
+
+  async function asignarElegidos(cid, boton){
+    const ids = [...elegidos].map(Number).filter(n => Number.isFinite(n));
+    if(!ids.length) return;
+    [...$('listaCategorias').children].forEach(x => x.disabled = true);
+    boton.classList.add('sel');
+    try{
+      const { error } = await db.rpc('asignar_categoria_modelos', { ids, cid });
+      if(error) throw error;
+      ids.forEach(id => { const m = modelos.find(x => x.id === id); if(m) m.categoria_pago_id = cid; });
+      cerrarHoja('sheetCategoria');
+      const n = ids.length;
+      toast(cid ? `Listo: ${n === 1 ? '1 modelo' : n + ' modelos'} con ${nombreCategoria(cid)}` : `Listo: ${n === 1 ? '1 modelo quedó' : n + ' modelos quedaron'} sin categoría`);
+      ponerEligiendo(false);
+      if(filtro === SIN_CAT && !sinCategoria().length) filtro = 'Todos';
+      pintarChips();
+      pintarLista();
+    } catch(err){
+      toast('No se pudo guardar: ' + ((err && err.message) || 'revisa tu conexión'), 'error');
+      [...$('listaCategorias').children].forEach(x => x.disabled = false);
+      boton.classList.remove('sel');
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Formulario compartido: modelo nuevo / editar modelo / marcar pieza disponible

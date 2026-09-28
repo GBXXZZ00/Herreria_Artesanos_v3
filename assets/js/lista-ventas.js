@@ -190,7 +190,7 @@
   async function cargar(){
     try{
       const [r, ps] = await Promise.all([
-        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,produccion_pedida_en,mensaje_en,mensaje_estado,pdf_en,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(id,monto,tipo,estado,confirmado_en)').order('creado_en', { ascending:false }).limit(2000),
+        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,produccion_pedida_en,mensaje_en,mensaje_estado,pdf_en,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(id,monto,tipo,estado,confirmado_en)').eq('interna', false).order('creado_en', { ascending:false }).limit(2000),
         AV.perfiles()
       ]);
       if(r.error) throw r.error;

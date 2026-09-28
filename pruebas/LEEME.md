@@ -13,3 +13,9 @@ Simulan Supabase con datos falsos: no tocan la base real y los PIN son de mentir
 - test18: a medida con tipo, exhibición con pago completo, comprobante obligatorio, edición, lista desde copia local, service worker
 - test19: mensaje único al cliente (cotización, nota de pedido, avisar por WhatsApp), chip "Por avisar"
 - test20: módulo Usuarios (solo admin) — crear cuenta, especialidad de trabajador, restablecer PIN, desactivar, eliminar, protección de la propia cuenta
+- test21: Producción — lista, ficha por etapas, asignar trabajador, marcar terminado, Combo en paralelo
+- test22: Categorías de pago (solo admin) — crear, editar, eliminar, fijo o por m²
+- test23: Catálogo — categoría de pago en el formulario del modelo
+- test24: Catálogo — elegir varios modelos y darles la misma categoría de pago
+- test25: Producción — categoría por producto, fabricar para exhibición (+), cancelar orden, abrir desde aviso
+- test26: Inicio del trabajador (empezar uno a la vez, terminar, pagos, vale) y avisos del admin (vales, sin asignar, sin categoría)

@@ -1,20 +1,25 @@
-// Producción: pedidos en fabricación, sus productos y las etapas de cada uno
-// (asignar trabajador, marcar terminado). Solo lo usan los administradores.
+// Producción: pedidos en fabricación y órdenes para exhibición, sus productos y las
+// etapas de cada uno (asignar trabajador, marcar terminado, categoría de pago).
+// Solo lo usan los administradores.
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, toast, abrirHoja, cerrarHoja } = window.AH;
+  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, fotoModelo, acabados } = window.AH;
   const AV = window.AV;
   const S = window.Sesion;
   const $ = (id) => document.getElementById(id);
 
   const NOMBRE_ESPECIALIDAD = { herrero:'Herrero', masilla_pintura:'Masilla y pintura', acabados:'Detalles', ventanero:'Ventanero', carpintero:'Carpintero' };
+  const TIPOS_PRODUCCION = ['Puerta Multilock', 'Portón', 'Puerta de Madera', 'Ventana', 'Combo'];
   const inicial = (n) => (String(n || '?').trim()[0] || '?').toUpperCase();
 
   let pedidos = [];
   let trabajadores = [];
-  const FILTROS = [ { id:'todos', t:'Todos' }, { id:'asignar', t:'Por asignar' }, { id:'atrasados', t:'Atrasados' } ];
-  let filtro = 'todos';
+  let categorias = [];
+  const FILTROS = [ { id:'todos', t:'Todos' }, { id:'asignar', t:'Por asignar' }, { id:'sincat', t:'Sin categoría' }, { id:'atrasados', t:'Atrasados' } ];
+  const params = new URLSearchParams(location.search);
+  let filtro = FILTROS.some(f => f.id === params.get('filtro')) ? params.get('filtro') : 'todos';
+  let abrirAlCargar = Number(params.get('abrir')) || null;
 
   // ---------------------------------------------------------------------------
   // Cálculos sobre las etapas de un pedido
@@ -30,9 +35,12 @@
   function etapaActual(lista){
     return lista.find(e => e.estado === 'pendiente') || null;
   }
+  // Solo los productos que se fabrican (una pieza de exhibición ya está hecha)
+  const itemsFabrica = (v) => (v.items || []).filter(it => (it.etapas || []).length);
   function resumenPedido(v){
-    let total = 0, hechas = 0, sinAsignar = 0;
-    (v.items || []).forEach(it => {
+    let total = 0, hechas = 0, sinAsignar = 0, sinCat = 0;
+    itemsFabrica(v).forEach(it => {
+      if(!it.categoria_pago_id) sinCat++;
       Object.values(ramas(it)).forEach(lista => {
         total += lista.length;
         hechas += lista.filter(e => e.estado === 'hecha').length;
@@ -40,47 +48,63 @@
         if(act && !act.trabajador_id) sinAsignar++;
       });
     });
-    return { total, hechas, sinAsignar };
+    return { total, hechas, sinAsignar, sinCat };
   }
   function diasAtraso(v){
     if(!v.fecha_entrega) return null;
     return -AV.diasHasta(v.fecha_entrega); // positivo = atrasado
   }
+  const nombreCategoria = (id) => (categorias.find(c => c.id === id) || {}).nombre || '';
+  const tituloPedido = (v) => v.interna ? 'Para exhibición' : ((v.cliente || {}).nombre || 'Sin nombre');
 
   // ---------------------------------------------------------------------------
   // Cargar
   // ---------------------------------------------------------------------------
   async function cargar(){
     try{
-      const { data, error } = await db.from('ventas')
-        .select('id,fecha_entrega,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,etapas(id,rama,nombre,orden,especialidad,estado,trabajador_id,foto,terminada_en,trabajador:perfiles(nombre)))')
-        .eq('estado', 'en_produccion');
-      if(error) throw error;
-      pedidos = (data || []).map(v => Object.assign(v, { _resumen: resumenPedido(v) }));
+      const [rv, rc] = await Promise.all([
+        db.from('ventas')
+          .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,cantidad,categoria_pago_id,etapas(id,rama,nombre,orden,especialidad,estado,trabajador_id,foto,terminada_en,iniciada_en,monto,trabajador:perfiles(nombre)))')
+          .eq('estado', 'en_produccion'),
+        db.from('categorias_pago').select('id,nombre').eq('activo', true).order('nombre', { ascending:true })
+      ]);
+      if(rv.error) throw rv.error;
+      if(rc.error) toast('No se pudieron cargar las categorías de pago', 'error');
+      categorias = rc.data || [];
+      pedidos = (rv.data || []).map(v => Object.assign(v, { _resumen: resumenPedido(v) }));
       pedidos.sort((a, b) => {
         const da = diasAtraso(a) || 0, db_ = diasAtraso(b) || 0;
         if((da > 0) !== (db_ > 0)) return db_ > 0 ? 1 : -1;
         if(da > 0 && db_ > 0) return db_ - da;
+        if(a.interna !== b.interna) return a.interna ? 1 : -1;
         const fa = a.fecha_entrega || '9999', fb = b.fecha_entrega || '9999';
-        return fa < fb ? -1 : fa > fb ? 1 : 0;
+        return fa < fb ? -1 : fa > fb ? 1 : a.id - b.id;
       });
       pintarChips();
       pintarLista();
+      if(abrirAlCargar){
+        const v = pedidos.find(x => x.id === abrirAlCargar);
+        abrirAlCargar = null;
+        if(v) pintarFicha(v);
+      }
     } catch(e){
-      $('lista').innerHTML = '<div class="vacio">No se pudo cargar. Desliza para reintentar.</div>';
-      toast(e.message, 'error');
+      $('lista').innerHTML = '<div class="vacio"><h3>No se pudo cargar</h3><p>Revisa tu internet y toca actualizar.</p></div>';
+      toast((e && e.message) || 'No se pudo cargar', 'error');
     }
   }
 
   function pintarChips(){
-    const asignar = pedidos.filter(v => v._resumen.sinAsignar > 0).length;
-    const atrasados = pedidos.filter(v => (diasAtraso(v) || 0) > 0).length;
-    const cont = $('chips');
-    cont.innerHTML = FILTROS.map(f => {
-      const n = f.id === 'todos' ? pedidos.length : f.id === 'asignar' ? asignar : atrasados;
-      return `<button class="chip ${filtro === f.id ? 'active' : ''}" data-f="${f.id}">${f.t} · ${n}</button>`;
-    }).join('');
-    $('subtitulo').textContent = pedidos.length + (pedidos.length === 1 ? ' pedido en taller' : ' pedidos en taller');
+    const n = {
+      todos: pedidos.length,
+      asignar: pedidos.filter(v => v._resumen.sinAsignar > 0).length,
+      sincat: pedidos.filter(v => v._resumen.sinCat > 0).length,
+      atrasados: pedidos.filter(v => (diasAtraso(v) || 0) > 0).length
+    };
+    if(filtro === 'sincat' && !n.sincat) filtro = 'todos';
+    $('chips').innerHTML = FILTROS.filter(f => f.id !== 'sincat' || n.sincat).map(f =>
+      `<button class="chip ${filtro === f.id ? 'active' : ''}" data-f="${f.id}">${f.t} · ${n[f.id]}</button>`).join('');
+    const ped = pedidos.filter(v => !v.interna).length, exh = pedidos.length - ped;
+    $('subtitulo').textContent = (ped === 1 ? '1 pedido' : ped + ' pedidos') + ' en taller' + (exh ? ` · ${exh} para exhibición` : '');
   }
   $('chips').addEventListener('click', (e) => {
     const b = e.target.closest('.chip'); if(!b) return;
@@ -91,20 +115,28 @@
   function pintarLista(){
     let vistos = pedidos;
     if(filtro === 'asignar') vistos = pedidos.filter(v => v._resumen.sinAsignar > 0);
+    if(filtro === 'sincat') vistos = pedidos.filter(v => v._resumen.sinCat > 0);
     if(filtro === 'atrasados') vistos = pedidos.filter(v => (diasAtraso(v) || 0) > 0);
     const cont = $('lista');
-    if(!vistos.length){ cont.innerHTML = '<div class="vacio">No hay pedidos aquí.</div>'; return; }
+    if(!vistos.length){
+      cont.innerHTML = pedidos.length
+        ? '<div class="vacio"><h3>Nada por aquí</h3><p>Ningún pedido coincide con este filtro.</p></div>'
+        : '<div class="vacio"><h3>El taller está libre</h3><p>Cuando un pedido pase a producción aparece aquí. Con el botón + puedes fabricar algo para exhibición.</p></div>';
+      return;
+    }
     cont.innerHTML = vistos.map((v, i) => {
       const r = v._resumen;
       const da = diasAtraso(v);
       const plazo = da > 0 ? `<span class="plazo tarde">${da} ${da === 1 ? 'día' : 'días'} atrasada</span>`
         : v.fecha_entrega ? `<span class="plazo">Entrega ${AV.fechaCorta(v.fecha_entrega)}</span>` : '';
-      const badge = r.sinAsignar > 0 ? `<span class="plazo">${r.sinAsignar} sin asignar</span>` : '<span class="plazo ok">Todo asignado</span>';
-      const prod = (v.items || []).map(it => it.nombre).join(', ');
+      const badge = r.sinAsignar > 0 ? `<span class="plazo">${r.sinAsignar} sin asignar</span>`
+        : r.sinCat > 0 ? '<span class="plazo aviso">Sin categoría de pago</span>'
+        : '<span class="plazo ok">Todo asignado</span>';
+      const prod = itemsFabrica(v).map(it => it.nombre + (it.cantidad > 1 ? ' ×' + it.cantidad : '')).join(', ');
       const pct = r.total ? r.hechas / r.total : 0;
       return `<button class="vcard" style="--i:${i}" data-id="${v.id}">
         <div class="vcard-top">
-          <div><div class="vcard-nombre">${esc((v.cliente || {}).nombre || 'Sin nombre')}</div><div class="vcard-num">N° ${v.id}</div></div>
+          <div style="min-width:0"><div class="vcard-nombre">${esc(tituloPedido(v))}</div>${v.interna ? '<span class="vcard-exhib">Exhibición</span>' : `<div class="vcard-num">N° ${v.id}</div>`}</div>
           ${plazo}
         </div>
         <div class="vcard-prod">${esc(prod)}</div>
@@ -125,10 +157,19 @@
   let pedidoActual = null;
   function pintarFicha(v){
     pedidoActual = v;
+    const cab = v.interna ? 'Para exhibición' : `N° ${v.id} · ${esc((v.cliente || {}).nombre || '')}`;
     $('fichaBody').innerHTML = `
-      <p class="field-label" style="margin-bottom:2px">N° ${v.id} · ${esc((v.cliente || {}).nombre || '')}</p>
-      ${(v.items || []).map(it => itemHtml(it)).join('')}`;
+      <p class="field-label" style="margin-bottom:2px">${cab}</p>
+      ${itemsFabrica(v).map(it => itemHtml(it)).join('')}
+      ${v.interna ? `<button class="btn-cancelar-orden" type="button" data-cancelar-orden="${v.id}">Cancelar esta orden</button>` : ''}`;
     abrirHoja('sheetFicha');
+  }
+  function catHtml(it){
+    if(!categorias.length && !it.categoria_pago_id) return '';
+    if(it.categoria_pago_id){
+      return `<button class="p-cat" type="button" data-cat-item="${it.id}"><span>Pago: ${esc(nombreCategoria(it.categoria_pago_id) || 'Categoría')}</span></button>`;
+    }
+    return `<button class="p-cat falta" type="button" data-cat-item="${it.id}"><span>Sin categoría · toca para asignar</span></button>`;
   }
   function itemHtml(it){
     const grupos = ramas(it);
@@ -144,12 +185,14 @@
           ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : '';
         let accion = '';
         if(e.estado === 'hecha'){
-          accion = `<span class="e-hecha-info">Terminó${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}</span>`;
+          const monto = e.monto != null ? ` · <span class="e-monto">${dinero(e.monto)}</span>` : '';
+          accion = `<span class="e-hecha-info">Terminó${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}${monto}</span>`;
         } else if(cls === 'actual'){
           if(e.trabajador_id){
-            accion = `<span class="e-chip"><span class="ini">${esc(inicial(e.trabajador ? e.trabajador.nombre : ''))}</span>${esc(e.trabajador ? e.trabajador.nombre : '')}</span><button class="e-terminar" data-terminar="${e.id}">Marcar terminado</button>`;
+            const nom = e.trabajador ? e.trabajador.nombre : '';
+            accion = `<button class="e-chip" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}" aria-label="Cambiar a quién está asignada"><span class="ini">${esc(inicial(nom))}</span>${esc(nom)}${e.iniciada_en ? ' · trabajando' : ''}</button><button class="e-terminar" data-terminar="${e.id}">Marcar terminado</button>`;
           } else {
-            accion = `<button class="e-asignar" data-asignar="${e.id}" data-esp="${e.especialidad}" data-nombre="${esc(e.nombre)}">Sin asignar · toca para asignar</button>`;
+            accion = `<button class="e-asignar" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}">Sin asignar · toca para asignar</button>`;
           }
         }
         return `<div class="etapa ${cls}"><div class="e-dot">${dot}</div><div class="e-cuerpo"><div class="e-nom">${esc(e.nombre)}</div><div class="e-fila">${accion}</div></div></div>`;
@@ -157,11 +200,16 @@
     }).join('');
     return `<div class="p-item">
       <div class="p-item-cab">
-        <div class="p-item-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="">` : ''}</div>
-        <div><div class="p-item-nom">${esc(it.nombre)}</div><div class="p-item-cant">${esc(it.tipo || '')}</div></div>
+        <div class="p-item-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="">` : iconoTipo(it.tipo, 22)}</div>
+        <div><div class="p-item-nom">${esc(it.nombre)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div><div class="p-item-cant">${esc(it.tipo || '')}</div>${catHtml(it)}</div>
       </div>
       ${bloques}
     </div>`;
+  }
+  async function refrescarFicha(){
+    await cargar();
+    const v = pedidoActual && pedidos.find(x => x.id === pedidoActual.id);
+    if(v) pintarFicha(v); else cerrarHoja('sheetFicha');
   }
 
   // ---------------------------------------------------------------------------
@@ -176,6 +224,10 @@
     return trabajadores;
   }
   $('fichaBody').addEventListener('click', async (e) => {
+    const bc = e.target.closest('[data-cat-item]');
+    if(bc){ abrirCatItem(Number(bc.dataset.catItem)); return; }
+    const bo = e.target.closest('[data-cancelar-orden]');
+    if(bo){ cancelarOrden(Number(bo.dataset.cancelarOrden), bo); return; }
     const ba = e.target.closest('[data-asignar]');
     if(ba){
       etapaParaAsignar = { id:Number(ba.dataset.asignar), esp:ba.dataset.esp };
@@ -184,7 +236,7 @@
       const filtrados = todos.filter(t => (t.especialidades || []).includes(ba.dataset.esp));
       $('asignarSub').textContent = 'Solo se muestran trabajadores de ' + (NOMBRE_ESPECIALIDAD[ba.dataset.esp] || ba.dataset.esp);
       $('listaTrabajadores').innerHTML = filtrados.length
-        ? filtrados.map(t => `<button class="fila-t" data-tid="${t.id}"><span class="u-avatar">${esc(inicial(t.nombre))}</span><span><span class="nom">${esc(t.nombre)}</span><span class="esp">${esc((t.especialidades || []).map(x => NOMBRE_ESPECIALIDAD[x] || x).join(' · '))}</span></span></button>`).join('')
+        ? filtrados.map(t => `<button class="fila-t" data-tid="${esc(t.id)}"><span class="u-avatar">${esc(inicial(t.nombre))}</span><span><span class="nom">${esc(t.nombre)}</span><span class="esp">${esc((t.especialidades || []).map(x => NOMBRE_ESPECIALIDAD[x] || x).join(' · '))}</span></span></button>`).join('')
         : '<p class="field-error" style="display:block">No hay trabajadores activos con esa especialidad. Créalos en Usuarios.</p>';
       abrirHoja('sheetAsignar');
       return;
@@ -194,25 +246,72 @@
       etapaParaTerminar = Number(bt.dataset.terminar);
       fotoTerminarBlob = null;
       $('terminarFotoPrev').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/></svg>';
+      $('terminarFotoInput').value = '';
       abrirHoja('sheetTerminar');
     }
   });
   $('listaTrabajadores').addEventListener('click', async (e) => {
     const b = e.target.closest('[data-tid]'); if(!b || !etapaParaAsignar) return;
-    b.disabled = true;
+    [...$('listaTrabajadores').children].forEach(x => x.disabled = true);
     try{
       const { error } = await db.rpc('asignar_etapa', { eid: etapaParaAsignar.id, tid: b.dataset.tid });
       if(error) throw error;
       cerrarHoja('sheetAsignar');
-      toast('Trabajador asignado');
-      await cargar();
-      const v = pedidos.find(x => x.id === pedidoActual.id);
-      if(v) pintarFicha(v);
+      toast('Trabajador asignado. Le llegó el aviso.');
+      await refrescarFicha();
     } catch(err){
       toast(err.message, 'error');
-      b.disabled = false;
+      [...$('listaTrabajadores').children].forEach(x => x.disabled = false);
     }
   });
+
+  // ---------------------------------------------------------------------------
+  // Categoría de pago de un producto
+  // ---------------------------------------------------------------------------
+  let itemParaCat = null;
+  function abrirCatItem(iid){
+    const it = pedidoActual && itemsFabrica(pedidoActual).find(x => x.id === iid);
+    if(!it) return;
+    itemParaCat = it;
+    $('catItemSub').textContent = it.nombre + ': con esto se calcula lo que gana cada trabajador.';
+    $('listaCatItem').innerHTML = categorias.length
+      ? categorias.map(c => `<button class="fila-cat ${c.id === it.categoria_pago_id ? 'sel' : ''}" type="button" data-cid="${c.id}">${esc(c.nombre)}</button>`).join('')
+      : '<p class="field-error" style="display:block">Aún no hay categorías. Créalas en Mi cuenta › Categorías de pago.</p>';
+    abrirHoja('sheetCatItem');
+  }
+  $('listaCatItem').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-cid]'); if(!b || !itemParaCat) return;
+    const cid = Number(b.dataset.cid);
+    if(cid === itemParaCat.categoria_pago_id){ cerrarHoja('sheetCatItem'); return; }
+    [...$('listaCatItem').children].forEach(x => x.disabled = true);
+    b.classList.add('sel');
+    try{
+      const { error } = await db.rpc('asignar_categoria_item', { iid: itemParaCat.id, cid });
+      if(error) throw error;
+      cerrarHoja('sheetCatItem');
+      toast('Categoría guardada');
+      await refrescarFicha();
+    } catch(err){
+      toast(err.message, 'error');
+      [...$('listaCatItem').children].forEach(x => x.disabled = false);
+      b.classList.remove('sel');
+    }
+  });
+
+  async function cancelarOrden(vid, boton){
+    if(!confirm('¿Cancelar esta orden para exhibición? Lo que ya se terminó queda pagado a quien lo hizo.')) return;
+    boton.disabled = true;
+    try{
+      const { error } = await db.rpc('cancelar_orden_exhibicion', { vid });
+      if(error) throw error;
+      cerrarHoja('sheetFicha');
+      toast('Orden cancelada');
+      await cargar();
+    } catch(err){
+      toast(err.message, 'error');
+      boton.disabled = false;
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Marcar terminado (con foto opcional)
@@ -242,12 +341,129 @@
       if(error) throw error;
       cerrarHoja('sheetTerminar');
       cerrarHoja('sheetFicha');
-      toast(data && data.listo ? 'Etapa terminada. El pedido quedó Listo y se avisó a quien lo vendió.' : 'Etapa terminada');
+      toast(data && data.listo
+        ? (data.interna ? 'Listo. La pieza pasó a Entrega inmediata en el catálogo.' : 'Etapa terminada. El pedido quedó Listo y se avisó a quien lo vendió.')
+        : 'Etapa terminada');
       await cargar();
     } catch(err){
       toast(err.message, 'error');
     } finally {
       $('btnConfirmarTerminar').disabled = false;
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Fabricar para exhibición (sin cliente): al terminar queda en Entrega inmediata
+  // ---------------------------------------------------------------------------
+  let modelosCat = null;
+  let sedes = [];
+  const orden = { modelo:null, color:null, sede:null, cantidad:1 };
+
+  async function cargarModelos(){
+    if(modelosCat) return modelosCat;
+    const [rm, rs] = await Promise.all([
+      db.from('catalogo').select('id,nombre,tipo,fotos,precio_base,categoria_pago_id').in('tipo', TIPOS_PRODUCCION).order('nombre', { ascending:true }),
+      db.from('sedes').select('id,nombre').eq('activa', true).order('orden', { ascending:true })
+    ]);
+    if(rm.error || rs.error) throw (rm.error || rs.error);
+    modelosCat = rm.data || [];
+    sedes = rs.data || [];
+    return modelosCat;
+  }
+  function coloresDe(m){
+    const f = (m && m.fotos) || {};
+    return acabados(m && m.tipo).filter(a => a.sw && f[a.key]).map(a => a.key);
+  }
+  function pintarOrden(){
+    const m = orden.modelo;
+    const foto = m ? fotoModelo(m, orden.color) : null;
+    $('modeloFoto').innerHTML = foto ? `<img src="${esc(foto)}" alt="">` : (m ? iconoTipo(m.tipo, 20) : '');
+    $('modeloNombre').textContent = m ? m.nombre : 'Elige un modelo';
+    $('modeloNombre').classList.toggle('ph', !m);
+    $('modeloSub').textContent = m ? m.tipo : '';
+    $('hintSinCat').classList.toggle('hidden', !m || !!m.categoria_pago_id);
+    const colores = coloresDe(m);
+    $('campoColor').classList.toggle('hidden', colores.length < 2);
+    $('optsColor').innerHTML = colores.map(c => `<button type="button" class="opt ${c === orden.color ? 'selected' : ''}" data-color="${esc(c)}">${esc(c)}</button>`).join('');
+    $('optsSede').innerHTML = sedes.map(s => `<button type="button" class="opt ${s.id === orden.sede ? 'selected' : ''}" data-sede="${s.id}">${esc(s.nombre)}</button>`).join('');
+    $('cantValor').textContent = orden.cantidad;
+  }
+  $('btnNuevaOrden').addEventListener('click', async () => {
+    try{ await cargarModelos(); }
+    catch(err){ toast('No se pudieron cargar los modelos: ' + ((err && err.message) || ''), 'error'); return; }
+    Object.assign(orden, { modelo:null, color:null, sede: sedes.length === 1 ? sedes[0].id : null, cantidad:1 });
+    $('fPrecio').value = '';
+    ['campoModelo'].forEach(id => $(id).classList.remove('invalid'));
+    $('eSede').closest('.field').classList.remove('invalid');
+    $('ePrecio').closest('.field').classList.remove('invalid');
+    pintarOrden();
+    abrirHoja('sheetOrden');
+  });
+  function pintarModelos(){
+    const q = $('buscaModelo').value.trim().toLowerCase();
+    const lista = (modelosCat || []).filter(m => !q || m.nombre.toLowerCase().includes(q) || m.tipo.toLowerCase().includes(q));
+    $('listaModelos').innerHTML = lista.length ? lista.map(m => {
+      const f = fotoModelo(m);
+      return `<button class="fila-mod" type="button" data-mid="${m.id}">
+        <span class="mini-foto">${f ? `<img src="${esc(f)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 20)}</span>
+        <span style="min-width:0"><span class="mod-nom">${esc(m.nombre)}</span><span class="mod-sub">${esc(m.tipo)} · ${dinero(m.precio_base)}</span></span>
+      </button>`;
+    }).join('') : '<div class="vacio" style="padding:28px 10px"><p>Ningún modelo coincide.</p></div>';
+  }
+  $('btnModelo').addEventListener('click', () => {
+    $('buscaModelo').value = '';
+    pintarModelos();
+    abrirHoja('sheetModelos');
+  });
+  $('buscaModelo').addEventListener('input', pintarModelos);
+  $('listaModelos').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mid]'); if(!b) return;
+    const m = modelosCat.find(x => String(x.id) === b.dataset.mid); if(!m) return;
+    orden.modelo = m;
+    const colores = coloresDe(m);
+    orden.color = colores[0] || null;
+    $('fPrecio').value = Number(m.precio_base) > 0 ? m.precio_base : '';
+    $('campoModelo').classList.remove('invalid');
+    if(Number(m.precio_base) > 0) $('ePrecio').closest('.field').classList.remove('invalid');
+    pintarOrden();
+    cerrarHoja('sheetModelos');
+  });
+  $('optsColor').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-color]'); if(!b) return;
+    orden.color = b.dataset.color; pintarOrden();
+  });
+  $('optsSede').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sede]'); if(!b) return;
+    orden.sede = Number(b.dataset.sede);
+    $('eSede').closest('.field').classList.remove('invalid');
+    pintarOrden();
+  });
+  $('sheetOrden').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cant]'); if(!b) return;
+    orden.cantidad = Math.min(50, Math.max(1, orden.cantidad + Number(b.dataset.cant)));
+    $('cantValor').textContent = orden.cantidad;
+  });
+  $('fPrecio').addEventListener('input', () => $('ePrecio').closest('.field').classList.remove('invalid'));
+  $('btnCrearOrden').addEventListener('click', async () => {
+    const precio = montoOrNull($('fPrecio').value);
+    let ok = true;
+    if(!orden.modelo){ $('eModelo').textContent = 'Elige qué se va a fabricar'; $('campoModelo').classList.add('invalid'); ok = false; }
+    if(!orden.sede){ $('eSede').textContent = 'Elige dónde quedará la pieza'; $('eSede').closest('.field').classList.add('invalid'); ok = false; }
+    if(!(precio > 0)){ $('ePrecio').textContent = 'Ingresa un precio mayor a 0'; $('ePrecio').closest('.field').classList.add('invalid'); ok = false; }
+    if(!ok) return;
+    const btn = $('btnCrearOrden');
+    btn.disabled = true;
+    try{
+      const { data, error } = await db.rpc('crear_orden_exhibicion', { p: { catalogo_id: orden.modelo.id, color: orden.color, sede_id: orden.sede, cantidad: orden.cantidad, precio } });
+      if(error) throw error;
+      cerrarHoja('sheetOrden');
+      toast('Listo, ya está en producción. Asigna quién la fabrica.');
+      abrirAlCargar = data && data.id;
+      await cargar();
+    } catch(err){
+      toast(err.message, 'error');
+    } finally {
+      btn.disabled = false;
     }
   });
 

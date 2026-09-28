@@ -56,6 +56,8 @@
     const { data } = await db.from('perfiles').select('*').eq('id', s.user.id).maybeSingle();
     perfilActual = data || { nombre: (s.user.user_metadata || {}).nombre || 'Usuario', rol: (s.user.user_metadata || {}).rol || 'vendedor' };
     ocultarProduccionSiNoAdmin(perfilActual);
+    // El trabajador solo usa su Inicio: cualquier otra pantalla lo regresa allí
+    if(perfilActual.rol === 'trabajador' && enModulo){ location.replace('index.html'); return null; }
     return perfilActual;
   }
   // En los módulos: si no hay sesión, vuelve a la pantalla de acceso

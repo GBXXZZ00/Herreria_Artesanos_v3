@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=38">
+<link rel="stylesheet" href="assets/css/base.css?v=39">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -66,6 +66,73 @@
   .aviso-btn{margin-left:auto;flex-shrink:0;height:38px;padding:0 14px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800}
   #sheetPin .sheet-body{padding-bottom:calc(24px + var(--safe-b))}
   #sheetPin .pin-cab{margin-top:4px}
+  .aviso-card.suave .ini-ico{background:var(--accent-soft);color:var(--accent)}
+
+  /* Inicio del trabajador */
+  .es-trabajador #btnNuevaVenta, .es-trabajador #modulos, .es-trabajador #menuModulos{display:none}
+  .es-trabajador .page{padding-bottom:calc(var(--safe-b) + 32px)}
+  .t-activo{display:block;width:100%;text-align:left;padding:18px;margin-bottom:12px;border-radius:var(--radius);background:var(--accent);color:#fff;box-shadow:0 12px 28px rgba(23,85,92,0.28);transition:transform 150ms var(--ease-out)}
+  .t-activo:active{transform:scale(0.98)}
+  .t-activo-eyebrow{font-size:12.5px;font-weight:700;color:rgba(255,255,255,0.8)}
+  .t-activo-tit{display:block;font-size:20px;font-weight:800;letter-spacing:-0.2px;margin-top:4px}
+  .t-activo-sub{display:block;font-size:14px;color:rgba(255,255,255,0.85);margin-top:2px}
+  .t-activo-btn{display:inline-flex;align-items:center;height:40px;padding:0 16px;margin-top:14px;border-radius:12px;background:#fff;color:var(--accent);font-size:14.5px;font-weight:800}
+  .t-tiles{display:grid;grid-template-columns:1.15fr 1fr;gap:12px;margin-bottom:12px}
+  .t-tile{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:150px;padding:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-sm);text-align:left;opacity:0;transform:translateY(10px);animation:tileIn 380ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 50ms);transition:transform 150ms var(--ease-out)}
+  .t-tile:active{transform:scale(0.97)}
+  .t-tile .ini-ico{width:44px;height:44px;border-radius:13px}
+  .t-num{display:block;font-size:30px;font-weight:800;letter-spacing:-0.8px;line-height:1;margin-top:auto}
+  .t-lbl{display:block;font-size:14px;font-weight:700;color:var(--ink-soft);margin-top:4px}
+  .sk-tile{min-height:150px;border-radius:var(--radius);background:var(--surface-2);animation:pulse 1.2s ease-in-out infinite}
+
+  .tr-lista{display:flex;flex-direction:column;gap:10px}
+  .tr{padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+  .tr.activo{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .tr.bloq{background:var(--surface-2);border-color:transparent}
+  .tr-cab{display:flex;gap:12px;align-items:center}
+  .tr-foto{width:52px;height:52px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .tr-foto img{width:100%;height:100%;object-fit:cover}
+  .tr-etapa{font-size:12px;font-weight:800;color:var(--accent)}
+  .tr-nom{font-size:15.5px;font-weight:800;line-height:1.25}
+  .tr-det{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+  .tr-pie{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .tr-gana{font-size:13px;font-weight:800;color:var(--ink-soft);margin-right:auto}
+  .tr-btn{height:40px;padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800;white-space:nowrap;transition:transform 130ms var(--ease-out)}
+  .tr-btn:active{transform:scale(0.97)}
+  .tr-btn.sec{background:none;color:var(--ink-soft);padding:0 6px}
+  .tr-bloq{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink-faint)}
+  .tr-vacio{text-align:center;padding:36px 12px;color:var(--ink-soft);font-size:15px}
+
+  .pg-resumen{padding:18px;border-radius:var(--radius);background:var(--surface-2);margin-bottom:14px}
+  .pg-lbl{font-size:13px;font-weight:700;color:var(--ink-soft)}
+  .pg-total{font-size:34px;font-weight:800;letter-spacing:-0.8px;line-height:1.1;margin-top:2px}
+  .pg-linea{display:flex;gap:16px;margin-top:10px;font-size:13px;color:var(--ink-soft)}
+  .pg-linea b{color:var(--ink)}
+  .pg-aviso{font-size:12.5px;color:#8A5A00;margin-top:10px}
+  .pg-mov{display:flex;align-items:center;gap:12px;padding:12px 2px}
+  .pg-mov + .pg-mov{border-top:1px solid var(--line)}
+  .pg-mov-t{display:block;font-size:14.5px;font-weight:700}
+  .pg-mov-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .pg-mov-m{margin-left:auto;font-size:15px;font-weight:800;white-space:nowrap;text-align:right}
+  .pg-mov-m.menos{color:var(--ink-soft)}
+  .pg-pill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;background:var(--surface-2);color:var(--ink-soft)}
+  .pg-pill.pendiente{background:#FFF1D6;color:#8A5A00}
+  .pg-tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:18px 0 2px}
+  .vale-pend{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#FFF8EC;border:1px solid #F2C99A;font-size:14px;font-weight:700;color:#8A5A00}
+
+  .va{display:flex;align-items:center;gap:12px;padding:14px 0}
+  .va + .va{border-top:1px solid var(--line)}
+  .va-t{display:block;font-size:15.5px;font-weight:800}
+  .va-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .va-acc{margin-left:auto;display:flex;gap:8px;flex-shrink:0}
+  .va-acc button{height:38px;padding:0 13px;border-radius:12px;font-size:13.5px;font-weight:800;white-space:nowrap;transition:transform 130ms var(--ease-out)}
+  .va-acc button:active{transform:scale(0.96)}
+  .va-si{background:var(--accent);color:#fff}
+  .va-no{border:1px solid var(--line-strong);color:var(--ink-soft)}
+  .foto-opc{display:flex;align-items:center;gap:12px;margin-top:4px}
+  .foto-prev{width:56px;height:56px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .foto-prev img{width:100%;height:100%;object-fit:cover}
+  .foto-btn{flex:1;height:44px;border:1px solid var(--line-strong);border-radius:12px;background:none;font-size:13.5px;font-weight:700;color:var(--ink-soft)}
 </style>
 </head>
 <body>
@@ -121,6 +188,7 @@
         <span><span class="ini-nombre">Nueva venta</span><span class="ini-cuenta">Cotización o venta</span></span>
       </a>
 
+      <div id="vistaTrabajo" class="hidden"></div>
       <div id="avisosAdmin"></div>
       <div class="ini-grid" id="modulos"></div>
     </section>
@@ -188,13 +256,92 @@
   </div>
 </section>
 
+<!-- Trabajador: sus trabajos -->
+<div class="sheet-scrim" id="scrimTrabajos" data-cerrar="sheetTrabajos"></div>
+<section class="sheet sheet-auto" id="sheetTrabajos" role="dialog" aria-modal="true" aria-labelledby="trabajosTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="trabajosTitulo">Trabajos pendientes</h2>
+    <button class="icon-btn" data-cerrar="sheetTrabajos" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="field-hint" id="trabajosAyuda" style="margin:0 0 12px">Elige con cuál empiezas. Los demás esperan hasta que lo termines.</p>
+    <div class="tr-lista" id="listaTrabajos"></div>
+  </div>
+</section>
+
+<!-- Trabajador: marcar terminado -->
+<div class="sheet-scrim scrim-top" id="scrimTerminarT" data-cerrar="sheetTerminarT"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetTerminarT" role="dialog" aria-modal="true" aria-labelledby="terminarTTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="terminarTTitulo">¿Lo terminaste?</h2>
+    <button class="icon-btn" data-cerrar="sheetTerminarT" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="field-hint" id="terminarTSub" style="margin:0 0 14px"></p>
+    <span class="field-label">Foto (opcional)</span>
+    <div class="foto-opc">
+      <div class="foto-prev" id="tFotoPrev"></div>
+      <button type="button" class="foto-btn" id="btnTFoto">Tomar foto</button>
+      <input type="file" accept="image/*" capture="environment" id="tFotoInput" class="hidden">
+    </div>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnTConfirmar">Sí, lo terminé</button></div>
+</section>
+
+<!-- Trabajador: pagos -->
+<div class="sheet-scrim" id="scrimPagos" data-cerrar="sheetPagos"></div>
+<section class="sheet sheet-auto" id="sheetPagos" role="dialog" aria-modal="true" aria-labelledby="pagosTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="pagosTitulo">Mis pagos</h2>
+    <button class="icon-btn" data-cerrar="sheetPagos" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="pagosBody"></div>
+</section>
+
+<!-- Trabajador: pedir vale -->
+<div class="sheet-scrim scrim-top" id="scrimVale" data-cerrar="sheetVale"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetVale" role="dialog" aria-modal="true" aria-labelledby="valeTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="valeTitulo">Pedir un vale</h2>
+    <button class="icon-btn" data-cerrar="sheetVale" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field" id="campoValeMonto">
+      <label class="field-label" for="valeMonto">Monto</label>
+      <div class="input-affix">
+        <span class="affix">$</span>
+        <input class="input" id="valeMonto" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+      <p class="field-error">Escribe un monto mayor a 0</p>
+    </div>
+    <div class="field">
+      <label class="field-label" for="valeNota">Para qué (opcional)</label>
+      <input class="input" id="valeNota" type="text" maxlength="120" autocomplete="off">
+    </div>
+    <p class="field-hint">Cuando el administrador lo apruebe, se descuenta de lo que tienes por cobrar.</p>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnPedirVale">Pedir vale</button></div>
+</section>
+
+<!-- Administrador: vales por aprobar -->
+<div class="sheet-scrim" id="scrimVales" data-cerrar="sheetVales"></div>
+<section class="sheet sheet-auto" id="sheetVales" role="dialog" aria-modal="true" aria-labelledby="valesTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="valesTitulo">Vales por aprobar</h2>
+    <button class="icon-btn" data-cerrar="sheetVales" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="valesBody"></div>
+</section>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=38"></script>
-<script src="assets/js/supabase-client.js?v=38"></script>
-<script src="assets/js/comun.js?v=38"></script>
-<script src="assets/js/avisos.js?v=38"></script>
-<script src="assets/js/sesion.js?v=38"></script>
+<script src="assets/vendor/supabase.js?v=39"></script>
+<script src="assets/js/supabase-client.js?v=39"></script>
+<script src="assets/js/img-compress.js?v=39"></script>
+<script src="assets/js/comun.js?v=39"></script>
+<script src="assets/js/avisos.js?v=39"></script>
+<script src="assets/js/sesion.js?v=39"></script>
+<script src="assets/js/mi-trabajo.js?v=39"></script>
 <script>
 (function(){
   'use strict';
@@ -372,7 +519,7 @@
     const ec = $('cuenta-cotizaciones'), ev = $('cuenta-ventas');
     if(!ec && !ev) return;
     try{
-      const { data, error } = await db.from('ventas').select('estado,total,vence_en,confirmada_en,abonos(monto,tipo,estado)').in('estado', ['cotizacion', 'confirmada', 'en_produccion', 'lista', 'entregada']);
+      const { data, error } = await db.from('ventas').select('estado,total,vence_en,confirmada_en,abonos(monto,tipo,estado)').eq('interna', false).in('estado', ['cotizacion', 'confirmada', 'en_produccion', 'lista', 'entregada']);
       if(error) throw error;
       const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
       const abiertas = data.filter(v => v.estado === 'cotizacion' && new Date(v.vence_en + 'T00:00') >= hoy).length;
@@ -424,13 +571,14 @@
         </a>`;
       }
     } catch(e){}
+    if(admin) html += await avisosTaller();
     // Notificaciones del teléfono
     try{ estadoNotif = window.Avisos ? await window.Avisos.estado() : 'no-soportado'; } catch(e){ estadoNotif = 'no-soportado'; }
     $('notifCheck').classList.toggle('hidden', estadoNotif !== 'activo');
     $('btnPrueba').classList.toggle('hidden', estadoNotif !== 'activo');
     if(estadoNotif === 'inactivo'){
       html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>
-        <span><span class="aviso-t">Recibe avisos en tu teléfono</span><span class="aviso-s">${admin ? 'Ventas nuevas, pagos y pedidos a producción.' : 'Te avisamos si un pago no llegó.'}</span></span>
+        <span><span class="aviso-t">Recibe avisos en tu teléfono</span><span class="aviso-s">${admin ? 'Ventas nuevas, pagos y pedidos a producción.' : p && p.rol === 'trabajador' ? 'Te avisamos cuando te asignen un trabajo.' : 'Te avisamos si un pago no llegó.'}</span></span>
         <button class="aviso-btn" type="button" data-activar-notif>Activar</button></div>`;
     } else if(estadoNotif === 'instalar'){
       html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>
@@ -441,6 +589,79 @@
     }
     cont.innerHTML = html;
   }
+  // Taller: vales por aprobar, trabajos sin asignar y lo que falta para calcular pagos
+  const ICON_ETIQUETA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>';
+  const ICON_PERSONA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>';
+  async function avisosTaller(){
+    let html = '';
+    const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
+    const [rVales, rProd, rCats, rMod] = await Promise.all([
+      window.Trabajo.cargarVales().then(d => ({ data:d }), () => ({ data:[] })),
+      db.from('ventas').select('id,items:venta_items(categoria_pago_id,etapas(rama,orden,estado,trabajador_id))').eq('estado', 'en_produccion'),
+      db.from('categorias_pago').select('id', { count:'exact', head:true }),
+      db.from('catalogo').select('id', { count:'exact', head:true }).is('categoria_pago_id', null)
+    ].map(p => Promise.resolve(p).catch(() => ({ data:null }))));
+    const vales = rVales.data || [];
+    if(vales.length){
+      const total = vales.reduce((a, v) => a + Number(v.monto), 0);
+      html += `<button class="aviso-card urgente" type="button" data-abrir-vales>
+        <span class="ini-ico">${ICON_DINERO}</span>
+        <span><span class="aviso-t">${plural(vales.length, '1 vale por aprobar', 'vales por aprobar')}</span>
+        <span class="aviso-s">${esc(vales.slice(0, 2).map(v => (v.trabajador || {}).nombre || '').join(' · '))} · ${window.AH.dinero(total)} en total</span></span>
+      </button>`;
+    }
+    let sinAsignar = 0, sinCat = 0;
+    const enTaller = ((rProd && rProd.data) || []).length;
+    ((rProd && rProd.data) || []).forEach(v => (v.items || []).forEach(it => {
+      const et = it.etapas || [];
+      if(!et.length) return;
+      if(!it.categoria_pago_id) sinCat++;
+      const ramas = {};
+      et.forEach(e => (ramas[e.rama] = ramas[e.rama] || []).push(e));
+      Object.values(ramas).forEach(l => {
+        const act = l.sort((a, b) => a.orden - b.orden).find(e => e.estado === 'pendiente');
+        if(act && !act.trabajador_id) sinAsignar++;
+      });
+    }));
+    const ep = $('cuenta-produccion');
+    if(ep) ep.innerHTML = !(rProd && rProd.data) ? 'Pedidos en fabricación'
+      : enTaller ? `${enTaller} en taller${sinAsignar ? ` · <span class="num">${sinAsignar} sin asignar</span>` : ''}` : 'Taller libre';
+    if(sinAsignar){
+      html += `<a class="aviso-card urgente" href="produccion.html?filtro=asignar" data-modulo>
+        <span class="ini-ico">${ICON_PERSONA}</span>
+        <span><span class="aviso-t">${plural(sinAsignar, '1 trabajo sin asignar', 'trabajos sin asignar')}</span>
+        <span class="aviso-s">Nadie lo está haciendo. Toca para elegir quién.</span></span>
+      </a>`;
+    }
+    const nCats = rCats && typeof rCats.count === 'number' ? rCats.count : null;
+    if(nCats === 0){
+      html += `<a class="aviso-card suave" href="categorias-pago.html" data-modulo>
+        <span class="ini-ico">${ICON_ETIQUETA}</span>
+        <span><span class="aviso-t">Crea las categorías de pago</span>
+        <span class="aviso-s">Sin ellas no se sabe cuánto gana cada trabajador.</span></span>
+      </a>`;
+    } else if(nCats){
+      if(sinCat){
+        html += `<a class="aviso-card suave" href="produccion.html?filtro=sincat" data-modulo>
+          <span class="ini-ico">${ICON_ETIQUETA}</span>
+          <span><span class="aviso-t">${plural(sinCat, '1 producto sin categoría de pago', 'productos sin categoría de pago')}</span>
+          <span class="aviso-s">Está en producción. Asígnala para calcular lo que se paga.</span></span>
+        </a>`;
+      }
+      const nMod = rMod && typeof rMod.count === 'number' ? rMod.count : 0;
+      if(nMod){
+        html += `<a class="aviso-card suave" href="catalogo.html?filtro=sin-categoria" data-modulo>
+          <span class="ini-ico">${ICON_ETIQUETA}</span>
+          <span><span class="aviso-t">${plural(nMod, '1 modelo sin categoría de pago', 'modelos sin categoría de pago')}</span>
+          <span class="aviso-s">Elige varios y asígnales la misma de una vez.</span></span>
+        </a>`;
+      }
+    }
+    return html;
+  }
+  document.addEventListener('click', (e) => { if(e.target.closest('[data-abrir-vales]')) window.Trabajo.abrirVales(); });
+  window.Trabajo.onValesCambian(() => pintarAvisosAdmin(perfilActual));
+
   async function activarNotif(){
     if(!window.Avisos) return;
     try{
@@ -480,17 +701,31 @@
     $('cuentaNombre').textContent = nombre;
     $('cuentaRol').textContent = nombreRol(p && p.rol);
     $('grupoModulosAdmin').classList.toggle('hidden', !(p && p.rol === 'admin'));
+    // El trabajador solo ve lo suyo: sus trabajos y sus pagos
+    if(p && p.rol === 'trabajador'){
+      $('modulos').innerHTML = '';
+      const listo = window.Trabajo.iniciarTrabajador(p);
+      pintarAvisosAdmin(p);
+      mostrar('vInicio');
+      await listo;
+      window.Trabajo.abrirSegunURL(p);
+      return;
+    }
+    window.Trabajo.salirTrabajador();
     pintarModulos(p);
-    pintarAvisosAdmin(p);
+    const avisos = pintarAvisosAdmin(p);
     mostrar('vInicio');
     contarCatalogo();
     contarVentas();
+    await avisos;
+    window.Trabajo.abrirSegunURL(p);
   }
 
   $('btnCuenta').addEventListener('click', () => abrirHoja('sheetCuenta'));
   $('btnSalir').addEventListener('click', async () => {
     cerrarHoja('sheetCuenta', true);
     await S.salir();
+    window.Trabajo.salirTrabajador();
     elegido = null;
     $('pasoPin').classList.add('hidden');
     $('pasoQuien').classList.remove('hidden');
@@ -557,7 +792,15 @@
   });
 
   // Al volver a Inicio desde un módulo (página guardada por el navegador), refresca los números
-  window.addEventListener('pageshow', (e) => { if(e.persisted && !$('vInicio').classList.contains('hidden')){ contarCatalogo(); contarVentas(); pintarAvisosAdmin(perfilActual); } });
+  window.addEventListener('pageshow', (e) => {
+    if(!e.persisted || $('vInicio').classList.contains('hidden')) return;
+    if(window.Trabajo.esTrabajador()){ window.Trabajo.refrescar(); pintarAvisosAdmin(perfilActual); return; }
+    contarCatalogo(); contarVentas(); pintarAvisosAdmin(perfilActual);
+  });
+  // Al volver a la app (desde el fondo), el trabajador ve lo último que le asignaron
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && window.Trabajo.esTrabajador()) window.Trabajo.refrescar();
+  });
 
   window.addEventListener('scroll', () => $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
 
