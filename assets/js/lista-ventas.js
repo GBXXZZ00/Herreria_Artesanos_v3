@@ -19,8 +19,9 @@
   let cargadoUnaVez = false;
   const FILTROS = COT
     ? [ { id:'abiertas', t:'Abiertas' }, { id:'vencidas', t:'Vencidas' }, { id:'descartadas', t:'Descartadas' } ]
-    : [ { id:'activas', t:'Activas' }, { id:'cobrar', t:'Por cobrar' }, { id:'entregadas', t:'Entregadas' }, { id:'canceladas', t:'Canceladas' } ];
+    : [ { id:'activas', t:'Activas' }, { id:'confirmar', t:'Abonos por confirmar', soloSiHay:true }, { id:'cobrar', t:'Por cobrar' }, { id:'entregadas', t:'Entregadas' }, { id:'canceladas', t:'Canceladas' } ];
   let filtro = FILTROS[0].id;
+  { const f = new URLSearchParams(location.search).get('filtro'); if(f && FILTROS.some(x => x.id === f)) filtro = f; }
 
   // ---------------------------------------------------------------------------
   // Filtros y orden
@@ -34,6 +35,7 @@
     }
     if(f === 'activas') return ['confirmada', 'en_produccion', 'lista'].includes(v.estado);
     if(f === 'cobrar') return v.estado !== 'cancelada' && AV.resta(v) > 0;
+    if(f === 'confirmar') return AV.porConfirmar(v.abonos).length > 0;
     if(f === 'entregadas') return v.estado === 'entregada';
     return v.estado === 'cancelada';
   }
@@ -42,7 +44,7 @@
     const porEntrega = (a, b) => (a.fecha_entrega || '9999') < (b.fecha_entrega || '9999') ? -1 : (a.fecha_entrega || '9999') > (b.fecha_entrega || '9999') ? 1 : 0;
     if(filtro === 'abiertas') return lista.sort((a, b) => t(b.creado_en) - t(a.creado_en));
     if(filtro === 'vencidas') return lista.sort((a, b) => (b.vence_en || '').localeCompare(a.vence_en || ''));
-    if(filtro === 'activas' || filtro === 'cobrar') return lista.sort(porEntrega);
+    if(filtro === 'activas' || filtro === 'cobrar' || filtro === 'confirmar') return lista.sort(porEntrega);
     if(filtro === 'entregadas') return lista.sort((a, b) => t(b.actualizado_en) - t(a.actualizado_en));
     return lista.sort((a, b) => t(b.cancelada_en) - t(a.cancelada_en));
   }
@@ -57,6 +59,7 @@
     return `<span class="plazo ${d <= 5 ? 'pronto' : ''}">Vence en ${d} ${d === 1 ? 'día' : 'días'}</span>`;
   }
   function plazoEntrega(v){
+    if(AV.porConfirmar(v.abonos).length) return '<span class="plazo pronto">Abono por confirmar</span>';
     if(v.estado === 'confirmada' && v.produccion_pedida_en) return '<span class="plazo pronto">Pedida a producción</span>';
     if(!v.fecha_entrega || !['confirmada', 'en_produccion', 'lista'].includes(v.estado)) return '';
     const d = AV.diasHasta(v.fecha_entrega);
@@ -96,13 +99,14 @@
     </button>`;
   }
   let nombres = {};
-  let esAdmin = false;
-  window.Sesion.perfil().then(p => { esAdmin = !!(p && p.rol === 'admin'); }).catch(() => {});
+  let esAdmin = false, puedeConfirmar = false;
+  window.Sesion.perfil().then(p => { esAdmin = !!(p && p.rol === 'admin'); puedeConfirmar = !!(p && p.confirma_abonos); if(actual) pintarFicha(); }).catch(() => {});
   const vendedor = (v) => nombres[v.vendedor_id] || '';
 
   function pintarChips(){
     $('chips').innerHTML = FILTROS.map(f => {
       const n = todas.filter(v => enFiltro(v, f.id)).length;
+      if(f.soloSiHay && !n && filtro !== f.id) return '';
       return `<button class="chip ${f.id === filtro ? 'active' : ''}" role="tab" aria-selected="${f.id === filtro}" data-f="${f.id}">${esc(f.t)}${n ? ' · ' + n : ''}</button>`;
     }).join('');
   }
@@ -148,7 +152,7 @@
   async function cargar(){
     try{
       const [r, ps] = await Promise.all([
-        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,produccion_pedida_en,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(monto,tipo)').order('creado_en', { ascending:false }).limit(2000),
+        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,produccion_pedida_en,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(id,monto,tipo,estado)').order('creado_en', { ascending:false }).limit(2000),
         AV.perfiles()
       ]);
       if(r.error) throw r.error;
@@ -249,12 +253,18 @@
       </div>`;
     if(!cot && v.abonos.length){
       html += `<div class="f-sec"><div class="f-tit">Pagos</div>
-        ${v.abonos.map(a => `<button type="button" class="f-abono ${a.tipo === 'devolucion' ? 'dev' : ''}" ${a.comprobante ? `data-comprobante="${esc(a.comprobante)}"` : 'disabled'}>
+        ${v.abonos.map(a => {
+          const pend = a.tipo === 'abono' && a.estado === 'por_confirmar';
+          const rech = a.estado === 'rechazado';
+          const tocar = (pend && puedeConfirmar) ? `data-confirmar="${a.id}"` : (a.comprobante ? `data-comprobante="${esc(a.comprobante)}"` : 'disabled');
+          const marca = pend ? '<span class="plazo pronto">Por confirmar</span>' : rech ? '<span class="plazo tarde">No llegó</span>' : (a.tipo === 'abono' ? '<span class="plazo ok">Confirmado</span>' : '');
+          return `<button type="button" class="f-abono ${a.tipo === 'devolucion' ? 'dev' : ''} ${rech ? 'rech' : ''}" ${tocar}>
           <span class="f-abono-ico">${ICON_DINERO}</span>
-          <span><span class="f-abono-t" style="display:block">${a.tipo === 'devolucion' ? 'Devolución' : 'Abono'} · ${esc(a.metodo)}</span>
-            <span class="f-abono-s">${esc(AV.fechaNum(a.fecha))}${nombres[a.registrado_por] ? ' · ' + esc(nombres[a.registrado_por]) : ''}${a.comprobante ? ' · <span class="ver">Ver comprobante</span>' : ''}</span></span>
+          <span style="min-width:0"><span class="f-abono-t" style="display:block">${a.tipo === 'devolucion' ? 'Devolución' : 'Abono'} · ${esc(a.metodo)} ${marca}</span>
+            <span class="f-abono-s">${esc(AV.fechaNum(a.fecha))}${nombres[a.registrado_por] ? ' · ' + esc(nombres[a.registrado_por]) : ''}${pend && puedeConfirmar ? ' · <span class="ver">Tocar para confirmar</span>' : a.comprobante ? ' · <span class="ver">Ver comprobante</span>' : ''}</span>
+            ${a.nota_confirmacion ? `<span class="f-abono-s" style="display:block;color:var(--ink)">Nota de ${esc(nombres[a.confirmado_por] || 'Ray')}: ${esc(a.nota_confirmacion)}</span>` : ''}</span>
           <span class="f-abono-m">${a.tipo === 'devolucion' ? '- ' : ''}${dinero(a.monto)}</span>
-        </button>`).join('')}
+        </button>`; }).join('')}
       </div>`;
     }
     const datos = [];
@@ -359,6 +369,8 @@
     }
     const est = e.target.closest('[data-estado]');
     if(est){ cambiarEstado(est.dataset.estado); return; }
+    const conf = e.target.closest('[data-confirmar]');
+    if(conf){ abrirAccion('confirmar', +conf.dataset.confirmar); return; }
     const comp = e.target.closest('[data-comprobante]');
     if(comp){
       const { data, error } = await db.storage.from('comprobantes').createSignedUrl(comp.dataset.comprobante, 600);
@@ -438,14 +450,14 @@
     const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
   }
-  function abrirAccion(tipo){
+  function abrirAccion(tipo, abonoId){
     const v = actual;
     const r = AV.resta(v);
-    acc = { tipo, monto:'', metodo:null, fecha: AV.habiles(20), blob:null, foto:null, motivo:'', guardando:false, clave: uuid() };
+    acc = { tipo, monto:'', metodo:null, fecha: AV.habiles(20), blob:null, foto:null, motivo:'', guardando:false, clave: uuid(), abono: tipo === 'confirmar' ? v.abonos.find(a => a.id === abonoId) : null, nota:'' };
     if(tipo === 'convertir') acc.monto = String(Math.round(v.total * 50) / 100);
     if(tipo === 'abono') acc.monto = String(r);
-    $('accionTitulo').textContent = tipo === 'convertir' ? 'Convertir en venta' : tipo === 'abono' ? 'Registrar abono' : (AV.esCotizacion(v) ? 'Descartar cotización' : 'Cancelar venta');
-    $('btnAccion').textContent = tipo === 'convertir' ? 'Guardar venta' : tipo === 'abono' ? 'Guardar abono' : (AV.esCotizacion(v) ? 'Descartar' : 'Cancelar venta');
+    $('accionTitulo').textContent = tipo === 'confirmar' ? 'Confirmar abono' : tipo === 'convertir' ? 'Convertir en venta' : tipo === 'abono' ? 'Registrar abono' : (AV.esCotizacion(v) ? 'Descartar cotización' : 'Cancelar venta');
+    $('btnAccion').textContent = tipo === 'confirmar' ? 'Sí llegó, confirmar' : tipo === 'convertir' ? 'Guardar venta' : tipo === 'abono' ? 'Guardar abono' : (AV.esCotizacion(v) ? 'Descartar' : 'Cancelar venta');
     $('btnAccion').style.background = tipo === 'cancelar' ? 'var(--danger)' : '';
     pintarAccion();
     abrirHoja('sheetAccion');
@@ -458,7 +470,15 @@
   function pintarAccion(){
     const v = actual;
     let html = '';
-    if(acc.tipo === 'cancelar'){
+    if(acc.tipo === 'confirmar'){
+      const a = acc.abono;
+      html = `<div class="conf-total"><span>Abono · ${esc(a.metodo)}</span><b>${dinero(a.monto)}</b></div>
+        <div class="f-nota" style="margin:0 0 12px">Pedido N° ${v.id} · ${esc(v.cliente.nombre)} · ${esc(AV.fechaNum(a.fecha))}${nombres[a.registrado_por] ? ' · registró ' + esc(nombres[a.registrado_por]) : ''}</div>
+        ${a.comprobante ? `<button type="button" class="btn-secondary" data-ver-comprobante="${esc(a.comprobante)}" style="width:100%;height:48px;margin-bottom:14px">Ver comprobante</button>` : '<div class="f-nota" style="margin:0 0 12px">No subieron comprobante.</div>'}
+        <div class="field"><label class="field-label" for="aNota">Tu nota (opcional)</label>
+          <textarea class="input" id="aNota" rows="3" placeholder="A dónde llegó el dinero, a quién se transfirió…">${esc(acc.nota)}</textarea></div>
+        <button type="button" class="f-link peligro" data-no-llego style="width:100%;justify-content:center;border:1px solid #F4C7C3;border-radius:14px;margin-top:4px">No llegó</button>`;
+    } else if(acc.tipo === 'cancelar'){
       const pag = AV.pagado(v.abonos);
       html = `${pag > 0 ? `<div class="conf-total"><span>Se le devuelve</span><b>${dinero(pag)}</b></div>${metodosHtml('Cómo se le devolvió')}` : ''}
         <div class="field"><label class="field-label" for="aMotivo">Motivo (opcional)</label>
@@ -498,6 +518,7 @@
   $('accionBody').addEventListener('input', (e) => {
     if(e.target.id === 'aMonto'){ acc.monto = e.target.value; avisoMonto(); }
     if(e.target.id === 'aMotivo') acc.motivo = e.target.value;
+    if(e.target.id === 'aNota') acc.nota = e.target.value;
     if(e.target.id === 'aFecha'){ acc.fecha = e.target.value; $('campoFecha').classList.remove('invalid'); }
   });
   $('accionBody').addEventListener('change', async (e) => {
@@ -510,7 +531,14 @@
       } catch(err){ toast('No se pudo leer la foto', 'error'); }
     }
   });
-  $('accionBody').addEventListener('click', (e) => {
+  $('accionBody').addEventListener('click', async (e) => {
+    const vc = e.target.closest('[data-ver-comprobante]');
+    if(vc){
+      const { data, error } = await db.storage.from('comprobantes').createSignedUrl(vc.dataset.verComprobante, 600);
+      if(error || !data) toast('No se pudo abrir el comprobante', 'error'); else verFoto(data.signedUrl);
+      return;
+    }
+    if(e.target.closest('[data-no-llego]')){ guardarConfirmacion(false); return; }
     const b = e.target.closest('[data-metodo]');
     if(!b) return;
     acc.metodo = b.dataset.metodo;
@@ -526,8 +554,25 @@
     return path;
   }
 
+  async function guardarConfirmacion(llego){
+    if(!acc || acc.guardando) return;
+    const v = actual, a = acc.abono;
+    if(!llego && !confirm(`¿Marcar que el abono de ${dinero(a.monto)} NO llegó? Dejará de contar y se le avisa a quien lo registró.`)) return;
+    acc.guardando = true;
+    const btn = $('btnAccion'); btn.disabled = true;
+    try{
+      const { error } = await db.rpc('confirmar_abono', { aid: a.id, llego, nota: acc.nota || null });
+      if(error) throw new Error(error.message);
+      cerrarHoja('sheetAccion', true);
+      toast(llego ? 'Abono confirmado' : 'Marcado como que no llegó');
+      await Promise.all([recargarFicha(), cargar()]);
+    } catch(err){ toast(err.message, 'error'); }
+    finally { if(acc) acc.guardando = false; btn.disabled = false; }
+  }
+
   $('btnAccion').addEventListener('click', async () => {
     if(!acc || acc.guardando) return;
+    if(acc.tipo === 'confirmar'){ guardarConfirmacion(true); return; }
     const v = actual;
     const btn = $('btnAccion');
     let primero = null;
@@ -565,7 +610,7 @@
         cerrarHoja('sheetFicha', true);
         await cargar();
       } else {
-        toast(acc.tipo === 'abono' ? 'Abono guardado' : (AV.esCotizacion(v) ? 'Cotización descartada' : 'Venta cancelada'));
+        toast(acc.tipo === 'abono' ? 'Abono guardado. Queda por confirmar' : (AV.esCotizacion(v) ? 'Cotización descartada' : 'Venta cancelada'));
         await Promise.all([recargarFicha(), cargar()]);
       }
     } catch(err){

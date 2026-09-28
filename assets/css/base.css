@@ -600,3 +600,5 @@ a.btn-primary{text-decoration:none;display:inline-flex;align-items:center;justif
 .paso3.hecho{background:var(--accent-soft);border-color:transparent}
 .paso3.hecho .p3-num{background:var(--accent);color:#fff}
 .paso3:not(.hecho):not([disabled]) .p3-num{background:var(--accent);color:#fff}
+.plazo.ok{background:#E3F4EA;color:#1C6B3A}
+.f-abono.rech .f-abono-m{text-decoration:line-through;color:var(--ink-faint)}

@@ -20,7 +20,10 @@
   };
 
   const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
-  function pagado(abonos){ return r2((abonos || []).reduce((a, x) => a + (x.tipo === 'devolucion' ? -1 : 1) * Number(x.monto || 0), 0)); }
+  // Lo pagado cuenta los abonos por confirmar y los confirmados (los que "no llegaron" no cuentan)
+  const cuenta = (x) => x.estado !== 'rechazado';
+  function pagado(abonos){ return r2((abonos || []).filter(cuenta).reduce((a, x) => a + (x.tipo === 'devolucion' ? -1 : 1) * Number(x.monto || 0), 0)); }
+  const porConfirmar = (abonos) => (abonos || []).filter(x => x.tipo === 'abono' && x.estado === 'por_confirmar');
   function resta(v){ return r2(Number(v.total || 0) - pagado(v.abonos)); }
   const esCotizacion = (v) => v.estado === 'cotizacion' || (v.estado === 'cancelada' && !v.confirmada_en);
 
@@ -207,7 +210,8 @@
     });
 
     // Totales y pagos
-    const abonos = (v.abonos || []);
+    const abonos = (v.abonos || []).filter(cuenta);
+    const pendientes = porConfirmar(abonos).length;
     const alto = 30 + (cot ? 0 : 12 + abonos.length * 5);
     if(y + alto > 262){ doc.addPage(); y = cabecera() + 8; }
     y += 2;
@@ -228,7 +232,7 @@
     doc.text('Monto total', X, y + 1.3); doc.text(dinero(v.total), D - 2, y + 1.3, { align:'right' });
     y += 11;
     if(!cot){
-      abonos.forEach(a => fila(`${a.tipo === 'devolucion' ? 'Devolución' : 'Abono'} ${fechaNum(a.fecha)} · ${a.metodo}`, (a.tipo === 'devolucion' ? '- ' : '') + dinero(a.monto)));
+      abonos.forEach(a => fila(`${a.tipo === 'devolucion' ? 'Devolución' : 'Abono'} ${fechaNum(a.fecha)} · ${a.metodo}${a.estado === 'por_confirmar' ? ' (por confirmar)' : ''}`, (a.tipo === 'devolucion' ? '- ' : '') + dinero(a.monto)));
       fila('Resta por pagar', dinero(resta(v)), true, resta(v) > 0 ? TEAL : TINTA);
     }
 
@@ -238,6 +242,7 @@
     const notas = ['Precios en dólares (USD).'];
     if(cot) notas.push(`Cotización válida hasta el ${fechaLarga(v.vence_en)}.`);
     if(!cot && abonos.length){ const ult = abonos.filter(a => a.tipo === 'abono').pop(); if(ult) notas.push(`Método de pago: ${ult.metodo}.`); }
+    if(!cot && pendientes) notas.push(pendientes === 1 ? 'Hay un abono pendiente por confirmar. Al confirmarlo se actualiza en tu seguimiento.' : 'Hay abonos pendientes por confirmar. Al confirmarlos se actualizan en tu seguimiento.');
     if(v.notas) notas.push('Nota: ' + v.notas);
     notas.forEach(t => { const ls = doc.splitTextToSize(t, X - M - 10); doc.text(ls, M, yn); yn += ls.length * 3.8 + 1.5; });
 
@@ -313,7 +318,7 @@
     const cot = esCotizacion(v);
     let t;
     if(v.estado === 'cotizacion') t = `Hola ${n}, te saluda Herrería Artesanos. Aquí tienes tu cotización N° ${v.id} por ${dinero(v.total)}, válida hasta el ${fechaLarga(v.vence_en)}. Puedes verla y descargarla aquí:\n${url}\n\nCualquier duda, aquí estamos.`;
-    else if(v.estado === 'confirmada') t = `Hola ${n}, recibimos tu abono. Tu pedido N° ${v.id} está confirmado${entrega ? ' y la entrega estimada es el ' + entrega : ''}. Aquí puedes seguir tu pedido y descargar tu nota:\n${url}`;
+    else if(v.estado === 'confirmada') t = `Hola ${n}, recibimos tu abono. Tu pedido N° ${v.id} está confirmado${entrega ? ' y la entrega estimada es el ' + entrega : ''}.${porConfirmar(v.abonos).length ? ' Tu pago está en revisión: cuando lo confirmemos lo verás actualizado en tu seguimiento.' : ''} Aquí puedes seguir tu pedido y descargar tu nota:\n${url}`;
     else if(v.estado === 'en_produccion') t = `Hola ${n}, tu pedido N° ${v.id} ya está en fabricación.${entrega ? ' Entrega estimada: ' + entrega + '.' : ''} Síguelo aquí:\n${url}`;
     else if(v.estado === 'lista') t = `Hola ${n}, ¡tu pedido N° ${v.id} está listo!${resta(v) > 0 ? ' Resta por pagar ' + dinero(resta(v)) + '.' : ''} Escríbenos para coordinar la entrega. Detalles aquí:\n${url}`;
     else if(v.estado === 'entregada') t = `Hola ${n}, gracias por confiar en Herrería Artesanos. Aquí puedes descargar tu nota de pedido final (disponible por 3 días):\n${url}`;
@@ -322,6 +327,6 @@
   }
   const linkSeguimientoWA = (v) => `https://wa.me/${v.cliente.telefono}?text=${encodeURIComponent(mensajeSeguimiento(v))}`;
 
-  window.AV = { ESTADOS, METODOS, pagado, resta, esCotizacion, diasHasta, diasDesde, fechaCorta, fechaLarga, fechaNum, hace, habiles, iso,
+  window.AV = { porConfirmar, ESTADOS, METODOS, pagado, resta, esCotizacion, diasHasta, diasDesde, fechaCorta, fechaLarga, fechaNum, hace, habiles, iso,
     detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, telBonito, linkWhatsApp, urlSeguimiento, mensajeSeguimiento, linkSeguimientoWA, crearPDF, compartirPDF, descargarPDF, nombrePDF, SELECT_VENTA, esc };
 })();
