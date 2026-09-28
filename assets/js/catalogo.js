@@ -20,6 +20,8 @@
   let modelos = [];
   let piezas = [];  // piezas disponibles (estado = disponible)
   let sedes = [];
+  let categorias = []; // categorías de pago (solo las ve un admin, por RLS)
+  let categoriaSeleccionada = null; // id de categoría elegida en el form del modelo
   let filtro = 'Todos';
   let primeraCarga = true;
   let cargando = false;
@@ -187,13 +189,16 @@
     if(modelos.length === 0) pintarEsqueleto();
     try{
       if(!db) throw new Error('No se pudo conectar con la base de datos. Revisa tu conexión a internet.');
-      const [rc, rp, rs] = await Promise.all([
+      const [rc, rp, rs, rcat] = await Promise.all([
         db.from('catalogo').select('*').order('id', { ascending:false }),
         db.from('disponibles').select('*').eq('estado', 'disponible').gt('cantidad', 0).order('id', { ascending:true }),
-        db.from('sedes').select('*').eq('activa', true).order('orden', { ascending:true })
+        db.from('sedes').select('*').eq('activa', true).order('orden', { ascending:true }),
+        db.from('categorias_pago').select('id,nombre').eq('activo', true).order('nombre', { ascending:true })
       ]);
       const err = rc.error || rp.error || rs.error;
       if(err) throw new Error(err.message);
+      // Si no es admin, RLS simplemente devuelve vacío (no error): el campo se oculta solo.
+      categorias = rcat.data || [];
       // Los que se están guardando en este momento se mantienen visibles
       const lista = rc.data || [];
       // Lo guardado hace poco (por si este refresco salió antes de que terminara de guardarse)
@@ -507,6 +512,32 @@
   $('btnNuevo').addEventListener('click', ()=> abrirSelector('nuevo'));
 
   // ---------------------------------------------------------------------------
+  // Categoría de pago del modelo
+  // ---------------------------------------------------------------------------
+  function pintarCategoriaTexto(){
+    const c = categoriaSeleccionada != null ? categorias.find(x => x.id === categoriaSeleccionada) : null;
+    $('categoriaTexto').textContent = c ? c.nombre : 'Sin categoría';
+  }
+
+  function abrirSelectorCategoria(){
+    $('listaCategorias').innerHTML = `
+      <button type="button" class="cat-fila-op ${categoriaSeleccionada == null ? 'sel' : ''}" data-cat="">Sin categoría</button>
+      ${categorias.map(c => `<button type="button" class="cat-fila-op ${c.id === categoriaSeleccionada ? 'sel' : ''}" data-cat="${c.id}">${esc(c.nombre)}</button>`).join('')}`;
+    abrirHoja('sheetCategoria');
+  }
+
+  $('btnCategoria').addEventListener('click', abrirSelectorCategoria);
+
+  $('listaCategorias').addEventListener('click', (e)=>{
+    const b = e.target.closest('[data-cat]');
+    if(!b) return;
+    categoriaSeleccionada = b.dataset.cat ? Number(b.dataset.cat) : null;
+    formSucio = true;
+    pintarCategoriaTexto();
+    cerrarHoja('sheetCategoria');
+  });
+
+  // ---------------------------------------------------------------------------
   // Formulario compartido: modelo nuevo / editar modelo / marcar pieza disponible
   // ---------------------------------------------------------------------------
   let modoForm = 'modelo';  // 'modelo' | 'pieza'
@@ -698,6 +729,7 @@
     $('campoColor').classList.toggle('hidden', !pieza || !tieneColores(tipoActual));
     $('campoSede').classList.toggle('hidden', !pieza);
     $('campoCantidad').classList.toggle('hidden', !pieza);
+    $('campoCategoria').classList.toggle('hidden', pieza || categorias.length === 0);
     $('fotosHint').classList.toggle('hidden', !pieza);
     $('precioPreviewFila').classList.toggle('hidden', pieza);
     $('fotosLabel').textContent = pieza ? 'Foto de la pieza' : 'Fotos';
@@ -738,6 +770,8 @@
     fotosExistentes = m ? { ...(m.fotos || {}) } : {};
     limpiarFotosNuevas();
     caracteristicas = m && Array.isArray(m.caracteristicas) ? [...m.caracteristicas] : [];
+    categoriaSeleccionada = m ? (m.categoria_pago_id || null) : null;
+    pintarCategoriaTexto();
 
     $('formTitulo').textContent = m ? 'Editar modelo' : 'Nuevo modelo';
     $('formSub').textContent = '';
@@ -1026,7 +1060,8 @@
       precio_base: precio,
       badge: $('fBadge').value.trim() || null,
       descripcion_publica: $('fDescripcion').value.trim() || null,
-      caracteristicas: [...caracteristicas]
+      caracteristicas: [...caracteristicas],
+      categoria_pago_id: categoriaSeleccionada
     };
 
     const tmpId = 'tmp-' + Date.now();
