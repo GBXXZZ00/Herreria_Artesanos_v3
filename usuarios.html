@@ -13,18 +13,25 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Usuarios · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=37">
+<link rel="stylesheet" href="assets/css/base.css?v=38">
 <style>
   .page{padding-bottom:calc(var(--safe-b) + 110px)}
   .u-vlista{display:flex;flex-direction:column;gap:10px;padding:14px 18px 0}
-  .u-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-sm);transition:transform 140ms var(--ease-out);opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 35ms)}
+  .u-card{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:13px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-sm);transition:transform 140ms var(--ease-out);opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 35ms)}
   .u-card:active{transform:scale(0.98)}
   .u-card.inactivo{opacity:.55}
   .u-card.inactivo{animation:none;opacity:.55;transform:none}
-  .u-avatar{width:42px;height:42px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+  .u-avatar-wrap{position:relative;flex-shrink:0}
+  .u-avatar{width:44px;height:44px;border-radius:50%;background:var(--surface-2);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .u-rolico{position:absolute;right:-3px;bottom:-3px;width:19px;height:19px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--surface)}
+  .u-rolico svg{width:11px;height:11px}
+  .u-body{flex:1;min-width:0}
   .u-nombre{font-size:15.5px;font-weight:800}
-  .u-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
-  .u-badge{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--ink-soft);background:var(--surface-2);border-radius:999px;padding:4px 10px;flex-shrink:0}
+  .u-sub{font-size:12px;color:var(--ink-soft);font-weight:600;margin-top:1px}
+  .u-esp-fila{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .u-esp{font-size:11px;font-weight:700;color:var(--ink-soft);background:var(--surface-2);border-radius:999px;padding:3px 9px}
+  .u-badge{font-size:11px;font-weight:700;color:var(--ink-faint);background:var(--surface-2);border-radius:999px;padding:4px 10px;flex-shrink:0}
+  .u-flecha{color:var(--ink-faint);flex-shrink:0}
   .f-link{display:flex;align-items:center;justify-content:space-between;padding:15px 2px;font-size:15.5px;font-weight:700;color:var(--ink);text-decoration:none;transition:transform 130ms var(--ease-out)}
   .f-link:active{transform:scale(0.99)}
   button.f-link{width:100%;text-align:left;border:0;background:none}
@@ -133,10 +140,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=37"></script>
-<script src="assets/js/supabase-client.js?v=37"></script>
-<script src="assets/js/comun.js?v=37"></script>
-<script src="assets/js/sesion.js?v=37"></script>
-<script src="assets/js/usuarios.js?v=37"></script>
+<script src="assets/vendor/supabase.js?v=38"></script>
+<script src="assets/js/supabase-client.js?v=38"></script>
+<script src="assets/js/comun.js?v=38"></script>
+<script src="assets/js/sesion.js?v=38"></script>
+<script src="assets/js/usuarios.js?v=38"></script>
 </body>
 </html>

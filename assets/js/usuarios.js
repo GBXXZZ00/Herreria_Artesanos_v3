@@ -11,6 +11,12 @@
   const NOMBRE_ESPECIALIDAD = {
     herrero:'Herrero', masilla_pintura:'Masilla y pintura', acabados:'Detalles', ventanero:'Ventanero', carpintero:'Carpintero'
   };
+  // Un icono chiquito sobre el avatar según el tipo de cuenta, para distinguir de un vistazo.
+  const ICONO_ROL = {
+    admin:'<path d="M12 3l7 3v6c0 4.4-2.9 7.6-7 9-4.1-1.4-7-4.6-7-9V6z"/>',
+    vendedor:'<path d="M20.6 12.6L12 21.2 2.8 12 11.4 3.4H18a2.6 2.6 0 0 1 2.6 2.6z"/><circle cx="15.5" cy="8.5" r="1"/>',
+    trabajador:'<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>'
+  };
   const inicial = (n) => (String(n || '?').trim()[0] || '?').toUpperCase();
 
   let usuarios = [];
@@ -32,6 +38,14 @@
     const esp = (u.especialidades || []).map(e => NOMBRE_ESPECIALIDAD[e] || e);
     return esp.length ? esp.join(' · ') : 'Trabajador';
   }
+  function iconoRol(u){
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${ICONO_ROL[u.rol] || ''}</svg>`;
+  }
+  function especialidadesHtml(u){
+    const esp = (u.especialidades || []).map(e => NOMBRE_ESPECIALIDAD[e] || e);
+    if(!esp.length) return '<span class="u-sub">Trabajador</span>';
+    return `<div class="u-esp-fila">${esp.map(e => `<span class="u-esp">${esc(e)}</span>`).join('')}</div>`;
+  }
 
   function pintarLista(){
     const cont = $('lista');
@@ -39,9 +53,15 @@
     if(!usuarios.length){ cont.innerHTML = '<div class="u-vacio">Todavía no hay usuarios.</div>'; return; }
     cont.innerHTML = usuarios.map((u, i) => `
       <button class="u-card ${u.activo ? '' : 'inactivo'}" data-id="${esc(u.id)}" style="--i:${i}">
-        <span class="u-avatar">${esc(inicial(u.nombre))}</span>
-        <span><span class="u-nombre" style="display:block">${esc(u.nombre)}</span><span class="u-sub">${esc(subtitulo(u))}</span></span>
-        ${u.activo ? '' : '<span class="u-badge">Inactivo</span>'}
+        <span class="u-avatar-wrap">
+          <span class="u-avatar">${esc(inicial(u.nombre))}</span>
+          <span class="u-rolico">${iconoRol(u)}</span>
+        </span>
+        <span class="u-body">
+          <span class="u-nombre" style="display:block">${esc(u.nombre)}</span>
+          ${u.rol === 'trabajador' ? especialidadesHtml(u) : `<span class="u-sub">${esc(NOMBRE_ROL[u.rol] || u.rol)}</span>`}
+        </span>
+        ${u.activo ? '<svg class="u-flecha" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>' : '<span class="u-badge">Inactivo</span>'}
       </button>`).join('');
   }
 

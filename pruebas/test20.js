@@ -60,6 +60,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.waitForSelector('#vInicio.entra');
  await a.click('#btnCuenta');await a.waitForSelector('#sheetCuenta.open');
  ok('Admin sí ve el grupo de Administración con "Usuarios"',!(await a.$eval('#grupoModulosAdmin',x=>x.classList.contains('hidden'))));
+ ok('Y también "Categorías de pago" junto a Usuarios',!!(await a.$('#btnCategoriasPago')));
  ok('Mi cuenta muestra la cuadrícula de cajitas con 4 opciones',(await a.$$('#sheetCuenta .cuenta-box')).length===4);
  ok('Las cajitas son Cambiar PIN, Notificaciones, Aviso de prueba y Salir',await a.$('#btnCambiarPin.cuenta-box')&&await a.$('#btnNotif.cuenta-box')&&await a.$('#btnPrueba.cuenta-box')&&await a.$('#btnSalir.cuenta-box'));
  await a.screenshot({path:'shots4/s0-mi-cuenta-cajitas.png'});

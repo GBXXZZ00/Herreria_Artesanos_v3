@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Categorías de pago · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=38">
+<style>
+  .page{padding-bottom:calc(var(--safe-b) + 110px)}
+  .c-vlista{display:flex;flex-direction:column;gap:10px;padding:14px 18px 0}
+  .c-card{display:flex;gap:13px;width:100%;text-align:left;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-sm);transition:transform 140ms var(--ease-out);opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 35ms)}
+  .c-card:active{transform:scale(0.98)}
+  .c-ico{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .c-body{flex:1;min-width:0}
+  .c-nom{font-size:15.5px;font-weight:800}
+  .c-tarifas{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .c-tarifa{font-size:12px;font-weight:700;color:var(--ink-soft);background:var(--surface-2);border-radius:999px;padding:5px 11px}
+  .c-tarifa b{color:var(--ink)}
+  .c-usado{font-size:12px;color:var(--ink-faint);margin-top:8px}
+  .c-vacio{text-align:center;padding:60px 20px;color:var(--ink-soft);font-size:15px}
+
+  .cat-fila{display:flex;align-items:center;gap:10px;padding:12px 2px}
+  .cat-fila + .cat-fila{border-top:1px solid var(--line)}
+  .cat-esp{flex:1;font-size:14.5px;font-weight:700}
+  .cat-monto{width:78px;flex-shrink:0}
+  .cat-monto input{width:100%;height:40px;border:1px solid var(--line-strong);border-radius:10px;text-align:right;padding:0 10px;font-size:14.5px;font-weight:700;font-family:inherit;color:var(--ink);background:var(--surface)}
+  .cat-modo{display:flex;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;flex-shrink:0}
+  .cat-modo button{padding:9px 10px;font-size:12px;font-weight:700;color:var(--ink-soft);background:var(--surface);transition:background-color 140ms var(--ease-out),color 140ms var(--ease-out)}
+  .cat-modo button.on{background:var(--accent);color:#fff}
+  .btn-peligro{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:16px;border:1px solid #F4C7C3;border-radius:14px;background:none;color:var(--danger);font-size:15px;font-weight:700;transition:transform 130ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .btn-peligro:active{transform:scale(0.98);background:#FDECEA}
+</style>
+</head>
+<body data-requiere-sesion="si">
+
+<header class="topbar" id="topbar">
+  <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+  <div class="topbar-text">
+    <div class="topbar-title">Categorías de pago</div>
+    <div class="topbar-sub" id="subtitulo">Cargando</div>
+  </div>
+</header>
+
+<main class="page">
+  <section class="c-vlista" id="lista" aria-live="polite">
+    <div class="sk-vcard"></div><div class="sk-vcard"></div>
+  </section>
+</main>
+
+<div class="hidden" id="menuModulos" data-activo="categorias-pago"></div>
+
+<button class="fab" id="btnNuevo" aria-label="Nueva categoría">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<!-- Ficha: crear/editar categoría -->
+<div class="sheet-scrim" id="scrimFicha" data-cerrar="sheetFicha"></div>
+<section class="sheet sheet-auto" id="sheetFicha" role="dialog" aria-modal="true" aria-labelledby="fichaTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="fichaTitulo">Nueva categoría</h2>
+    <button class="icon-btn" data-cerrar="sheetFicha" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field">
+      <label class="field-label" for="fNombre">Nombre de la categoría</label>
+      <input class="input" id="fNombre" type="text" autocomplete="off">
+      <p class="field-error" id="eNombre"></p>
+    </div>
+    <label class="field-label" style="margin-top:6px;display:block">Tarifa por especialidad</label>
+    <div id="filasTarifa"></div>
+    <button class="btn-peligro hidden" type="button" id="btnEliminar">Eliminar categoría</button>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardar">Guardar categoría</button></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/vendor/supabase.js?v=38"></script>
+<script src="assets/js/supabase-client.js?v=38"></script>
+<script src="assets/js/comun.js?v=38"></script>
+<script src="assets/js/sesion.js?v=38"></script>
+<script src="assets/js/categorias-pago.js?v=38"></script>
+</body>
+</html>
