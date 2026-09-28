@@ -168,7 +168,8 @@
     };
     par(M + 5, y + 6, 'Cliente', v.cliente.nombre);
     par(M + 5, y + 16, 'Cédula o RIF', v.cliente.cedula);
-    par(M + 68, y + 6, 'Teléfono', '+' + (v.cliente.telefono || '').replace(/^(\d{2})(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3 $4'));
+    const telc = String(v.cliente.telefono || '');
+    par(M + 68, y + 6, 'Teléfono', /^\d+$/.test(telc) ? '+' + telc.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3 $4') : telc);
     par(M + 68, y + 16, 'Sede', v.sede ? v.sede.nombre : '');
     par(M + 130, y + 6, 'Fecha de emisión', fechaNum(cot ? v.creado_en : (v.confirmada_en || v.creado_en)));
     par(M + 130, y + 16, cot ? 'Válida hasta' : 'Fecha de entrega', cot ? fechaNum(fechaLocal(v.vence_en)) : (v.fecha_entrega ? fechaNum(fechaLocal(v.fecha_entrega)) : '-'));
@@ -302,6 +303,25 @@
     setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
 
+  // Enlace público del seguimiento del cliente
+  function urlSeguimiento(v){ return new URL('seguimiento.html?t=' + v.token_seguimiento, location.href).href; }
+  // Mensaje de WhatsApp según cómo va el pedido, con su enlace de seguimiento
+  function mensajeSeguimiento(v){
+    const n = (v.cliente.nombre || '').split(' ')[0];
+    const url = urlSeguimiento(v);
+    const entrega = v.fecha_entrega ? fechaLarga(v.fecha_entrega) : '';
+    const cot = esCotizacion(v);
+    let t;
+    if(v.estado === 'cotizacion') t = `Hola ${n}, te saluda Herrería Artesanos. Aquí tienes tu cotización N° ${v.id} por ${dinero(v.total)}, válida hasta el ${fechaLarga(v.vence_en)}. Puedes verla y descargarla aquí:\n${url}\n\nCualquier duda, aquí estamos.`;
+    else if(v.estado === 'confirmada') t = `Hola ${n}, recibimos tu abono. Tu pedido N° ${v.id} está confirmado${entrega ? ' y la entrega estimada es el ' + entrega : ''}. Aquí puedes seguir tu pedido y descargar tu nota:\n${url}`;
+    else if(v.estado === 'en_produccion') t = `Hola ${n}, tu pedido N° ${v.id} ya está en fabricación.${entrega ? ' Entrega estimada: ' + entrega + '.' : ''} Síguelo aquí:\n${url}`;
+    else if(v.estado === 'lista') t = `Hola ${n}, ¡tu pedido N° ${v.id} está listo!${resta(v) > 0 ? ' Resta por pagar ' + dinero(resta(v)) + '.' : ''} Escríbenos para coordinar la entrega. Detalles aquí:\n${url}`;
+    else if(v.estado === 'entregada') t = `Hola ${n}, gracias por confiar en Herrería Artesanos. Aquí puedes descargar tu nota de pedido final (disponible por 3 días):\n${url}`;
+    else t = cot ? `Hola ${n}, te escribimos por tu cotización N° ${v.id}. Aquí tienes el detalle:\n${url}` : `Hola ${n}, tu pedido N° ${v.id} fue cancelado. Aquí tienes el detalle:\n${url}`;
+    return t;
+  }
+  const linkSeguimientoWA = (v) => `https://wa.me/${v.cliente.telefono}?text=${encodeURIComponent(mensajeSeguimiento(v))}`;
+
   window.AV = { ESTADOS, METODOS, pagado, resta, esCotizacion, diasHasta, diasDesde, fechaCorta, fechaLarga, fechaNum, hace, habiles, iso,
-    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, telBonito, linkWhatsApp, crearPDF, compartirPDF, descargarPDF, nombrePDF, SELECT_VENTA, esc };
+    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, telBonito, linkWhatsApp, urlSeguimiento, mensajeSeguimiento, linkSeguimientoWA, crearPDF, compartirPDF, descargarPDF, nombrePDF, SELECT_VENTA, esc };
 })();

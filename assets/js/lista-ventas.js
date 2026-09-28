@@ -57,6 +57,7 @@
     return `<span class="plazo ${d <= 5 ? 'pronto' : ''}">Vence en ${d} ${d === 1 ? 'día' : 'días'}</span>`;
   }
   function plazoEntrega(v){
+    if(v.estado === 'confirmada' && v.produccion_pedida_en) return '<span class="plazo pronto">Pedida a producción</span>';
     if(!v.fecha_entrega || !['confirmada', 'en_produccion', 'lista'].includes(v.estado)) return '';
     const d = AV.diasHasta(v.fecha_entrega);
     if(d < 0) return `<span class="plazo tarde">Atrasada ${-d} ${-d === 1 ? 'día' : 'días'}</span>`;
@@ -147,7 +148,7 @@
   async function cargar(){
     try{
       const [r, ps] = await Promise.all([
-        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(monto,tipo)').order('creado_en', { ascending:false }).limit(2000),
+        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,produccion_pedida_en,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(monto,tipo)').order('creado_en', { ascending:false }).limit(2000),
         AV.perfiles()
       ]);
       if(r.error) throw r.error;
@@ -229,6 +230,7 @@
         <a href="https://wa.me/${esc(tel)}" target="_blank" rel="noopener">${ICON_WA}Escribirle</a>
         <a href="tel:+${esc(tel)}">${ICON_TEL}Llamar</a>
       </div>
+      ${pasosHtml(v)}
       <div class="f-sec"><div class="f-tit">Productos</div>
         ${v.items.map(it => `<div class="f-item">
           <div class="f-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="" loading="lazy">` : iconoTipo(it.tipo, 24)}</div>
@@ -268,7 +270,7 @@
     if(!cot && !['cancelada'].includes(v.estado)){
       const pasos = ['confirmada', 'en_produccion', 'lista', 'entregada'];
       html += `<div class="f-sec"><div class="f-tit">Estado</div>
-        <div class="opts" style="--cols:2">${pasos.map((s, i) => { const atras = i < pasos.indexOf(v.estado) && !esAdmin; return `<button type="button" class="opt ${s === v.estado ? 'selected' : ''}" data-estado="${s}" aria-pressed="${s === v.estado}" ${atras ? 'disabled style="opacity:.45"' : ''}>${esc(AV.ESTADOS[s].t)}</button>`; }).join('')}</div>
+        <div class="opts" style="--cols:2">${pasos.map((s, i) => { const atras = (i < pasos.indexOf(v.estado) || (s === 'en_produccion' && v.estado === 'confirmada')) && !esAdmin; return `<button type="button" class="opt ${s === v.estado ? 'selected' : ''}" data-estado="${s}" aria-pressed="${s === v.estado}" ${atras ? 'disabled style="opacity:.45"' : ''}>${esc(AV.ESTADOS[s].t)}</button>`; }).join('')}</div>
         <div class="f-nota">Cuando exista el módulo de Producción, esto cambiará solo.</div></div>`;
     }
     const links = [];
@@ -276,7 +278,7 @@
       if(editable(v)) links.push(`<a class="f-link" href="venta.html?editar=${v.id}" data-sub>${cot ? 'Editar cotización' : 'Editar venta'}${ICON_CHEV}</a>`);
       else links.push(`<span class="f-link" aria-disabled="true">Ya no se puede editar (${esc(AV.ESTADOS[v.estado].t.toLowerCase())})</span>`);
     }
-    links.push(`<a class="f-link" href="${esc(AV.linkWhatsApp(v))}" target="_blank" rel="noopener">Mandar resumen por WhatsApp${ICON_CHEV}</a>`);
+    links.push(`<button type="button" class="f-link" data-accion="copiar-enlace">Copiar enlace de seguimiento${ICON_CHEV}</button>`);
     links.push(`<button type="button" class="f-link" data-accion="descargar">Descargar PDF${ICON_CHEV}</button>`);
     if(v.estado !== 'cancelada' && v.estado !== 'entregada') links.push(`<button type="button" class="f-link peligro" data-accion="cancelar">${cot ? 'Descartar cotización' : 'Cancelar venta'}</button>`);
     html += `<div class="f-links">${links.join('')}</div>`;
@@ -284,18 +286,59 @@
     pintarPie();
   }
 
+  // Los tres pasos: ① mensaje con seguimiento ② PDF ③ producción (o convertir, en una cotización)
+  const ICON_OK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+  function cuando(ts, por){
+    const d = new Date(ts), hoyD = new Date();
+    const mismoDia = d.toDateString() === hoyD.toDateString();
+    const hora = d.toLocaleTimeString('es-VE', { hour:'numeric', minute:'2-digit' });
+    return (mismoDia ? 'Hoy ' + hora : AV.fechaNum(ts)) + (nombres[por] ? ' · ' + nombres[por] : '');
+  }
+  function paso(n, hecho, titulo, sub, attrs, deshabilitado){
+    return `<button type="button" class="paso3 ${hecho ? 'hecho' : ''}" ${attrs} ${deshabilitado ? 'disabled' : ''}>
+      <span class="p3-num">${hecho ? ICON_OK : n}</span><span class="p3-t">${titulo}</span><span class="p3-s">${sub}</span></button>`;
+  }
+  function pasosHtml(v){
+    const cot = AV.esCotizacion(v);
+    const msjHecho = !!(v.mensaje_en && v.mensaje_estado === v.estado);
+    const pdfListo = !!(pdf && pdf.blob && pdf.clave && pdf.clave.startsWith(v.id + '|'));
+    const pdfHecho = !!(v.pdf_en && new Date(v.pdf_en) >= new Date(v.actualizado_en));
+    const p1 = paso(1, msjHecho, 'Mensaje', msjHecho ? cuando(v.mensaje_en, v.mensaje_por) : 'Con su seguimiento', 'data-accion="mensaje"');
+    const p2 = paso(2, pdfHecho, 'PDF', pdfHecho ? cuando(v.pdf_en, v.pdf_por) : (pdfListo ? 'Compartir' : 'Preparando…'), 'data-accion="pdf"', !pdfListo);
+    let p3;
+    if(cot){
+      p3 = v.estado === 'cotizacion' ? paso(3, false, 'Venta', 'Convertir con abono', 'data-accion="convertir"') : paso(3, false, 'Venta', 'Descartada', '', true);
+    } else if(v.estado === 'confirmada'){
+      if(esAdmin) p3 = paso(3, false, 'Producción', v.produccion_pedida_en ? 'Te lo pidieron' : 'Enviar ahora', 'data-accion="producir"');
+      else p3 = v.produccion_pedida_en ? paso(3, true, 'Producción', 'Pedido ' + cuando(v.produccion_pedida_en, v.produccion_pedida_por), '', true)
+                                       : paso(3, false, 'Producción', 'Pedir al admin', 'data-accion="pedir-produccion"');
+    } else if(v.estado === 'cancelada'){
+      p3 = paso(3, false, 'Producción', 'Cancelada', '', true);
+    } else {
+      p3 = paso(3, true, 'Producción', AV.ESTADOS[v.estado].t, '', true);
+    }
+    return `<div class="pasos3">${p1}${p2}${p3}</div>`;
+  }
   function pintarPie(){
     const v = actual;
     if(!v) return;
     const cot = AV.esCotizacion(v);
-    const listo = pdf && pdf.blob;
-    const btnPdf = `<button class="btn-secondary" type="button" data-accion="pdf" ${listo ? '' : 'disabled'}>${listo ? 'Enviar PDF' : '<span class="spinner" style="border-color:rgba(0,0,0,.15);border-top-color:var(--accent)"></span>PDF'}</button>`;
-    let principal = '';
-    if(cot && v.estado === 'cotizacion') principal = `<button class="btn-primary" type="button" data-accion="convertir">Convertir en venta</button>`;
-    else if(!cot && v.estado !== 'cancelada' && AV.resta(v) > 0) principal = `<button class="btn-primary" type="button" data-accion="abono">Registrar abono</button>`;
-    $('fichaFoot').innerHTML = principal
-      ? `<div class="f-foot">${btnPdf}${principal}</div>`
-      : `<button class="btn-primary" type="button" data-accion="pdf" ${listo ? '' : 'disabled'}>${listo ? 'Enviar PDF' : '<span class="spinner"></span>Preparando PDF'}</button>`;
+    const pasos = document.querySelector('#fichaBody .pasos3');
+    if(pasos) pasos.outerHTML = pasosHtml(v);
+    const abono = !cot && v.estado !== 'cancelada' && AV.resta(v) > 0;
+    $('fichaFoot').innerHTML = abono ? `<button class="btn-primary" type="button" data-accion="abono">Registrar abono</button>` : '';
+    $('fichaFoot').classList.toggle('hidden', !abono);
+  }
+  async function marcarPaso(v, pasoNombre){
+    const { error } = await db.rpc('marcar_paso', { vid: v.id, paso: pasoNombre });
+    if(error) return;
+    const ahora = new Date().toISOString();
+    if(actual && actual.id === v.id){
+      const me = (await window.Sesion.perfil()) || {};
+      if(pasoNombre === 'mensaje'){ actual.mensaje_en = ahora; actual.mensaje_estado = actual.estado; actual.mensaje_por = me.id; }
+      if(pasoNombre === 'pdf'){ actual.pdf_en = ahora; actual.pdf_por = me.id; }
+      pintarPie();
+    }
   }
 
   // Acciones de la ficha
@@ -324,10 +367,41 @@
     const b = e.target.closest('[data-accion]');
     if(!b || !actual) return;
     const a = b.dataset.accion;
+    if(a === 'mensaje'){
+      const v0 = actual;
+      const url = AV.linkSeguimientoWA(v0);
+      const w = window.open(url, '_blank');
+      if(!w) location.href = url;
+      marcarPaso(v0, 'mensaje');
+      return;
+    }
+    if(a === 'copiar-enlace'){
+      try{ await navigator.clipboard.writeText(AV.urlSeguimiento(actual)); toast('Enlace copiado'); } catch(err){ toast('No se pudo copiar', 'error'); }
+      return;
+    }
+    if(a === 'producir'){
+      const v0 = actual;
+      if(!confirm(`¿Enviar el pedido N° ${v0.id} a producción?`)) return;
+      const { error } = await db.rpc('cambiar_estado_venta', { vid: v0.id, nuevo: 'en_produccion' });
+      if(error){ toast(error.message, 'error'); return; }
+      toast(`Pedido N° ${v0.id} en producción`);
+      await Promise.all([recargarFicha(), cargar()]);
+      return;
+    }
+    if(a === 'pedir-produccion'){
+      const v0 = actual;
+      if(!confirm(`¿Pedir al administrador que envíe el pedido N° ${v0.id} a producción?`)) return;
+      const { error } = await db.rpc('pedir_produccion', { vid: v0.id });
+      if(error){ toast(error.message, 'error'); return; }
+      toast('Listo, le llegó el aviso al administrador');
+      await Promise.all([recargarFicha(), cargar()]);
+      return;
+    }
     if(a === 'pdf'){
       if(!pdf || !pdf.blob) return;
       const v0 = actual;
       const r = await AV.compartirPDF(pdf.blob, v0);
+      if(r !== 'cancelado') marcarPaso(v0, 'pdf');
       if(r === 'descargado') toast('PDF descargado');
       else if(r !== 'cancelado') toast(`Teléfono copiado (${window.AV.telBonito(v0)}). Pégalo en el buscador de WhatsApp si no ves el chat`);
     }
@@ -508,6 +582,11 @@
   function fichaPendiente(){
     let id = null;
     try{ id = sessionStorage.getItem('ah_ficha'); sessionStorage.removeItem('ah_ficha'); }catch(e){}
+    if(!id){
+      // Desde una notificación: ventas.html?abrir=12 (se quita de la dirección para no reabrirla)
+      const q = new URLSearchParams(location.search);
+      if(q.get('abrir')){ id = q.get('abrir'); history.replaceState(history.state, '', location.pathname); }
+    }
     return id ? +id : null;
   }
   window.addEventListener('pageshow', async (e) => {

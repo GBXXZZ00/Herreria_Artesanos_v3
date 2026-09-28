@@ -62,6 +62,7 @@
     return data.session;
   }
   async function salir(){
+    if(window.Avisos) await window.Avisos.olvidar();
     perfilActual = null;
     try{ await db.auth.signOut(); } catch(e){}
   }

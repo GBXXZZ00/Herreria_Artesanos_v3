@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=24">
+<link rel="stylesheet" href="assets/css/base.css?v=25">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -47,6 +47,14 @@
   .cuenta-op + .cuenta-op{border-top:1px solid var(--line)}
   .cuenta-op .op-ico{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0}
   .cuenta-op.salir{color:var(--danger)}
+  .aviso-card{display:flex;align-items:center;gap:14px;width:100%;padding:14px;margin-bottom:12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);text-align:left;text-decoration:none;color:var(--ink);transition:transform 140ms var(--ease-out)}
+  .aviso-card:active{transform:scale(0.98)}
+  .aviso-card .ini-ico{width:46px;height:46px;border-radius:14px;flex-shrink:0}
+  .aviso-t{display:block;font-size:16px;font-weight:800}
+  .aviso-s{display:block;font-size:13.5px;color:var(--ink-soft);margin-top:2px;line-height:1.35}
+  .aviso-card.urgente{border-color:#F2C99A;background:#FFF8EC}
+  .aviso-card.urgente .ini-ico{background:#FFE7C2;color:#8A5A00}
+  .aviso-btn{margin-left:auto;flex-shrink:0;height:38px;padding:0 14px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800}
   .cuenta-op.salir .op-ico{color:var(--danger)}
   #sheetPin .sheet-body{padding-bottom:calc(24px + var(--safe-b))}
   #sheetPin .pin-cab{margin-top:4px}
@@ -105,6 +113,7 @@
         <span><span class="ini-nombre">Nueva venta</span><span class="ini-cuenta">Cotización o venta</span></span>
       </a>
 
+      <div id="avisosAdmin"></div>
       <div class="ini-grid" id="modulos"></div>
     </section>
   </main>
@@ -124,6 +133,10 @@
     <button class="cuenta-op" id="btnCambiarPin">
       <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
       Cambiar mi PIN
+    </button>
+    <button class="cuenta-op hidden" id="btnNotif">
+      <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+      <span id="btnNotifTxt">Notificaciones</span>
     </button>
     <button class="cuenta-op salir" id="btnSalir">
       <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></svg></span>
@@ -149,10 +162,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=24"></script>
-<script src="assets/js/supabase-client.js?v=24"></script>
-<script src="assets/js/comun.js?v=24"></script>
-<script src="assets/js/sesion.js?v=24"></script>
+<script src="assets/vendor/supabase.js?v=25"></script>
+<script src="assets/js/supabase-client.js?v=25"></script>
+<script src="assets/js/comun.js?v=25"></script>
+<script src="assets/js/avisos.js?v=25"></script>
+<script src="assets/js/sesion.js?v=25"></script>
 <script>
 (function(){
   'use strict';
@@ -344,6 +358,68 @@
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Administradores: pedidos esperando producción y notificaciones del teléfono
+  // ---------------------------------------------------------------------------
+  const ICON_CAMPANA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+  const ICON_LLAVE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/></svg>';
+  const TEXTO_NOTIF = {
+    activo: 'Notificaciones activadas',
+    inactivo: 'Activar notificaciones',
+    bloqueado: 'Notificaciones bloqueadas',
+    instalar: 'Notificaciones: abre la app desde su ícono',
+    'no-soportado': 'Este teléfono no permite notificaciones'
+  };
+  let estadoNotif = null;
+  async function pintarAvisosAdmin(p){
+    const cont = $('avisosAdmin');
+    const admin = p && p.rol === 'admin';
+    $('btnNotif').classList.toggle('hidden', !admin);
+    if(!admin){ cont.innerHTML = ''; return; }
+    let html = '';
+    // Pedidos que Yulimar pidió enviar a producción
+    try{
+      const { data } = await db.from('ventas').select('id,produccion_pedida_en,cliente:clientes(nombre)').eq('estado', 'confirmada').not('produccion_pedida_en', 'is', null).order('produccion_pedida_en', { ascending:true });
+      if(data && data.length){
+        const primero = data[0];
+        html += `<a class="aviso-card urgente" href="ventas.html?abrir=${data.length === 1 ? primero.id : ''}" data-modulo>
+          <span class="ini-ico">${ICON_LLAVE}</span>
+          <span><span class="aviso-t">${data.length === 1 ? '1 pedido espera producción' : data.length + ' pedidos esperan producción'}</span>
+          <span class="aviso-s">${esc(data.map(v => 'N° ' + v.id + ' · ' + (v.cliente ? v.cliente.nombre : '')).slice(0, 2).join(' · '))}${data.length > 2 ? ' y más' : ''}</span></span>
+        </a>`;
+      }
+    } catch(e){}
+    // Notificaciones del teléfono
+    try{ estadoNotif = window.Avisos ? await window.Avisos.estado() : 'no-soportado'; } catch(e){ estadoNotif = 'no-soportado'; }
+    $('btnNotifTxt').textContent = TEXTO_NOTIF[estadoNotif] || 'Notificaciones';
+    if(estadoNotif === 'inactivo'){
+      html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>
+        <span><span class="aviso-t">Recibe avisos en tu teléfono</span><span class="aviso-s">Ventas nuevas, abonos y pedidos a producción.</span></span>
+        <button class="aviso-btn" type="button" data-activar-notif>Activar</button></div>`;
+    } else if(estadoNotif === 'instalar'){
+      html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>
+        <span><span class="aviso-t">Para recibir avisos en tu teléfono</span><span class="aviso-s">Abre la app desde su ícono en la pantalla de inicio (no desde Safari) y vuelve aquí.</span></span></div>`;
+    } else if(estadoNotif === 'bloqueado'){
+      html += `<div class="aviso-card"><span class="ini-ico">${ICON_CAMPANA}</span>
+        <span><span class="aviso-t">Los avisos están bloqueados</span><span class="aviso-s">Actívalos en Ajustes › Notificaciones › Artesanos.</span></span></div>`;
+    }
+    cont.innerHTML = html;
+  }
+  async function activarNotif(){
+    if(!window.Avisos) return;
+    try{
+      const r = await window.Avisos.activar();
+      toast(r === 'activo' ? 'Listo, te llegarán los avisos' : r === 'bloqueado' ? 'Los avisos quedaron bloqueados' : 'No se activaron', r === 'activo' ? undefined : 'error');
+    } catch(e){ toast('No se pudieron activar: ' + (e.message || ''), 'error'); }
+    pintarAvisosAdmin(perfilActual);
+  }
+  document.addEventListener('click', (e) => { if(e.target.closest('[data-activar-notif]')) activarNotif(); });
+  $('btnNotif').addEventListener('click', () => {
+    if(estadoNotif === 'inactivo') activarNotif();
+    else if(estadoNotif === 'instalar') toast('Abre la app desde su ícono en la pantalla de inicio');
+    else if(estadoNotif === 'bloqueado') toast('Actívalas en Ajustes › Notificaciones › Artesanos');
+  });
+
   let perfilActual = null;
   async function abrirInicio(){
     const p = await S.perfil();
@@ -357,6 +433,7 @@
     $('cuentaNombre').textContent = nombre;
     $('cuentaRol').textContent = nombreRol(p && p.rol);
     pintarModulos(p);
+    pintarAvisosAdmin(p);
     mostrar('vInicio');
     contarCatalogo();
     contarVentas();
@@ -432,7 +509,7 @@
   });
 
   // Al volver a Inicio desde un módulo (página guardada por el navegador), refresca los números
-  window.addEventListener('pageshow', (e) => { if(e.persisted && !$('vInicio').classList.contains('hidden')){ contarCatalogo(); contarVentas(); } });
+  window.addEventListener('pageshow', (e) => { if(e.persisted && !$('vInicio').classList.contains('hidden')){ contarCatalogo(); contarVentas(); pintarAvisosAdmin(perfilActual); } });
 
   window.addEventListener('scroll', () => $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
 

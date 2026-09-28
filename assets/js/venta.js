@@ -796,8 +796,6 @@
     const esVenta = !!abono;
     $('pie').classList.add('hidden');
     $('subVenta').textContent = esVenta ? 'Venta confirmada' : 'Cotización guardada';
-    const texto = mensajeCliente(res, p, abono);
-    const wa = `https://wa.me/${p.cliente.telefono}?text=${encodeURIComponent(texto)}`;
     $('pagina').innerHTML = `
       <div class="listo">
         <div class="listo-ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>
@@ -814,7 +812,7 @@
       </div>
       <div class="listo-btns">
         <button class="btn-wa" type="button" id="btnPdf" disabled><span class="spinner"></span>Preparando PDF</button>
-        <a class="link-simple" href="${esc(wa)}" target="_blank" rel="noopener" style="text-align:center;margin-top:0">Mandar solo el resumen en texto</a>
+        <button class="btn-secondary" type="button" id="btnMsj" style="height:54px" disabled>Enviar mensaje con su seguimiento</button>
         <button class="btn-secondary" type="button" id="btnOtra" style="height:54px">Hacer otra venta</button>
         <button class="link-simple" type="button" id="btnIrInicio">Volver a Inicio</button>
       </div>`;
@@ -830,15 +828,24 @@
       try{
         venta = await window.AV.cargarVenta(res.id);
         blob = await window.AV.crearPDF(venta);
+        const m = $('btnMsj'); if(m) m.disabled = false;
         const b = $('btnPdf'); if(!b) return;
         b.disabled = false; b.innerHTML = `${ICON_WA}Enviar PDF al cliente`;
       } catch(e){
         const b = $('btnPdf'); if(b){ b.innerHTML = 'No se pudo preparar el PDF'; }
       }
     })();
+    $('btnMsj').addEventListener('click', () => {
+      if(!venta) return;
+      const url = window.AV.linkSeguimientoWA(venta);
+      const w = window.open(url, '_blank'); if(!w) location.href = url;
+      db.rpc('marcar_paso', { vid: venta.id, paso: 'mensaje' });
+      $('btnMsj').innerHTML = '✓ Mensaje enviado';
+    });
     $('btnPdf').addEventListener('click', async () => {
       if(!blob) return;
       const r = await window.AV.compartirPDF(blob, venta);
+      if(r !== 'cancelado') db.rpc('marcar_paso', { vid: venta.id, paso: 'pdf' });
       if(r === 'descargado') toast('PDF descargado');
       else if(r !== 'cancelado') toast(`Teléfono copiado (${window.AV.telBonito(venta)}). Pégalo en el buscador de WhatsApp si no ves el chat`);
     });
