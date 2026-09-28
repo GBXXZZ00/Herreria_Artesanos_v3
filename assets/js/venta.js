@@ -16,6 +16,7 @@
   let modelos = [], piezas = [], sedes = [], perfil = null;
   let items = [];           // productos de la venta
   let sedeId = null;
+  const extras = { desc:false, inst:false };   // descuento e instalación: opcionales
   let clienteExistente = null;
   let guardando = false;
   let terminado = false;
@@ -38,6 +39,12 @@
     return d;
   }
   const telValido = (t) => /^58\d{10}$/.test(normTel(t));
+  // Cédula o RIF: sin puntos ni guiones; si son solo números es V
+  function normCed(t){
+    const d = String(t || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return /^\d+$/.test(d) ? 'V' + d : d;
+  }
+  const cedValida = (t) => /^[VEJGP]\d{5,10}$/.test(normCed(t));
 
   // ---------------------------------------------------------------------------
   // Totales
@@ -45,8 +52,8 @@
   function subtotalItem(it){ return r2((numOrNull(it.precio) || 0) * (it.cantidad || 1)); }
   function totales(){
     const sub = r2(items.reduce((a, it) => a + subtotalItem(it), 0));
-    const desc = numOrNull($('vDesc').value) || 0;
-    const inst = numOrNull($('vInst').value) || 0;
+    const desc = extras.desc ? (numOrNull($('vDesc').value) || 0) : 0;
+    const inst = extras.inst ? (numOrNull($('vInst').value) || 0) : 0;
     return { sub, desc, inst, total: r2(sub - desc + inst) };
   }
   function pintarResumen(){
@@ -153,7 +160,7 @@
     const color = tieneColores(m.tipo) ? ((cols[0] && cols[0].key) || 'Blanco') : null;
     abrirProducto({
       origen:'catalogo', catalogo_id:m.id, tipo:m.tipo, nombre:m.nombre, color,
-      estado: estadoDesdeEspecificaciones(m.tipo, m.especificaciones_base, 'pedido'),
+      estado: Object.assign(estadoDesdeEspecificaciones(m.tipo, m.especificaciones_base, 'pedido'), m.tipo === 'Combo' && color ? { ventanas_color: color } : {}),
       extraProteccion:'', precio:'', precioManual:false, cantidad:1
     }, null);
   });
@@ -246,16 +253,20 @@
     if(g.tipo === 'texto') return `<div class="field"><label class="field-label">${esc(g.label)}</label><input class="input" type="text" data-texto="${g.g}" value="${esc(prod.estado[g.g] || '')}" placeholder="${esc(g.placeholder || '')}" autocomplete="off"></div>`;
     return optsHtml(g, prod.estado[g.g]);
   }
+  const ICON_PUERTA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="1.5"/><path d="M15 11v2.5"/></svg>';
+  const ICON_VENTANA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M12 4.5v15M3.5 12h17"/></svg>';
   function specsHtml(){
     const esq = esquema(prod.tipo, 'pedido');
     const s = prod.estado;
-    let html = medidasHtml(esq.medidas.label || 'Medidas', 'alto', 'ancho');
+    const combo = prod.tipo === 'Combo';
+    let html = combo ? `<div class="zona">${ICON_PUERTA}Puerta</div>` : '';
+    html += medidasHtml(esq.medidas.label || 'Medidas', 'alto', 'ancho');
     if(tieneColores(prod.tipo)){
-      html += optsHtml({ g:'__color', label:'Color', opts: acabados(prod.tipo).filter(a => a.sw).map(a => ({ v:a.key, sw:a.sw })) }, prod.color);
+      html += optsHtml({ g:'__color', label: combo ? 'Color (puerta y ventanas)' : 'Color', opts: acabados(prod.tipo).filter(a => a.sw).map(a => ({ v:a.key, sw:a.sw })) }, prod.color);
     }
     const dependeDeGrupo = (g) => g.si && typeof g.si === 'object';
     const dependeDeExtra = (g) => g.si && typeof g.si === 'string';
-    esq.grupos.filter(g => !g.si).forEach(g => {
+    esq.grupos.filter(g => !g.si && !g.zona).forEach(g => {
       html += grupoHtml(g);
       esq.grupos.filter(h => dependeDeGrupo(h) && h.si.g === g.g && grupoActivo(h, s)).forEach(h => { html += grupoHtml(h); });
     });
@@ -263,11 +274,17 @@
       html += `<div class="field"><span class="field-label">Extras</span><div class="toggles">${esq.extras.map(x => `
         <button type="button" class="tchip ${s[x.k] ? 'on' : ''}" data-k="${x.k}" aria-pressed="${!!s[x.k]}"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>${esc(x.label)}</button>`).join('')}</div></div>`;
     }
-    esq.grupos.filter(g => dependeDeExtra(g) && grupoActivo(g, s)).forEach(g => { html += grupoHtml(g); });
+    esq.grupos.filter(g => dependeDeExtra(g) && grupoActivo(g, s) && !g.zona).forEach(g => { html += grupoHtml(g); });
     if(pideMontoProteccion(prod)){
       html += `<div class="field" id="campoProt"><label class="field-label" for="pProt">Monto de la protección</label>
         <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="pProt" data-precio-extra type="text" inputmode="decimal" autocomplete="off" value="${esc(prod.extraProteccion || '')}"></div>
         <div class="field-error">Escribe cuánto cuesta la protección</div></div>`;
+    }
+    const zona = esq.grupos.filter(g => g.zona && grupoActivo(g, s));
+    if(zona.length){
+      html += `<div class="zona">${ICON_VENTANA}Ventanas</div>`;
+      zona.forEach(g => { html += grupoHtml(g); });
+      html += '<div class="zona-fin"></div>';
     }
     return html;
   }
@@ -354,7 +371,10 @@
     const o = e.target.closest('.opt[data-g]');
     if(o){
       prodSucio = true;
-      if(o.dataset.g === '__color') prod.color = o.dataset.v;
+      if(o.dataset.g === '__color'){
+        prod.color = o.dataset.v;
+        if(prod.tipo === 'Combo') prod.estado.ventanas_color = o.dataset.v;  // las ventanas van del mismo color
+      }
       else prod.estado[o.dataset.g] = o.dataset.v;
       pintarProducto(); return;
     }
@@ -415,35 +435,56 @@
   // Cliente: si el teléfono ya existe, se llenan sus datos
   // ---------------------------------------------------------------------------
   let buscarTimer = null, ultimaBusqueda = '';
-  $('cTel').addEventListener('input', () => {
-    $('campoTel').classList.remove('invalid');
-    clearTimeout(buscarTimer);
-    buscarTimer = setTimeout(buscarCliente, 350);
-    guardarBorrador();
-  });
+  function programarBusqueda(){ clearTimeout(buscarTimer); buscarTimer = setTimeout(buscarCliente, 350); }
+  $('cCedula').addEventListener('input', () => { $('campoCed').classList.remove('invalid'); programarBusqueda(); guardarBorrador(); });
+  $('cTel').addEventListener('input', () => { $('campoTel').classList.remove('invalid'); programarBusqueda(); guardarBorrador(); });
   async function buscarCliente(){
-    const tel = normTel($('cTel').value);
-    if(!telValido(tel) || tel === ultimaBusqueda) { if(!telValido(tel)){ clienteExistente = null; $('avisoCliente').innerHTML = ''; } return; }
-    ultimaBusqueda = tel;
-    const { data, error } = await db.from('clientes').select('*').eq('telefono', tel).maybeSingle();
-    if(error || normTel($('cTel').value) !== tel) return;
-    clienteExistente = data || null;
-    if(data){
-      $('cNombre').value = data.nombre || '';
-      $('cDir').value = data.direccion || '';
+    const ced = cedValida($('cCedula').value) ? normCed($('cCedula').value) : null;
+    const tel = telValido($('cTel').value) ? normTel($('cTel').value) : null;
+    const clave = (ced || '') + '|' + (tel || '');
+    if(!ced && !tel){ clienteExistente = null; $('avisoCliente').innerHTML = ''; return; }
+    if(clave === ultimaBusqueda) return;
+    ultimaBusqueda = clave;
+    let data = null;
+    if(ced){ const r = await db.from('clientes').select('*').eq('cedula', ced).maybeSingle(); if(!r.error) data = r.data; }
+    if(!data && tel){ const r = await db.from('clientes').select('*').eq('telefono', tel).maybeSingle(); if(!r.error) data = r.data; }
+    if(clave !== ultimaBusqueda) return;
+    if(data && (!clienteExistente || clienteExistente.id !== data.id)){
+      clienteExistente = data;
       if(data.cedula) $('cCedula').value = data.cedula;
-      ['campoNombreC', 'campoDir'].forEach(id => $(id).classList.remove('invalid'));
+      if(data.telefono) $('cTel').value = '0' + String(data.telefono).replace(/^58/, '');
+      $('cNombre').value = data.nombre || '';
+      ultimaBusqueda = normCed($('cCedula').value) + '|' + normTel($('cTel').value);
+      ['campoCed', 'campoTel', 'campoNombreC'].forEach(id => $(id).classList.remove('invalid'));
       $('avisoCliente').innerHTML = `<div class="aviso-cliente">${ICON_CHECK}Ya es cliente. Sus datos se llenaron solos.</div>`;
       guardarBorrador();
-    } else {
+    } else if(!data){
+      clienteExistente = null;
       $('avisoCliente').innerHTML = '';
     }
   }
-  ['cNombre', 'cDir', 'cCedula', 'vNotas'].forEach(id => $(id).addEventListener('input', () => {
+  ['cNombre', 'vNotas'].forEach(id => $(id).addEventListener('input', () => {
     const f = $(id).closest('.field'); if(f) f.classList.remove('invalid');
     guardarBorrador();
   }));
   ['vDesc', 'vInst'].forEach(id => $(id).addEventListener('input', () => { pintarResumen(); guardarBorrador(); }));
+
+  // Descuento e instalación: se activan tocando el botón y ahí aparece el monto
+  function pintarExtrasCierre(enfocar){
+    document.querySelectorAll('[data-extra]').forEach(b => { const on = extras[b.dataset.extra]; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    $('campoDesc').classList.toggle('hidden', !extras.desc);
+    $('campoInst').classList.toggle('hidden', !extras.inst);
+    if(enfocar === 'desc' && extras.desc) $('vDesc').focus();
+    if(enfocar === 'inst' && extras.inst) $('vInst').focus();
+    pintarResumen();
+  }
+  document.querySelector('[data-extra]').parentElement.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-extra]');
+    if(!b) return;
+    extras[b.dataset.extra] = !extras[b.dataset.extra];
+    pintarExtrasCierre(b.dataset.extra);
+    guardarBorrador();
+  });
 
   function pintarSedes(){
     $('optsSede').innerHTML = sedes.map(s => `<button type="button" class="opt ${s.id === sedeId ? 'selected' : ''}" data-sede="${s.id}" aria-pressed="${s.id === sedeId}">${esc(s.nombre)}</button>`).join('');
@@ -453,14 +494,14 @@
   // ---------------------------------------------------------------------------
   // Borrador: si se sale sin guardar, al volver se recupera
   // ---------------------------------------------------------------------------
-  function hayDatos(){ return items.length || $('cTel').value.trim() || $('cNombre').value.trim(); }
+  function hayDatos(){ return items.length || $('cTel').value.trim() || $('cNombre').value.trim() || $('cCedula').value.trim(); }
   function guardarBorrador(){
     if(terminado || !cargado) return;
     try{
       if(!hayDatos()){ localStorage.removeItem(BORRADOR); return; }
       localStorage.setItem(BORRADOR, JSON.stringify({
-        tel:$('cTel').value, nombre:$('cNombre').value, dir:$('cDir').value, cedula:$('cCedula').value,
-        desc:$('vDesc').value, inst:$('vInst').value, notas:$('vNotas').value, sedeId,
+        tel:$('cTel').value, nombre:$('cNombre').value, cedula:$('cCedula').value,
+        desc:$('vDesc').value, inst:$('vInst').value, notas:$('vNotas').value, sedeId, extras,
         items: items.map(it => { const c = Object.assign({}, it); delete c.fotoBlob; if(c.origen === 'medida' && String(c.foto || '').startsWith('blob:')) c.foto = null; return c; })
       }));
     } catch(e){}
@@ -469,7 +510,8 @@
     let b = null;
     try{ b = JSON.parse(localStorage.getItem(BORRADOR) || 'null'); } catch(e){}
     if(!b) return;
-    $('cTel').value = b.tel || ''; $('cNombre').value = b.nombre || ''; $('cDir').value = b.dir || ''; $('cCedula').value = b.cedula || '';
+    $('cTel').value = b.tel || ''; $('cNombre').value = b.nombre || ''; $('cCedula').value = b.cedula || '';
+    if(b.extras){ extras.desc = !!b.extras.desc; extras.inst = !!b.extras.inst; }
     $('vDesc').value = b.desc || ''; $('vInst').value = b.inst || ''; $('vNotas').value = b.notas || '';
     if(b.sedeId) sedeId = b.sedeId;
     // Las piezas de entrega inmediata que ya no están se quitan
@@ -483,7 +525,8 @@
   });
   function limpiarTodo(){
     try{ localStorage.removeItem(BORRADOR); }catch(e){}
-    ['cTel', 'cNombre', 'cDir', 'cCedula', 'vDesc', 'vInst', 'vNotas'].forEach(id => { $(id).value = ''; });
+    ['cTel', 'cNombre', 'cCedula', 'vDesc', 'vInst', 'vNotas'].forEach(id => { $(id).value = ''; });
+    extras.desc = false; extras.inst = false; pintarExtrasCierre();
     items = []; clienteExistente = null; ultimaBusqueda = '';
     sedeId = (perfil && perfil.sede_id) || (sedes[0] && sedes[0].id) || null;
     $('avisoCliente').innerHTML = ''; $('avisoBorrador').innerHTML = '';
@@ -497,9 +540,9 @@
   function validar(){
     let primero = null;
     const marcar = (id, mal) => { $(id).classList.toggle('invalid', mal); if(mal && !primero) primero = $(id); };
+    marcar('campoCed', !cedValida($('cCedula').value));
     marcar('campoTel', !telValido($('cTel').value));
     marcar('campoNombreC', !$('cNombre').value.trim());
-    marcar('campoDir', !$('cDir').value.trim());
     marcar('campoItems', !items.length);
     marcar('campoDesc', totales().total < 0);
     if(primero){ primero.scrollIntoView({ block:'center', behavior:'smooth' }); toast('Revisa lo que está en rojo', 'error'); return false; }
@@ -520,7 +563,7 @@
   function payload(confirmar, abono){
     const t = totales();
     return {
-      cliente:{ telefono: normTel($('cTel').value), nombre: $('cNombre').value.trim(), direccion: $('cDir').value.trim(), cedula: $('cCedula').value.trim() },
+      cliente:{ telefono: normTel($('cTel').value), nombre: $('cNombre').value.trim(), cedula: normCed($('cCedula').value) },
       venta:{ sede_id: sedeId, descuento: t.desc, instalacion: t.inst, notas: $('vNotas').value.trim(), confirmar, fecha_entrega: abono ? abono.fecha : null },
       items: items.map(it => ({
         catalogo_id: it.origen === 'medida' ? null : it.catalogo_id,
@@ -536,7 +579,7 @@
         precio_unitario: numOrNull(it.precio) || 0,
         cantidad: it.cantidad || 1
       })),
-      abono: abono ? { monto: abono.monto, metodo: abono.metodo, tasa: abono.tasa, monto_bs: abono.monto_bs } : null
+      abono: abono ? { monto: abono.monto, metodo: abono.metodo, comprobante: abono.comprobante || null } : null
     };
   }
 
@@ -548,6 +591,12 @@
     boton.innerHTML = '<span class="spinner"></span>Guardando';
     try{
       await subirFotos();
+      if(abono && abono.comprobanteBlob && !abono.comprobante){
+        const path = `${new Date().toISOString().slice(0, 7)}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error } = await db.storage.from('comprobantes').upload(path, abono.comprobanteBlob, { contentType:'image/jpeg' });
+        if(error) throw new Error('No se pudo subir el comprobante: ' + error.message);
+        abono.comprobante = path;
+      }
       const p = payload(confirmar, abono);
       const { data, error } = await db.rpc('crear_venta', { p });
       if(error) throw new Error(error.message);
@@ -565,27 +614,37 @@
     }
   }
 
-  $('btnCotizacion').addEventListener('click', (e) => { if(validar()) guardar(false, null, e.currentTarget); });
+  $('btnGuardar').addEventListener('click', () => { if(validar()) abrirHoja('sheetGuardar'); });
+  $('optCotizacion').addEventListener('click', () => {
+    cerrarHoja('sheetGuardar', true);
+    guardar(false, null, $('btnGuardar'));
+  });
+  $('optVenta').addEventListener('click', () => {
+    cerrarHoja('sheetGuardar', true);
+    const t = totales();
+    conf = { monto: String(Math.round(t.total * 0.5 * 100) / 100), metodo:null, fecha: habiles(20), comprobante:null, blob:null };
+    pintarConfirmar();
+    abrirHoja('sheetConfirmar');
+  });
 
   // ---------------------------------------------------------------------------
   // Confirmar venta: abono, método y fecha de entrega
   // ---------------------------------------------------------------------------
   let conf = null;
-  function hoyISO(){ const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
-  $('btnConfirmar').addEventListener('click', () => {
-    if(!validar()) return;
-    const t = totales();
-    conf = { monto: String(Math.round(t.total * 0.5 * 100) / 100), metodo:null, tasa:'', fecha:'' };
-    pintarConfirmar();
-    abrirHoja('sheetConfirmar');
-  });
+  function iso(d){ const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); }
+  function hoyISO(){ return iso(new Date()); }
+  // N días hábiles desde hoy, sin contar sábados ni domingos
+  function habiles(n){
+    const d = new Date();
+    let k = 0;
+    while(k < n){ d.setDate(d.getDate() + 1); const w = d.getDay(); if(w !== 0 && w !== 6) k++; }
+    return iso(d);
+  }
   function pintarConfirmar(){
     const t = totales();
-    const monto = numOrNull(conf.monto) || 0;
-    const tasa = numOrNull(conf.tasa) || 0;
     $('confBody').innerHTML = `
       <div class="conf-total"><span>Total de la venta</span><b>${dinero(t.total)}</b></div>
-      <div class="field" id="campoAbono"><label class="field-label" for="aMonto">Abono</label>
+      <div class="field" id="campoAbono"><label class="field-label" for="aMonto">Abono en dólares</label>
         <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="aMonto" type="text" inputmode="decimal" autocomplete="off" value="${esc(conf.monto)}"></div>
         <div class="field-error" id="errAbono">Escribe el abono</div>
         <div id="avisoAbono"></div>
@@ -594,13 +653,14 @@
         <div class="opts" style="--cols:2">${METODOS.map(x => `<button type="button" class="opt ${x === conf.metodo ? 'selected' : ''}" data-metodo="${x}" aria-pressed="${x === conf.metodo}">${x}</button>`).join('')}</div>
         <div class="field-error">Elige cómo pagó</div>
       </div>
-      <div class="field ${conf.metodo === 'Bolívares' ? '' : 'hidden'}" id="campoTasa"><label class="field-label" for="aTasa">Tasa Binance de hoy</label>
-        <div class="input-affix has-r"><input class="input" id="aTasa" type="text" inputmode="decimal" autocomplete="off" value="${esc(conf.tasa)}"><span class="affix affix-r">Bs/$</span></div>
-        <div class="field-hint" id="enBs">${tasa && monto ? 'Son Bs ' + new Intl.NumberFormat('es-VE', { maximumFractionDigits:2 }).format(monto * tasa) : 'Escribe la tasa del día'}</div>
-        <div class="field-error">Escribe la tasa</div>
+      <div class="field"><span class="field-label">Comprobante (opcional)</span>
+        <div class="photos single"><label class="photo-box ${conf.comprobante ? 'filled' : ''}" style="aspect-ratio:3/1">
+          ${conf.comprobante ? `<img src="${esc(conf.comprobante)}" alt=""><span class="photo-tag">Cambiar comprobante</span>` : `<span class="plus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span>Foto o captura del pago</span>`}
+          <input type="file" accept="image/*" id="aComprobante" aria-label="Comprobante de pago"></label></div>
       </div>
       <div class="field" id="campoFecha"><label class="field-label" for="aFecha">Fecha de entrega</label>
         <input class="input" id="aFecha" type="date" min="${hoyISO()}" value="${esc(conf.fecha)}">
+        <div class="field-hint">20 días hábiles desde hoy, sin sábados ni domingos. La puedes cambiar.</div>
         <div class="field-error">Elige la fecha de entrega</div>
       </div>`;
     avisoAbono();
@@ -617,23 +677,25 @@
     $('campoAbono').classList.toggle('invalid', m > t);
   }
   $('confBody').addEventListener('input', (e) => {
-    if(e.target.id === 'aMonto'){ conf.monto = e.target.value; avisoAbono(); actualizarBs(); }
-    if(e.target.id === 'aTasa'){ conf.tasa = e.target.value; $('campoTasa').classList.remove('invalid'); actualizarBs(); }
+    if(e.target.id === 'aMonto'){ conf.monto = e.target.value; avisoAbono(); }
     if(e.target.id === 'aFecha'){ conf.fecha = e.target.value; $('campoFecha').classList.remove('invalid'); }
   });
-  $('confBody').addEventListener('change', (e) => { if(e.target.id === 'aFecha'){ conf.fecha = e.target.value; $('campoFecha').classList.remove('invalid'); } });
-  function actualizarBs(){
-    const m = numOrNull(conf.monto) || 0, t = numOrNull(conf.tasa) || 0;
-    const el = $('enBs'); if(!el) return;
-    el.textContent = m && t ? 'Son Bs ' + new Intl.NumberFormat('es-VE', { maximumFractionDigits:2 }).format(m * t) : 'Escribe la tasa del día';
-  }
+  $('confBody').addEventListener('change', async (e) => {
+    if(e.target.id === 'aFecha'){ conf.fecha = e.target.value; $('campoFecha').classList.remove('invalid'); }
+    if(e.target.id === 'aComprobante' && e.target.files[0]){
+      try{
+        conf.blob = await comprimirFoto(e.target.files[0], 1600, 0.8);
+        conf.comprobante = URL.createObjectURL(conf.blob);
+        const scroll = $('confBody').scrollTop; pintarConfirmar(); $('confBody').scrollTop = scroll;
+      } catch(err){ toast('No se pudo leer la foto', 'error'); }
+    }
+  });
   $('confBody').addEventListener('click', (e) => {
     const b = e.target.closest('[data-metodo]');
     if(!b) return;
     conf.metodo = b.dataset.metodo;
     document.querySelectorAll('#confBody [data-metodo]').forEach(x => { const s = x === b; x.classList.toggle('selected', s); x.setAttribute('aria-pressed', s); });
     $('campoMetodo').classList.remove('invalid');
-    $('campoTasa').classList.toggle('hidden', conf.metodo !== 'Bolívares');
   });
   $('btnConfListo').addEventListener('click', (e) => {
     const t = totales().total;
@@ -642,11 +704,9 @@
     const marcar = (id, mal) => { $(id).classList.toggle('invalid', mal); if(mal && !primero) primero = $(id); };
     marcar('campoAbono', !(m > 0) || m > t);
     marcar('campoMetodo', !conf.metodo);
-    marcar('campoTasa', conf.metodo === 'Bolívares' && !(numOrNull(conf.tasa) > 0));
     marcar('campoFecha', !conf.fecha);
     if(primero){ primero.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
-    const tasa = conf.metodo === 'Bolívares' ? numOrNull(conf.tasa) : null;
-    guardar(true, { monto: r2(m), metodo: conf.metodo, tasa, monto_bs: tasa ? r2(m * tasa) : null, fecha: conf.fecha }, e.currentTarget);
+    guardar(true, { monto: r2(m), metodo: conf.metodo, fecha: conf.fecha, comprobanteBlob: conf.blob }, e.currentTarget);
   });
 
   // ---------------------------------------------------------------------------
@@ -742,9 +802,10 @@
       sedeId = (perfil && perfil.sede_id) || (sedes[0] && sedes[0].id) || null;
       cargarBorrador();
       cargado = true;
+      pintarExtrasCierre();
       pintarSedes();
       pintarItems();
-      if($('cTel').value) buscarCliente();
+      if($('cTel').value || $('cCedula').value) buscarCliente();
     } catch(e){
       cargado = true;
       toast('Sin conexión. Revisa tu internet y vuelve a entrar', 'error');

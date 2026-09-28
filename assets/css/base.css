@@ -546,3 +546,11 @@ a.nav-item{text-decoration:none}
 .tecla.borrar{background:none;color:var(--ink-soft)}
 .link-simple{display:block;margin:18px auto 0;font-size:15px;font-weight:700;color:var(--accent);padding:8px}
 a.ini-cta{text-decoration:none}
+
+/* Paso suave entre pantallas (iPhone con iOS 18.2 o más nuevo; en los demás, cambio normal) */
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtSale 160ms var(--ease-out) both}
+::view-transition-new(root){animation:vtEntra 280ms var(--ease-out) both}
+@keyframes vtSale{to{opacity:0}}
+@keyframes vtEntra{from{opacity:0;transform:translateY(14px)}}
+@media (prefers-reduced-motion: reduce){::view-transition-old(root),::view-transition-new(root){animation:none}}

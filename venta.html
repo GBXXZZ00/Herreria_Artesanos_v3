@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Nueva venta · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=20">
+<link rel="stylesheet" href="assets/css/base.css?v=21">
 <style>
   .page{padding:4px 18px calc(150px + var(--safe-b))}
   .sec{margin-top:22px}
@@ -55,11 +55,18 @@
 
   /* Pie fijo */
   .foot-venta{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:12px 18px calc(12px + var(--safe-b));background:rgba(255,255,255,0.96);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
-  .foot-total{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;color:var(--ink-soft);margin-bottom:10px}
-  .foot-total b{font-size:18px;color:var(--ink);font-weight:800}
-  .foot-btns{display:flex;gap:10px}
-  .foot-btns .btn-secondary{flex:0 0 auto;padding:0 16px;height:54px}
-  .foot-btns .btn-primary{flex:1;min-width:0}
+  .foot-fila{display:flex;align-items:center;gap:14px}
+  .foot-total{display:flex;flex-direction:column;flex:1;min-width:0;font-size:13px;color:var(--ink-soft)}
+  .foot-total b{font-size:22px;color:var(--ink);font-weight:800;letter-spacing:-0.4px}
+  .foot-fila .btn-primary{flex:0 0 auto;width:auto;padding:0 34px}
+  /* Entrada suave de la pantalla */
+  .sec{opacity:0;transform:translateY(10px);animation:secIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 60ms)}
+  @keyframes secIn{to{opacity:1;transform:none}}
+  /* Combos: qué es de la puerta y qué de las ventanas */
+  .zona{display:flex;align-items:center;gap:10px;margin:24px 0 12px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:14.5px;font-weight:800}
+  .zona:first-child{margin-top:4px}
+  .zona svg{flex-shrink:0}
+  .zona-fin{height:1px;background:var(--line);margin:22px 0 4px}
 
   /* Hoja: elegir origen */
   .origenes{display:flex;flex-direction:column;gap:10px}
@@ -126,32 +133,28 @@
   <div id="avisoBorrador"></div>
 
   <!-- 1. Cliente -->
-  <section class="sec">
+  <section class="sec" style="--i:0">
     <div class="sec-head"><span class="sec-num">1</span><h2 class="sec-title">Cliente</h2></div>
+    <div class="field" id="campoCed">
+      <label class="field-label" for="cCedula">Cédula o RIF</label>
+      <input class="input" id="cCedula" type="text" autocomplete="off" autocapitalize="characters" placeholder="V-12345678">
+      <div class="field-error">Escribe la cédula o el RIF</div>
+    </div>
+    <div id="avisoCliente"></div>
     <div class="field" id="campoTel">
       <label class="field-label" for="cTel">Teléfono (WhatsApp)</label>
       <input class="input" id="cTel" type="tel" inputmode="tel" autocomplete="off" placeholder="0414 123 4567">
       <div class="field-error">Escribe un teléfono válido</div>
     </div>
-    <div id="avisoCliente"></div>
     <div class="field" id="campoNombreC">
       <label class="field-label" for="cNombre">Nombre y apellido</label>
       <input class="input" id="cNombre" type="text" autocomplete="off" autocapitalize="words">
       <div class="field-error">Falta el nombre</div>
     </div>
-    <div class="field" id="campoDir">
-      <label class="field-label" for="cDir">Dirección de instalación</label>
-      <textarea class="input" id="cDir" rows="2" placeholder="Sector, calle, casa y punto de referencia"></textarea>
-      <div class="field-error">Falta la dirección</div>
-    </div>
-    <div class="field">
-      <label class="field-label" for="cCedula">Cédula o RIF (opcional)</label>
-      <input class="input" id="cCedula" type="text" autocomplete="off" inputmode="text">
-    </div>
   </section>
 
   <!-- 2. Productos -->
-  <section class="sec">
+  <section class="sec" style="--i:1">
     <div class="sec-head"><span class="sec-num">2</span><h2 class="sec-title">Productos</h2></div>
     <div class="field" id="campoItems">
       <div class="items" id="items"></div>
@@ -163,18 +166,23 @@
   </section>
 
   <!-- 3. Cierre -->
-  <section class="sec">
+  <section class="sec" style="--i:2">
     <div class="sec-head"><span class="sec-num">3</span><h2 class="sec-title">Cierre</h2></div>
-    <div class="input-row">
-      <div class="field" style="flex:1" id="campoDesc">
-        <label class="field-label" for="vDesc">Descuento</label>
-        <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vDesc" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
-        <div class="field-error">Es mayor que el total</div>
+    <div class="field">
+      <span class="field-label">¿Lleva algo más?</span>
+      <div class="toggles">
+        <button type="button" class="tchip" data-extra="desc" aria-pressed="false"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Descuento</button>
+        <button type="button" class="tchip" data-extra="inst" aria-pressed="false"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Instalación o traslado</button>
       </div>
-      <div class="field" style="flex:1">
-        <label class="field-label" for="vInst">Instalación o traslado</label>
-        <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vInst" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
-      </div>
+    </div>
+    <div class="field hidden" id="campoDesc">
+      <label class="field-label" for="vDesc">Monto del descuento</label>
+      <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vDesc" type="text" inputmode="decimal" autocomplete="off"></div>
+      <div class="field-error">Es mayor que el total</div>
+    </div>
+    <div class="field hidden" id="campoInst">
+      <label class="field-label" for="vInst">Monto de instalación o traslado</label>
+      <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="vInst" type="text" inputmode="decimal" autocomplete="off"></div>
     </div>
     <div class="field">
       <span class="field-label">Sede de la venta</span>
@@ -189,12 +197,32 @@
 </main>
 
 <div class="foot-venta" id="pie">
-  <div class="foot-total"><span>Total</span><b id="pieTotal">$0</b></div>
-  <div class="foot-btns">
-    <button class="btn-secondary" type="button" id="btnCotizacion">Guardar cotización</button>
-    <button class="btn-primary" type="button" id="btnConfirmar">Confirmar venta</button>
+  <div class="foot-fila">
+    <div class="foot-total"><span>Total</span><b id="pieTotal">$0</b></div>
+    <button class="btn-primary" type="button" id="btnGuardar">Guardar</button>
   </div>
 </div>
+
+<!-- Guardar como cotización o como venta -->
+<div class="sheet-scrim" id="scrimGuardar" data-cerrar="sheetGuardar"></div>
+<section class="sheet sheet-auto" id="sheetGuardar" role="dialog" aria-modal="true" aria-labelledby="guardarTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="guardarTitulo">¿Cómo la guardamos?</h2>
+    <button class="icon-btn" data-cerrar="sheetGuardar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="origenes">
+      <button class="origen" type="button" id="optCotizacion">
+        <span class="ini-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+        <span><span class="origen-t">Cotización</span><span class="origen-s">El cliente lo va a pensar. Vale 20 días</span></span>
+      </button>
+      <button class="origen" type="button" id="optVenta">
+        <span class="ini-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span>
+        <span><span class="origen-t">Venta</span><span class="origen-s">El cliente ya dio un abono</span></span>
+      </button>
+    </div>
+  </div>
+</section>
 
 <div class="hidden" id="menuModulos" data-activo="venta"></div>
 
@@ -265,20 +293,20 @@
 <div class="sheet-scrim" id="scrimConfirmar" data-cerrar="sheetConfirmar"></div>
 <section class="sheet sheet-auto" id="sheetConfirmar" role="dialog" aria-modal="true" aria-labelledby="confTitulo">
   <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title" id="confTitulo">Confirmar venta</h2>
+  <div class="sheet-head"><h2 class="sheet-title" id="confTitulo">Abono</h2>
     <button class="icon-btn" data-cerrar="sheetConfirmar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="sheet-body" id="confBody"></div>
-  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnConfListo">Confirmar venta</button></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnConfListo">Guardar venta</button></div>
 </section>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=20"></script>
-<script src="assets/js/supabase-client.js?v=20"></script>
-<script src="assets/js/img-compress.js?v=20"></script>
-<script src="assets/js/comun.js?v=20"></script>
-<script src="assets/js/sesion.js?v=20"></script>
-<script src="assets/js/venta.js?v=20"></script>
+<script src="assets/vendor/supabase.js?v=21"></script>
+<script src="assets/js/supabase-client.js?v=21"></script>
+<script src="assets/js/img-compress.js?v=21"></script>
+<script src="assets/js/comun.js?v=21"></script>
+<script src="assets/js/sesion.js?v=21"></script>
+<script src="assets/js/venta.js?v=21"></script>
 </body>
 </html>
