@@ -44,10 +44,11 @@
   .cuenta-cab .avatar{width:54px;height:54px;font-size:21px}
   .cuenta-op{display:flex;align-items:center;gap:14px;width:100%;padding:16px 4px;font-size:16.5px;font-weight:700;color:var(--ink);text-align:left;text-decoration:none;transition:transform 140ms var(--ease-out)}
   .cuenta-op:active{transform:scale(0.98)}
-  .cuenta-op + .cuenta-op{border-top:1px solid var(--line)}
   .cuenta-op .op-ico{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0}
-  .cuenta-grupo{border-top:1px solid var(--line);margin-top:8px;padding-top:14px}
+  .cuenta-grupo{border-top:1px solid var(--line);margin-top:8px;padding-top:14px;display:flex;flex-direction:column;gap:8px}
   .cuenta-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.3px;color:var(--ink-faint);text-transform:uppercase;margin:0 0 2px;padding:0 4px}
+  .cuenta-op.cuenta-modulo{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:14px}
+  .cuenta-op.cuenta-modulo:active{background:var(--surface-2)}
   .cuenta-op .flecha{margin-left:auto;color:var(--ink-faint);flex-shrink:0}
   .cuenta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:20px}
   .cuenta-box{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;height:78px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:700;text-align:center;transition:transform 130ms var(--ease-out),background-color 160ms var(--ease-out)}
