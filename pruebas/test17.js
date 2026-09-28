@@ -55,7 +55,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.waitForSelector('#vInicio.entra');await a.waitForTimeout(1200);
  const av=await a.textContent('#avisosAdmin');
  ok('Admin ve "1 pedido espera producción"',av.includes('1 pedido espera producción')&&av.includes('N° 2'),av);
- ok('Admin ve cómo activar avisos en el iPhone',av.includes('Abre la app desde su ícono'),av);
+ ok('Admin ve cómo activar avisos en el iPhone',av.includes('Avisos: cómo activarlos'),av);
  ok('Ray ve "1 pago por confirmar"',av.includes('1 pago por confirmar'),av);
  await a.screenshot({path:'shots4/s2-inicio-admin.png'});
  // Ray confirma el abono

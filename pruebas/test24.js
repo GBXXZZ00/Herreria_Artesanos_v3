@@ -1,4 +1,7 @@
-// Catálogo: elegir varios modelos y darles la misma categoría de pago (solo admin).
+// Categorías de pago: "Asignar a modelos" (varios a la vez) sin equivocarse.
+// Primero salen los sin categoría; en "Todos" se ve la de cada uno; los que ya están en
+// esta no se marcan; si uno cambia de categoría se avisa y se confirma.
+// También: Catálogo ya no tiene "Elegir varios", y el aviso de Inicio lleva aquí.
 const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
 const now=Math.floor(Date.now()/1000);
@@ -10,86 +13,90 @@ const modelos=[
   {id:1,nombre:'Lineal',tipo:'Puerta Multilock',fotos:{Blanco:GIF},especificaciones_base:{},precio_base:200,categoria_pago_id:null},
   {id:2,nombre:'Imperial',tipo:'Puerta Multilock',fotos:{Blanco:GIF},especificaciones_base:{},precio_base:300,categoria_pago_id:null},
   {id:3,nombre:'Colonial',tipo:'Puerta Multilock',fotos:{Blanco:GIF},especificaciones_base:{},precio_base:250,categoria_pago_id:7},
-  {id:4,nombre:'Ventana Simple',tipo:'Ventana',fotos:{Blanco:GIF},especificaciones_base:{},precio_base:90,categoria_pago_id:null}
+  {id:4,nombre:'Ventana Simple',tipo:'Ventana',fotos:{Blanco:GIF},especificaciones_base:{},precio_base:90,categoria_pago_id:8},
+  {id:5,nombre:'Combo Real',tipo:'Combo',fotos:{},especificaciones_base:{},precio_base:700,categoria_pago_id:null}
 ];
-const categorias=[{id:7,nombre:'General'},{id:8,nombre:'Ventanas'}];
+const categorias=[{id:7,nombre:'General',tarifas:{herrero:{monto:25,modo:'fijo'}},activo:true},{id:8,nombre:'Ventanas',tarifas:{ventanero:{monto:10,modo:'fijo'}},activo:true}];
 const llamadas=[];
 
 function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{const req=r.request();const u=decodeURIComponent(req.url());const j=(x,st=200,h={})=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'content-range',...h},body:JSON.stringify(x)});
+  const head=(n)=>r.fulfill({status:200,headers:{'content-range':'*/'+n,'access-control-expose-headers':'content-range','access-control-allow-origin':'*'},body:''});
   if(u.includes('/auth/v1/token'))return j(ses(user));
   if(u.includes('/auth/v1/user'))return j({id:user});
-  if(u.includes('/perfiles')){ if(u.includes('id=eq'))return j({id:user,usuario:rol==='admin'?'ray':'yuli',nombre:rol==='admin'?'Ray':'Yulimar',rol}); return j([{usuario:rol==='admin'?'ray':'yuli',nombre:rol==='admin'?'Ray':'Yulimar',rol,orden:1}]);}
+  if(u.includes('/perfiles')){ if(u.includes('id=eq'))return j({id:user,usuario:'ray',nombre:'Ray',rol}); return j([{usuario:'ray',nombre:'Ray',rol,orden:1}]);}
   if(u.includes('/rpc/asignar_categoria_modelos')){
     const body=JSON.parse(req.postData()||'{}');llamadas.push(body);
     body.ids.forEach(id=>{const m=modelos.find(x=>x.id===id);if(m)m.categoria_pago_id=body.cid;});
     return j(body.ids.length);
   }
-  if(u.includes('/categorias_pago'))return j(rol==='admin'?categorias:[]);
-  if(u.includes('/catalogo'))return req.method()==='HEAD'?r.fulfill({status:200,headers:{'content-range':'0-3/4','access-control-expose-headers':'content-range','access-control-allow-origin':'*'},body:''}):j(modelos,200,{'content-range':'0-3/4'});
+  if(u.includes('/categorias_pago'))return req.method()==='HEAD'?head(2):j(categorias);
+  if(u.includes('/catalogo')){
+    if(req.method()==='HEAD')return head(u.includes('is.null')?modelos.filter(m=>!m.categoria_pago_id).length:modelos.length);
+    return j(modelos);
+  }
   if(u.includes('/sedes'))return j([{id:1,nombre:'Sede Cumbres',orden:1,activa:true}]);
   return j([]);});}
 
-async function entrar(b,user,rol,pin){
-  const ctx=await b.newContext({...devices['iPhone 13']});await mock(ctx,user,rol);
-  const p=await ctx.newPage();
-  await p.goto('http://127.0.0.1:8765/index.html');await p.waitForSelector('.quien-btn');await p.click('.quien-btn');
-  for(const d of pin) await p.click(`#pinTeclado [data-t="${d}"]`);
-  await p.waitForSelector('#vInicio.entra');
-  return p;
-}
-
 (async()=>{ const b=await chromium.launch(); const err=[]; try{
- // Vendedora: no ve el botón de elegir ni el filtro
- const y=await entrar(b,'u3','vendedor','333333');y.on('pageerror',e=>err.push('vend:'+e.message));
- await y.goto('http://127.0.0.1:8765/catalogo.html');await y.waitForSelector('.card');await y.waitForTimeout(400);
- ok('Vendedora no ve el botón "Elegir varios"',!(await y.isVisible('#btnElegir')));
- ok('Vendedora no ve el filtro "Sin categoría de pago"',!(await y.textContent('#chips')).includes('Sin categoría'));
+ const ctx=await b.newContext({...devices['iPhone 13']});await mock(ctx,'u2','admin');
+ const a=await ctx.newPage();a.on('pageerror',e=>err.push(e.message));a._dlg=[];a.on('dialog',d=>{a._dlg.push(d.message());d.accept();});
+ await a.goto('http://127.0.0.1:8765/index.html');await a.waitForSelector('.quien-btn');await a.click('.quien-btn');
+ for(const d of '222222') await a.click(`#pinTeclado [data-t="${d}"]`);
+ await a.waitForSelector('#vInicio.entra');await a.waitForSelector('.pend-fila');
 
- // Admin
- const a=await entrar(b,'u2','admin','222222');a.on('pageerror',e=>err.push('admin:'+e.message));
- await a.goto('http://127.0.0.1:8765/catalogo.html');await a.waitForSelector('.card');await a.waitForTimeout(400);
- ok('Admin ve el botón "Elegir varios" con texto',await a.isVisible('#btnElegir') && (await a.textContent('#btnElegir')).includes('Elegir varios'));
- await a.screenshot({path:'shots5/c3b-boton.png'});
- ok('Filtro "Sin categoría de pago · 3"',(await a.textContent('#chips')).includes('Sin categoría de pago · 3'));
- await a.click('.chip[data-cat="Sin categoría"]');await a.waitForTimeout(300);
- ok('El filtro muestra solo los 3 sin categoría',(await a.$$('.card')).length===3);
+ // El pendiente de Inicio lleva a Categorías de pago
+ ok('Inicio: "3 modelos sin categoría" lleva a Categorías de pago',!!(await a.$('a.pend-fila[href="categorias-pago.html"]')));
+ await a.click('a.pend-fila[href="categorias-pago.html"]');await a.waitForSelector('.c-card');
+ ok('Arriba avisa cuántos modelos no tienen categoría',(await a.textContent('#avisoSin')).includes('3 modelos sin categoría'));
+ ok('Cada categoría dice en cuántos modelos se usa',(await a.textContent('#lista')).includes('Usada en 1 modelo del catálogo'));
+ await a.screenshot({path:'shots5/k0-lista.png'});
 
- // Modo elegir
- await a.click('#btnElegir');await a.waitForTimeout(300);
- ok('El botón dice "Listo" mientras eliges',(await a.textContent('#btnElegir')).trim()==='Listo');
- ok('Aparece la barra y se esconde el menú',await a.evaluate(()=>document.body.classList.contains('eligiendo')));
- ok('Cada tarjeta muestra su casilla y "Sin categoría"',(await a.$$('.card-check')).length===3 && (await a.textContent('#grid')).includes('Sin categoría'));
- ok('"Dar categoría" desactivado sin elegir nada',await a.$eval('#btnSelAsignar',x=>x.disabled));
- await a.click('.card[data-id="1"]');await a.click('.card[data-id="4"]');
- ok('Dos tarjetas marcadas',(await a.$$('.card.sel')).length===2 && (await a.textContent('#selN'))==='2 elegidos');
- ok('Tocar una tarjeta NO abre la ficha',!(await a.$('#sheetDetalle.open')));
- await a.screenshot({path:'shots5/c4-elegir.png'});
- await a.click('#btnSelTodos');await a.waitForTimeout(200);
- ok('"Elegir todos los que ves" marca los 3',(await a.$$('.card.sel')).length===3 && (await a.textContent('#btnSelTodos'))==='Quitar todos');
- await a.click('#btnSelTodos');await a.waitForTimeout(200);
- ok('"Quitar todos" los desmarca',(await a.$$('.card.sel')).length===0);
- await a.click('.card[data-id="1"]');await a.click('.card[data-id="2"]');
+ // Abrir "General" y asignar a modelos
+ await a.click('.c-card >> text=General');await a.waitForSelector('#sheetFicha.open');
+ ok('La ficha tiene "Asignar a modelos" con cuántos usan y cuántos faltan',(await a.textContent('#btnAsignarModelos')).includes('Usada en 1 modelo') && (await a.textContent('#btnAsignarModelos')).includes('3 sin categoría'));
+ await a.click('#btnAsignarModelos');await a.waitForSelector('#sheetModelos.open');
+ ok('Abre en "Sin categoría" con solo los 3 que no tienen',(await a.textContent('#chipsModelos .chip.active')).includes('Sin categoría · 3') && (await a.$$('#listaModelos .m-fila')).length===3);
+ ok('Botón desactivado sin marcar nada',await a.$eval('#btnAsignar',x=>x.disabled));
+ await a.click('.m-fila[data-mid="1"]');await a.click('.m-fila[data-mid="2"]');
+ ok('Al marcar 2, el botón dice "Asignar a 2 modelos"',(await a.textContent('#btnAsignar'))==='Asignar a 2 modelos');
+ await a.screenshot({path:'shots5/k1-sin.png'});
 
- await a.click('#btnSelAsignar');await a.waitForSelector('#sheetCategoria.open');
- ok('El selector dice para cuántos modelos es',(await a.textContent('#categoriaTitulo'))==='Categoría para 2 modelos');
- ok('Ofrece las 2 categorías y "Quitarles la categoría"',(await a.$$('#listaCategorias .cat-fila-op')).length===3 && (await a.textContent('#listaCategorias')).includes('Quitarles la categoría'));
- await a.screenshot({path:'shots5/c5-selector.png'});
- await a.click('#listaCategorias [data-cat="7"]');await a.waitForTimeout(600);
- ok('Se llamó al servidor con los 2 modelos y la categoría',llamadas.length===1&&JSON.stringify(llamadas[0].ids.sort())==='[1,2]'&&llamadas[0].cid===7,llamadas[0]);
- ok('Sale del modo elegir',!(await a.evaluate(()=>document.body.classList.contains('eligiendo'))));
- ok('Queda 1 sin categoría en el filtro',(await a.textContent('#chips')).includes('Sin categoría de pago · 1') && (await a.$$('.card')).length===1);
- await a.screenshot({path:'shots5/c6-listo.png'});
+ // Pestaña "Todos": se ve la categoría de cada uno
+ await a.click('[data-pestana="todos"]');await a.waitForTimeout(150);
+ const todos=await a.textContent('#listaModelos');
+ ok('En "Todos" se ven los 5 con su categoría',(await a.$$('#listaModelos .m-fila')).length===5 && todos.includes('Tiene: Ventanas'));
+ ok('El que ya está en General sale con ✓ y no se puede marcar',todos.includes('Ya está en General') && await a.$eval('.m-fila[data-mid="3"]',x=>x.disabled));
+ ok('Al cambiar de pestaña no quedan marcados escondidos',(await a.$$('.m-fila.sel')).length===0 && (await a.textContent('#btnAsignar'))==='Elige los modelos');
+ await a.click('.m-fila[data-mid="1"]');await a.click('.m-fila[data-mid="2"]');
+ await a.click('.m-fila[data-mid="4"]');await a.waitForTimeout(100);
+ ok('Marcar uno con otra categoría avisa que pasará de Ventanas a General',(await a.textContent('.m-fila[data-mid="4"]')).includes('Pasará de Ventanas a General'));
+ await a.screenshot({path:'shots5/k2-todos.png'});
 
- // Desde el aviso de Inicio: entra directo al filtro y en modo elegir
- await a.goto('http://127.0.0.1:8765/catalogo.html?filtro=sin-categoria');await a.waitForSelector('.card');await a.waitForTimeout(400);
- ok('Con ?filtro=sin-categoria abre el filtro ya eligiendo',await a.evaluate(()=>document.body.classList.contains('eligiendo')) && (await a.$$('.card')).length===1);
- await a.click('.card[data-id="4"]');await a.click('#btnSelAsignar');await a.waitForSelector('#sheetCategoria.open');
- await a.click('#listaCategorias [data-cat="8"]');await a.waitForTimeout(600);
- ok('Asignar el último deja todo con categoría y vuelve a "Todos"',!(await a.textContent('#chips')).includes('Sin categoría') && (await a.$$('.card')).length===4);
+ // Confirmación antes de cambiar una categoría
+ a._dlg=[];
+ await a.click('#btnAsignar');await a.waitForTimeout(800);
+ ok('Pregunta antes de cambiar la categoría de uno que ya tenía',a._dlg.length===1 && a._dlg[0].includes('1 modelo ya tiene otra categoría'),a._dlg);
+ ok('Se guardan los 3 marcados con General',llamadas.length===1 && JSON.stringify(llamadas[0].ids.sort())==='[1,2,4]' && llamadas[0].cid===7,llamadas[0]);
+ ok('La hoja se cierra y General dice "Usada en 4 modelos"',!(await a.$('#sheetModelos.open')) && (await a.textContent('#asigSub')).includes('Usada en 4 modelos'));
 
- // Tocar una tarjeta fuera del modo elegir sigue abriendo la ficha
- await a.click('.card[data-id="3"]');await a.waitForTimeout(400);
- ok('Fuera del modo elegir, la tarjeta abre la ficha',!!(await a.$('#sheetDetalle.open')));
+ // Si todos estaban sin categoría, no pregunta
+ await a.click('#btnAsignarModelos');await a.waitForSelector('#sheetModelos.open');
+ ok('Queda 1 sin categoría',(await a.$$('#listaModelos .m-fila')).length===1);
+ a._dlg=[];
+ await a.click('#btnMarcarTodos');await a.click('#btnAsignar');await a.waitForTimeout(800);
+ ok('Sin cambios de categoría, guarda directo sin preguntar',a._dlg.length===0 && llamadas.length===2 && llamadas[1].ids[0]===5);
+ await a.click('#sheetFicha [data-cerrar="sheetFicha"]');await a.waitForTimeout(400);
+ ok('El aviso de arriba desaparece cuando todos tienen categoría',(await a.textContent('#avisoSin')).trim()==='');
+
+ // Nombre vacío: el error se ve debajo del campo
+ await a.click('#btnNuevo');await a.waitForSelector('#sheetFicha.open');
+ ok('Una categoría nueva todavía no muestra "Asignar a modelos"',!(await a.isVisible('#btnAsignarModelos')));
+ await a.click('#btnGuardar');await a.waitForTimeout(150);
+ ok('Sin nombre, el error se ve debajo del campo',await a.isVisible('#eNombre'));
+
+ // Catálogo ya no tiene "Elegir varios"
+ await a.goto('http://127.0.0.1:8765/catalogo.html');await a.waitForSelector('.card');
+ ok('Catálogo ya no tiene "Elegir varios"',!(await a.$('#btnElegir')) && !(await a.textContent('#chips')).includes('Sin categoría'));
 
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

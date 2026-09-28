@@ -16,6 +16,7 @@ Simulan Supabase con datos falsos: no tocan la base real y los PIN son de mentir
 - test21: Producción — lista, ficha por etapas, asignar trabajador, marcar terminado, Combo en paralelo
 - test22: Categorías de pago (solo admin) — crear, editar, eliminar, fijo o por m²
 - test23: Catálogo — categoría de pago en el formulario del modelo
-- test24: Catálogo — elegir varios modelos y darles la misma categoría de pago
+- test24: Categorías de pago — "Asignar a modelos": sin categoría primero, ver la de cada uno, no pisar sin confirmar; Catálogo sin "Elegir varios"
 - test25: Producción — sin categoría no se asigna, "Asignar" a la derecha, fabricar para exhibición (tipo, modelo, especificaciones, categoría), cancelar orden, abrir desde aviso
 - test26: Inicio del trabajador (empezar uno a la vez, terminar, pagos, vale) y avisos del admin (vales, sin asignar, sin categoría)
+- test27: menú y perfil — sin señal no se esconde Producción ni se adivina el rol; reintentar

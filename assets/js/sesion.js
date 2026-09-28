@@ -44,17 +44,34 @@
   // Producción solo lo usan los administradores (Gualfredo/Ray): al resto no se le
   // muestra el botón del menú de abajo.
   function ocultarProduccionSiNoAdmin(p){
-    if(!p || p.rol === 'admin') return;
+    // Solo se quita si sabemos el rol (si no se pudo leer el perfil, no se esconde nada)
+    if(!p || !p.rol || p.rol === 'admin') return;
     const cont = document.getElementById('menuModulos');
     const item = cont && cont.querySelector('a.nav-item[href="produccion.html"]');
     if(item) item.remove();
   }
   async function perfil(){
-    if(perfilActual){ ocultarProduccionSiNoAdmin(perfilActual); return perfilActual; }
+    // Si el rol no se pudo leer, se vuelve a intentar la próxima vez (no se queda "sin rol")
+    if(perfilActual && perfilActual.rol){ ocultarProduccionSiNoAdmin(perfilActual); return perfilActual; }
     const s = await sesionActual();
     if(!s) return null;
-    const { data } = await db.from('perfiles').select('*').eq('id', s.user.id).maybeSingle();
-    perfilActual = data || { nombre: (s.user.user_metadata || {}).nombre || 'Usuario', rol: (s.user.user_metadata || {}).rol || 'vendedor' };
+    // Si la señal falla al leer el perfil, se reintenta y luego se usa el último perfil
+    // guardado en este teléfono. Nunca se adivina el rol (antes caía en "vendedor" y
+    // a un administrador se le escondía Producción).
+    const CLAVE = 'ah_cache_perfil_' + s.user.id;
+    let data = null;
+    for(let i = 0; i < 2 && !data; i++){
+      try{
+        const r = await db.from('perfiles').select('*').eq('id', s.user.id).maybeSingle();
+        if(!r.error) data = r.data || null;
+        if(!r.error) break;
+      } catch(e){}
+      if(i === 0) await new Promise(ok => setTimeout(ok, 600));
+    }
+    if(data){ try{ localStorage.setItem(CLAVE, JSON.stringify(data)); } catch(e){} }
+    else { try{ data = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch(e){ data = null; } }
+    const meta = s.user.user_metadata || {};
+    perfilActual = data || { nombre: meta.nombre || 'Usuario', rol: meta.rol || null };
     ocultarProduccionSiNoAdmin(perfilActual);
     // El trabajador solo usa su Inicio: cualquier otra pantalla lo regresa allí
     if(perfilActual.rol === 'trabajador' && enModulo){ location.replace('index.html'); return null; }

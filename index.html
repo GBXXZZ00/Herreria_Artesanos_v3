@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=40">
+<link rel="stylesheet" href="assets/css/base.css?v=41">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -66,28 +66,43 @@
   .aviso-btn{margin-left:auto;flex-shrink:0;height:38px;padding:0 14px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800}
   #sheetPin .sheet-body{padding-bottom:calc(24px + var(--safe-b))}
   #sheetPin .pin-cab{margin-top:4px}
-  /* Pendientes: una caja, una línea por cosa, color según qué es */
-  .pend{margin:0 0 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden;box-shadow:var(--shadow-sm)}
-  .pend-cab{display:flex;align-items:center;gap:8px;padding:12px 14px 4px;font-size:13px;font-weight:800;color:var(--ink-soft)}
+  /* Pendientes: una tarjeta de color por cosa, en una sola línea */
+  .pend-cab{display:flex;align-items:center;gap:8px;margin:2px 4px 10px;font-size:13px;font-weight:800;color:var(--ink-soft)}
   .pend-n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#C2410C;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
-  .pend-fila{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;text-align:left;color:var(--ink);text-decoration:none;transition:background-color 140ms var(--ease-out),transform 140ms var(--ease-out)}
-  .pend-fila:active{background:var(--surface-2);transform:scale(0.99)}
-  .pend-fila + .pend-fila{border-top:1px solid var(--line)}
-  .pend-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .pend-t{flex:1;min-width:0;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pend-t span{font-weight:600;color:var(--ink-soft)}
-  .pend-fila .chev{color:var(--ink-faint);flex-shrink:0}
-  .c-rojo{background:#FDE3E1;color:#B42318}
-  .c-naranja{background:#FFE7C2;color:#8A5A00}
-  .c-verde{background:#DDF2E6;color:#1B6B3A}
-  .c-teal{background:var(--accent-soft);color:var(--accent)}
-  .aviso-card.notif{padding:12px 14px}
-  .aviso-card.notif .ini-ico{width:38px;height:38px;border-radius:11px}
-  .aviso-card.notif .aviso-t{font-size:14.5px}
-  .aviso-card.notif .aviso-s{font-size:12.5px}
+  .pend-lista{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+  .pend-fila{display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border-radius:16px;border:1px solid;text-align:left;text-decoration:none;opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms);transition:transform 140ms var(--ease-out)}
+  .pend-fila:active{transform:scale(0.98)}
+  .pend-ico{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .pend-t{flex:1;min-width:0;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pend-t span{font-weight:600;opacity:.75}
+  .pend-fila .chev{flex-shrink:0;opacity:.6}
+  .pend-fila.rojo{background:#FFF5F4;border-color:#F4C7C3;color:#7A1A12;box-shadow:0 6px 18px rgba(180,35,24,0.12)}
+  .pend-fila.rojo .pend-ico{background:#FDE3E1;color:#B42318}
+  .pend-fila.naranja{background:#FFF8EC;border-color:#F2C99A;color:#5C3D00;box-shadow:0 6px 18px rgba(194,120,0,0.14)}
+  .pend-fila.naranja .pend-ico{background:#FFE7C2;color:#8A5A00}
+  .pend-fila.verde{background:#F2FAF5;border-color:#B7E0C6;color:#14532D;box-shadow:0 6px 18px rgba(27,107,58,0.12)}
+  .pend-fila.verde .pend-ico{background:#DDF2E6;color:#1B6B3A}
+  .pend-fila.teal{background:#F1F7F7;border-color:#BCD6D8;color:#123F44;box-shadow:0 6px 18px rgba(23,85,92,0.12)}
+  .pend-fila.teal .pend-ico{background:var(--accent-soft);color:var(--accent)}
+
+  /* Avisos del teléfono: una línea delgada y en gris */
+  .notif-fila{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 8px 6px 12px;margin-bottom:16px;border-radius:14px;background:var(--surface-2);color:var(--ink-soft);text-align:left;font-size:13.5px;font-weight:700;transition:transform 140ms var(--ease-out)}
+  .notif-fila:active{transform:scale(0.98)}
+  .notif-fila svg{flex-shrink:0}
+  .notif-fila .nt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .notif-fila .aviso-btn{height:34px;padding:0 13px;font-size:13px;border-radius:10px}
+
+  /* Módulos en dos columnas */
+  .ini-grid .ini-tile{gap:12px;padding:14px}
+  .ini-grid .ini-tile .ini-ico{width:46px;height:46px;border-radius:14px}
+  .ini-grid .ini-tile .ini-nombre{font-size:16.5px}
+  .ini-grid .ini-tile .ini-cuenta{font-size:13px}
+  .ini-grid .ini-tile.pronto{gap:12px}
+  .ini-grid .ini-tile.pronto .ini-ico{width:46px;height:46px}
 
   /* Inicio del trabajador */
-  .es-trabajador #btnNuevaVenta, .es-trabajador #modulos, .es-trabajador #menuModulos{display:none}
+  .es-trabajador #btnNuevaVenta, .es-trabajador #modulos, .es-trabajador #menuModulos,
+  .sin-perfil #btnNuevaVenta, .sin-perfil #modulos, .sin-perfil #menuModulos{display:none}
   .es-trabajador .page{padding-bottom:calc(var(--safe-b) + 32px)}
   .t-activo{display:block;width:100%;text-align:left;padding:18px;margin-bottom:12px;border-radius:var(--radius);background:var(--accent);color:#fff;box-shadow:0 12px 28px rgba(23,85,92,0.28);transition:transform 150ms var(--ease-out)}
   .t-activo:active{transform:scale(0.98)}
@@ -353,13 +368,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=40"></script>
-<script src="assets/js/supabase-client.js?v=40"></script>
-<script src="assets/js/img-compress.js?v=40"></script>
-<script src="assets/js/comun.js?v=40"></script>
-<script src="assets/js/avisos.js?v=40"></script>
-<script src="assets/js/sesion.js?v=40"></script>
-<script src="assets/js/mi-trabajo.js?v=40"></script>
+<script src="assets/vendor/supabase.js?v=41"></script>
+<script src="assets/js/supabase-client.js?v=41"></script>
+<script src="assets/js/img-compress.js?v=41"></script>
+<script src="assets/js/comun.js?v=41"></script>
+<script src="assets/js/avisos.js?v=41"></script>
+<script src="assets/js/sesion.js?v=41"></script>
+<script src="assets/js/mi-trabajo.js?v=41"></script>
 <script>
 (function(){
   'use strict';
@@ -503,10 +518,9 @@
     const listos = mods.filter(m => m.listo), pronto = mods.filter(m => !m.listo);
     let i = 0;
     $('modulos').innerHTML = listos.map(m => `
-      <a class="ini-tile ancho" href="${m.href}" style="--i:${i++}">
-        <span class="ini-ico">${S.iconoModulo(m, 28)}</span>
-        <span><span class="ini-nombre">${m.nombre}</span><span class="ini-cuenta" id="cuenta-${m.id}"><span class="sk-linea" style="display:block;width:140px;margin-top:4px"></span></span></span>
-        <svg class="flecha" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      <a class="ini-tile" href="${m.href}" style="--i:${i++}">
+        <span class="ini-ico">${S.iconoModulo(m, 24)}</span>
+        <span><span class="ini-nombre">${m.nombre}</span><span class="ini-cuenta" id="cuenta-${m.id}"><span class="sk-linea" style="display:block;width:90px;margin-top:4px"></span></span></span>
       </a>`).join('') + pronto.map(m => `
       <div class="ini-tile pronto" style="--i:${i++}" aria-disabled="true">
         <span class="pill-pronto">Pronto</span>
@@ -568,11 +582,11 @@
 
   // Un pendiente = una línea: color según qué es, título corto y detalle
   // p = { color:'rojo'|'naranja'|'verde'|'teal', icono, titulo, detalle, href | vales:true }
-  function filaPendiente(p){
-    const dentro = `<span class="pend-ico c-${p.color}">${ICONOS[p.icono]}</span>
+  function filaPendiente(p, i){
+    const dentro = `<span class="pend-ico">${ICONOS[p.icono]}</span>
       <span class="pend-t">${esc(p.titulo)}${p.detalle ? ` <span>· ${esc(p.detalle)}</span>` : ''}</span>${CHEV}`;
-    return p.vales ? `<button class="pend-fila" type="button" data-abrir-vales>${dentro}</button>`
-      : `<a class="pend-fila" href="${esc(p.href)}" data-modulo>${dentro}</a>`;
+    return p.vales ? `<button class="pend-fila ${p.color}" type="button" style="--i:${i}" data-abrir-vales>${dentro}</button>`
+      : `<a class="pend-fila ${p.color}" href="${esc(p.href)}" style="--i:${i}" data-modulo>${dentro}</a>`;
   }
 
   let estadoNotif = null;
@@ -603,24 +617,21 @@
     } catch(e){}
     if(admin) pend.push(...await pendientesTaller());
 
-    let html = pend.length ? `<div class="pend" aria-label="Pendientes">
+    let html = pend.length ? `<section class="pend" aria-label="Pendientes">
       <div class="pend-cab">Pendientes <span class="pend-n">${pend.length}</span></div>
-      ${pend.map(filaPendiente).join('')}</div>` : '';
+      <div class="pend-lista">${pend.map(filaPendiente).join('')}</div></section>` : '';
 
     // Notificaciones del teléfono (aparte: no es un pendiente de trabajo)
     try{ estadoNotif = window.Avisos ? await window.Avisos.estado() : 'no-soportado'; } catch(e){ estadoNotif = 'no-soportado'; }
     $('notifCheck').classList.toggle('hidden', estadoNotif !== 'activo');
     $('btnPrueba').classList.toggle('hidden', estadoNotif !== 'activo');
+    const campana = ICON_CAMPANA.replace('width="22" height="22"', 'width="18" height="18"');
     if(estadoNotif === 'inactivo'){
-      html += `<div class="aviso-card notif"><span class="ini-ico">${ICON_CAMPANA}</span>
-        <span><span class="aviso-t">Recibe avisos en tu teléfono</span><span class="aviso-s">${admin ? 'Ventas nuevas, pagos y pedidos a producción.' : p && p.rol === 'trabajador' ? 'Te avisamos cuando te asignen un trabajo.' : 'Te avisamos si un pago no llegó.'}</span></span>
-        <button class="aviso-btn" type="button" data-activar-notif>Activar</button></div>`;
+      html += `<div class="notif-fila">${campana}<span class="nt">Avisos en este teléfono</span><button class="aviso-btn" type="button" data-activar-notif>Activar</button></div>`;
     } else if(estadoNotif === 'instalar'){
-      html += `<div class="aviso-card notif"><span class="ini-ico">${ICON_CAMPANA}</span>
-        <span><span class="aviso-t">Para recibir avisos en tu teléfono</span><span class="aviso-s">Abre la app desde su ícono en la pantalla de inicio (no desde Safari) y vuelve aquí.</span></span></div>`;
+      html += `<button class="notif-fila" type="button" data-notif-ayuda="instalar">${campana}<span class="nt">Avisos: cómo activarlos</span>${CHEV}</button>`;
     } else if(estadoNotif === 'bloqueado'){
-      html += `<div class="aviso-card notif"><span class="ini-ico">${ICON_CAMPANA}</span>
-        <span><span class="aviso-t">Los avisos están bloqueados</span><span class="aviso-s">Actívalos en Ajustes › Notificaciones › Artesanos.</span></span></div>`;
+      html += `<button class="notif-fila" type="button" data-notif-ayuda="bloqueado">${campana}<span class="nt">Avisos bloqueados: cómo activarlos</span>${CHEV}</button>`;
     }
     cont.innerHTML = html;
   }
@@ -649,7 +660,7 @@
     }));
     const ep = $('cuenta-produccion');
     if(ep) ep.innerHTML = !(rProd && rProd.data) ? 'Pedidos en fabricación'
-      : enTaller ? `${enTaller} en taller${sinAsignar ? ` · <span class="num">${sinAsignar} sin asignar</span>` : ''}` : 'Taller libre';
+      : sinAsignar ? `<span class="num">${sinAsignar} sin asignar</span>` : enTaller ? `${enTaller} en taller` : 'Taller libre';
     if(sinAsignar) pend.push({ color:'naranja', icono:'persona', titulo: plural(sinAsignar, '1 trabajo sin asignar', 'trabajos sin asignar'), href:'produccion.html?filtro=asignar' });
     const vales = rVales.data || [];
     if(vales.length){
@@ -663,7 +674,7 @@
     } else if(nCats){
       if(sinCat) pend.push({ color:'teal', icono:'etiqueta', titulo: plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'produccion.html?filtro=sincat' });
       const nMod = rMod && typeof rMod.count === 'number' ? rMod.count : 0;
-      if(nMod) pend.push({ color:'teal', icono:'etiqueta', titulo: plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), detalle:'catálogo', href:'catalogo.html?filtro=sin-categoria' });
+      if(nMod) pend.push({ color:'teal', icono:'etiqueta', titulo: plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html' });
     }
     return pend;
   }
@@ -679,6 +690,11 @@
     pintarAvisosAdmin(perfilActual);
   }
   document.addEventListener('click', (e) => { if(e.target.closest('[data-activar-notif]')) activarNotif(); });
+  document.addEventListener('click', (e) => { if(e.target.closest('[data-reintentar-perfil]')) abrirInicio(); });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-notif-ayuda]'); if(!b) return;
+    toast(b.dataset.notifAyuda === 'bloqueado' ? 'Actívalos en Ajustes › Notificaciones › Artesanos.' : 'Abre la app desde su ícono en la pantalla de inicio (no desde Safari) y vuelve aquí.');
+  });
   $('btnPrueba').addEventListener('click', async () => {
     const { error } = await db.rpc('aviso_prueba');
     toast(error ? 'No se pudo mandar: ' + error.message : 'Listo. En unos segundos te llega el aviso', error ? 'error' : undefined);
@@ -709,6 +725,16 @@
     $('cuentaNombre').textContent = nombre;
     $('cuentaRol').textContent = nombreRol(p && p.rol);
     $('grupoModulosAdmin').classList.toggle('hidden', !(p && p.rol === 'admin'));
+    // Sin señal en el primer ingreso: no se adivina qué eres, se pide reintentar
+    document.body.classList.toggle('sin-perfil', !(p && p.rol));
+    if(!(p && p.rol)){
+      window.Trabajo.salirTrabajador();
+      $('modulos').innerHTML = '';
+      $('avisosAdmin').innerHTML = `<div class="aviso-card"><span><span class="aviso-t">No se pudo cargar tu perfil</span>
+        <span class="aviso-s">Revisa tu señal e intenta de nuevo.</span></span><button class="aviso-btn" type="button" data-reintentar-perfil>Reintentar</button></div>`;
+      mostrar('vInicio');
+      return;
+    }
     // El trabajador solo ve lo suyo: sus trabajos y sus pagos
     if(p && p.rol === 'trabajador'){
       $('modulos').innerHTML = '';

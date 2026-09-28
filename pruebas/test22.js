@@ -44,7 +44,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
     }
   }
   if(u.includes('/catalogo')){
-    if(method==='GET') return j(catalogo.filter(c=>c.categoria_pago_id!=null).map(c=>({categoria_pago_id:c.categoria_pago_id})));
+    if(method==='GET') return j(catalogo.map(c=>({id:c.id,nombre:'Modelo '+c.id,tipo:'Puerta Multilock',fotos:{},categoria_pago_id:c.categoria_pago_id})));
   }
   return j([]);});}
 

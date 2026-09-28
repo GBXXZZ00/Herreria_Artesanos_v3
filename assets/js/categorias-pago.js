@@ -3,7 +3,7 @@
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, toast, abrirHoja, cerrarHoja } = window.AH;
+  const { esc, toast, abrirHoja, cerrarHoja, fotoModelo, iconoTipo } = window.AH;
   const S = window.Sesion;
   const $ = (id) => document.getElementById(id);
 
@@ -18,23 +18,36 @@
 
   let categorias = [];
   let usoPorCategoria = {};
+  let modelos = [];   // todo el catálogo: id, nombre, tipo, fotos, categoria_pago_id
 
   async function cargar(){
     try{
       const [{ data: cats, error: e1 }, { data: cat, error: e2 }] = await Promise.all([
         db.from('categorias_pago').select('*').order('id'),
-        db.from('catalogo').select('categoria_pago_id').not('categoria_pago_id', 'is', null)
+        db.from('catalogo').select('id,nombre,tipo,fotos,categoria_pago_id').order('nombre', { ascending:true })
       ]);
       if(e1) throw e1;
       if(e2) throw e2;
       categorias = cats || [];
-      usoPorCategoria = {};
-      (cat || []).forEach(r => { usoPorCategoria[r.categoria_pago_id] = (usoPorCategoria[r.categoria_pago_id] || 0) + 1; });
+      modelos = cat || [];
+      contarUso();
       pintarLista();
     } catch(e){
       $('lista').innerHTML = '<div class="c-vacio">No se pudo cargar. Desliza para reintentar.</div>';
       toast(e.message || 'No se pudo cargar', 'error');
     }
+  }
+
+  function contarUso(){
+    usoPorCategoria = {};
+    modelos.forEach(m => { if(m.categoria_pago_id) usoPorCategoria[m.categoria_pago_id] = (usoPorCategoria[m.categoria_pago_id] || 0) + 1; });
+  }
+  const sinCategoria = () => modelos.filter(m => !m.categoria_pago_id);
+  const nombreCat = (id) => (categorias.find(c => c.id === id) || {}).nombre || '';
+  function pintarAviso(){
+    const n = sinCategoria().length;
+    $('avisoSin').innerHTML = n && categorias.length ? `<div class="c-aviso"><span class="c-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/></svg></span>
+      <span><b>${n === 1 ? '1 modelo sin categoría.' : n + ' modelos sin categoría.'}</b> Abre una categoría y toca "Asignar a modelos".</span></div>` : '';
   }
 
   function tarifasHtml(t){
@@ -47,6 +60,7 @@
   function pintarLista(){
     const cont = $('lista');
     $('subtitulo').textContent = categorias.length + (categorias.length === 1 ? ' grupo' : ' grupos');
+    pintarAviso();
     if(!categorias.length){ cont.innerHTML = '<div class="c-vacio">Todavía no hay categorías. Toca + para crear la primera.</div>'; return; }
     cont.innerHTML = categorias.map((c, i) => {
       const usados = usoPorCategoria[c.id] || 0;
@@ -81,7 +95,9 @@
     categoriaActual = c;
     $('fichaTitulo').textContent = c ? 'Editar categoría' : 'Nueva categoría';
     $('fNombre').value = c ? c.nombre : '';
-    $('eNombre').textContent = '';
+    $('campoNombre').classList.remove('invalid');
+    $('btnAsignarModelos').classList.toggle('hidden', !c);
+    pintarAsigSub();
     $('filasTarifa').innerHTML = ESPECIALIDADES.map(e => filaTarifaHtml(e, c && c.tarifas ? c.tarifas[e.v] : null)).join('');
     $('btnEliminar').classList.toggle('hidden', !c);
     abrirHoja('sheetFicha');
@@ -111,8 +127,8 @@
 
   $('btnGuardar').addEventListener('click', async () => {
     const nombre = $('fNombre').value.trim();
-    $('eNombre').textContent = '';
-    if(!nombre){ $('eNombre').textContent = 'Escribe el nombre'; return; }
+    $('campoNombre').classList.remove('invalid');
+    if(!nombre){ $('eNombre').textContent = 'Escribe el nombre'; $('campoNombre').classList.add('invalid'); $('fNombre').focus(); return; }
     const tarifas = leerTarifas();
     $('btnGuardar').disabled = true;
     try{
@@ -131,6 +147,102 @@
       toast(e.message || 'No se pudo guardar', 'error');
     } finally {
       $('btnGuardar').disabled = false;
+    }
+  });
+
+  $('fNombre').addEventListener('input', () => $('campoNombre').classList.remove('invalid'));
+
+  // ---------------- Asignar esta categoría a varios modelos ----------------
+  // Primero salen los que no tienen categoría (no se pisa nada). En "Todos" se ve la
+  // categoría de cada uno; los que ya están en esta no se pueden marcar, y si marcas
+  // uno que tiene otra, se avisa en la fila y se pide confirmar antes de guardar.
+  let pestana = 'sin';
+  const marcados = new Set();
+  function pintarAsigSub(){
+    const c = categoriaActual; if(!c) return;
+    const n = usoPorCategoria[c.id] || 0, sin = sinCategoria().length;
+    $('asigSub').textContent = (n ? `Usada en ${n} ${n === 1 ? 'modelo' : 'modelos'}` : 'Todavía no la usa ningún modelo') + (sin ? ` · ${sin} sin categoría` : '');
+  }
+  function visibles(){
+    return pestana === 'sin' ? sinCategoria() : modelos;
+  }
+  function pintarModelosAsignar(){
+    const c = categoriaActual;
+    const nSin = sinCategoria().length;
+    $('chipsModelos').innerHTML = [['sin', `Sin categoría · ${nSin}`], ['todos', `Todos · ${modelos.length}`]]
+      .map(([id, t]) => `<button class="chip ${pestana === id ? 'active' : ''}" type="button" role="tab" aria-selected="${pestana === id}" data-pestana="${id}">${esc(t)}</button>`).join('');
+    const lista = visibles();
+    const elegibles = lista.filter(m => m.categoria_pago_id !== c.id);
+    $('mCuenta').textContent = lista.length ? (pestana === 'sin' ? 'Ninguno tiene categoría' : 'Los que ya están en esta salen con ✓') : '';
+    const todos = elegibles.length && elegibles.every(m => marcados.has(m.id));
+    $('btnMarcarTodos').textContent = todos ? 'Quitar todos' : 'Marcar todos';
+    $('btnMarcarTodos').classList.toggle('hidden', !elegibles.length);
+    $('listaModelos').innerHTML = lista.length ? lista.map(m => {
+      const misma = m.categoria_pago_id === c.id;
+      const sel = marcados.has(m.id);
+      let tag;
+      if(misma) tag = `<span class="m-tag misma">Ya está en ${esc(c.nombre)}</span>`;
+      else if(m.categoria_pago_id && sel) tag = `<span class="m-tag cambia">Pasará de ${esc(nombreCat(m.categoria_pago_id))} a ${esc(c.nombre)}</span>`;
+      else if(m.categoria_pago_id) tag = `<span class="m-tag otra">Tiene: ${esc(nombreCat(m.categoria_pago_id))}</span>`;
+      else tag = '<span class="m-tag">Sin categoría</span>';
+      const f = fotoModelo(m);
+      return `<button class="m-fila ${sel ? 'sel' : ''}" type="button" data-mid="${m.id}" ${misma ? 'disabled' : ''} aria-pressed="${sel || misma}">
+        <span class="m-foto">${f ? `<img src="${esc(f)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 22)}</span>
+        <span class="m-txt"><span class="m-nom">${esc(m.nombre)}</span>${tag}</span>
+        <span class="m-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+      </button>`;
+    }).join('') : `<div class="m-vacio">${pestana === 'sin' ? 'Todos los modelos tienen categoría.' : 'No hay modelos en el catálogo.'}</div>`;
+    const n = marcados.size;
+    $('btnAsignar').disabled = !n;
+    $('btnAsignar').textContent = n ? `Asignar a ${n === 1 ? '1 modelo' : n + ' modelos'}` : 'Elige los modelos';
+  }
+  $('btnAsignarModelos').addEventListener('click', () => {
+    if(!categoriaActual) return;
+    pestana = sinCategoria().length ? 'sin' : 'todos';
+    marcados.clear();
+    $('modelosTitulo').textContent = 'Asignar ' + categoriaActual.nombre;
+    pintarModelosAsignar();
+    abrirHoja('sheetModelos');
+  });
+  $('chipsModelos').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pestana]'); if(!b) return;
+    if(b.dataset.pestana === pestana) return;
+    pestana = b.dataset.pestana;
+    marcados.clear();   // lo marcado es solo lo que se ve: no quedan elegidos escondidos
+    pintarModelosAsignar();
+  });
+  $('listaModelos').addEventListener('click', (e) => {
+    const b = e.target.closest('.m-fila'); if(!b || b.disabled) return;
+    const id = Number(b.dataset.mid);
+    if(marcados.has(id)) marcados.delete(id); else marcados.add(id);
+    pintarModelosAsignar();
+  });
+  $('btnMarcarTodos').addEventListener('click', () => {
+    const elegibles = visibles().filter(m => m.categoria_pago_id !== categoriaActual.id);
+    const todos = elegibles.every(m => marcados.has(m.id));
+    elegibles.forEach(m => { if(todos) marcados.delete(m.id); else marcados.add(m.id); });
+    pintarModelosAsignar();
+  });
+  $('btnAsignar').addEventListener('click', async () => {
+    const c = categoriaActual; if(!c || !marcados.size) return;
+    const ids = [...marcados];
+    const cambian = modelos.filter(m => marcados.has(m.id) && m.categoria_pago_id && m.categoria_pago_id !== c.id);
+    if(cambian.length && !confirm(`${cambian.length === 1 ? '1 modelo ya tiene otra categoría y se cambiará' : cambian.length + ' modelos ya tienen otra categoría y se cambiarán'} a ${c.nombre}. ¿Seguro?`)) return;
+    const btn = $('btnAsignar');
+    btn.disabled = true;
+    try{
+      const { error } = await db.rpc('asignar_categoria_modelos', { ids, cid: c.id });
+      if(error) throw error;
+      modelos.forEach(m => { if(marcados.has(m.id)) m.categoria_pago_id = c.id; });
+      contarUso();
+      marcados.clear();
+      cerrarHoja('sheetModelos');
+      toast(`Listo: ${ids.length === 1 ? '1 modelo' : ids.length + ' modelos'} con ${c.nombre}`);
+      pintarAsigSub();
+      pintarLista();
+    } catch(err){
+      toast('No se pudo guardar: ' + ((err && err.message) || 'revisa tu conexión'), 'error');
+      pintarModelosAsignar();
     }
   });
 
