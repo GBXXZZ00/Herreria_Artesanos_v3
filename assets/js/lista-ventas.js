@@ -11,9 +11,14 @@
   const ICON_ALERTA = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
   const ICON_WA = '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z"/></svg>';
   const ICON_TEL = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>';
-  const ICON_CHEV = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
   const ICON_DOC = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>';
   const ICON_DINERO = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/></svg>';
+  const ICON_EDITAR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+  const ICON_SEGUIMIENTO = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const ICON_COPIAR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const ICON_PDF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>';
+  const ICON_UNDO = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-6.7L3 9"/></svg>';
+  const ICON_CANCELAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5l5 5m0-5l-5 5"/></svg>';
 
   let todas = [];
   let cargadoUnaVez = false;
@@ -208,7 +213,10 @@
   }
 
   let fichaSeq = 0;
-  async function abrirFicha(id){
+  // id: de la venta. confirmarId: si viene de un aviso de pago, el abono a confirmar (abre esa
+  // hoja de una vez). resaltar: si viene de cualquier aviso, para llamar la atención sobre el
+  // paso "Mensaje" cuando está pendiente (así se ve claro qué hay que avisarle al cliente).
+  async function abrirFicha(id, confirmarId, resaltar){
     const seq = ++fichaSeq;
     actual = null;
     $('fichaBody').innerHTML = '<div class="sk-vcard" style="height:80px"></div><div class="sk-vcard" style="height:200px;margin-top:14px"></div>';
@@ -220,10 +228,35 @@
       actual = v;
       pintarFicha();
       prepararPDF(actual);
+      if(confirmarId){
+        const p = await window.Sesion.perfil().catch(() => null);
+        const puede = !!(p && p.confirma_abonos);
+        const ab = v.abonos.find(a => a.id === confirmarId && a.tipo === 'abono' && a.estado === 'por_confirmar');
+        if(seq !== fichaSeq) return;
+        if(ab && puede){ abrirAccion('confirmar', confirmarId); return; }
+      }
+      if(resaltar) resaltarMensaje();
     } catch(e){
       if(seq !== fichaSeq) return;
       $('fichaBody').innerHTML = `<div class="vacio"><h3>No se pudo abrir</h3><p>Revisa tu internet.</p></div>`;
     }
+  }
+  // Brillo breve alrededor del paso "Mensaje" cuando está pendiente y se llegó desde un aviso.
+  // Hasta cuándo debe verse el resaltado. Con un timestamp (en vez de solo agregar la clase)
+  // sobrevive a que pintarPie() vuelva a armar ese pedazo del HTML (pasa cuando el PDF
+  // termina de prepararse, justo después de abrir la ficha).
+  let resaltarHasta = 0;
+  function aplicarResaltado(){
+    const b = document.querySelector('#fichaBody .paso3[data-accion="mensaje"]');
+    if(!b) return;
+    const restante = resaltarHasta - Date.now();
+    if(restante <= 0 || b.classList.contains('hecho')) return;
+    b.classList.add('resaltar');
+    setTimeout(() => { if(Date.now() >= resaltarHasta) b.classList.remove('resaltar'); }, restante);
+  }
+  function resaltarMensaje(){
+    resaltarHasta = Date.now() + 1500;
+    aplicarResaltado();
   }
   async function recargarFicha(){
     if(!actual) return;
@@ -309,18 +342,19 @@
     if(v.estado === 'cancelada') datos.push(`<div class="f-dato ancho"><span>${cot ? 'Descartada' : 'Cancelada'} el ${esc(AV.fechaNum(v.cancelada_en))}</span><b style="font-weight:600">${esc(v.cancelada_motivo || 'Sin motivo')}</b></div>`);
     html += acordeon('datos', cot ? 'Datos de la cotización' : 'Datos de la venta', 'Fechas, sede y notas', `<div class="f-datos">${datos.join('')}</div>`);
 
-    const links = [];
-    if(v.estado !== 'cancelada' && v.estado !== 'entregada'){
-      if(editable(v)) links.push(opcion(`<a class="f-link" href="venta.html?editar=${v.id}" data-sub>`, cot ? 'Editar cotización' : 'Editar venta', 'Si el cliente cambia o agrega algo', '</a>'));
-      else links.push(`<span class="f-link" aria-disabled="true"><span><span class="op-t">No se puede editar</span><span class="op-s">Ya está ${esc(AV.ESTADOS[v.estado].t.toLowerCase())}</span></span></span>`);
+    const grid = [];
+    if(v.estado !== 'cancelada' && v.estado !== 'entregada' && editable(v)){
+      grid.push(botonGrid(`<a href="venta.html?editar=${v.id}" data-sub>`, ICON_EDITAR, 'Editar', '</a>'));
     }
-    links.push(opcion(`<a class="f-link" href="${esc(AV.urlSeguimiento(v))}" target="_blank" rel="noopener">`, 'Ver seguimiento', 'Así lo ve el cliente', '</a>'));
-    links.push(opcion('<button type="button" class="f-link" data-accion="copiar-enlace">', 'Copiar enlace de seguimiento', 'Para mandarlo por otro lado', '</button>'));
-    links.push(opcion('<button type="button" class="f-link" data-accion="descargar">', 'Descargar PDF', 'Guardarlo en el teléfono', '</button>'));
+    grid.push(botonGrid(`<a href="${esc(AV.urlSeguimiento(v))}" target="_blank" rel="noopener">`, ICON_SEGUIMIENTO, 'Seguimiento', '</a>'));
+    grid.push(botonGrid('<button type="button" data-accion="copiar-enlace">', ICON_COPIAR, 'Copiar enlace', '</button>'));
+    grid.push(botonGrid('<button type="button" data-accion="descargar">', ICON_PDF, 'PDF', '</button>'));
     const pv = pasosDe(v), k = pv.indexOf(v.estado);
-    if(esAdmin && k > 0) links.push(opcion(`<button type="button" class="f-link" data-retro="${pv[k - 1]}">`, `Devolver a "${AV.ESTADOS[pv[k - 1]].t}"`, 'Solo si se marcó por error', '</button>'));
-    if(v.estado !== 'cancelada' && v.estado !== 'entregada') links.push(opcion('<button type="button" class="f-link peligro" data-accion="cancelar">', cot ? 'Descartar cotización' : 'Cancelar venta', cot ? 'El cliente no la quiere' : 'Si pagó algo, se registra la devolución', '</button>'));
-    html += acordeon('mas', 'Más opciones', 'Editar, PDF, seguimiento, cancelar', `<div class="f-links" style="margin-top:0;border-top:0">${links.join('')}</div>`);
+    let masHtml = `<div class="grid-acciones">${grid.join('')}</div>`;
+    if(!editable(v) && v.estado !== 'cancelada' && v.estado !== 'entregada') masHtml += `<div class="f-nota">No se puede editar: ya está ${esc(AV.ESTADOS[v.estado].t.toLowerCase())}.</div>`;
+    if(esAdmin && k > 0) masHtml += `<button type="button" class="f-link-chico" data-retro="${pv[k - 1]}">${ICON_UNDO}Devolver a "${esc(AV.ESTADOS[pv[k - 1]].t)}"</button>`;
+    if(v.estado !== 'cancelada' && v.estado !== 'entregada') masHtml += `<button type="button" class="btn-peligro" data-accion="cancelar">${ICON_CANCELAR}${cot ? 'Descartar cotización' : 'Cancelar venta'}</button>`;
+    html += acordeon('mas', 'Más opciones', 'Editar, PDF, seguimiento, cancelar', masHtml);
 
     $('fichaBody').innerHTML = html;
     pintarPie();
@@ -338,8 +372,8 @@
     const d = e.target.closest && e.target.closest('details.acord');
     if(d) abiertos[d.dataset.sec] = d.open;
   }, true);
-  function opcion(abre, t, s, cierra){
-    return `${abre}<span><span class="op-t">${esc(t)}</span><span class="op-s">${esc(s)}</span></span>${ICON_CHEV}${cierra}`;
+  function botonGrid(abre, icono, t, cierra){
+    return `${abre.replace('>', ' class="btn-grid">')}${icono}<span>${esc(t)}</span>${cierra}`;
   }
 
   // Estados en orden (no se saltan pasos)
@@ -384,8 +418,17 @@
     return `<button type="button" class="paso3 ${hecho ? 'hecho' : ''}" ${attrs} ${deshabilitado ? 'disabled' : ''}>
       <span class="p3-num">${hecho ? ICON_OK : n}</span><span class="p3-t">${titulo}</span><span class="p3-s">${sub}</span></button>`;
   }
+  // Además de reaccionar al cambio de estado (ya existía), el paso "Mensaje" también se
+  // vuelve a marcar pendiente si se confirmó un pago después del último mensaje: el estado
+  // de la venta no cambia al confirmar un abono, así que sin esto el botón se quedaba
+  // marcado "Enviado" aunque hubiera algo nuevo que avisarle al cliente.
+  function ultimaConfirmacionMs(v){
+    return (v.abonos || []).filter(a => a.tipo === 'abono' && a.estado === 'confirmado' && a.confirmado_en)
+      .reduce((max, a) => Math.max(max, new Date(a.confirmado_en).getTime()), 0);
+  }
   function avisarHtml(v){
-    const msjHecho = !!(v.mensaje_en && v.mensaje_estado === v.estado);
+    const ultimaConf = ultimaConfirmacionMs(v);
+    const msjHecho = !!(v.mensaje_en && v.mensaje_estado === v.estado && (!ultimaConf || new Date(v.mensaje_en).getTime() >= ultimaConf));
     const pdfListo = !!(pdf && pdf.blob && pdf.clave && pdf.clave.startsWith(v.id + '|'));
     const pdfHecho = !!(v.pdf_en && new Date(v.pdf_en) >= new Date(v.actualizado_en));
     return paso(1, msjHecho, 'Mensaje', msjHecho ? 'Enviado ' + cuando(v.mensaje_en, v.mensaje_por) : 'Le escribe con el enlace de su seguimiento', 'data-accion="mensaje"')
@@ -396,6 +439,7 @@
     if(!v) return;
     const cont = document.querySelector('#fichaBody .pasos3');
     if(cont) cont.innerHTML = avisarHtml(v);
+    aplicarResaltado();
     $('fichaFoot').innerHTML = '';
     $('fichaFoot').classList.add('hidden');
   }
@@ -705,24 +749,25 @@
   function fichaPendiente(){
     let id = null;
     try{ id = sessionStorage.getItem('ah_ficha'); sessionStorage.removeItem('ah_ficha'); }catch(e){}
-    if(!id){
-      // Desde una notificación: ventas.html?abrir=12 (se quita de la dirección para no reabrirla)
-      const q = new URLSearchParams(location.search);
-      if(q.get('abrir')){ id = q.get('abrir'); history.replaceState(history.state, '', location.pathname); }
-    }
-    return id ? +id : null;
+    if(id) return { id:+id, confirmar:null, resaltar:false };
+    // Desde una notificación: ventas.html?abrir=12&confirmar=5 (se quita de la dirección para no reabrirla)
+    const q = new URLSearchParams(location.search);
+    if(!q.get('abrir')) return null;
+    id = q.get('abrir'); const confirmar = q.get('confirmar');
+    history.replaceState(history.state, '', location.pathname);
+    return { id:+id, confirmar: confirmar ? +confirmar : null, resaltar:true };
   }
   window.addEventListener('pageshow', async (e) => {
     if(!e.persisted) return;
     await cargar();
-    const id = fichaPendiente();
-    if(id) abrirFicha(id); else recargarFicha();
+    const pend = fichaPendiente();
+    if(pend) abrirFicha(pend.id, pend.confirmar, pend.resaltar); else recargarFicha();
   });
 
   (async function(){
     desdeCache();
     await cargar();
-    const id = fichaPendiente();
-    if(id) abrirFicha(id);
+    const pend = fichaPendiente();
+    if(pend) abrirFicha(pend.id, pend.confirmar, pend.resaltar);
   })();
 })();

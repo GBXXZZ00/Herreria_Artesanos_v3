@@ -146,7 +146,7 @@ const rpcs=[];
  await p.goBack({waitUntil:'commit'});await w(600);ok('Atrás cierra la ficha',!(await p.$('#sheetFicha.open')));
  // Editar la venta 2 (confirmada)
  await p.click('.chip[data-f="activas"]');await w(300);await p.click('.vcard[data-id="2"]');await w(1500);
- if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}await p.click('a.f-link[href^="venta.html?editar="]');await p.waitForURL('**/venta.html?editar=2');await w(1500);
+ if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}await p.click('a.btn-grid[href^="venta.html?editar="]');await p.waitForURL('**/venta.html?editar=2');await w(1500);
  ok('Editar carga los datos',(await p.inputValue('#cNombre'))==='María González'&&(await p.$$('#items .item')).length===1&&(await p.textContent('#btnGuardar'))==='Guardar cambios');
  ok('Editar mantiene el descuento',await p.inputValue('#vDesc')==='10');
  await p.click('#items [data-editar="0"]');await w(500);await p.fill('#pPrecio','280');await p.click('#btnProdListo');await w(400);

@@ -45,7 +45,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await y.click('#fichaBody [data-accion="pedir-produccion"]');await y.waitForTimeout(1500);
  ok('Pedir a producción llama al servidor',rpcs.some(x=>x[0]==='pedir_produccion'&&x[1].vid===2));
  ok('Queda "Pedido a producción ✓"',(await y.textContent('#fichaBody .btn-guia.hecho')).includes('Pedido a producción'));
- ok('Enlace para ver el seguimiento en la ficha',(await y.getAttribute('#fichaBody a.f-link[target="_blank"]','href')).includes('seguimiento.html?t=aaaaaaaa-bbbb-4ccc-8ddd-000000000002'));
+ ok('Enlace para ver el seguimiento en la ficha',(await y.getAttribute('#fichaBody a.btn-grid[target="_blank"]','href')).includes('seguimiento.html?t=aaaaaaaa-bbbb-4ccc-8ddd-000000000002'));
  await y.screenshot({path:'shots4/s1-pasos-vendedora.png'});
  // Admin: aviso en Inicio
  const ca=await b.newContext({...devices['iPhone 13']});await mock(ca,'u2','admin');

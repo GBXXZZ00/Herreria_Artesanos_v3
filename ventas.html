@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Ventas · Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
-<link rel="stylesheet" href="assets/css/base.css?v=31">
+<link rel="stylesheet" href="assets/css/base.css?v=32">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   #scrimAccion{z-index:50} #sheetAccion{z-index:51}
@@ -48,12 +48,17 @@
   .f-abono-s{font-size:12.5px;color:var(--ink-soft)}
   .f-abono-m{margin-left:auto;font-size:15px;font-weight:800;white-space:nowrap}
   .f-abono .ver{font-size:12px;font-weight:800;color:var(--accent)}
-  .f-links{display:flex;flex-direction:column;margin-top:22px;border-top:1px solid var(--line)}
-  .f-link{display:flex;align-items:center;justify-content:space-between;padding:15px 2px;font-size:15.5px;font-weight:700;color:var(--ink);border-bottom:1px solid var(--line);text-decoration:none;transition:transform 130ms var(--ease-out)}
+  .f-link{display:flex;align-items:center;justify-content:space-between;padding:15px 2px;font-size:15.5px;font-weight:700;color:var(--ink);text-decoration:none;transition:transform 130ms var(--ease-out)}
   .f-link:active{transform:scale(0.99)}
   button.f-link{width:100%;text-align:left}
   .f-link.peligro{color:var(--danger)}
-  .f-link[aria-disabled="true"]{color:var(--ink-faint);pointer-events:none}
+  .grid-acciones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .btn-grid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:72px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:12.5px;font-weight:700;transition:transform 130ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .btn-grid:active{transform:scale(0.96);background:var(--surface-2)}
+  .f-link-chico{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:38px;margin-top:10px;border:0;background:none;font-size:13px;font-weight:700;color:var(--ink-soft)}
+  .f-link-chico:active{opacity:0.6}
+  .btn-peligro{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:14px;border:1px solid #F4C7C3;border-radius:14px;background:none;color:var(--danger);font-size:15px;font-weight:700;transition:transform 130ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .btn-peligro:active{transform:scale(0.98);background:#FDECEA}
   .f-nota{font-size:13px;color:var(--ink-soft);margin-top:6px}
   .f-foot{display:flex;gap:10px}
   .f-foot .btn-secondary{flex:0 0 auto;height:54px;padding:0 18px}
@@ -126,13 +131,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=31"></script>
-<script src="assets/js/supabase-client.js?v=31"></script>
-<script src="assets/js/img-compress.js?v=31"></script>
-<script src="assets/js/comun.js?v=31"></script>
-<script src="assets/js/avisos.js?v=31"></script>
-<script src="assets/js/sesion.js?v=31"></script>
-<script src="assets/js/ventas-comun.js?v=31"></script>
-<script src="assets/js/lista-ventas.js?v=31"></script>
+<script src="assets/vendor/supabase.js?v=32"></script>
+<script src="assets/js/supabase-client.js?v=32"></script>
+<script src="assets/js/img-compress.js?v=32"></script>
+<script src="assets/js/comun.js?v=32"></script>
+<script src="assets/js/avisos.js?v=32"></script>
+<script src="assets/js/sesion.js?v=32"></script>
+<script src="assets/js/ventas-comun.js?v=32"></script>
+<script src="assets/js/lista-ventas.js?v=32"></script>
 </body>
 </html>

@@ -604,6 +604,11 @@ a.btn-primary{text-decoration:none;display:inline-flex;align-items:center;justif
 .paso3.hecho{background:var(--accent-soft);border-color:transparent}
 .paso3.hecho .p3-num{background:var(--accent);color:#fff}
 .paso3:not(.hecho):not([disabled]) .p3-num{background:var(--accent);color:#fff}
+/* Brillo breve al llegar desde un aviso, para que salte a la vista el paso pendiente */
+.paso3.resaltar{position:relative;animation:paso3Pulso 700ms var(--ease-out) 2}
+@keyframes paso3Pulso{0%{transform:scale(1)}50%{transform:scale(1.045)}100%{transform:scale(1)}}
+.paso3.resaltar::after{content:'';position:absolute;inset:-3px;border-radius:16px;border:2px solid var(--accent);opacity:0;pointer-events:none;animation:paso3Anillo 1400ms var(--ease-out) 2}
+@keyframes paso3Anillo{0%{opacity:.85}100%{opacity:0}}
 .plazo.ok{background:#E3F4EA;color:#1C6B3A}
 .f-abono.rech .f-abono-m{text-decoration:line-through;color:var(--ink-faint)}
 
