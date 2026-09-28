@@ -47,7 +47,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  for(const d of '333333') await y.click(`#pinTeclado [data-t="${d}"]`);
  await y.waitForSelector('#vInicio.entra');
  await y.click('#btnCuenta');await y.waitForSelector('#sheetCuenta.open');
- ok('Vendedora no ve "Usuarios" en Mi cuenta',await y.$eval('#btnUsuarios',x=>x.classList.contains('hidden')));
+ ok('Vendedora no ve el grupo de Administración en Mi cuenta',await y.$eval('#grupoModulosAdmin',x=>x.classList.contains('hidden')));
  // Entrando directo por la URL la manda de vuelta a Inicio
  await y.goto('http://127.0.0.1:8765/usuarios.html');await y.waitForURL('**/index.html');
  ok('Vendedora no puede entrar a usuarios.html directo',y.url().includes('index.html'));
@@ -59,7 +59,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  for(const d of '222222') await a.click(`#pinTeclado [data-t="${d}"]`);
  await a.waitForSelector('#vInicio.entra');
  await a.click('#btnCuenta');await a.waitForSelector('#sheetCuenta.open');
- ok('Admin sí ve "Usuarios" en Mi cuenta',!(await a.$eval('#btnUsuarios',x=>x.classList.contains('hidden'))));
+ ok('Admin sí ve el grupo de Administración con "Usuarios"',!(await a.$eval('#grupoModulosAdmin',x=>x.classList.contains('hidden'))));
  await a.click('#btnUsuarios');await a.waitForSelector('.u-card');
  ok('Lista muestra los 3 usuarios existentes',(await a.$$('.u-card')).length===3);
  ok('Se ve el rol/especialidad de cada uno',(await a.textContent('#lista')).includes('Vendedor'));

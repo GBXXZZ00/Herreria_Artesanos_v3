@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=34">
+<link rel="stylesheet" href="assets/css/base.css?v=35">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -42,11 +42,15 @@
   .pin-cargando .teclado{opacity:.45;pointer-events:none}
   .cuenta-cab{display:flex;align-items:center;gap:14px;padding:6px 0 18px}
   .cuenta-cab .avatar{width:54px;height:54px;font-size:21px}
-  .cuenta-op{display:flex;align-items:center;gap:14px;width:100%;padding:16px 4px;font-size:16.5px;font-weight:700;color:var(--ink);text-align:left;transition:transform 140ms var(--ease-out)}
+  .cuenta-op{display:flex;align-items:center;gap:14px;width:100%;padding:16px 4px;font-size:16.5px;font-weight:700;color:var(--ink);text-align:left;text-decoration:none;transition:transform 140ms var(--ease-out)}
   .cuenta-op:active{transform:scale(0.98)}
   .cuenta-op + .cuenta-op{border-top:1px solid var(--line)}
   .cuenta-op .op-ico{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0}
   .cuenta-op.salir{color:var(--danger)}
+  .cuenta-grupo{border-top:1px solid var(--line);margin-top:8px;padding-top:14px}
+  .cuenta-grupo + .cuenta-op{border-top:1px solid var(--line)}
+  .cuenta-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.3px;color:var(--ink-faint);text-transform:uppercase;margin:0 0 2px;padding:0 4px}
+  .cuenta-op .flecha{margin-left:auto;color:var(--ink-faint);flex-shrink:0}
   .notif-ok{color:var(--accent);font-weight:800;margin-left:4px}
   .notif-sub{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-top:1px}
   .aviso-card{display:flex;align-items:center;gap:14px;width:100%;padding:14px;margin-bottom:12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);text-align:left;text-decoration:none;color:var(--ink);transition:transform 140ms var(--ease-out)}
@@ -136,10 +140,6 @@
       <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
       Cambiar mi PIN
     </button>
-    <a class="cuenta-op hidden" id="btnUsuarios" href="usuarios.html" data-modulo>
-      <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-      Usuarios
-    </a>
     <button class="cuenta-op hidden" id="btnNotif">
       <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
       <span id="btnNotifTxt">Notificaciones</span>
@@ -148,6 +148,14 @@
       <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></span>
       Mandarme un aviso de prueba
     </button>
+    <div class="cuenta-grupo hidden" id="grupoModulosAdmin">
+      <p class="cuenta-eyebrow">Administración</p>
+      <a class="cuenta-op cuenta-modulo" id="btnUsuarios" href="usuarios.html" data-modulo>
+        <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Usuarios
+        <svg class="flecha" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+    </div>
     <button class="cuenta-op salir" id="btnSalir">
       <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></svg></span>
       Salir
@@ -172,11 +180,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=34"></script>
-<script src="assets/js/supabase-client.js?v=34"></script>
-<script src="assets/js/comun.js?v=34"></script>
-<script src="assets/js/avisos.js?v=34"></script>
-<script src="assets/js/sesion.js?v=34"></script>
+<script src="assets/vendor/supabase.js?v=35"></script>
+<script src="assets/js/supabase-client.js?v=35"></script>
+<script src="assets/js/comun.js?v=35"></script>
+<script src="assets/js/avisos.js?v=35"></script>
+<script src="assets/js/sesion.js?v=35"></script>
 <script>
 (function(){
   'use strict';
@@ -470,7 +478,7 @@
     $('cuentaAvatar').textContent = inicial(nombre);
     $('cuentaNombre').textContent = nombre;
     $('cuentaRol').textContent = nombreRol(p && p.rol);
-    $('btnUsuarios').classList.toggle('hidden', !(p && p.rol === 'admin'));
+    $('grupoModulosAdmin').classList.toggle('hidden', !(p && p.rol === 'admin'));
     pintarModulos(p);
     pintarAvisosAdmin(p);
     mostrar('vInicio');
