@@ -6,9 +6,9 @@ const ses=(sub)=>({access_token:b64({alg:'HS256',typ:'JWT'})+'.'+b64({sub,exp:no
 const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+(x!==undefined?'  → '+JSON.stringify(x):''));if(!c)fallas++;};
 
 let usuarios=[
-  {id:'u1',usuario:'gualfredo',nombre:'Gualfredo',rol:'admin',especialidad:null,activo:true,orden:1},
-  {id:'u2',usuario:'raymundo',nombre:'Ray',rol:'admin',especialidad:null,activo:true,orden:2},
-  {id:'u3',usuario:'yulimar',nombre:'Yulimar',rol:'vendedor',especialidad:null,activo:true,orden:3}
+  {id:'u1',usuario:'gualfredo',nombre:'Gualfredo',rol:'admin',especialidades:[],activo:true,orden:1},
+  {id:'u2',usuario:'raymundo',nombre:'Ray',rol:'admin',especialidades:[],activo:true,orden:2},
+  {id:'u3',usuario:'yulimar',nombre:'Yulimar',rol:'vendedor',especialidades:[],activo:true,orden:3}
 ];
 const llamadas=[];
 
@@ -24,7 +24,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
     if(body.accion==='crear'){
       const p=body.payload;
       if(usuarios.some(x=>x.usuario===p.usuario)) return j({error:'Ya existe un usuario con ese nombre de acceso'},400);
-      const nuevo={id:'nuevo1',usuario:p.usuario,nombre:p.nombre,rol:p.rol,especialidad:p.especialidad||null,activo:true,orden:usuarios.length+1};
+      const nuevo={id:'nuevo1',usuario:p.usuario,nombre:p.nombre,rol:p.rol,especialidades:Array.isArray(p.especialidades)?p.especialidades:[],activo:true,orden:usuarios.length+1};
       usuarios.push(nuevo);
       return j({id:nuevo.id});
     }
@@ -60,6 +60,9 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.waitForSelector('#vInicio.entra');
  await a.click('#btnCuenta');await a.waitForSelector('#sheetCuenta.open');
  ok('Admin sí ve el grupo de Administración con "Usuarios"',!(await a.$eval('#grupoModulosAdmin',x=>x.classList.contains('hidden'))));
+ ok('Mi cuenta muestra la cuadrícula de cajitas con 4 opciones',(await a.$$('#sheetCuenta .cuenta-box')).length===4);
+ ok('Las cajitas son Cambiar PIN, Notificaciones, Aviso de prueba y Salir',await a.$('#btnCambiarPin.cuenta-box')&&await a.$('#btnNotif.cuenta-box')&&await a.$('#btnPrueba.cuenta-box')&&await a.$('#btnSalir.cuenta-box'));
+ await a.screenshot({path:'shots4/s0-mi-cuenta-cajitas.png'});
  await a.click('#btnUsuarios');await a.waitForSelector('.u-card');
  ok('Lista muestra los 3 usuarios existentes',(await a.$$('.u-card')).length===3);
  ok('Se ve el rol/especialidad de cada uno',(await a.textContent('#lista')).includes('Vendedor'));
@@ -72,13 +75,14 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.click('#nRol [data-v="trabajador"]');
  ok('Al elegir trabajador aparece la especialidad',!(await a.$eval('#fEspecialidad',x=>x.classList.contains('hidden'))));
  await a.click('#nEspecialidad [data-v="herrero"]');
+ await a.click('#nEspecialidad [data-v="ventanero"]');
  await a.screenshot({path:'shots4/s1-nuevo-trabajador.png'});
  await a.click('#btnCrear');await a.waitForTimeout(600);
  const crea=llamadas.find(x=>x[0]==='crear');
- ok('Se llamó a crear con los datos correctos',crea&&crea[1].nombre==='Pedro Pérez'&&crea[1].usuario==='pedro'&&crea[1].rol==='trabajador'&&crea[1].especialidad==='herrero',crea&&crea[1]);
+ ok('Se llamó a crear con los datos correctos (varias especialidades)',crea&&crea[1].nombre==='Pedro Pérez'&&crea[1].usuario==='pedro'&&crea[1].rol==='trabajador'&&crea[1].especialidades.includes('herrero')&&crea[1].especialidades.includes('ventanero')&&crea[1].especialidades.length===2,crea&&crea[1]);
  await a.waitForTimeout(500);
  ok('Se cierra la hoja y aparece el nuevo usuario',(await a.$$('.u-card')).length===4);
- ok('Muestra la especialidad del nuevo trabajador',(await a.textContent('#lista')).includes('Herrero'));
+ ok('Muestra las especialidades del nuevo trabajador',(await a.textContent('#lista')).includes('Herrero')&&(await a.textContent('#lista')).includes('Ventanero'));
 
  // Restablecer PIN del nuevo trabajador
  await a.click('.u-card >> text=Pedro Pérez');await a.waitForSelector('#sheetFicha.open');

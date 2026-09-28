@@ -28,7 +28,9 @@
   }
 
   function subtitulo(u){
-    return u.rol === 'trabajador' ? (NOMBRE_ESPECIALIDAD[u.especialidad] || 'Trabajador') : NOMBRE_ROL[u.rol] || u.rol;
+    if(u.rol !== 'trabajador') return NOMBRE_ROL[u.rol] || u.rol;
+    const esp = (u.especialidades || []).map(e => NOMBRE_ESPECIALIDAD[e] || e);
+    return esp.length ? esp.join(' · ') : 'Trabajador';
   }
 
   function pintarLista(){
@@ -55,7 +57,7 @@
   }
 
   // ---------------- Nuevo usuario ----------------
-  let nRol = null, nEspecialidad = null;
+  let nRol = null, nEspecialidades = [];
   function marcarOpt(cont, valor){
     cont.querySelectorAll('.opt').forEach(b => b.classList.toggle('selected', b.dataset.v === valor));
   }
@@ -65,14 +67,16 @@
     marcarOpt($('nRol'), nRol);
     $('fEspecialidad').classList.toggle('hidden', nRol !== 'trabajador');
   });
+  // Especialidad: selección múltiple, cada toque prende o apaga esa opción sola.
   $('nEspecialidad').addEventListener('click', (e) => {
     const b = e.target.closest('.opt'); if(!b) return;
-    nEspecialidad = b.dataset.v;
-    marcarOpt($('nEspecialidad'), nEspecialidad);
+    const v = b.dataset.v;
+    nEspecialidades = nEspecialidades.includes(v) ? nEspecialidades.filter(x => x !== v) : [...nEspecialidades, v];
+    b.classList.toggle('selected', nEspecialidades.includes(v));
   });
   function limpiarForm(){
     $('nNombre').value = ''; $('nUsuario').value = ''; $('nPin').value = '';
-    nRol = null; nEspecialidad = null;
+    nRol = null; nEspecialidades = [];
     marcarOpt($('nRol'), null); marcarOpt($('nEspecialidad'), null);
     $('fEspecialidad').classList.add('hidden');
     ['eNombre', 'eUsuario', 'ePin', 'eEspecialidad'].forEach(id => $(id).textContent = '');
@@ -89,12 +93,12 @@
     if(!/^[a-z0-9._-]+$/i.test(usuario)){ $('eUsuario').textContent = 'Solo letras, números, punto o guion'; ok = false; }
     if(!/^\d{6}$/.test(pin)){ $('ePin').textContent = 'Debe ser de 6 números'; ok = false; }
     if(!nRol){ toast('Elige el tipo de cuenta', 'error'); ok = false; }
-    if(nRol === 'trabajador' && !nEspecialidad){ $('eEspecialidad').textContent = 'Elige la especialidad'; ok = false; }
+    if(nRol === 'trabajador' && !nEspecialidades.length){ $('eEspecialidad').textContent = 'Elige al menos una especialidad'; ok = false; }
     if(!ok) return;
 
     $('btnCrear').disabled = true;
     try{
-      await llamar('crear', { nombre, usuario, pin, rol:nRol, especialidad:nEspecialidad });
+      await llamar('crear', { nombre, usuario, pin, rol:nRol, especialidades:nEspecialidades });
       cerrarHoja('sheetNuevo');
       toast('Usuario creado');
       cargar();
