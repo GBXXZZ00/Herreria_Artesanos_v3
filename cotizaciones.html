@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Cotizaciones · Herrería Artesanos</title>
+<link rel="prefetch" href="venta.html">
+<link rel="stylesheet" href="assets/css/base.css?v=22">
+<style>
+  .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
+  #scrimAccion{z-index:50} #sheetAccion{z-index:51}
+  /* Ficha */
+  .f-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .f-num{font-size:13px;font-weight:800;color:var(--ink-faint)}
+  .f-nombre{font-size:22px;font-weight:800;letter-spacing:-0.4px;line-height:1.15;margin:2px 0 4px}
+  .f-sub{font-size:14px;color:var(--ink-soft)}
+  .f-contacto{display:flex;gap:8px;margin-top:12px}
+  .f-contacto a{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:12px;border:1px solid var(--line);font-size:14px;font-weight:700;color:var(--ink);text-decoration:none;transition:transform 130ms var(--ease-out)}
+  .f-contacto a:active{transform:scale(0.97)}
+  .f-sec{margin-top:22px}
+  .f-tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:0 0 10px}
+  .f-item{display:flex;gap:12px;padding:10px 0}
+  .f-item + .f-item{border-top:1px solid var(--line)}
+  .f-foto{width:56px;height:56px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .f-foto img{width:100%;height:100%;object-fit:cover}
+  .f-item-t{font-size:15px;font-weight:800}
+  .f-item-d{font-size:12.5px;color:var(--ink-soft);margin-top:2px;line-height:1.4}
+  .f-item-p{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-top:4px}
+  .f-item-p b{color:var(--ink)}
+  .f-datos{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;padding:14px;border-radius:var(--radius);background:var(--surface-2)}
+  .f-dato span{display:block;font-size:12px;color:var(--ink-soft)}
+  .f-dato b{display:block;font-size:14.5px;margin-top:1px}
+  .f-dato.ancho{grid-column:1 / -1}
+  .f-abono{display:flex;align-items:center;gap:12px;width:100%;padding:10px 0;text-align:left}
+  .f-abono + .f-abono{border-top:1px solid var(--line)}
+  .f-abono-ico{width:36px;height:36px;border-radius:11px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .f-abono.dev .f-abono-ico{background:#FDECEA;color:var(--danger)}
+  .f-abono-t{font-size:14.5px;font-weight:700}
+  .f-abono-s{font-size:12.5px;color:var(--ink-soft)}
+  .f-abono-m{margin-left:auto;font-size:15px;font-weight:800;white-space:nowrap}
+  .f-abono .ver{font-size:12px;font-weight:800;color:var(--accent)}
+  .f-links{display:flex;flex-direction:column;margin-top:22px;border-top:1px solid var(--line)}
+  .f-link{display:flex;align-items:center;justify-content:space-between;padding:15px 2px;font-size:15.5px;font-weight:700;color:var(--ink);border-bottom:1px solid var(--line);text-decoration:none;transition:transform 130ms var(--ease-out)}
+  .f-link:active{transform:scale(0.99)}
+  button.f-link{width:100%;text-align:left}
+  .f-link.peligro{color:var(--danger)}
+  .f-link[aria-disabled="true"]{color:var(--ink-faint);pointer-events:none}
+  .f-nota{font-size:13px;color:var(--ink-soft);margin-top:6px}
+  .f-foot{display:flex;gap:10px}
+  .f-foot .btn-secondary{flex:0 0 auto;height:54px;padding:0 18px}
+  .f-foot .btn-primary{flex:1;min-width:0}
+  .totales{padding:14px 16px;border-radius:var(--radius);background:var(--surface-2)}
+  .t-fila{display:flex;justify-content:space-between;font-size:14.5px;padding:2px 0;color:var(--ink-soft)}
+  .t-fila b{color:var(--ink)}
+  .t-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;padding-top:10px;border-top:1px solid var(--line)}
+  .t-total span{font-weight:800}
+  .t-total b{font-size:24px;font-weight:800;color:var(--accent)}
+  .aviso-50{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#8A5A00;background:#FFF4DC;padding:9px 12px;border-radius:12px;margin-top:8px}
+  .resta-t{font-size:14px;color:var(--ink-soft);margin-top:8px}
+  .resta-t b{color:var(--ink)}
+  .conf-total{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px;border-radius:var(--radius);background:var(--surface-2);margin-bottom:6px}
+  .conf-total span{font-size:15px;color:var(--ink-soft)}
+  .conf-total b{font-size:22px;font-weight:800}
+</style>
+</head>
+<body data-requiere-sesion="si" data-modo="cotizaciones">
+
+<header class="topbar" id="topbar">
+  <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+  <div class="topbar-text">
+    <div class="topbar-title" id="titulo">Cotizaciones</div>
+    <div class="topbar-sub" id="subtitulo">Cargando</div>
+  </div>
+  <button class="icon-btn" id="btnActualizar" aria-label="Actualizar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+  </button>
+</header>
+
+<main class="page">
+  <div class="chips" id="chips" role="tablist"></div>
+  <label class="search-box">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input type="search" id="buscador" placeholder="Buscar por nombre, cédula o número" autocomplete="off" aria-label="Buscar">
+  </label>
+  <section class="vlista" id="lista" aria-live="polite">
+    <div class="sk-vcard"></div><div class="sk-vcard"></div><div class="sk-vcard"></div>
+  </section>
+</main>
+
+<a class="fab" id="btnNueva" href="venta.html" data-sub aria-label="Nueva venta">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</a>
+
+<div class="bottom-nav-wrap" id="menuModulos" data-activo="cotizaciones"></div>
+
+<!-- Ficha -->
+<div class="sheet-scrim" id="scrimFicha" data-cerrar="sheetFicha"></div>
+<section class="sheet" id="sheetFicha" role="dialog" aria-modal="true" aria-label="Detalle">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetFicha" aria-label="Cerrar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sheet-body" id="fichaBody" style="padding-top:18px"></div>
+  <div class="sheet-foot" id="fichaFoot"></div>
+</section>
+
+<!-- Acción: abono, convertir, cancelar -->
+<div class="sheet-scrim" id="scrimAccion" data-cerrar="sheetAccion"></div>
+<section class="sheet sheet-auto" id="sheetAccion" role="dialog" aria-modal="true" aria-labelledby="accionTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="accionTitulo"></h2>
+    <button class="icon-btn" data-cerrar="sheetAccion" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="accionBody"></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnAccion"></button></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/vendor/supabase.js?v=22"></script>
+<script src="assets/js/supabase-client.js?v=22"></script>
+<script src="assets/js/img-compress.js?v=22"></script>
+<script src="assets/js/comun.js?v=22"></script>
+<script src="assets/js/sesion.js?v=22"></script>
+<script src="assets/js/ventas-comun.js?v=22"></script>
+<script src="assets/js/lista-ventas.js?v=22"></script>
+</body>
+</html>

@@ -9,9 +9,9 @@
   const MODULOS = [
     { id:'inicio',       nombre:'Inicio',       href:'index.html',    listo:true,
       icon:'<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>' },
-    { id:'cotizaciones', nombre:'Cotizaciones', href:null,            listo:false,
+    { id:'cotizaciones', nombre:'Cotizaciones', href:'cotizaciones.html', listo:true,
       icon:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>' },
-    { id:'ventas',       nombre:'Ventas',       href:null,            listo:false,
+    { id:'ventas',       nombre:'Ventas',       href:'ventas.html',   listo:true,
       icon:'<path d="M6 2l1.5 4h9L18 2"/><rect x="3" y="6" width="18" height="15" rx="2"/><path d="M8 11a4 4 0 0 0 8 0"/>' },
     { id:'catalogo',     nombre:'Catálogo',     href:'catalogo.html', listo:true,
       icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/>' },
@@ -75,11 +75,18 @@
   // módulo siempre regresa a Inicio; cambiar de módulo reemplaza (no apila).
   // ---------------------------------------------------------------------------
   const FLAG = 'ah_desdeInicio';
+  const FLAG_SUB = 'ah_sub';   // pantalla abierta desde un módulo (ej. Nueva venta desde Ventas): atrás regresa allí
   const cont = document.getElementById('menuModulos');
   const activo = cont ? cont.dataset.activo : null;
   const enModulo = activo && activo !== 'inicio';
   function guardarFlag(){ try{ sessionStorage.setItem(FLAG, '1'); }catch(e){} }
 
+  // Enlaces a una pantalla secundaria (ej. Nueva venta o Editar desde la lista)
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-sub]');
+    if(a){ try{ sessionStorage.setItem(FLAG_SUB, '1'); }catch(err){} }
+  });
+  const esSubpantalla = () => !!(history.state && history.state.sub);
   // Regresa a Inicio sin apilar pasos (Inicio siempre queda debajo del módulo)
   function irInicio(){
     const n = (window.AH && AH.profundidad) ? AH.profundidad() : 0;
@@ -88,7 +95,12 @@
 
   if(enModulo){
     const st = history.state || {};
-    if(!st.modulo){
+    let esSub = false;
+    try{ esSub = sessionStorage.getItem(FLAG_SUB) === '1'; if(esSub) sessionStorage.removeItem(FLAG_SUB); }catch(e){}
+    if(!st.modulo && esSub){
+      try{ sessionStorage.removeItem(FLAG); }catch(e){}
+      history.replaceState(Object.assign({}, st, { modulo:true, sub:true, ah:0 }), '');
+    } else if(!st.modulo){
       let desdeInicio = false;
       try{ desdeInicio = sessionStorage.getItem(FLAG) === '1'; sessionStorage.removeItem(FLAG); }catch(e){}
       if(desdeInicio){
@@ -124,7 +136,7 @@
     });
   }
 
-  window.Sesion = { irInicio, MODULOS, iconoModulo, pintarMenu, sesionActual, perfil, requerir, entrar, salir, cambiarPin };
+  window.Sesion = { irInicio, esSubpantalla, MODULOS, iconoModulo, pintarMenu, sesionActual, perfil, requerir, entrar, salir, cambiarPin };
 
   pintarMenu();
   if(document.body.dataset.requiereSesion === 'si') requerir();

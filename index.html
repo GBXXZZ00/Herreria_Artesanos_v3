@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=21">
+<link rel="stylesheet" href="assets/css/base.css?v=22">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -149,10 +149,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=21"></script>
-<script src="assets/js/supabase-client.js?v=21"></script>
-<script src="assets/js/comun.js?v=21"></script>
-<script src="assets/js/sesion.js?v=21"></script>
+<script src="assets/vendor/supabase.js?v=22"></script>
+<script src="assets/js/supabase-client.js?v=22"></script>
+<script src="assets/js/comun.js?v=22"></script>
+<script src="assets/js/sesion.js?v=22"></script>
 <script>
 (function(){
   'use strict';
@@ -325,6 +325,25 @@
     }
   }
 
+  // Cotizaciones abiertas, ventas activas y por cobrar
+  async function contarVentas(){
+    const ec = $('cuenta-cotizaciones'), ev = $('cuenta-ventas');
+    if(!ec && !ev) return;
+    try{
+      const { data, error } = await db.from('ventas').select('estado,total,vence_en,confirmada_en,abonos(monto,tipo)').in('estado', ['cotizacion', 'confirmada', 'en_produccion', 'lista', 'entregada']);
+      if(error) throw error;
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      const abiertas = data.filter(v => v.estado === 'cotizacion' && new Date(v.vence_en + 'T00:00') >= hoy).length;
+      const activas = data.filter(v => ['confirmada', 'en_produccion', 'lista'].includes(v.estado)).length;
+      const porCobrar = data.filter(v => v.estado !== 'cotizacion' && (Number(v.total) - (v.abonos || []).reduce((a, x) => a + (x.tipo === 'devolucion' ? -1 : 1) * Number(x.monto), 0)) > 0.009).length;
+      if(ec) ec.innerHTML = abiertas ? `<span class="num">${abiertas} ${abiertas === 1 ? 'abierta' : 'abiertas'}</span>` : 'Ninguna abierta';
+      if(ev) ev.innerHTML = activas || porCobrar ? `${activas} ${activas === 1 ? 'activa' : 'activas'}${porCobrar ? ` · <span class="num">${porCobrar} por cobrar</span>` : ''}` : 'Ninguna activa';
+    } catch(e){
+      if(ec) ec.textContent = 'Clientes que preguntaron';
+      if(ev) ev.textContent = 'Pedidos con abono';
+    }
+  }
+
   let perfilActual = null;
   async function abrirInicio(){
     const p = await S.perfil();
@@ -340,6 +359,7 @@
     pintarModulos(p);
     mostrar('vInicio');
     contarCatalogo();
+    contarVentas();
   }
 
   $('btnCuenta').addEventListener('click', () => abrirHoja('sheetCuenta'));
@@ -412,7 +432,7 @@
   });
 
   // Al volver a Inicio desde un módulo (página guardada por el navegador), refresca los números
-  window.addEventListener('pageshow', (e) => { if(e.persisted && !$('vInicio').classList.contains('hidden')) contarCatalogo(); });
+  window.addEventListener('pageshow', (e) => { if(e.persisted && !$('vInicio').classList.contains('hidden')){ contarCatalogo(); contarVentas(); } });
 
   window.addEventListener('scroll', () => $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
 

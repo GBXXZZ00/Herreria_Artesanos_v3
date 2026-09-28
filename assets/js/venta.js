@@ -20,7 +20,9 @@
   let clienteExistente = null;
   let guardando = false;
   let terminado = false;
-  let cargado = false;      // hasta que se recupere el borrador no se sobrescribe
+  let cargado = false;
+  const editId = +(new URLSearchParams(location.search).get('editar') || 0) || null;   // editar una cotización o venta
+  let editVenta = null;      // hasta que se recupere el borrador no se sobrescribe
 
   const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
   const ICON_EDIT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
@@ -290,6 +292,7 @@
   }
 
   function cantidadHtml(max){
+    if(prod.fijo) return `<div class="field"><span class="field-label">Cantidad</span><div class="f-fijo">${prod.cantidad} (ya vendida)</div></div>`;
     return `<div class="field"><span class="field-label">Cantidad</span>
       <div class="stepper"><button type="button" data-cant="-1" aria-label="Una menos">−</button><span id="pCant">${prod.cantidad}</span><button type="button" data-cant="1" aria-label="Una más">+</button></div>
       ${max ? `<div class="field-hint">Hay ${max} en tienda.</div>` : ''}</div>`;
@@ -421,7 +424,7 @@
     prod.precio = precio;
     if(prod.origen === 'catalogo'){
       prod.especificaciones = especificacionesDesdeEstado(prod.tipo, prod.estado, 'pedido');
-      prod.foto = fotoModelo(modeloDe(prod), prod.color);
+      prod.foto = fotoModelo(modeloDe(prod), prod.color) || prod.foto || null;
     }
     if(prod.origen === 'medida') prod.nombre = prod.nombre.trim();
     if(prodIndex == null) items.push(prod); else items[prodIndex] = prod;
@@ -496,7 +499,7 @@
   // ---------------------------------------------------------------------------
   function hayDatos(){ return items.length || $('cTel').value.trim() || $('cNombre').value.trim() || $('cCedula').value.trim(); }
   function guardarBorrador(){
-    if(terminado || !cargado) return;
+    if(terminado || !cargado || editId) return;
     try{
       if(!hayDatos()){ localStorage.removeItem(BORRADOR); return; }
       localStorage.setItem(BORRADOR, JSON.stringify({
@@ -614,7 +617,32 @@
     }
   }
 
-  $('btnGuardar').addEventListener('click', () => { if(validar()) abrirHoja('sheetGuardar'); });
+  $('btnGuardar').addEventListener('click', () => {
+    if(!validar()) return;
+    if(editId) guardarEdicion(); else abrirHoja('sheetGuardar');
+  });
+  async function guardarEdicion(){
+    if(guardando) return;
+    guardando = true;
+    const btn = $('btnGuardar');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando';
+    try{
+      await subirFotos();
+      const p = payload(false, null);
+      const { error } = await db.rpc('actualizar_venta', { vid: editId, p });
+      if(error) throw new Error(error.message);
+      terminado = true;
+      toast('Cambios guardados');
+      setTimeout(() => {
+        if(window.Sesion.esSubpantalla()) history.back();
+        else location.replace(editVenta && editVenta.estado === 'cotizacion' ? 'cotizaciones.html' : 'ventas.html');
+      }, 500);
+    } catch(err){
+      const m = String(err.message || '');
+      toast(/fetch|network/i.test(m) ? 'Sin conexión. Tus cambios siguen aquí, intenta de nuevo' : m, 'error');
+      btn.disabled = false; btn.textContent = 'Guardar cambios';
+    } finally { guardando = false; }
+  }
   $('optCotizacion').addEventListener('click', () => {
     cerrarHoja('sheetGuardar', true);
     guardar(false, null, $('btnGuardar'));
@@ -744,7 +772,6 @@
   }
   function mostrarListo(res, p, abono){
     const esVenta = !!abono;
-    const t = totales();
     $('pie').classList.add('hidden');
     $('subVenta').textContent = esVenta ? 'Venta confirmada' : 'Cotización guardada';
     const texto = mensajeCliente(res, p, abono);
@@ -764,14 +791,34 @@
         <div class="res-total"><span>Total</span><b>${dinero(res.total)}</b></div>
       </div>
       <div class="listo-btns">
-        <a class="btn-wa" href="${esc(wa)}" target="_blank" rel="noopener">${ICON_WA}Enviar al cliente por WhatsApp</a>
+        <button class="btn-wa" type="button" id="btnPdf" disabled><span class="spinner"></span>Preparando PDF</button>
+        <a class="link-simple" href="${esc(wa)}" target="_blank" rel="noopener" style="text-align:center;margin-top:0">Mandar solo el resumen en texto</a>
         <button class="btn-secondary" type="button" id="btnOtra" style="height:54px">Hacer otra venta</button>
         <button class="link-simple" type="button" id="btnIrInicio">Volver a Inicio</button>
       </div>`;
     window.scrollTo(0, 0);
-    $('btnOtra').addEventListener('click', () => { location.replace('venta.html'); });
+    $('btnOtra').addEventListener('click', () => {
+      try{ sessionStorage.setItem(window.Sesion.esSubpantalla() ? 'ah_sub' : 'ah_desdeInicio', '1'); }catch(e){}
+      location.replace('venta.html');
+    });
     $('btnIrInicio').addEventListener('click', () => window.Sesion.irInicio());
-    void t;
+    // El PDF se prepara de una vez para que al tocar "Enviar" se abra WhatsApp enseguida
+    let blob = null, venta = null;
+    (async () => {
+      try{
+        venta = await window.AV.cargarVenta(res.id);
+        blob = await window.AV.crearPDF(venta);
+        const b = $('btnPdf'); if(!b) return;
+        b.disabled = false; b.innerHTML = `${ICON_WA}Enviar PDF al cliente`;
+      } catch(e){
+        const b = $('btnPdf'); if(b){ b.innerHTML = 'No se pudo preparar el PDF'; }
+      }
+    })();
+    $('btnPdf').addEventListener('click', async () => {
+      if(!blob) return;
+      const r = await window.AV.compartirPDF(blob, venta);
+      if(r === 'descargado') toast('PDF descargado');
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -779,7 +826,7 @@
   // ---------------------------------------------------------------------------
   $('btnSalirVenta').addEventListener('click', () => {
     // Lo escrito queda guardado como borrador y se recupera al volver
-    window.Sesion.irInicio();
+    if(window.Sesion.esSubpantalla()) history.back(); else window.Sesion.irInicio();
   });
 
   window.addEventListener('scroll', () => $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
@@ -787,6 +834,40 @@
   // ---------------------------------------------------------------------------
   // Arranque
   // ---------------------------------------------------------------------------
+  async function cargarEdicion(){
+    const v = await window.AV.cargarVenta(editId);
+    editVenta = v;
+    const cot = v.estado === 'cotizacion';
+    document.title = `Editar N° ${v.id} · Herrería Artesanos`;
+    document.querySelector('.topbar-title').textContent = cot ? `Editar cotización` : `Editar venta`;
+    $('subVenta').textContent = `N° ${v.id} · ${v.cliente.nombre}`;
+    $('btnGuardar').textContent = 'Guardar cambios';
+    const editable = ['cotizacion', 'confirmada', 'lista'].includes(v.estado);
+    if(!editable){
+      $('pagina').innerHTML = `<div class="listo"><h1>Ya no se puede editar</h1><p>Esta venta está ${esc(window.AV.ESTADOS[v.estado].t.toLowerCase())}.</p></div>`;
+      $('pie').classList.add('hidden');
+      return;
+    }
+    $('cCedula').value = v.cliente.cedula || '';
+    $('cTel').value = v.cliente.telefono ? '0' + String(v.cliente.telefono).replace(/^58/, '') : '';
+    $('cNombre').value = v.cliente.nombre || '';
+    $('vNotas').value = v.notas || '';
+    if(Number(v.descuento)){ extras.desc = true; $('vDesc').value = Number(v.descuento); }
+    if(Number(v.instalacion)){ extras.inst = true; $('vInst').value = Number(v.instalacion); }
+    if(v.sede_id) sedeId = v.sede_id;
+    clienteExistente = v.cliente;
+    ultimaBusqueda = normCed($('cCedula').value) + '|' + normTel($('cTel').value);
+    items = v.items.map(it => {
+      const e = it.especificaciones || {};
+      const base = { tipo: it.tipo, nombre: it.nombre, foto: it.foto, precio: Number(it.precio_unitario), cantidad: it.cantidad };
+      if(it.a_medida) return Object.assign(base, { origen:'medida', descripcion: e.descripcion || '' });
+      if(it.pieza_id) return Object.assign(base, { origen:'pieza', pieza_id: it.pieza_id, catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e, precioManual:true, fijo: !cot });
+      return Object.assign(base, { origen:'catalogo', catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e,
+        estado: estadoDesdeEspecificaciones(it.tipo, e, 'pedido'), extraProteccion: e.monto_proteccion || '', precioManual:true });
+    });
+    if(!cot) $('avisoBorrador').innerHTML = `<div class="borrador"><span>Es una venta confirmada: lo que cambies se refleja en el pedido y el PDF.</span></div>`;
+  }
+
   (async function(){
     pintarItems();
     try{
@@ -800,7 +881,7 @@
       if(err) throw err;
       modelos = rc.data || []; piezas = rp.data || []; sedes = rs.data || []; perfil = pf;
       sedeId = (perfil && perfil.sede_id) || (sedes[0] && sedes[0].id) || null;
-      cargarBorrador();
+      if(editId) await cargarEdicion(); else cargarBorrador();
       cargado = true;
       pintarExtrasCierre();
       pintarSedes();

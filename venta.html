@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Nueva venta · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=21">
+<link rel="stylesheet" href="assets/css/base.css?v=22">
 <style>
   .page{padding:4px 18px calc(150px + var(--safe-b))}
   .sec{margin-top:22px}
@@ -113,8 +113,11 @@
   .listo p{font-size:15.5px;color:var(--ink-soft);margin:0}
   .listo-datos{margin:22px 0 18px;text-align:left}
   .listo-btns{display:flex;flex-direction:column;gap:10px}
-  .btn-wa{display:flex;align-items:center;justify-content:center;gap:10px;height:54px;border-radius:14px;background:#1FA855;color:#fff;font-size:16.5px;font-weight:800;text-decoration:none;transition:transform 140ms var(--ease-out)}
+  .btn-wa{width:100%;border:0;display:flex;align-items:center;justify-content:center;gap:10px;height:54px;border-radius:14px;background:#1FA855;color:#fff;font-size:16.5px;font-weight:800;text-decoration:none;transition:transform 140ms var(--ease-out)}
   .btn-wa:active{transform:scale(0.98)}
+  .btn-wa[disabled]{opacity:.7}
+  .btn-wa .spinner{border-color:rgba(255,255,255,.35);border-top-color:#fff}
+  .f-fijo{font-size:15px;font-weight:700;color:var(--ink-soft)}
 </style>
 </head>
 <body data-requiere-sesion="si">
@@ -302,11 +305,12 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=21"></script>
-<script src="assets/js/supabase-client.js?v=21"></script>
-<script src="assets/js/img-compress.js?v=21"></script>
-<script src="assets/js/comun.js?v=21"></script>
-<script src="assets/js/sesion.js?v=21"></script>
-<script src="assets/js/venta.js?v=21"></script>
+<script src="assets/vendor/supabase.js?v=22"></script>
+<script src="assets/js/supabase-client.js?v=22"></script>
+<script src="assets/js/img-compress.js?v=22"></script>
+<script src="assets/js/comun.js?v=22"></script>
+<script src="assets/js/sesion.js?v=22"></script>
+<script src="assets/js/ventas-comun.js?v=22"></script>
+<script src="assets/js/venta.js?v=22"></script>
 </body>
 </html>
