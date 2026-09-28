@@ -90,7 +90,8 @@
   // Regresa a Inicio sin apilar pasos (Inicio siempre queda debajo del módulo)
   function irInicio(){
     const n = (window.AH && AH.profundidad) ? AH.profundidad() : 0;
-    history.go(-(n + 1));
+    // Una subpantalla tiene su módulo debajo, y debajo de él Inicio
+    history.go(-(n + (esSubpantalla() ? 2 : 1)));
   }
 
   if(enModulo){

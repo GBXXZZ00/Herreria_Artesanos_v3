@@ -4,7 +4,7 @@
   const db = window.db;
   const { TIPOS, iconoTipo, acabados, tieneColores, esquema, grupoActivo, especificacionesDesdeEstado,
           estadoDesdeEspecificaciones, resumenSpecs, fotoModelo, fotoPieza, esc, numOrNull, dinero, toast,
-          abrirHoja, cerrarHoja, antesDeCerrar } = window.AH;
+          abrirHoja, cerrarHoja, antesDeCerrar, montoOrNull } = window.AH;
   const $ = (id) => document.getElementById(id);
 
   const TARIFA_VENTANA = { 'Panorámica':[90, 190], 'Ecobel':[120, 220] }; // $/m² sin y con protección
@@ -25,6 +25,14 @@
   let editVenta = null;      // hasta que se recupere el borrador no se sobrescribe
 
   const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  // Clave única: si se reintenta por mala conexión, el servidor no duplica
+  function uuid(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+    const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  }
+  const claveVenta = uuid();
   const ICON_EDIT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
   const ICON_DEL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg>';
   const ICON_CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
@@ -51,11 +59,11 @@
   // ---------------------------------------------------------------------------
   // Totales
   // ---------------------------------------------------------------------------
-  function subtotalItem(it){ return r2((numOrNull(it.precio) || 0) * (it.cantidad || 1)); }
+  function subtotalItem(it){ return r2((montoOrNull(it.precio) || 0) * (it.cantidad || 1)); }
   function totales(){
     const sub = r2(items.reduce((a, it) => a + subtotalItem(it), 0));
-    const desc = extras.desc ? (numOrNull($('vDesc').value) || 0) : 0;
-    const inst = extras.inst ? (numOrNull($('vInst').value) || 0) : 0;
+    const desc = extras.desc ? (montoOrNull($('vDesc').value) || 0) : 0;
+    const inst = extras.inst ? (montoOrNull($('vInst').value) || 0) : 0;
     return { sub, desc, inst, total: r2(sub - desc + inst) };
   }
   function pintarResumen(){
@@ -223,7 +231,7 @@
     const b = base(it);
     if(s.manillon && s.manillon !== 'Sin' && !b.manillon){ total += PRECIO_MANILLON; partes.push(`manillón ${dinero(PRECIO_MANILLON)}`); }
     if(pideMontoProteccion(it)){
-      const x = numOrNull(it.extraProteccion) || 0;
+      const x = montoOrNull(it.extraProteccion) || 0;
       total += x; partes.push(`protección ${x ? dinero(x) : '(escribe el monto)'}`);
     }
     return { total: r2(total), texto: partes.join(' + ') };
@@ -417,8 +425,8 @@
   $('btnProdListo').addEventListener('click', () => {
     let ok = true;
     if(prod.origen === 'medida' && !String(prod.nombre || '').trim()){ $('campoMedNombre').classList.add('invalid'); ok = false; }
-    if($('campoProt') && !(numOrNull(prod.extraProteccion) > 0)){ $('campoProt').classList.add('invalid'); ok = false; }
-    const precio = numOrNull($('pPrecio').value);
+    if($('campoProt') && !(montoOrNull(prod.extraProteccion) > 0)){ $('campoProt').classList.add('invalid'); ok = false; }
+    const precio = montoOrNull($('pPrecio').value);
     if(!(precio > 0)){ $('campoPrecio').classList.add('invalid'); ok = false; }
     if(!ok){ const f = $('prodBody').querySelector('.field.invalid'); if(f) f.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     prod.precio = precio;
@@ -441,31 +449,42 @@
   function programarBusqueda(){ clearTimeout(buscarTimer); buscarTimer = setTimeout(buscarCliente, 350); }
   $('cCedula').addEventListener('input', () => { $('campoCed').classList.remove('invalid'); programarBusqueda(); guardarBorrador(); });
   $('cTel').addEventListener('input', () => { $('campoTel').classList.remove('invalid'); programarBusqueda(); guardarBorrador(); });
+  // Qué campos llenó la búsqueda (para poder limpiarlos si la cédula cambia)
+  const auto = { nombre:false, tel:false, ced:false };
   async function buscarCliente(){
-    const ced = cedValida($('cCedula').value) ? normCed($('cCedula').value) : null;
-    const tel = telValido($('cTel').value) ? normTel($('cTel').value) : null;
-    const clave = (ced || '') + '|' + (tel || '');
-    if(!ced && !tel){ clienteExistente = null; $('avisoCliente').innerHTML = ''; return; }
+    const cedTxt = $('cCedula').value.trim();
+    const ced = cedValida(cedTxt) ? normCed(cedTxt) : null;
+    const tel = !cedTxt && telValido($('cTel').value) ? normTel($('cTel').value) : null;   // por teléfono solo si no hay cédula
+    const clave = ced ? 'c' + ced : tel ? 't' + tel : '';
     if(clave === ultimaBusqueda) return;
     ultimaBusqueda = clave;
     let data = null;
     if(ced){ const r = await db.from('clientes').select('*').eq('cedula', ced).maybeSingle(); if(!r.error) data = r.data; }
-    if(!data && tel){ const r = await db.from('clientes').select('*').eq('telefono', tel).maybeSingle(); if(!r.error) data = r.data; }
-    if(clave !== ultimaBusqueda) return;
-    if(data && (!clienteExistente || clienteExistente.id !== data.id)){
+    else if(tel){ const r = await db.from('clientes').select('*').eq('telefono', tel).maybeSingle(); if(!r.error) data = r.data; }
+    if(clave !== ultimaBusqueda) return;   // llegó tarde: ya se escribió otra cosa
+    if(data){
       clienteExistente = data;
-      if(data.cedula) $('cCedula').value = data.cedula;
-      if(data.telefono) $('cTel').value = '0' + String(data.telefono).replace(/^58/, '');
-      $('cNombre').value = data.nombre || '';
-      ultimaBusqueda = normCed($('cCedula').value) + '|' + normTel($('cTel').value);
+      if(!ced && data.cedula){ $('cCedula').value = data.cedula; auto.ced = true; }
+      if(data.telefono && (auto.tel || !$('cTel').value.trim() || ced)){ $('cTel').value = '0' + String(data.telefono).replace(/^58/, ''); auto.tel = true; }
+      if(auto.nombre || !$('cNombre').value.trim() || ced){ $('cNombre').value = data.nombre || ''; auto.nombre = true; }
       ['campoCed', 'campoTel', 'campoNombreC'].forEach(id => $(id).classList.remove('invalid'));
       $('avisoCliente').innerHTML = `<div class="aviso-cliente">${ICON_CHECK}Ya es cliente. Sus datos se llenaron solos.</div>`;
-      guardarBorrador();
-    } else if(!data){
+    } else {
+      // No existe: se quita lo que se había llenado de otro cliente
+      if(clienteExistente){
+        if(auto.nombre) $('cNombre').value = '';
+        if(auto.tel) $('cTel').value = '';
+        if(auto.ced) $('cCedula').value = '';
+      }
+      auto.nombre = auto.tel = auto.ced = false;
       clienteExistente = null;
       $('avisoCliente').innerHTML = '';
     }
+    guardarBorrador();
   }
+  $('cNombre').addEventListener('input', () => { auto.nombre = false; });
+  $('cTel').addEventListener('input', () => { auto.tel = false; });
+  $('cCedula').addEventListener('input', () => { auto.ced = false; });
   ['cNombre', 'vNotas'].forEach(id => $(id).addEventListener('input', () => {
     const f = $(id).closest('.field'); if(f) f.classList.remove('invalid');
     guardarBorrador();
@@ -566,8 +585,10 @@
   function payload(confirmar, abono){
     const t = totales();
     return {
+      clave: claveVenta,
       cliente:{ telefono: normTel($('cTel').value), nombre: $('cNombre').value.trim(), cedula: normCed($('cCedula').value) },
-      venta:{ sede_id: sedeId, descuento: t.desc, instalacion: t.inst, notas: $('vNotas').value.trim(), confirmar, fecha_entrega: abono ? abono.fecha : null },
+      venta:{ sede_id: sedeId, descuento: t.desc, instalacion: t.inst, notas: $('vNotas').value.trim(), confirmar,
+        fecha_entrega: abono ? abono.fecha : (editId && $('vFecha') && $('vFecha').value ? $('vFecha').value : null) },
       items: items.map(it => ({
         catalogo_id: it.origen === 'medida' ? null : it.catalogo_id,
         pieza_id: it.origen === 'pieza' ? it.pieza_id : null,
@@ -577,12 +598,12 @@
         especificaciones: it.origen === 'medida'
           ? { descripcion: it.descripcion || '' }
           : Object.assign({}, it.especificaciones, it.color ? { color: it.color } : {},
-              it.origen === 'catalogo' && pideMontoProteccion(it) ? { monto_proteccion: numOrNull(it.extraProteccion) } : {}),
+              it.origen === 'catalogo' && pideMontoProteccion(it) ? { monto_proteccion: montoOrNull(it.extraProteccion) } : {}),
         foto: it.foto || null,
-        precio_unitario: numOrNull(it.precio) || 0,
+        precio_unitario: montoOrNull(it.precio) || 0,
         cantidad: it.cantidad || 1
       })),
-      abono: abono ? { monto: abono.monto, metodo: abono.metodo, comprobante: abono.comprobante || null } : null
+      abono: abono ? { monto: abono.monto, metodo: abono.metodo, comprobante: abono.comprobante || null, clave: abono.clave } : null
     };
   }
 
@@ -619,6 +640,7 @@
 
   $('btnGuardar').addEventListener('click', () => {
     if(!validar()) return;
+    if(editId && $('vFecha') && !$('vFecha').value){ $('campoFechaEd').classList.add('invalid'); $('campoFechaEd').scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     if(editId) guardarEdicion(); else abrirHoja('sheetGuardar');
   });
   async function guardarEdicion(){
@@ -650,7 +672,7 @@
   $('optVenta').addEventListener('click', () => {
     cerrarHoja('sheetGuardar', true);
     const t = totales();
-    conf = { monto: String(Math.round(t.total * 0.5 * 100) / 100), metodo:null, fecha: habiles(20), comprobante:null, blob:null };
+    conf = { monto: String(Math.round(t.total * 0.5 * 100) / 100), metodo:null, fecha: habiles(20), comprobante:null, blob:null, clave: conf && conf.clave ? conf.clave : uuid() };
     pintarConfirmar();
     abrirHoja('sheetConfirmar');
   });
@@ -695,7 +717,7 @@
   }
   function avisoAbono(){
     const t = totales().total;
-    const m = numOrNull(conf.monto) || 0;
+    const m = montoOrNull(conf.monto) || 0;
     let html = '';
     if(m > t) html = '';
     else if(m > 0 && m < t * 0.5) html = `<div class="aviso-50">${ICON_ALERTA}Abono menor al 50%</div>`;
@@ -727,14 +749,14 @@
   });
   $('btnConfListo').addEventListener('click', (e) => {
     const t = totales().total;
-    const m = numOrNull(conf.monto) || 0;
+    const m = montoOrNull(conf.monto) || 0;
     let primero = null;
     const marcar = (id, mal) => { $(id).classList.toggle('invalid', mal); if(mal && !primero) primero = $(id); };
     marcar('campoAbono', !(m > 0) || m > t);
     marcar('campoMetodo', !conf.metodo);
-    marcar('campoFecha', !conf.fecha);
+    marcar('campoFecha', !conf.fecha || conf.fecha < hoyISO());
     if(primero){ primero.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
-    guardar(true, { monto: r2(m), metodo: conf.metodo, fecha: conf.fecha, comprobanteBlob: conf.blob }, e.currentTarget);
+    guardar(true, { monto: r2(m), metodo: conf.metodo, fecha: conf.fecha, comprobanteBlob: conf.blob, clave: conf.clave }, e.currentTarget);
   });
 
   // ---------------------------------------------------------------------------
@@ -846,7 +868,14 @@
     if(!editable){
       $('pagina').innerHTML = `<div class="listo"><h1>Ya no se puede editar</h1><p>Esta venta está ${esc(window.AV.ESTADOS[v.estado].t.toLowerCase())}.</p></div>`;
       $('pie').classList.add('hidden');
-      return;
+      return false;
+    }
+    if(!cot){
+      // En una venta confirmada también se puede mover la fecha de entrega
+      const f = document.createElement('div');
+      f.className = 'field'; f.id = 'campoFechaEd';
+      f.innerHTML = `<label class="field-label" for="vFecha">Fecha de entrega</label><input class="input" id="vFecha" type="date" value="${esc(v.fecha_entrega || '')}"><div class="field-error">Elige la fecha de entrega</div>`;
+      $('optsSede').closest('.field').before(f);
     }
     $('cCedula').value = v.cliente.cedula || '';
     $('cTel').value = v.cliente.telefono ? '0' + String(v.cliente.telefono).replace(/^58/, '') : '';
@@ -856,7 +885,7 @@
     if(Number(v.instalacion)){ extras.inst = true; $('vInst').value = Number(v.instalacion); }
     if(v.sede_id) sedeId = v.sede_id;
     clienteExistente = v.cliente;
-    ultimaBusqueda = normCed($('cCedula').value) + '|' + normTel($('cTel').value);
+    ultimaBusqueda = $('cCedula').value.trim() ? 'c' + normCed($('cCedula').value) : 't' + normTel($('cTel').value);
     items = v.items.map(it => {
       const e = it.especificaciones || {};
       const base = { tipo: it.tipo, nombre: it.nombre, foto: it.foto, precio: Number(it.precio_unitario), cantidad: it.cantidad };
@@ -865,6 +894,7 @@
       return Object.assign(base, { origen:'catalogo', catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e,
         estado: estadoDesdeEspecificaciones(it.tipo, e, 'pedido'), extraProteccion: e.monto_proteccion || '', precioManual:true });
     });
+    auto.nombre = auto.tel = auto.ced = false;
     if(!cot) $('avisoBorrador').innerHTML = `<div class="borrador"><span>Es una venta confirmada: lo que cambies se refleja en el pedido y el PDF.</span></div>`;
   }
 
@@ -881,7 +911,7 @@
       if(err) throw err;
       modelos = rc.data || []; piezas = rp.data || []; sedes = rs.data || []; perfil = pf;
       sedeId = (perfil && perfil.sede_id) || (sedes[0] && sedes[0].id) || null;
-      if(editId) await cargarEdicion(); else cargarBorrador();
+      if(editId){ if(await cargarEdicion() === false){ cargado = true; return; } } else cargarBorrador();
       cargado = true;
       pintarExtrasCierre();
       pintarSedes();

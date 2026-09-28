@@ -296,8 +296,20 @@
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
   function numOrNull(v){ const n = parseFloat(String(v == null ? '' : v).replace(',', '.').trim()); return isFinite(n) ? n : null; }
+  // Montos: acepta 1.500 / 1.500,50 (como se escribe aquí), 1,500.50 y 150,5
+  function montoOrNull(v){
+    let t = String(v == null ? '' : v).replace(/[\s$]/g, '');
+    if(!t) return null;
+    if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.');
+    else if(/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) t = t.replace(/,/g, '');
+    else t = t.replace(',', '.');
+    if(!/^\d*\.?\d+$|^\d+\.$/.test(t)) return null;
+    const n = parseFloat(t);
+    return isFinite(n) ? Math.round(n * 100) / 100 : null;
+  }
   const fmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
-  function dinero(n){ return '$' + fmt.format(Number(n) || 0); }
+  const fmtCent = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function dinero(n){ const x = Math.round((Number(n) || 0) * 100) / 100; return '$' + (Number.isInteger(x) ? fmt : fmtCent).format(x); }
   function specChipsHtml(lista){
     return lista.map(s => `<span class="spec-chip">${s.sw ? `<span class="swatch ${s.sw}"></span>` : ''}${esc(s.t)}</span>`).join('');
   }
@@ -537,7 +549,7 @@
     heroAttrs, heroZoom, actualizarFondoHero, verFoto,
     TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
-    fotoModelo, fotoPieza, esc, numOrNull, fmt, dinero, specChipsHtml, toast,
+    fotoModelo, fotoPieza, esc, numOrNull, montoOrNull, fmt, dinero, specChipsHtml, toast,
     abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo,
     profundidad: prof, vistaInterna
   };

@@ -2,7 +2,7 @@
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, dinero, numOrNull, toast, abrirHoja, cerrarHoja, iconoTipo, verFoto, antesDeCerrar } = window.AH;
+  const { esc, dinero, montoOrNull: numOrNull, toast, abrirHoja, cerrarHoja, iconoTipo, verFoto, antesDeCerrar } = window.AH;
   const AV = window.AV;
   const $ = (id) => document.getElementById(id);
   const MODO = document.body.dataset.modo;             // 'cotizaciones' | 'ventas'
@@ -95,6 +95,8 @@
     </button>`;
   }
   let nombres = {};
+  let esAdmin = false;
+  window.Sesion.perfil().then(p => { esAdmin = !!(p && p.rol === 'admin'); }).catch(() => {});
   const vendedor = (v) => nombres[v.vendedor_id] || '';
 
   function pintarChips(){
@@ -105,7 +107,8 @@
   }
   function pintar(){
     pintarChips();
-    const q = $('buscador').value.trim().toLowerCase().replace(/[.\-\s]/g, '');
+    let q = $('buscador').value.trim().toLowerCase().replace(/[.\-\s]/g, '');
+    if(/^0\d{3,}$/.test(q)) q = '58' + q.slice(1);   // 0414… también encuentra 58414…
     let lista = todas.filter(v => enFiltro(v, filtro));
     if(q){
       lista = lista.filter(v => {
@@ -144,7 +147,7 @@
   async function cargar(){
     try{
       const [r, ps] = await Promise.all([
-        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(monto,tipo)').order('creado_en', { ascending:false }).limit(500),
+        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(monto,tipo)').order('creado_en', { ascending:false }).limit(2000),
         AV.perfiles()
       ]);
       if(r.error) throw r.error;
@@ -182,23 +185,34 @@
       .catch(() => { if(pdf === este){ pdf = null; pintarPie(); } });
   }
 
+  let fichaSeq = 0;
   async function abrirFicha(id){
+    const seq = ++fichaSeq;
+    actual = null;
     $('fichaBody').innerHTML = '<div class="sk-vcard" style="height:80px"></div><div class="sk-vcard" style="height:200px;margin-top:14px"></div>';
     $('fichaFoot').innerHTML = '';
     abrirHoja('sheetFicha');
     try{
-      actual = await AV.cargarVenta(id);
+      const v = await AV.cargarVenta(id);
+      if(seq !== fichaSeq || !$('sheetFicha').classList.contains('open')) return;
+      actual = v;
       pintarFicha();
       prepararPDF(actual);
     } catch(e){
+      if(seq !== fichaSeq) return;
       $('fichaBody').innerHTML = `<div class="vacio"><h3>No se pudo abrir</h3><p>Revisa tu internet.</p></div>`;
     }
   }
   async function recargarFicha(){
     if(!actual) return;
-    try{ actual = await AV.cargarVenta(actual.id); pintarFicha(); prepararPDF(actual); } catch(e){}
+    const seq = fichaSeq, id = actual.id;
+    try{
+      const v = await AV.cargarVenta(id);
+      if(seq !== fichaSeq || !actual || actual.id !== id) return;
+      actual = v; pintarFicha(); prepararPDF(actual);
+    } catch(e){}
   }
-  window.AH.alCerrar.sheetFicha = () => { actual = null; };
+  window.AH.alCerrar.sheetFicha = () => { actual = null; fichaSeq++; };
 
   const editable = (v) => v.estado === 'cotizacion' || v.estado === 'confirmada' || (v.estado === 'lista' && v.items.every(it => it.pieza_id));
 
@@ -254,7 +268,7 @@
     if(!cot && !['cancelada'].includes(v.estado)){
       const pasos = ['confirmada', 'en_produccion', 'lista', 'entregada'];
       html += `<div class="f-sec"><div class="f-tit">Estado</div>
-        <div class="opts" style="--cols:2">${pasos.map(s => `<button type="button" class="opt ${s === v.estado ? 'selected' : ''}" data-estado="${s}" aria-pressed="${s === v.estado}">${esc(AV.ESTADOS[s].t)}</button>`).join('')}</div>
+        <div class="opts" style="--cols:2">${pasos.map((s, i) => { const atras = i < pasos.indexOf(v.estado) && !esAdmin; return `<button type="button" class="opt ${s === v.estado ? 'selected' : ''}" data-estado="${s}" aria-pressed="${s === v.estado}" ${atras ? 'disabled style="opacity:.45"' : ''}>${esc(AV.ESTADOS[s].t)}</button>`; }).join('')}</div>
         <div class="f-nota">Cuando exista el módulo de Producción, esto cambiará solo.</div></div>`;
     }
     const links = [];
@@ -341,10 +355,16 @@
   // Hoja de acción: convertir en venta, registrar abono, cancelar
   // ---------------------------------------------------------------------------
   let acc = null;
+  function uuid(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+    const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  }
   function abrirAccion(tipo){
     const v = actual;
     const r = AV.resta(v);
-    acc = { tipo, monto:'', metodo:null, fecha: AV.habiles(20), blob:null, foto:null, motivo:'', guardando:false };
+    acc = { tipo, monto:'', metodo:null, fecha: AV.habiles(20), blob:null, foto:null, motivo:'', guardando:false, clave: uuid() };
     if(tipo === 'convertir') acc.monto = String(Math.round(v.total * 50) / 100);
     if(tipo === 'abono') acc.monto = String(r);
     $('accionTitulo').textContent = tipo === 'convertir' ? 'Convertir en venta' : tipo === 'abono' ? 'Registrar abono' : (AV.esCotizacion(v) ? 'Descartar cotización' : 'Cancelar venta');
@@ -443,7 +463,7 @@
       const m = numOrNull(acc.monto) || 0;
       marcar('campoMonto', !(m > 0) || m > tope);
       marcar('campoMetodo', !acc.metodo);
-      if(acc.tipo === 'convertir') marcar('campoFecha', !acc.fecha);
+      if(acc.tipo === 'convertir') marcar('campoFecha', !acc.fecha || acc.fecha < AV.iso(new Date()));
     }
     if(primero){ primero.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     if(acc.tipo === 'cancelar' && !confirm(AV.esCotizacion(v) ? '¿Descartar esta cotización?' : (pag > 0 ? `¿Cancelar la venta y registrar la devolución de ${dinero(pag)}?` : '¿Cancelar esta venta?'))) return;
@@ -457,7 +477,7 @@
         res = await db.rpc('cancelar_venta', { vid: v.id, motivo: acc.motivo || null, metodo_devolucion: pag > 0 ? acc.metodo : null });
       } else {
         const comprobante = await subirComprobante();
-        const a = { monto: Math.round((numOrNull(acc.monto) || 0) * 100) / 100, metodo: acc.metodo, comprobante };
+        const a = { monto: Math.round((numOrNull(acc.monto) || 0) * 100) / 100, metodo: acc.metodo, comprobante, clave: acc.clave };
         if(acc.tipo === 'convertir'){ a.fecha_entrega = acc.fecha; res = await db.rpc('convertir_en_venta', { vid: v.id, a }); }
         else res = await db.rpc('registrar_abono', { vid: v.id, a });
       }
