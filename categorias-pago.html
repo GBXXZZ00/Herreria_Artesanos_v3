@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Categorías de pago · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=50">
+<link rel="stylesheet" href="assets/css/base.css?v=51">
 <style>
   .page{padding-bottom:calc(var(--safe-b) + 110px)}
   .c-vlista{display:flex;flex-direction:column;gap:10px;padding:14px 18px 0}
@@ -29,7 +29,12 @@
   .c-vacio{text-align:center;padding:60px 20px;color:var(--ink-soft);font-size:15px}
 
   .cat-fila{display:flex;align-items:center;gap:10px;padding:12px 2px}
-  .cat-fila + .cat-fila{border-top:1px solid var(--line)}
+  .cat-oficio + .cat-oficio{border-top:1px solid var(--line)}
+  .cat-fila.prot{padding-top:0}
+  .cat-oficio.invalid .cat-fila:not(.prot) input{border-color:var(--danger);background:#FDECEA}
+  .cat-fila.prot .cat-esp{font-size:12.5px;font-weight:600;color:var(--ink-soft);padding-left:12px}
+  .c-prot{font-weight:700;color:var(--accent)}
+  .c-tarifa.vieja{opacity:.7}
   .cat-esp{flex:1;font-size:14.5px;font-weight:700}
   .cat-monto{width:78px;flex-shrink:0}
   .cat-monto input{width:100%;height:40px;border:1px solid var(--line-strong);border-radius:10px;text-align:right;padding:0 10px;font-size:14.5px;font-weight:700;font-family:inherit;color:var(--ink);background:var(--surface)}
@@ -113,7 +118,8 @@
       <input class="input" id="fNombre" type="text" autocomplete="off">
       <p class="field-error" id="eNombre"></p>
     </div>
-    <label class="field-label" style="margin-top:6px;display:block">Tarifa por especialidad</label>
+    <span class="field-label" style="margin-top:6px;display:block">Cuánto se paga por cada paso</span>
+    <p class="field-hint" style="margin:0 0 4px">El extra de protección es para puertas con protección y combos con protección en la puerta. Instalar la ventana no se paga.</p>
     <div id="filasTarifa"></div>
     <button class="asig-btn hidden" type="button" id="btnAsignarModelos">
       <span class="c-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/></svg></span>
@@ -144,10 +150,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=50"></script>
-<script src="assets/js/supabase-client.js?v=50"></script>
-<script src="assets/js/comun.js?v=50"></script>
-<script src="assets/js/sesion.js?v=50"></script>
-<script src="assets/js/categorias-pago.js?v=50"></script>
+<script src="assets/vendor/supabase.js?v=51"></script>
+<script src="assets/js/supabase-client.js?v=51"></script>
+<script src="assets/js/comun.js?v=51"></script>
+<script src="assets/js/sesion.js?v=51"></script>
+<script src="assets/js/categorias-pago.js?v=51"></script>
 </body>
 </html>

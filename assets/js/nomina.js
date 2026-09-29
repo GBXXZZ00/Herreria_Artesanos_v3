@@ -91,7 +91,7 @@
   }
   function filaItem(it){
     items[it.id] = it;
-    const monto = it.monto == null ? '<span class="mov-m gris">Por definir</span>' : `<span class="mov-m">${esc(dinero(it.monto))}${CHEV}</span>`;
+    const monto = it.oficio === 'instalar' ? `<span class="mov-m gris">No se paga${CHEV}</span>` : it.monto == null ? '<span class="mov-m gris">Por definir</span>' : `<span class="mov-m">${esc(dinero(it.monto))}${CHEV}</span>`;
     return `<button class="mov" type="button" data-item="${it.id}">
       <span class="mov-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="" loading="lazy">` : iconoTipo(it.tipo, 20)}</span>
       <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</span>
@@ -208,7 +208,7 @@
       <div class="d-datos">
         <div class="d-dato"><span>${it.interna ? 'Para' : 'Cliente'}</span><b>${esc(it.interna ? 'Exhibición' : (it.cliente || ''))}</b></div>
         <div class="d-dato"><span>${it.interna ? 'Sede' : 'Pedido'}</span><b>${esc(it.interna ? (it.sede || '') : 'N° ' + it.venta_id)}</b></div>
-        <div class="d-dato"><span>Pago por esta parte</span><b>${it.monto == null ? 'Por definir' : esc(dinero(it.monto))}</b></div>
+        <div class="d-dato"><span>Pago por esta parte</span><b>${it.oficio === 'instalar' ? 'No se paga' : it.monto == null ? 'Por definir' : esc(dinero(it.monto))}</b></div>
         <div class="d-dato"><span>Categoría</span><b>${esc(it.categoria || 'Sin categoría')}</b></div>
       </div>
       ${specs.length ? `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}

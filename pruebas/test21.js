@@ -199,5 +199,50 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Un trabajador inactivo asignado sale marcado como "(inactivo)" para poder cambiarlo',((await a.textContent('.at-op.on[data-eid="1008"]'))||'').includes('Mario (inactivo)'));
  ok('   y sin cambios el botón sigue apagado',await a.$eval('#btnGuardarTodo',x=>x.disabled));
 
+ // ===== Reglas nuevas (29 sep): combo por oficio y ventana con protección =====
+ await a.click('#sheetTodo [data-cerrar="sheetTodo"]').catch(()=>{});await a.waitForTimeout(300);
+ const E=(id,rama,nombre,orden,esp,oficio,extra)=>Object.assign({id,rama,nombre,orden,especialidad:esp,oficio,estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null,incluye:null,despues_de:null},extra||{});
+ const incC='Puerta con protección + 2 protecciones de ventana';
+ ventas.push({id:24,fecha_entrega:dia(12),cliente:{nombre:'Carmen Nueva'},estado:'en_produccion',items:[
+   {id:201,nombre:'Combo Imperial',tipo:'Combo',foto:null,categoria_pago_id:1,especificaciones:{alto:2,ancho:1,color:'Negro',ventanas_alto:1.2,ventanas_ancho:1,variante:'Con protección en puerta',aluminio:'Ecobel'},catalogo:{fotos:{Negro:GIF}},etapas:[
+     E(2001,'principal','Hierro',1,'herrero','hierro',{incluye:incC,estado:'hecha',trabajador_id:'t1',trabajador:{nombre:'Jesús'},terminada_en:new Date().toISOString()}),
+     E(2002,'principal','Masilla',2,'masilla_pintura','masilla',{incluye:incC}),
+     E(2003,'principal','Pintura',3,'masilla_pintura','pintura',{incluye:incC}),
+     E(2004,'principal','Detalles',4,'acabados','detalles',{incluye:'Solo la puerta'}),
+     E(2005,'ventana','Armar 2 ventanas',1,'ventanero','armar',{incluye:'2 ventanas',estado:'hecha',trabajador_id:'t3',trabajador:{nombre:'Luis'},terminada_en:new Date().toISOString()}),
+     E(2006,'ventana','Instalar en las protecciones',2,'ventanero','instalar',{incluye:'2 ventanas en sus protecciones',despues_de:['principal/3']})
+   ]},
+   {id:202,nombre:'Ventana Protegida',tipo:'Ventana',foto:null,categoria_pago_id:1,especificaciones:{alto:1.5,ancho:2,color:'Blanco',proteccion:true,aluminio:'Panorámica'},catalogo:{fotos:{Blanco:GIF}},etapas:[
+     E(2011,'proteccion','Hierro',1,'herrero','hierro',{incluye:'La protección'}),
+     E(2012,'proteccion','Masilla',2,'masilla_pintura','masilla',{incluye:'La protección'}),
+     E(2013,'proteccion','Pintura',3,'masilla_pintura','pintura',{incluye:'La protección'}),
+     E(2014,'ventana','Armar',1,'ventanero','armar',{incluye:'La ventana'}),
+     E(2015,'ventana','Instalar en la protección',2,'ventanero','instalar',{incluye:'La ventana en su protección',despues_de:['proteccion/3']})
+   ]}
+ ]});
+ await a.reload();await a.waitForSelector('.vcard');await a.waitForTimeout(400);
+ await a.click('.vcard >> text=Carmen Nueva');await a.waitForSelector('#sheetFicha.open');await a.waitForTimeout(300);
+ const tn=await a.$$eval('#fichaBody .e-rama-tit',x=>x.map(t=>t.textContent));
+ ok('Combo nuevo: "Puerta y protecciones" y "2 ventanas"; ventana: "Protección" y "Ventana"',tn.join('|')==='Puerta y protecciones|2 ventanas · 1.2 × 1 m c/u|Protección · 1.5 × 2 m|Ventana · 1.5 × 2 m',tn);
+ ok('Dice lo que incluye el bloque del combo',(await a.textContent('#fichaBody .e-rama-inc'))==='Incluye: puerta con protección + 2 protecciones de ventana');
+ const fn=await a.textContent('#fichaBody');
+ ok('Masilla y Pintura son pasos separados',fn.includes('Masilla') && fn.includes('Pintura') && !fn.includes('Masilla y pintura'));
+ ok('Instalar espera la pintura de la otra parte',fn.includes('Espera: pintura de puerta y protecciones') && fn.includes('Después de armar'),fn.match(/Espera:[^.]{0,40}/g));
+ ok('Pasos que se pueden hacer ya: masilla del combo, hierro y armar de la ventana (instalar no)',(await a.$$('#fichaBody .etapa.actual')).length===3);
+ await a.screenshot({path:'shots5/r1-combo-nuevo.png',fullPage:true});
+ await a.click('[data-asignar-todo="201"]');await a.waitForSelector('#sheetTodo.open');await a.waitForTimeout(200);
+ const filas=await a.$$eval('#todoBody .at-paso .at-nom',x=>x.map(y=>y.textContent.trim()));
+ ok('Asignar por rol: "Masilla y pintura" junto, Detalles e Instalar',filas.join('|')==='Masilla y pintura|Detalles|Instalar en las protecciones',filas);
+ ok('Masilla y pintura dice que son 2 pasos de la misma persona y lo que incluyen',(await a.textContent('#todoBody .at-paso >> nth=0')).includes('2 pasos · la misma persona') && (await a.textContent('#todoBody .at-paso >> nth=0')).includes('Puerta con protección + 2 protecciones de ventana'));
+ await a.click('#todoBody .at-paso >> nth=0 >> .at-op[data-tid="t2"]');await a.waitForTimeout(100);
+ ok('Elegir a Pedro una vez marca los 2 pasos',(await a.textContent('#btnGuardarTodo'))==='Guardar 2 cambios');
+ await a.screenshot({path:'shots5/r2-asignar-rol.png'});
+ await a.click('#btnGuardarTodo');await a.waitForTimeout(700);
+ at=llamadas.filter(x=>x[0]==='asignar_etapas').pop();
+ ok('Se guardan Masilla y Pintura con Pedro',at && at[1].p.length===2 && at[1].p.every(c=>c.tid==='t2') && at[1].p.map(c=>c.eid).sort().join()==='2002,2003',at&&at[1].p);
+ await a.click('[data-asignar-todo="202"]');await a.waitForSelector('#sheetTodo.open');await a.waitForTimeout(200);
+ const fv2=await a.$$eval('#todoBody .at-paso .at-nom',x=>x.map(y=>y.textContent.trim()));
+ ok('Ventana con protección: Hierro, Masilla y pintura, y Armar e instalar',fv2.join('|')==='Hierro|Masilla y pintura|Armar e instalar',fv2);
+
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

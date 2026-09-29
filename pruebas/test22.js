@@ -71,29 +71,35 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Se ve cuántos modelos usan cada una',(await a.textContent('#lista')).includes('Usada en 2 modelos') && (await a.textContent('#lista')).includes('Usada en 1 modelo'));
  await a.screenshot({path:'shots5/c1-lista.png',fullPage:true});
 
- // Crear una nueva categoría
+ // Crear una nueva categoría: por oficio, con extra si lleva protección
  await a.click('#btnNuevo');await a.waitForSelector('#sheetFicha.open');
- await a.fill('#fNombre','Protección de puerta');
- const filaHerrero=a.locator('.cat-fila[data-esp="herrero"]');
- await filaHerrero.locator('input').fill('20');
- const filaVentanero=a.locator('.cat-fila[data-esp="ventanero"]');
- await filaVentanero.locator('button[data-modo="m2"]').click();
- await filaVentanero.locator('input').fill('8');
+ ok('La ficha pide Hierro, Masilla, Pintura, Detalles y Armar, y el extra de protección en los 3 primeros',(await a.$$eval('.cat-fila:not(.prot)',x=>x.map(f=>f.dataset.esp))).join()==='hierro,masilla,pintura,detalles,armar' && (await a.$$eval('.cat-fila.prot',x=>x.map(f=>f.dataset.esp))).join()==='hierro,masilla,pintura' && (await a.textContent('#sheetFicha')).includes('Instalar la ventana no se paga'));
+ await a.fill('#fNombre','Puertas');
+ await a.locator('.cat-fila[data-esp="hierro"]:not(.prot) input').fill('20');
+ await a.locator('.cat-fila[data-esp="hierro"].prot input').fill('8');
+ await a.locator('.cat-fila[data-esp="pintura"]:not(.prot) button[data-modo="m2"]').click();
+ await a.locator('.cat-fila[data-esp="pintura"]:not(.prot) input').fill('4');
+ await a.locator('.cat-fila[data-esp="pintura"].prot button[data-modo="m2"]').click();
+ await a.locator('.cat-fila[data-esp="pintura"].prot input').fill('2');
+ await a.locator('.cat-fila[data-esp="masilla"].prot input').fill('5');
  await a.screenshot({path:'shots5/c2-nueva.png',fullPage:true});
+ await a.click('#btnGuardar');await a.waitForTimeout(400);
+ ok('Extra de protección sin tarifa del oficio: avisa y no guarda',!llamadas.some(x=>x[0]==='crear') && (await a.textContent('#toast')).includes('por masilla') && !!(await a.$('.cat-oficio.invalid [data-esp="masilla"]')));
+ await a.locator('.cat-fila[data-esp="masilla"].prot input').fill('');
  await a.click('#btnGuardar');await a.waitForTimeout(500);
  const crea=llamadas.find(x=>x[0]==='crear');
- ok('Se llamó a crear con nombre y tarifas correctas',crea&&crea[1].nombre==='Protección de puerta'&&crea[1].tarifas.herrero.monto===20&&crea[1].tarifas.herrero.modo==='fijo'&&crea[1].tarifas.ventanero.monto===8&&crea[1].tarifas.ventanero.modo==='m2',crea&&crea[1]);
- ok('Las especialidades sin monto no se guardan',crea && !crea[1].tarifas.masilla_pintura && !crea[1].tarifas.acabados,crea&&crea[1].tarifas);
- ok('Se cierra la hoja y aparece la nueva categoría',(await a.$$('.c-card')).length===3);
+ const tc=crea&&crea[1].tarifas;
+ ok('Se crea con nombre y tarifas por oficio',crea&&crea[1].nombre==='Puertas'&&tc.hierro.monto===20&&tc.hierro.modo==='fijo'&&tc.hierro.prot_monto===8&&tc.hierro.prot_modo==='fijo'&&tc.pintura.monto===4&&tc.pintura.modo==='m2'&&tc.pintura.prot_monto===2&&tc.pintura.prot_modo==='m2',tc);
+ ok('Sin monto no se guarda',tc && !tc.masilla && !tc.detalles && !tc.armar,tc);
+ ok('Se cierra la hoja y aparece la nueva categoría con su extra',(await a.$$('.c-card')).length===3 && (await a.textContent('#lista')).includes('+$8 prot.'));
 
- // Editar: cambiar un monto
+ // Editar una categoría de antes: se llena por oficio y se conservan sus tarifas viejas
  await a.click('.c-card >> text=General');await a.waitForSelector('#sheetFicha.open');
  ok('El botón eliminar aparece al editar (no al crear)',!(await a.$eval('#btnEliminar',x=>x.classList.contains('hidden'))));
- const filaHerrero2=a.locator('.cat-fila[data-esp="herrero"]');
- await filaHerrero2.locator('input').fill('27');
+ await a.locator('.cat-fila[data-esp="hierro"]:not(.prot) input').fill('27');
  await a.click('#btnGuardar');await a.waitForTimeout(500);
  const edita=llamadas.find(x=>x[0]==='editar');
- ok('Se llamó a editar con el monto nuevo',edita&&edita[2].tarifas.herrero.monto===27,edita&&edita[2]);
+ ok('Guarda el oficio nuevo y conserva las tarifas viejas (pedidos de antes)',edita&&edita[2].tarifas.hierro.monto===27&&edita[2].tarifas.herrero.monto===25&&edita[2].tarifas.masilla_pintura.monto===30,edita&&edita[2]);
  ok('La lista muestra el monto actualizado',(await a.textContent('#lista')).includes('$27'));
 
  // Eliminar una categoría usada: avisa cuántos modelos se quedan sin categoría

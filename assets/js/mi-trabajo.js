@@ -110,6 +110,37 @@
     return f.length ? `<div class="tj-specs">${f.map(x => `<div class="${x.ancho ? 'ancho' : ''}"><span>${esc(x.l)}</span>${esc(x.v)}</div>`).join('')}</div>` : '';
   }
   const refPedidoCorto = (t) => t.interna ? 'Para exhibición' : refPedido(t);
+  // Las piezas que incluye un trabajo (reglas nuevas, con "oficio"): ej. Hierro de un combo =
+  // la puerta, su protección si la lleva y las 2 protecciones de las ventanas, cada una con su medida
+  const PROT = ['hierro', 'masilla', 'pintura'];
+  // "masilla y pintura" / "la pintura de las protecciones": qué espera, en minúscula
+  function esperaTxt(t){
+    const e = String(t.espera || '').toLowerCase();
+    if(t.oficio === 'instalar' && /^pintura/.test(e)) return 'la pintura de ' + (t.tipo === 'Combo' ? 'las protecciones' : 'la protección');
+    return e;
+  }
+  const noSePaga = (t) => t.oficio === 'instalar';
+  function piezasDe(t){
+    if(!t.oficio) return [];
+    const e = t.especificaciones || {}, c = Number(t.cantidad) || 1;
+    const m = (a, b) => (a && b) ? medidas({ alto:a, ancho:b }) : '';
+    const puerta = m(e.alto, e.ancho), vent = m(e.ventanas_alto, e.ventanas_ancho);
+    if(t.tipo === 'Combo'){
+      if(t.oficio === 'detalles') return [{ n:c, t:'Puerta', d:puerta }];
+      if(!PROT.includes(t.oficio)) return [{ n:2 * c, t:'Ventanas', d:vent }];
+      return [{ n:c, t:'Puerta', d:puerta }]
+        .concat(e.variante === 'Con protección en puerta' ? [{ n:c, t:'Protección de puerta', d:puerta }] : [])
+        .concat([{ n:2 * c, t:'Protecciones de ventana', d:vent }]);
+    }
+    if(t.tipo === 'Ventana') return [{ n:c, t: t.rama === 'proteccion' ? 'Protección' : 'Ventana', d:puerta }];
+    const nom = t.tipo === 'Portón' ? 'Portón' : 'Puerta';
+    return [{ n:c, t:nom, d:puerta }].concat(t.tipo === 'Puerta Multilock' && PROT.includes(t.oficio) && e.proteccion ? [{ n:c, t:'Protección', d:puerta }] : []);
+  }
+  function piezasHtml(t){
+    const p = piezasDe(t);
+    if(p.length < 2 && t.tipo !== 'Combo') return '';
+    return `<div class="pz" aria-label="Lo que incluye">${p.map(x => `<span class="pz-n">${x.n}</span><span><b>${esc(x.t)}</b>${x.d ? ' ' + esc(x.d) : ''}</span>`).join('')}</div>`;
+  }
   function topeTrab(iso){
     const tt = topeTexto(iso);
     if(!tt.tarde) return tt;
@@ -174,6 +205,7 @@
           <div class="hoy-etapa haciendo"><span class="en-dot"></span>Estás haciendo · ${esc(desde(t.iniciada_en))}</div>
           <div class="hoy-nom">${esc(t.nombre)} · ${esc(t.producto)}</div>
           <div class="hoy-sub">${esc([t.cantidad > 1 ? t.cantidad + ' unidades' : '', refPedidoCorto(t)].filter(Boolean).join(' · '))}${t.para_el ? ' · ' + topeHtml(t, 'hoy-tope') : ''}</div>
+          ${piezasHtml(t)}
           ${chips.length ? `<div class="spec-chips">${specChipsHtml(chips)}</div>` : ''}
         </div>
         <div class="hoy-acc"><button class="btn-primary" type="button" data-terminar-t="${t.id}">Ya lo terminé · tomar foto</button></div>
@@ -190,7 +222,7 @@
     if(!vistos.some(x => x.id === elegidoId)) vistos.push(trabajos.find(x => x.id === elegidoId));
     const op = (t) => {
       const sel = t.id === elegidoId;
-      const sub = t.espera ? `<span class="el-s">Espera ${esc(t.espera.toLowerCase())}</span>`
+      const sub = t.espera ? `<span class="el-s">Espera ${esc(esperaTxt(t))}</span>`
         : t.para_el ? `<span class="el-s ${topeTrab(t.para_el).tarde ? 'tarde' : ''}">${esc([refPedidoCorto(t), topeTrab(t.para_el).t].join(' · '))}</span>`
         : `<span class="el-s">${esc(refPedidoCorto(t))}</span>`;
       return `<div class="el-op ${t.espera ? 'gris' : ''} ${sel ? 'sel' : ''}" ${t.espera ? 'aria-disabled="true"' : `role="radio" tabindex="0" aria-checked="${sel}" data-elegir="${t.id}"`}>
@@ -223,7 +255,7 @@
     if(!resto.length) return '';
     const vistos = resto.length > MAX_DESPUES + 1 ? resto.slice(0, MAX_DESPUES) : resto;
     const mini = (t, i) => {
-      const sub = t.espera ? `<span class="dp-s">Espera ${esc(t.espera.toLowerCase())}</span>`
+      const sub = t.espera ? `<span class="dp-s">Espera ${esc(esperaTxt(t))}</span>`
         : t.para_el ? topeHtml(t, 'dp-s') : `<span class="dp-s">${esc(refPedidoCorto(t))}</span>`;
       return `<button class="dp ${t.espera ? 'gris' : ''}" type="button" data-detalle="${t.id}">
         <span class="dp-foto">${fotoHtml(t, 26)}</span>
@@ -260,9 +292,9 @@
     const det = [t.cantidad > 1 ? t.cantidad + ' unidades' : '', refPedidoCorto(t)].filter(Boolean).join(' · ');
     const tt = t.para_el ? topeTrab(t.para_el) : null;
     const estado = t.iniciada_en ? `<span class="tr-estado" style="color:#1B6B3A"><span class="en-dot" style="margin-top:4px"></span>Estás haciendo este</span>`
-      : t.espera ? `<span class="tr-estado bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</span>`
+      : t.espera ? `<span class="tr-estado bloq">${ICON_CANDADO}Espera ${esc(esperaTxt(t))}</span>`
       : tt ? `<span class="tr-estado" style="${tt.tarde ? 'color:var(--danger)' : ''}">${esc(tt.t)}</span>`
-      : t.monto != null ? `<span class="tr-estado">Ganas ${esc(dinero(t.monto))}</span>` : '';
+      : noSePaga(t) ? '' : t.monto != null ? `<span class="tr-estado">Ganas ${esc(dinero(t.monto))}</span>` : '';
     return `<button class="tr ${t.espera ? 'gris' : ''}" type="button" data-detalle="${t.id}">
       <span class="tr-foto">${fotoHtml(t, 24)}</span>
       <span style="min-width:0">
@@ -293,17 +325,18 @@
       <div><span class="tj-parte">Tu parte: ${esc(t.nombre)}</span>${tt ? `<span class="tj-tope ${tt.tarde ? 'tarde' : ''}">${esc(tt.t)}</span>` : ''}</div>
       <div class="det-name" style="margin-top:10px">${esc(t.producto)}</div>
       <div class="det-type">${esc(t.tipo === 'Combo' ? 'Combo · 1 puerta + 2 ventanas + 2 protecciones' : (t.tipo || ''))}</div>
+      ${piezasHtml(t)}
       <div class="tj-datos">
         ${t.cantidad > 1 ? `<span><b>${t.cantidad}</b> unidades</span>` : ''}
         <span>${t.interna ? '<b>Para exhibición</b>' : `<b>${esc(refPedido(t))}</b>${t.fecha_entrega ? ' · entrega al cliente ' + esc(fechaCorta(t.fecha_entrega)) : ''}`}</span>
-        ${t.monto != null ? `<span>Ganas <b>${esc(dinero(t.monto))}</b></span>` : ''}
+        ${noSePaga(t) ? '<span>Este paso <b>no se paga</b></span>' : t.monto != null ? `<span>Ganas <b>${esc(dinero(t.monto))}</b></span>` : ''}
       </div>
       ${cd ? `<div class="tj-color"><span class="sw ${SW_COLOR[cd.c] || ''}"></span>${esc(cd.t)}</div>` : ''}
       ${specsTabla(t)}
       ${t.notas ? `<div class="tj-nota"><b>Nota de la venta:</b> ${esc(t.notas)}</div>` : ''}`;
     const ep = enProceso();
     $('trabajoFoot').innerHTML = t.espera
-      ? `<div class="tj-bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</div>`
+      ? `<div class="tj-bloq" style="padding:0 14px;text-align:center">${ICON_CANDADO}Espera ${esc(esperaTxt(t))}</div>`
       : t.iniciada_en
       ? `<button class="btn-primary" type="button" data-terminar-t="${t.id}" style="width:100%;white-space:nowrap">Ya lo terminé · tomar foto</button>`
       : ep
@@ -346,7 +379,7 @@
   const miniFoto = (url, tipo) => `<span>${url ? `<img src="${esc(url)}" alt="" loading="lazy">` : iconoTipo(tipo, 18)}</span>`;
   // Cada trabajo hecho: la foto del catálogo y la suya, juntas. Al tocarlo se ve el detalle.
   function filaTrabajo(m){
-    const monto = m.monto == null ? '<span class="pg-mov-m gris">Por definir</span>' : `<span class="pg-mov-m">${esc(dinero(m.monto))}</span>`;
+    const monto = noSePaga(m) ? '<span class="pg-mov-m gris">No se paga</span>' : m.monto == null ? '<span class="pg-mov-m gris">Por definir</span>' : `<span class="pg-mov-m">${esc(dinero(m.monto))}</span>`;
     return `<button class="pg-mov" type="button" data-hecho="${m.id}">
       <span class="duo">${miniFoto(m.foto, m.tipo)}${miniFoto(m.foto_trabajo, m.tipo)}</span>
       <span style="min-width:0"><span class="pg-mov-t">${esc(m.etapa)} · ${esc(m.producto)}</span>
@@ -383,7 +416,7 @@
       if(!g){ g = { k, l:[] }; grupos.push(g); }
       g.l.push(m);
     });
-    const porDefinir = tr.filter(m => m.monto == null).length;
+    const porDefinir = tr.filter(m => m.monto == null && !noSePaga(m)).length;
     let html = '';
     if(!tr.length && !va.length && !vp){
       html += '<div class="tr-vacio">Aquí verás cada trabajo que termines, con su foto, y lo que te toca cobrar.</div>';
@@ -450,9 +483,10 @@
       <p class="hecho-sub">${esc(refPedidoCorto(m))} · Terminado ${esc(diaCorto(m.fecha) + hora)}</p>
       <div class="cmp">${foto(m.foto, 'Catálogo')}${foto(m.foto_trabajo, 'Tu foto')}</div>
       ${etq ? `<p class="cmp-nota">${esc(etq)}</p>` : ''}
+      ${piezasHtml(t)}
       <div class="tj-datos">
         ${m.cantidad > 1 ? `<span><b>${m.cantidad}</b> unidades</span>` : ''}
-        <span>${m.monto == null ? 'Monto <b>por definir</b>' : `Te suma <b>${esc(dinero(m.monto))}</b>`}</span>
+        <span>${noSePaga(m) ? 'Este paso <b>no se paga</b>' : m.monto == null ? 'Monto <b>por definir</b>' : `Te suma <b>${esc(dinero(m.monto))}</b>`}</span>
       </div>
       ${cd ? `<div class="tj-color"><span class="sw ${SW_COLOR[cd.c] || ''}"></span>${esc(cd.t)}</div>` : ''}
       ${specsTabla(t)}
@@ -571,7 +605,7 @@
     $('listaOrden').innerHTML = lista.map((t) => {
       const n = ordenTocados.indexOf(t.id) + 1;
       const tt = t.para_el ? topeTrab(t.para_el) : null;
-      const sub = t.espera ? `${t.nombre} · espera ${t.espera.toLowerCase()}` : [t.nombre, tt ? tt.t : refPedidoCorto(t)].join(' · ');
+      const sub = t.espera ? `${t.nombre} · espera ${esperaTxt(t)}` : [t.nombre, tt ? tt.t : refPedidoCorto(t)].join(' · ');
       return `<button type="button" class="ord-f ${t.espera ? 'gris' : ''} ${n ? 'on' : ''}" data-tocar="${t.id}" aria-pressed="${!!n}">
         <span class="ord-n">${n || ''}</span>
         <span class="ord-t"><b>${esc(t.producto)}</b><span class="${tt && tt.tarde && !t.espera ? 'tarde' : ''}">${esc(sub)}</span></span>
@@ -646,7 +680,7 @@
     $('tFotoAyuda').textContent = fotoBlob ? 'Si no se ve bien, tócala para tomarla otra vez.' : 'La foto es obligatoria para terminar.';
     $('tFotoAyuda').classList.toggle('ok', !!fotoBlob);
     btn.disabled = !fotoBlob;
-    btn.textContent = fotoBlob && t && t.monto != null ? `Terminar · suma ${dinero(t.monto)}` : 'Terminar';
+    btn.textContent = fotoBlob && t && t.monto != null && !noSePaga(t) ? `Terminar · suma ${dinero(t.monto)}` : 'Terminar';
   }
   function abrirTerminar(id){
     const t = trabajos.find(x => x.id === id);
@@ -693,7 +727,7 @@
       terminarId = null;
       soltarFoto();
       elegidoId = null;
-      toast(data && data.monto != null ? `¡Bien hecho! Sumaste ${dinero(data.monto)}` : '¡Bien hecho! Quedó terminado');
+      toast(data && data.monto != null && Number(data.monto) > 0 ? `¡Bien hecho! Sumaste ${dinero(data.monto)}` : '¡Bien hecho! Quedó terminado');
       await refrescar();
     } catch(err){
       toast((err && err.message) || 'No se pudo terminar. Revisa tu internet.', 'error');

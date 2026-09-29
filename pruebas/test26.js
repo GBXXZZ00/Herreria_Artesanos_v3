@@ -180,7 +180,7 @@ async function entrar(b,user,rol,nombre){
  await t.screenshot({path:'shots5/t2b-detalle-combo.png',fullPage:true});
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
  await t.click('.dp[data-detalle="503"]');await t.waitForSelector('#sheetTrabajo.open');
- ok('El que espera a otro: se ve todo pero sin botón, dice qué espera',!(await t.$('#trabajoFoot button')) && (await t.textContent('#trabajoFoot')).includes('Espera que terminen Masilla y pintura'));
+ ok('El que espera a otro: se ve todo pero sin botón, dice qué espera',!(await t.$('#trabajoFoot button')) && (await t.textContent('#trabajoFoot')).includes('Espera masilla y pintura'));
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
 
  // Terminar: la foto es obligatoria
@@ -279,8 +279,27 @@ async function entrar(b,user,rol,nombre){
  await t.goto('http://127.0.0.1:8765/ventas.html',{waitUntil:'commit'}).catch(()=>{});await t.waitForURL('**/index.html',{timeout:8000}).catch(()=>{});await t.waitForTimeout(1500);
  ok('Trabajador que escribe ventas.html vuelve a su Inicio',t.url().includes('index.html'));
 
+ // Reglas nuevas: un trabajo incluye varias piezas (combo: puerta, su protección y las 2 protecciones)
+ const incC='Puerta con protección + 2 protecciones de ventana';
+ const t503=trabajos.find(x=>x.id===503);
+ trabajos=[
+   {id:701,nombre:'Hierro',especialidad:'herrero',rama:'principal',oficio:'hierro',incluye:incC,unidades:1,para_el:SAB.este,venta_id:60,interna:false,fecha_entrega:dia(8),notas:null,producto:'Combo Imperial',tipo:'Combo',foto:GIF,foto_de:'Negro',cantidad:1,color:'Negro',especificaciones:{color:'Negro',alto:2.1,ancho:1,ventanas_alto:1.2,ventanas_ancho:1,variante:'Con protección en puerta',aluminio:'Ecobel'},espera:null,monto:40,iniciada_en:new Date().toISOString()},
+   {id:702,nombre:'Instalar en las protecciones',especialidad:'ventanero',rama:'ventana',oficio:'instalar',incluye:'2 ventanas en sus protecciones',unidades:1,para_el:SAB.este,venta_id:60,interna:false,fecha_entrega:dia(8),notas:null,producto:'Combo Imperial',tipo:'Combo',foto:GIF,foto_de:'Negro',cantidad:1,color:'Negro',especificaciones:{color:'Negro',alto:2.1,ancho:1,ventanas_alto:1.2,ventanas_ancho:1,variante:'Con protección en puerta',aluminio:'Ecobel'},espera:'Pintura',monto:0}
+ ];
+ await t.goto('http://127.0.0.1:8765/index.html');await t.waitForSelector('.hoy');await t.waitForTimeout(400);
+ const pz=await t.$$eval('.hoy .pz > span:not(.pz-n)',x=>x.map(y=>y.textContent));
+ ok('Hierro de un combo: una sola tarjeta con la puerta, su protección y las 2 protecciones',(await t.textContent('.hoy-nom'))==='Hierro · Combo Imperial' && pz.join('|')==='Puerta 2.1 × 1 m|Protección de puerta 2.1 × 1 m|Protecciones de ventana 1.2 × 1 m' && (await t.$$eval('.hoy .pz-n',x=>x.map(y=>y.textContent))).join()==='1,1,2',pz);
+ ok('Instalar espera la pintura de las protecciones (en gris)',(await t.textContent('.dp.gris')).includes('Espera la pintura de las protecciones'));
+ await t.screenshot({path:'shots5/t7-combo-piezas.png',fullPage:true});
+ await t.click('.hoy-foto');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
+ ok('El detalle también dice lo que incluye y el aluminio',(await t.$$('#trabajoBody .pz > span:not(.pz-n)')).length===3 && (await t.textContent('#trabajoBody')).includes('AluminioEcobel'));
+ await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
+ await t.click('.dp[data-detalle="702"]');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
+ ok('Instalar: "Este paso no se paga" y dice que espera la pintura de las protecciones',(await t.textContent('#trabajoBody')).includes('Este paso no se paga') && (await t.textContent('#trabajoFoot')).includes('Espera la pintura de las protecciones'));
+ await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
+
  // Todos esperan a otro
- trabajos=[trabajos.find(x=>x.id===503)];
+ trabajos=[t503];
  await t.goto('http://127.0.0.1:8765/index.html');await t.waitForSelector('.hoy');await t.waitForTimeout(300);
  ok('Si todos esperan a otro: lo dice y se ven en "Después"',(await t.textContent('.hoy')).includes('Tus trabajos esperan a otro') && (await t.$$('.despues .dp')).length===1);
  // Sin trabajos

@@ -1,5 +1,7 @@
 // Categorías de pago: los "grupos" que definen cuánto se le paga a cada trabajador por
-// especialidad al terminar una etapa (fijo o por m²). Solo lo ve un admin.
+// oficio al terminar un paso (fijo o por m²), más un extra si el producto lleva protección
+// (puerta con protección o combo con protección en la puerta). Instalar no se paga. Solo lo ve un admin.
+// Las tarifas viejas por especialidad (pedidos de antes) se conservan al guardar.
 (function(){
   'use strict';
   const db = window.db;
@@ -7,12 +9,15 @@
   const S = window.Sesion;
   const $ = (id) => document.getElementById(id);
 
-  const ESPECIALIDADES = [
-    { v:'herrero', n:'Herrero' },
-    { v:'masilla_pintura', n:'Masilla y pintura' },
-    { v:'acabados', n:'Detalles' },
-    { v:'ventanero', n:'Ventanero' },
-    { v:'carpintero', n:'Carpintero' }
+  const OFICIOS = [
+    { v:'hierro', n:'Hierro', prot:true },
+    { v:'masilla', n:'Masilla', prot:true },
+    { v:'pintura', n:'Pintura', prot:true },
+    { v:'detalles', n:'Detalles' },
+    { v:'armar', n:'Armar ventana' }
+  ];
+  const ESPECIALIDADES_VIEJAS = [
+    { v:'herrero', n:'Herrero' }, { v:'masilla_pintura', n:'Masilla y pintura' }, { v:'acabados', n:'Detalles' }, { v:'ventanero', n:'Ventanero' }
   ];
   const ICONO_MONEDA = '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v.01M18 15v.01"/>';
 
@@ -50,10 +55,15 @@
       <span><b>${n === 1 ? '1 modelo sin categoría.' : n + ' modelos sin categoría.'}</b> Abre una categoría y toca "Asignar a modelos".</span></div>` : '';
   }
 
+  const precio = (monto, modo) => '$' + Number(monto) + (modo === 'm2' ? '/m²' : '');
   function tarifasHtml(t){
-    const filas = ESPECIALIDADES
+    let filas = OFICIOS
       .filter(e => t && t[e.v] && Number(t[e.v].monto) > 0)
-      .map(e => `<span class="c-tarifa">${esc(e.n)} <b>$${Number(t[e.v].monto)}${t[e.v].modo === 'm2' ? '/m²' : ''}</b></span>`);
+      .map(e => `<span class="c-tarifa">${esc(e.n)} <b>${precio(t[e.v].monto, t[e.v].modo)}</b>${Number(t[e.v].prot_monto) > 0 ? ` <span class="c-prot">+${precio(t[e.v].prot_monto, t[e.v].prot_modo)} prot.</span>` : ''}</span>`);
+    // Categoría de antes (por especialidad), hasta que se llene con los oficios nuevos
+    if(!filas.length) filas = ESPECIALIDADES_VIEJAS
+      .filter(e => t && t[e.v] && Number(t[e.v].monto) > 0)
+      .map(e => `<span class="c-tarifa vieja">${esc(e.n)} <b>${precio(t[e.v].monto, t[e.v].modo)}</b></span>`);
     return filas.length ? `<div class="c-tarifas">${filas.join('')}</div>` : '<p class="c-usado" style="margin-top:9px">Sin tarifas todavía</p>';
   }
 
@@ -78,18 +88,22 @@
 
   // ---------------- Ficha: crear/editar ----------------
   let categoriaActual = null;
-  function filaTarifaHtml(esp, datos){
-    const monto = datos && datos.monto != null ? datos.monto : '';
-    const modo = (datos && datos.modo) || 'fijo';
+  function filaHtml(of, nombre, modo, monto, prot){
     return `
-      <div class="cat-fila" data-esp="${esp.v}">
-        <span class="cat-esp">${esc(esp.n)}</span>
-        <div class="cat-modo">
-          <button type="button" data-modo="fijo" class="${modo === 'fijo' ? 'on' : ''}">Fijo</button>
-          <button type="button" data-modo="m2" class="${modo === 'm2' ? 'on' : ''}">m²</button>
+      <div class="cat-fila ${prot ? 'prot' : ''}" data-esp="${of.v}" ${prot ? 'data-prot="1"' : ''}>
+        <span class="cat-esp">${esc(nombre)}</span>
+        <div class="cat-modo" role="group" aria-label="${esc(nombre)}: fijo o por m²">
+          <button type="button" data-modo="fijo" class="${modo === 'fijo' ? 'on' : ''}" aria-pressed="${modo === 'fijo'}">Fijo</button>
+          <button type="button" data-modo="m2" class="${modo === 'm2' ? 'on' : ''}" aria-pressed="${modo === 'm2'}">m²</button>
         </div>
-        <div class="cat-monto"><input type="text" inputmode="decimal" value="${esc(monto)}" placeholder="0"></div>
+        <div class="cat-monto"><input type="text" inputmode="decimal" value="${esc(monto)}" placeholder="0" aria-label="${esc(nombre)}: monto"></div>
       </div>`;
+  }
+  function filaTarifaHtml(of, datos){
+    const d = datos || {};
+    const val = (x) => x != null && x !== '' ? x : '';
+    return `<div class="cat-oficio">${filaHtml(of, of.n, d.modo || 'fijo', val(d.monto), false)}
+      ${of.prot ? filaHtml(of, 'Si lleva protección, suma', d.prot_modo || 'fijo', val(d.prot_monto), true) : ''}</div>`;
   }
   function pintarFicha(c){
     categoriaActual = c;
@@ -98,7 +112,7 @@
     $('campoNombre').classList.remove('invalid');
     $('btnAsignarModelos').classList.toggle('hidden', !c);
     pintarAsigSub();
-    $('filasTarifa').innerHTML = ESPECIALIDADES.map(e => filaTarifaHtml(e, c && c.tarifas ? c.tarifas[e.v] : null)).join('');
+    $('filasTarifa').innerHTML = OFICIOS.map(e => filaTarifaHtml(e, c && c.tarifas ? c.tarifas[e.v] : null)).join('');
     $('btnEliminar').classList.toggle('hidden', !c);
     abrirHoja('sheetFicha');
   }
@@ -111,16 +125,21 @@
   $('filasTarifa').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-modo]'); if(!b) return;
     const fila = b.closest('.cat-fila');
-    fila.querySelectorAll('button[data-modo]').forEach(x => x.classList.toggle('on', x === b));
+    fila.querySelectorAll('button[data-modo]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
   });
 
+  // Se parte de lo que ya tenía (así no se pierden las tarifas viejas por especialidad)
   function leerTarifas(){
-    const tarifas = {};
+    const tarifas = Object.assign({}, (categoriaActual && categoriaActual.tarifas) || {});
+    OFICIOS.forEach(of => { delete tarifas[of.v]; });
     $('filasTarifa').querySelectorAll('.cat-fila').forEach(fila => {
-      const esp = fila.dataset.esp;
+      const of = fila.dataset.esp;
       const monto = parseFloat(fila.querySelector('.cat-monto input').value.replace(',', '.'));
       const modo = fila.querySelector('button[data-modo].on').dataset.modo;
-      if(!isNaN(monto) && monto > 0) tarifas[esp] = { monto, modo };
+      if(isNaN(monto) || !(monto > 0)) return;
+      if(fila.dataset.prot){
+        if(tarifas[of]){ tarifas[of].prot_monto = monto; tarifas[of].prot_modo = modo; }
+      } else tarifas[of] = { monto, modo };
     });
     return tarifas;
   }
@@ -129,6 +148,18 @@
     const nombre = $('fNombre').value.trim();
     $('campoNombre').classList.remove('invalid');
     if(!nombre){ $('eNombre').textContent = 'Escribe el nombre'; $('campoNombre').classList.add('invalid'); $('fNombre').focus(); return; }
+    // El extra de protección necesita la tarifa del oficio
+    const sinBase = [...$('filasTarifa').querySelectorAll('.cat-oficio')].find(g => {
+      const n = (f) => parseFloat((f && f.querySelector('input').value || '').replace(',', '.'));
+      return n(g.querySelector('.cat-fila.prot')) > 0 && !(n(g.querySelector('.cat-fila:not(.prot)')) > 0);
+    });
+    $('filasTarifa').querySelectorAll('.cat-oficio.invalid').forEach(g => g.classList.remove('invalid'));
+    if(sinBase){
+      sinBase.classList.add('invalid');
+      sinBase.scrollIntoView({ block:'center', behavior:'smooth' });
+      toast('Escribe cuánto se paga por ' + sinBase.querySelector('.cat-esp').textContent.toLowerCase() + ' para poder sumar el extra de protección', 'error');
+      return;
+    }
     const tarifas = leerTarifas();
     $('btnGuardar').disabled = true;
     try{

@@ -22,7 +22,7 @@ const PERFILES={
   u5:{id:'u5',usuario:'jesus',nombre:'Jesús',rol:'trabajador',sede_id:1,confirma_abonos:false,activo:true,orden:5,especialidades:['herrero','masilla_pintura','acabados']}
 };
 const DB={
-  categorias:[{id:1,nombre:'Puertas',tarifas:{herrero:{monto:20,modo:'fijo'},masilla_pintura:{monto:15,modo:'fijo'},acabados:{monto:5,modo:'fijo'}},activo:true}],
+  categorias:[{id:1,nombre:'Puertas',tarifas:{hierro:{monto:20,modo:'fijo'},masilla:{monto:7,modo:'fijo'},pintura:{monto:8,modo:'fijo'},detalles:{monto:5,modo:'fijo'}},activo:true}],
   modelos:[], ventas:[], clientes:[], abonos:[], etapas:[], vales:[], notifs:[], sec:{m:40,v:14,a:30,e:900,i:300,vale:1}
 };
 const TOKEN='aaaaaaaa-bbbb-4ccc-8ddd-0000000000e2';
@@ -79,8 +79,9 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
       const v=DB.ventas.find(x=>x.id===ab.venta_id);let prod=false;
       if(a.llego&&v.estado==='confirmada'){
         v.estado='en_produccion';v.produccion_en=iso();prod=true;
-        v.items.forEach(it=>['Hierro:herrero','Masilla y pintura:masilla_pintura','Detalles:acabados'].forEach((s,k)=>{const [nombre,esp]=s.split(':');
-          DB.etapas.push({id:++DB.sec.e,venta_item_id:it.id,rama:'principal',nombre,orden:k+1,especialidad:esp,estado:'pendiente',trabajador_id:null,foto:null,terminada_en:null,iniciada_en:null,monto:null});}));
+        // Reglas nuevas: una puerta pasa por Hierro, Masilla, Pintura y Detalles
+        v.items.forEach(it=>['Hierro:herrero:hierro','Masilla:masilla_pintura:masilla','Pintura:masilla_pintura:pintura','Detalles:acabados:detalles'].forEach((s,k)=>{const [nombre,esp,oficio]=s.split(':');
+          DB.etapas.push({id:++DB.sec.e,venta_item_id:it.id,rama:'principal',nombre,orden:k+1,especialidad:esp,oficio,incluye:null,despues_de:null,estado:'pendiente',trabajador_id:null,foto:null,terminada_en:null,iniciada_en:null,monto:null});}));
       }
       return j({id:a.aid,estado:ab.estado,produccion:prod});
     }
@@ -102,7 +103,7 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
         const mo=DB.modelos.find(z=>z.id===it.catalogo_id);
         out.push({id:e.id,nombre:e.nombre,especialidad:e.especialidad,rama:e.rama,unidades:1,para_el:e.para_el||null,notas:v.notas||null,foto_de:it.especificaciones.color,venta_id:v.id,interna:false,fecha_entrega:v.fecha_entrega,
           producto:it.nombre,tipo:it.tipo,cantidad:it.cantidad,foto:it.foto||(mo&&(mo.fotos[it.especificaciones.color]||Object.values(mo.fotos)[0]))||null,
-          color:it.especificaciones.color,especificaciones:it.especificaciones,espera:antes?antes.nombre:null,monto:montoDe(it,e.especialidad),iniciada_en:e.iniciada_en||null});
+          color:it.especificaciones.color,especificaciones:it.especificaciones,espera:antes?antes.nombre:null,oficio:e.oficio,incluye:e.incluye,monto:montoDe(it,e.oficio||e.especialidad),iniciada_en:e.iniciada_en||null});
       })));
       return j(out.sort((x,y)=>(x.iniciada_en?0:1)-(y.iniciada_en?0:1)||(x.espera?1:0)-(y.espera?1:0)||x.id-y.id));
     }
@@ -116,7 +117,7 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
       if(etapasDeItem(it.id).some(x=>x.orden<e.orden&&x.estado==='pendiente'))return j({message:'Primero hay que terminar la etapa anterior'},400);
       if(!e.iniciada_en)return j({message:'Primero empieza este trabajo en tu inicio'},400);
       if(!a.foto_url)return j({message:'Toma la foto del trabajo terminado para poder terminarlo'},400);
-      e.estado='hecha';e.foto=a.foto_url||null;e.terminada_en=iso();e.iniciada_en=null;e.monto=montoDe(it,e.especialidad);
+      e.estado='hecha';e.foto=a.foto_url||null;e.terminada_en=iso();e.iniciada_en=null;e.monto=montoDe(it,e.oficio||e.especialidad);
       const v=DB.ventas.find(x=>x.id===it.venta_id);
       const faltan=DB.etapas.filter(x=>itemsDe(v.id).some(i=>i.id===x.venta_item_id)&&x.estado==='pendiente').length;
       if(!faltan){v.estado='lista';v.lista_en=iso();}
@@ -255,7 +256,7 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  const t1=await r.waitForSelector('#toast.show',{timeout:5000}).then(e=>e.textContent()).catch(()=>'');
  ok('   Al confirmar dice que pasó a producción',/pasó a producción/i.test(t1),t1);
  await r.waitForTimeout(1300);
- ok('   La venta ahora está En producción, con 3 etapas creadas',v.estado==='en_produccion'&&DB.etapas.length===3);
+ ok('   La venta ahora está En producción, con 4 pasos creados (Hierro, Masilla, Pintura, Detalles)',v.estado==='en_produccion'&&DB.etapas.length===4);
  ok('   En la ficha ya no se puede devolver a Confirmada',!(await r.$('#fichaBody [data-retro]')));
  await r.screenshot({path:'shots5/e9-en-produccion.png'});
 
@@ -268,24 +269,25 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  await r.goto(H+'produccion.html?abrir='+v.id);await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(800);
  ok('   En la ficha hay un solo botón "Asignar trabajadores" y ningún "Marcar terminado"',(await r.$$('#fichaBody [data-asignar-todo]')).length===1 && !(await r.$('#fichaBody [data-terminar]')));
  await r.click('#fichaBody [data-asignar-todo]');await r.waitForSelector('#sheetTodo.open');await r.waitForTimeout(300);
- for(const e of DB.etapas) await r.click(`.at-op[data-eid="${e.id}"][data-tid="u5"]`);
+ ok('   La hoja junta Masilla y pintura en una sola fila (la misma persona)',(await r.$$eval('#todoBody .at-nom',x=>x.map(y=>y.textContent.trim()))).join('|')==='Hierro|Masilla y pintura|Detalles');
+ for(const b of await r.$$('#todoBody .at-op[data-tid="u5"]')) await b.click();
  await r.click('#btnGuardarTodo');await r.waitForTimeout(900);
- ok('   Asigna los 3 pasos a Jesús de una vez, para este sábado; solo le llega el aviso del primero',DB.etapas.every(e=>e.trabajador_id==='u5'&&e.para_el)&&DB.notifs.length===1,DB.notifs);
+ ok('   Asigna los 4 pasos a Jesús de una vez, para este sábado; solo le llega el aviso del primero',DB.etapas.every(e=>e.trabajador_id==='u5'&&e.para_el)&&DB.notifs.length===1,DB.notifs);
  await r.screenshot({path:'shots5/e11-asignado.png'});
 
  // ===== 5) Jesús hace cada etapa: la elige en "¿Con cuál empiezas?", la ve en "Estás haciendo" y la termina con foto =====
  const jz=await entrar(b,'u5','555555');pags.push(jz);
- const etapas=['Hierro','Masilla y pintura','Detalles'];
+ const etapas=['Hierro','Masilla','Pintura','Detalles'];
  for(let k=0;k<etapas.length;k++){
    await jz.goto(H+'index.html');await jz.waitForSelector('.hoy');await jz.waitForTimeout(500);
    const el=await texto(jz,'.hoy');
    ok(`5.${k+1} Jesús ve "¿Con cuál empiezas?" con ${etapas[k]} marcado ("Sigue")`,el.includes('¿Con cuál empiezas?')&&(await texto(jz,'.el-op.sel .el-etapa'))===etapas[k]+'Sigue',el);
-   if(k===0) ok('    Los otros dos pasos salen en gris (esperan a otro paso)',(await jz.$$('.el-op.gris')).length===2);
+   if(k===0) ok('    Los otros tres pasos salen en gris (esperan a otro paso)',(await jz.$$('.el-op.gris')).length===3);
    await jz.click('.hoy [data-empezar]');await jz.waitForSelector('.hoy-etapa.haciendo');await jz.waitForTimeout(300);
    const hoy=await texto(jz,'.hoy');
    ok(`    Lo empieza: "Estás haciendo · ${etapas[k]}" con la foto, el modelo, el color y su sábado`,hoy.includes('Estás haciendo')&&hoy.includes(etapas[k]+' · Imperial E2E')&&hoy.includes('Color negro')&&hoy.includes('Para el sáb')&&!!(await jz.$('.hoy-foto img')),hoy);
    if(k===0){
-     ok('    Ve lo que viene después (en gris, espera a otro paso)',(await jz.$$('.despues .dp.gris')).length===2);
+     ok('    Ve lo que viene después (en gris, espera a otro paso)',(await jz.$$('.despues .dp.gris')).length===3);
      // Ray ve en Producción que Jesús lo está haciendo
      await r.goto(H+'produccion.html');await r.waitForSelector('.vcard');await r.click('.vcard');await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(300);
      ok('    En Producción, Ray ve "Lo está haciendo ahora" en el Hierro',(await r.$$('#fichaBody .e-ahora')).length===1);
@@ -301,14 +303,14 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
    await jz.setInputFiles('#tFotoInput',{name:'f.png',mimeType:'image/png',buffer:FOTO});await jz.waitForTimeout(800);
    await jz.click('#btnTConfirmar');
    const tt=await jz.waitForFunction(()=>{const t=document.getElementById('toast');return t&&t.classList.contains('show')&&/Sumaste|terminado/.test(t.textContent)&&t.textContent;},null,{timeout:6000}).then(h=>h.jsonValue()).catch(()=>jz.textContent('#toast'));
-   ok(`    Termina con foto y le dice cuánto sumó`,/Sumaste \$(20|15|5)/.test(tt),tt);
+   ok(`    Termina con foto y le dice cuánto sumó`,/Sumaste \$(20|7|8|5)/.test(tt),tt);
    await jz.waitForTimeout(900);
    if(k===0){
      // El cliente ve el avance real en su seguimiento
      const c0x=await b.newContext({...devices['iPhone 13']});await mock(c0x,'x');const c0=await c0x.newPage();c0._err=[];c0.on('pageerror',e=>c0._err.push('cliente0: '+e.message));pags.push(c0);
      await c0.goto(H+'seguimiento.html?t='+TOKEN);await c0.waitForSelector('.pt');
-     ok('    El cliente ve "Tu Imperial E2E va en masilla y pintura"',(await texto(c0,'.estado-grande')).includes('Tu Imperial E2E va en masilla y pintura'),await texto(c0,'.estado-grande'));
-     ok('    Y en su producto: Hierro terminado con la foto del trabajador, Masilla es el siguiente',(await texto(c0,'.pt-p.hecho')).includes('Hierro')&&(await texto(c0,'.pt-p.hecho')).includes('Terminado el')&&!!(await c0.$('.pt-p.hecho .pt-foto img'))&&(await texto(c0,'.pt-p.actual')).includes('Masilla y pintura'));
+     ok('    El cliente ve "Tu Imperial E2E va en masilla"',(await texto(c0,'.estado-grande')).includes('Tu Imperial E2E va en masilla'),await texto(c0,'.estado-grande'));
+     ok('    Y en su producto: Hierro terminado con la foto del trabajador, Masilla es el siguiente',(await texto(c0,'.pt-p.hecho')).includes('Hierro')&&(await texto(c0,'.pt-p.hecho')).includes('Terminado el')&&!!(await c0.$('.pt-p.hecho .pt-foto img'))&&(await texto(c0,'.pt-p.actual')).includes('Masilla'));
      ok('    Sin nombres de trabajadores',!(await texto(c0,'main')).includes('Jesús'));
      await c0.waitForTimeout(800);await c0.screenshot({path:'shots5/e14b-seguimiento-avance.png',fullPage:true});
      await c0.click('.pt-foto');await c0.waitForTimeout(500);
@@ -321,7 +323,7 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
 
  // ===== 6) Pagos del trabajador y vale =====
  await jz.click('#vistaTrabajo [data-ver="pagos"]');await jz.waitForSelector('#sheetPagos.open');
- ok('7. Mis pagos: 3 trabajos esta semana, cada uno con sus dos fotos, y "Cobras el sáb ... $40"',(await jz.$$('#pagosBody [data-hecho]')).length===3&&(await jz.$$('#pagosBody [data-hecho] .duo img')).length===6&&(await texto(jz,'.pg-cobra b'))==='$40');
+ ok('7. Mis pagos: 4 trabajos esta semana, cada uno con sus dos fotos, y "Cobras el sáb ... $40"',(await jz.$$('#pagosBody [data-hecho]')).length===4&&(await jz.$$('#pagosBody [data-hecho] .duo img')).length===8&&(await texto(jz,'.pg-cobra b'))==='$40');
  await jz.click('#pagosBody [data-hecho] >> nth=0');await jz.waitForSelector('#sheetHecho.open');await jz.waitForTimeout(300);
  ok('   Al tocar uno: la foto del catálogo al lado de la suya',(await jz.$$('#hechoBody .cmp .hero img')).length===2);
  await jz.click('#sheetHecho [data-cerrar="sheetHecho"]');await jz.waitForTimeout(400);
@@ -343,7 +345,7 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  await r.goto(H+'index.html');await r.waitForSelector('#cuenta-nomina .num');
  ok('7b. Inicio de Ray: Nómina dice "$30 por pagar"',(await texto(r,'#cuenta-nomina'))==='$30 por pagar',await texto(r,'#cuenta-nomina'));
  await r.click('a.ini-tile[href="nomina.html"]');await r.waitForSelector('.n-card');
- ok('   En Nómina, Jesús: 3 trabajos, vale −$10, $30 por pagar',(await texto(r,'.n-card')).includes('3 trabajos · vales −$10')&&(await texto(r,'.n-card .n-monto b'))==='$30');
+ ok('   En Nómina, Jesús: 4 trabajos, vale −$10, $30 por pagar',(await texto(r,'.n-card')).includes('4 trabajos · vales −$10')&&(await texto(r,'.n-card .n-monto b'))==='$30');
  await r.screenshot({path:'shots5/e16b-nomina.png'});
  await r.click('.n-card');await r.waitForSelector('#sheetTrab.open');
  ok('   Cada trabajo dice de qué cliente y pedido es',(await texto(r,'#trabBody')).includes('Carla Prueba · N° '+v.id));
@@ -362,7 +364,7 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  await jz.goto(H+'index.html?ver=historial');await jz.waitForSelector('#sheetPagos.open');await jz.waitForTimeout(400);
  ok('   Jesús ve la semana pagada, cerrada',(await jz.$$('.pg-sem')).length===1&&(await jz.$$('.pg-sem[open]')).length===0);
  await jz.click('.pg-sem summary');await jz.waitForTimeout(300);
- ok('   Al abrirla: sus 3 trabajos con fotos y "Te pagaron · Ray $30"',(await jz.$$('.pg-sem[open] [data-hecho]')).length===3&&(await texto(jz,'.pg-sem[open] .pg-cobra'))==='Te pagaron · Ray$30');
+ ok('   Al abrirla: sus 4 trabajos con fotos y "Te pagaron · Ray $30"',(await jz.$$('.pg-sem[open] [data-hecho]')).length===4&&(await texto(jz,'.pg-sem[open] .pg-cobra'))==='Te pagaron · Ray$30');
  await jz.screenshot({path:'shots5/e16f-jesus-recibo.png',fullPage:true});
 
  // ===== 7) El cliente ve su seguimiento =====

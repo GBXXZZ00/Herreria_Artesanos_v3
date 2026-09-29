@@ -88,6 +88,16 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Público: descarga su PDF',fs.statSync('pub1.pdf').size>5000&&dl.suggestedFilename()==='Pedido-1-Maria-Gonzalez.pdf',dl.suggestedFilename());
  ok('Público: botón WhatsApp al negocio',(await c.getAttribute('.btn-wa','href')).startsWith('https://wa.me/584220167079'));
  await c.screenshot({path:'shots4/s3-publico.png',fullPage:true});
+ // Reglas nuevas: combo con "Puerta y protecciones" y "Ventanas: armar / instalar", e Instalar que espera la pintura
+ const Pp=(nombre,rama,orden,oficio,estado,espera)=>({nombre,rama,orden,oficio,estado,espera:!!espera,terminada_en:estado==='hecha'?new Date().toISOString():null,trabajando:false,foto:null});
+ v1.items=[{nombre:'Combo Imperial',tipo:'Combo',especificaciones:{color:'Negro'},foto:null,precio_unitario:800,cantidad:1,a_medida:false,pieza_id:null,orden:0,pasos:[
+   Pp('Hierro','principal',1,'hierro','hecha'),Pp('Masilla','principal',2,'masilla','pendiente'),Pp('Pintura','principal',3,'pintura','pendiente',1),Pp('Detalles','principal',4,'detalles','pendiente',1),
+   Pp('Armar 2 ventanas','ventana',1,'armar','hecha'),Pp('Instalar en las protecciones','ventana',2,'instalar','pendiente',1)]}];
+ await c.goto('http://127.0.0.1:8765/seguimiento.html?t='+TOK);await c.waitForSelector('.pt');await c.waitForTimeout(300);
+ const pn=await c.$$eval('.pt-t',x=>x.map(y=>y.textContent));
+ ok('Público (reglas nuevas): pasos del combo con nombres para el cliente',pn.join('|')==='Hierro|Masilla|Pintura|Detalles|Ventanas: armar|Ventanas: instalar en las protecciones',pn);
+ ok('Público: va en masilla (instalar espera la pintura, no sale como actual)',(await c.textContent('.estado-grande')).includes('va en masilla') && (await c.$$('.pt-p.actual')).length===1);
+ await c.screenshot({path:'shots4/s3b-publico-combo.png',fullPage:true});
  await c.goto('http://127.0.0.1:8765/seguimiento.html?t=aaaaaaaa-bbbb-4ccc-8ddd-999999999999');await c.waitForSelector('.aviso-fin');
  ok('Público: enlace inexistente',(await c.textContent('.aviso-fin h1')).includes('No encontramos'));
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
