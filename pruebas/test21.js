@@ -1,5 +1,6 @@
-// Producción: lista de pedidos en taller, ficha con las etapas de cada producto,
-// asignar trabajador y marcar una etapa como terminada (con foto opcional).
+// Producción: lista de pedidos en taller, ficha con las etapas de cada producto, un solo botón
+// "Asignar trabajadores" por producto (quién y para qué sábado), Combo con puerta, 2 ventanas y
+// 2 protecciones, pasos atrasados. El administrador ya no marca terminado (lo hace el trabajador).
 const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
 const now=Math.floor(Date.now()/1000);
@@ -13,6 +14,9 @@ const trabajadores=[
   {id:'t3',nombre:'Luis',especialidades:['ventanero']}
 ];
 const porId=id=>trabajadores.find(t=>t.id===id);
+const GIF='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+const iso=(d)=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const SAB=(()=>{const d=new Date();d.setHours(12,0,0,0);const w=d.getDay();d.setDate(d.getDate()+(w===0?6:6-w));const este=iso(d);d.setDate(d.getDate()+7);const prox=iso(d);d.setDate(d.getDate()-14);return {este,prox,pasado:iso(d)};})();
 
 let ventas=[
   {id:20,fecha_entrega:dia(-2),cliente:{nombre:'Carlos Pérez'},estado:'en_produccion',items:[
@@ -27,15 +31,17 @@ let ventas=[
   ]},
   {id:21,fecha_entrega:dia(5),cliente:{nombre:'Marisela Chávez'},estado:'en_produccion',items:[
     {id:103,nombre:'Reja para ventana',tipo:'Ventana',foto:null,categoria_pago_id:1,etapas:[
-      {id:1005,rama:'principal',nombre:'Ensamblar',orden:1,especialidad:'ventanero',estado:'pendiente',trabajador_id:'t3',trabajador:{nombre:'Luis'},foto:null,terminada_en:null}
+      {id:1005,rama:'principal',nombre:'Ensamblar',orden:1,especialidad:'ventanero',estado:'pendiente',trabajador_id:'t3',trabajador:{nombre:'Luis'},foto:null,terminada_en:null,para_el:SAB.pasado}
     ]}
   ]},
   {id:22,fecha_entrega:dia(10),cliente:{nombre:'Ana Belisario'},estado:'en_produccion',items:[
-    {id:104,nombre:'Combo Modelo Lineal',tipo:'Combo',foto:null,categoria_pago_id:1,etapas:[
+    {id:104,nombre:'Combo Modelo Lineal',tipo:'Combo',foto:null,categoria_pago_id:1,especificaciones:{alto:2,ancho:1,color:'Negro',ventanas_alto:1.2,ventanas_ancho:1,ventanas_color:'Negro'},catalogo:{fotos:{Blanco:GIF}},etapas:[
       {id:1006,rama:'principal',nombre:'Hierro',orden:1,especialidad:'herrero',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null},
       {id:1007,rama:'principal',nombre:'Masilla y pintura',orden:2,especialidad:'masilla_pintura',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null},
       {id:1008,rama:'principal',nombre:'Detalles',orden:3,especialidad:'acabados',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null},
-      {id:1009,rama:'ventana',nombre:'Ensamblar',orden:1,especialidad:'ventanero',estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null}
+      {id:1010,rama:'proteccion',nombre:'Hierro 2 protecciones',orden:1,especialidad:'herrero',estado:'pendiente',unidades:2,trabajador_id:null,trabajador:null,foto:null,terminada_en:null},
+      {id:1011,rama:'proteccion',nombre:'Pintura 2 protecciones',orden:2,especialidad:'masilla_pintura',estado:'pendiente',unidades:2,trabajador_id:null,trabajador:null,foto:null,terminada_en:null},
+      {id:1009,rama:'ventana',nombre:'Ensamblar 2 ventanas',orden:1,especialidad:'ventanero',estado:'pendiente',unidades:2,trabajador_id:null,trabajador:null,foto:null,terminada_en:null}
     ]}
   ]}
 ];
@@ -52,7 +58,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
   if(u.includes('/rpc/asignar_etapas')){
     const body=JSON.parse(req.postData()||'{}');llamadas.push(['asignar_etapas',body]);
     if(fallarTodo)return j({message:'Esta etapa ya no se puede asignar'},400);
-    body.p.forEach(c=>{ for(const v of ventas) for(const it of v.items) for(const e of it.etapas) if(e.id===c.eid){ e.trabajador_id=c.tid; e.trabajador=c.tid?{nombre:(porId(c.tid)||{}).nombre||''}:null; } });
+    body.p.forEach(c=>{ for(const v of ventas) for(const it of v.items) for(const e of it.etapas) if(e.id===c.eid){ e.trabajador_id=c.tid; e.trabajador=c.tid?{nombre:(porId(c.tid)||{}).nombre||''}:null; e.para_el=c.tid?(c.para||e.para_el||SAB.este):null; } });
     return j(body.p.length);
   }
   if(u.includes('/rpc/marcar_etapa_terminada')){
@@ -67,7 +73,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
   if(u.includes('/rpc/produccion_lectura')){
     if(rol!=='admin'&&rol!=='vendedor')return j({message:'No autorizado'},400);
     return j(ventas.filter(v=>v.estado==='en_produccion').map(v=>({id:v.id,fecha_entrega:v.fecha_entrega,interna:false,cliente:v.cliente,
-      items:v.items.map(it=>({id:it.id,nombre:it.nombre,tipo:it.tipo,foto:it.foto,cantidad:1,etapas:it.etapas.map(e=>({id:e.id,rama:e.rama,nombre:e.nombre,orden:e.orden,estado:e.estado,trabajador_id:e.trabajador_id,iniciada_en:null,terminada_en:e.terminada_en,trabajador:e.trabajador}))}))})));
+      items:v.items.map(it=>({id:it.id,nombre:it.nombre,tipo:it.tipo,foto:it.foto,cantidad:1,etapas:it.etapas.map(e=>({id:e.id,rama:e.rama,nombre:e.nombre,orden:e.orden,estado:e.estado,trabajador_id:e.trabajador_id,para_el:e.para_el||null,terminada_en:e.terminada_en,trabajador:e.trabajador}))}))})));
   }
   if(u.includes('/perfiles')){
     if(u.includes('rol=eq.trabajador')) return j(trabajadores);
@@ -113,59 +119,67 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Lista muestra los 3 pedidos en taller',(await a.$$('.vcard')).length===3);
  ok('El pedido atrasado se ordena primero',(await a.textContent('.vcard'))?.includes('Carlos Pérez'));
  ok('Chip "Por asignar" cuenta los 2 pedidos con su etapa actual sin trabajador',(await a.textContent('#chips')).includes('Por asignar · 2'));
- ok('Chip "Atrasados" cuenta 1',(await a.textContent('#chips')).includes('Atrasados · 1'));
  await a.screenshot({path:'shots5/s1-lista.png',fullPage:true});
+
+ ok('Chip "Atrasados" cuenta 2 (uno por fecha de entrega y otro con un paso que pasó su sábado)',(await a.textContent('#chips')).includes('Atrasados · 2'));
+ ok('La tarjeta del pedido con el paso atrasado lo dice',(await a.textContent('.vcard >> text=Marisela Chávez')) !== null && (await a.$$eval('.vcard',x=>x.map(c=>c.textContent))).some(t=>t.includes('Marisela') && t.includes('1 paso atrasado')));
 
  // Ficha: primer pedido (Hierro hecho, Masilla actual sin asignar, Detalles futura)
  await a.click('.vcard >> nth=0');await a.waitForSelector('#sheetFicha.open');
- ok('Hierro se ve terminado con quién lo hizo',(await a.textContent('#fichaBody')).includes('Terminó · Jesús') || (await a.textContent('#fichaBody')).includes('Terminó'));
- ok('Masilla y pintura es la etapa actual, sin asignar',!!(await a.$('[data-asignar][data-nombre="Masilla y pintura"]')));
- ok('Detalles (paso futuro) ya se puede asignar y dice después de qué va',!!(await a.$('[data-asignar][data-nombre="Detalles"]')) && (await a.textContent('#fichaBody')).includes('Después de masilla y pintura') && !(await a.$('#fichaBody [data-terminar]')));
+ const f1=await a.textContent('#fichaBody');
+ ok('Hierro se ve terminado con quién lo hizo',f1.includes('Terminó') && f1.includes('Jesús'));
+ ok('Cada paso pendiente solo dice "Por asignar" (sin botones por paso)',(await a.$$('#fichaBody .e-por')).length===3 && !(await a.$('#fichaBody [data-asignar]')));
+ ok('Detalles dice después de qué va',f1.includes('Después de masilla y pintura'));
+ ok('El admin ya no tiene "Marcar terminado"',!(await a.$('#fichaBody [data-terminar]')) && !f1.includes('Marcar terminado') && !(await a.$('#sheetTerminar')));
+ ok('Un solo botón "Asignar trabajadores" por producto',(await a.$$('#fichaBody [data-asignar-todo]')).length===2 && (await a.textContent('[data-asignar-todo="101"]'))==='Asignar trabajadores');
  await a.screenshot({path:'shots5/s2-ficha.png',fullPage:true});
 
- // Asignar Masilla y pintura: solo debe salir Pedro (especialidad masilla_pintura)
- await a.click('[data-asignar][data-nombre="Masilla y pintura"]');await a.waitForSelector('#sheetAsignar.open');
- ok('Solo aparece Pedro (masilla_pintura)',(await a.textContent('#listaTrabajadores')).includes('Pedro') && !(await a.textContent('#listaTrabajadores')).includes('Jesús'));
- await a.click('.fila-t >> text=Pedro');await a.waitForTimeout(500);
- const asigna=llamadas.find(x=>x[0]==='asignar_etapa');
- ok('Se llamó a asignar con la etapa y el trabajador correctos',asigna&&asigna[1].eid===1002&&asigna[1].tid==='t2',asigna&&asigna[1]);
- ok('La ficha se actualiza y ahora Masilla tiene botón de terminar',!!(await a.$('[data-terminar]')));
+ // Asignar trabajadores de la puerta: quién y para qué sábado
+ await a.click('[data-asignar-todo="101"]');await a.waitForSelector('#sheetTodo.open');await a.waitForTimeout(300);
+ ok('Pregunta "¿Para cuándo?" con este sábado marcado y el próximo',(await a.textContent('#todoBody')).includes('¿Para cuándo?') && (await a.getAttribute('.seg-op.on','data-para'))===SAB.este && !!(await a.$(`.seg-op[data-para="${SAB.prox}"]`)));
+ ok('En Masilla y pintura solo aparece Pedro',(await a.textContent('.at-paso[data-eid="1002"]')).includes('Pedro') && !(await a.textContent('.at-paso[data-eid="1002"]')).includes('Jesús'));
+ await a.click('.at-op[data-eid="1002"][data-tid="t2"]');await a.click('.at-op[data-eid="1003"][data-tid="t1"]');
+ await a.click(`.seg-op[data-para="${SAB.prox}"]`);
+ ok('Dice cuántos cambios va a guardar',(await a.textContent('#btnGuardarTodo'))==='Guardar 2 cambios');
+ await a.screenshot({path:'shots5/s3-asignar-cuando.png'});
+ await a.click('#btnGuardarTodo');await a.waitForTimeout(700);
+ let at=llamadas.filter(x=>x[0]==='asignar_etapas').pop();
+ ok('Se guarda quién y para el próximo sábado',at && at[1].p.length===2 && at[1].p.every(c=>c.para===SAB.prox) && at[1].p.find(c=>c.eid===1002).tid==='t2',at&&at[1]);
+ const f2=await a.textContent('#fichaBody');
+ ok('La ficha muestra a Pedro y a Jesús con "Para el sáb ..."',f2.includes('Pedro') && (await a.$$('#fichaBody .e-tope')).length===2 && f2.includes('Para el sáb'));
  await a.screenshot({path:'shots5/s3-asignado.png',fullPage:true});
+ // Cambiar solo la fecha: cuenta los ya asignados
+ await a.click('[data-asignar-todo="101"]');await a.waitForSelector('#sheetTodo.open');await a.waitForTimeout(300);
+ ok('Al volver a abrir, arranca en el próximo sábado (el que tienen)',(await a.getAttribute('.seg-op.on','data-para'))===SAB.prox && await a.$eval('#btnGuardarTodo',x=>x.disabled));
+ await a.click(`.seg-op[data-para="${SAB.este}"]`);
+ ok('Cambiar solo la fecha cuenta los 2 asignados',(await a.textContent('#btnGuardarTodo'))==='Guardar 2 cambios');
+ await a.click('#btnGuardarTodo');await a.waitForTimeout(700);
+ at=llamadas.filter(x=>x[0]==='asignar_etapas').pop();
+ ok('   y se guardan para este sábado',at && at[1].p.length===2 && at[1].p.every(c=>c.para===SAB.este && c.tid));
+ await a.click('#sheetFicha [data-cerrar="sheetFicha"]').catch(()=>{});await a.waitForTimeout(400);
 
- // Marcar terminado (sin foto)
- await a.click('[data-terminar]');await a.waitForSelector('#sheetTerminar.open');
- await a.click('#btnConfirmarTerminar');await a.waitForTimeout(500);
- const term=llamadas.find(x=>x[0]==='marcar_etapa_terminada');
- ok('Se llamó a marcar terminada con la etapa correcta',term&&term[1].eid===1002,term&&term[1]);
- ok('La hoja se cierra tras marcar terminado',!(await a.$('#sheetTerminar.open'))&&!(await a.$('#sheetFicha.open')));
-
- // Segundo pedido: su única etapa ya está asignada a Luis; al marcarla termina TODO el pedido
+ // Pedido con un paso que pasó su sábado
  await a.click('.vcard >> text=Marisela Chávez');await a.waitForSelector('#sheetFicha.open');
- ok('Ensamblar ya está asignada a Luis',(await a.textContent('#fichaBody')).includes('Luis'));
- await a.click('[data-terminar]');await a.waitForSelector('#sheetTerminar.open');
- await a.click('#btnConfirmarTerminar');await a.waitForTimeout(500);
- ok('Al terminar la última etapa, el pedido sale de la lista (quedan Carlos y Ana)',(await a.$$('.vcard')).length===2);
- await a.screenshot({path:'shots5/s4-final.png',fullPage:true});
+ ok('El paso atrasado dice "Se pasó del sáb ..." en rojo',!!(await a.$('#fichaBody .e-tope.tarde')) && (await a.textContent('#fichaBody')).includes('Se pasó del sáb'));
+ await a.click('#sheetFicha [data-cerrar="sheetFicha"]').catch(()=>{});await a.waitForTimeout(400);
 
- // Tercer pedido: Combo con dos ramas en paralelo (puerta y ventana)
+ // Tercer pedido: Combo con puerta, 2 ventanas y 2 protecciones en paralelo
  await a.click('.vcard >> text=Ana Belisario');await a.waitForSelector('#sheetFicha.open');
  const fichaCombo=await a.textContent('#fichaBody');
- ok('La ficha del Combo muestra la etiqueta "Puerta"',fichaCombo.includes('Puerta'));
- ok('La ficha del Combo muestra la etiqueta "Ventana"',fichaCombo.includes('Ventana'));
- ok('Hierro (rama puerta) es su etapa actual, sin asignar',!!(await a.$('[data-asignar][data-nombre="Hierro"]')));
- ok('Ensamblar (rama ventana) también es actual y sin asignar, en paralelo',!!(await a.$('[data-asignar][data-nombre="Ensamblar"]')));
- ok('Las dos ramas del Combo tienen su propia etapa actual a la vez',(await a.$$('#fichaBody .etapa.actual')).length===2);
- // Asignar todo el producto de una vez
- ok('Botón "Asignar todo el producto"',!!(await a.$('[data-asignar-todo="104"]')));
+ const titulos=await a.$$eval('#fichaBody .e-rama-tit',x=>x.map(t=>t.textContent));
+ ok('El Combo se ve en 3 bloques con sus medidas',titulos.length===3 && titulos[0].startsWith('Puerta') && titulos[0].includes('2 × 1 m') && titulos[1].startsWith('2 ventanas') && titulos[1].includes('c/u') && titulos[2].startsWith('2 protecciones'),titulos);
+ ok('Dice "1 puerta + 2 ventanas + 2 protecciones"',fichaCombo.includes('1 puerta + 2 ventanas + 2 protecciones'));
+ ok('Las tres líneas tienen su paso actual a la vez',(await a.$$('#fichaBody .etapa.actual')).length===3);
+ ok('Si el modelo no tiene foto en ese color, avisa: "Foto en blanco · la puerta va en NEGRO"',fichaCombo.includes('Foto en blanco · la puerta va en NEGRO'));
  await a.click('[data-asignar-todo="104"]');await a.waitForSelector('#sheetTodo.open');
- ok('La hoja lista los 4 pasos pendientes con quién puede hacer cada uno',(await a.$$('#todoBody .at-paso')).length===4 && (await a.textContent('.at-paso[data-eid="1007"]')).includes('Pedro') && !(await a.textContent('.at-paso[data-eid="1007"]')).includes('Luis'));
+ ok('La hoja lista los 6 pasos con quién puede hacer cada uno',(await a.$$('#todoBody .at-paso')).length===6 && (await a.textContent('.at-paso[data-eid="1011"]')).includes('Pedro') && !(await a.textContent('.at-paso[data-eid="1011"]')).includes('Luis'));
  ok('Sin cambios el botón está apagado',await a.$eval('#btnGuardarTodo',x=>x.disabled));
- await a.click('.at-op[data-eid="1006"][data-tid="t1"]');await a.click('.at-op[data-eid="1007"][data-tid="t2"]');await a.click('.at-op[data-eid="1008"][data-tid="t1"]');await a.click('.at-op[data-eid="1009"][data-tid="t3"]');
- ok('Dice cuántos cambios va a guardar',(await a.textContent('#btnGuardarTodo'))==='Guardar 4 cambios');
+ for(const [eid,tid] of [[1006,'t1'],[1007,'t2'],[1008,'t1'],[1009,'t3'],[1010,'t1'],[1011,'t2']]) await a.click(`.at-op[data-eid="${eid}"][data-tid="${tid}"]`);
+ ok('Dice cuántos cambios va a guardar',(await a.textContent('#btnGuardarTodo'))==='Guardar 6 cambios');
  await a.screenshot({path:'shots5/s6-asignar-todo.png'});
  await a.click('#btnGuardarTodo');await a.waitForTimeout(700);
- const at=llamadas.find(x=>x[0]==='asignar_etapas');
- ok('Se guardan los 4 de una vez',at && at[1].p.length===4 && at[1].p.find(x=>x.eid===1007).tid==='t2',at&&at[1]);
+ at=llamadas.filter(x=>x[0]==='asignar_etapas').pop();
+ ok('Se guardan los 6 de una vez, para este sábado',at && at[1].p.length===6 && at[1].p.every(c=>c.para===SAB.este) && at[1].p.find(x=>x.eid===1009).tid==='t3',at&&at[1]);
  ok('La ficha muestra a cada uno en su paso',(await a.textContent('#fichaBody')).includes('Pedro') && (await a.textContent('#fichaBody')).includes('Luis') && !(await a.$('#sheetTodo.open')));
  await a.screenshot({path:'shots5/s7-todo-asignado.png',fullPage:true});
  await a.screenshot({path:'shots5/s5-combo.png',fullPage:true});

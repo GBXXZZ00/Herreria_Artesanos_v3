@@ -1,19 +1,19 @@
-// Inicio del trabajador (sus trabajos y sus pagos) y vales por aprobar del administrador.
+// Inicio del trabajador: lo que le toca ahora, lo que viene después y sus pagos.
 // El trabajador ve solo lo suyo: lo que tiene asignado, lo que ha ganado y sus vales.
+// Los vales se aprueban en Nómina (solo Ray); aquí solo se cuentan para el Inicio del administrador.
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, resumenSpecs, specChipsHtml, heroAttrs, heroZoom, SW_COLOR } = window.AH;
+  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, resumenSpecs, specChipsHtml, heroAttrs, heroZoom, SW_COLOR,
+          topeTexto, sabadoCorto, medidas } = window.AH;
   const $ = (id) => document.getElementById(id);
 
   const ICON_CANDADO = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const icoP = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-  const ICON_LLAVE_P = icoP('<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>');
   const ICON_DINERO_P = icoP('<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/>');
-  const ICON_VALE_P = icoP('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>');
-  const ICON_HIST_P = icoP('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>');
   const CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
   const ICON_CAMARA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/></svg>';
+  const MAX_DESPUES = 4;   // en la fila "Después"; si hay más, "Ver todos"
 
   function fechaCorta(iso){
     if(!iso) return '';
@@ -30,15 +30,14 @@
   let perfil = null;
   let tabPagos = 'cobrar';
   let detalleId = null;
-  const activo = () => trabajos.find(t => t.iniciada_en) || null;
   const suma = (l) => Math.round((l || []).reduce((a, x) => a + (Number(x.monto) || 0), 0) * 100) / 100;
   // Lo que se cobra este sábado (lo del domingo queda para la próxima semana)
   const deEstePago = (l) => (l || []).filter(x => !(pagos && pagos.semana_pago && x.semana && x.semana > pagos.semana_pago));
   const ganado = () => suma(deEstePago(pagos && pagos.trabajos));
   const valesTotal = () => suma(deEstePago(pagos && pagos.vales));
   const porCobrar = () => Math.round((ganado() - valesTotal()) * 100) / 100;
-  // El que le toca: el primero que no espera a nadie (vienen ordenados por fecha de entrega)
-  const sugerido = () => trabajos.find(t => !t.espera) || null;
+  // "Ahora": el primero que no espera a nadie (vienen ordenados por fecha tope y de entrega)
+  const ahora = () => trabajos.find(t => !t.espera) || null;
 
   async function cargarTrabajador(){
     const [rt, rp] = await Promise.all([db.rpc('mis_trabajos'), db.rpc('mis_pagos')]);
@@ -48,85 +47,147 @@
   }
 
   const fotoHtml = (t, size) => t.foto ? `<img src="${esc(t.foto)}" alt="${esc(t.producto)}" loading="lazy">` : iconoTipo(t.tipo, size);
-  // El color va primero: la foto puede ser de otro color si el modelo no tiene la de ese
-  const specsDe = (t) => {
-    const e = t.especificaciones || {};
-    const c = e.color || t.color;
-    return (c ? [{ t:'Color ' + String(c).toLowerCase(), sw:SW_COLOR[c] }] : []).concat(resumenSpecs(t.tipo, e));
+  // La foto puede ser de otro color si el modelo no tiene la de ese: se dice arriba de la foto
+  // En las ventanas o protecciones de un Combo lo que importa es el color de las ventanas
+  const fotoInfo = (t) => {
+    const cd = colorDe(t);
+    const color = cd ? cd.c : null;
+    return { de: t.foto_de, color, otroColor: !!(t.foto && t.foto_de && color && t.foto_de !== color) };
   };
-  function subTrabajo(t){
-    return t.interna ? 'Para exhibición' : refPedido(t) + (t.fecha_entrega ? ' · entrega ' + fechaCorta(t.fecha_entrega) : '');
+  function etiquetaFoto(t){
+    const fi = fotoInfo(t);
+    if(!fi.otroColor) return '';
+    const quien = t.rama === 'ventana' ? 'las ventanas van' : t.rama === 'proteccion' ? 'las protecciones van' : t.tipo === 'Combo' ? 'la puerta va' : 'el tuyo va';
+    return `Foto en ${String(fi.de).toLowerCase()} · ${quien} en ${String(fi.color).toUpperCase()}`;
+  }
+  // Color de lo que hace: las ventanas y sus protecciones de un Combo van en el color de las ventanas
+  function colorDe(t){
+    const e = t.especificaciones || {};
+    const c = (t.rama === 'ventana' || t.rama === 'proteccion') ? (e.ventanas_color || e.color) : (e.color || t.color);
+    const quien = t.rama === 'ventana' ? 'Las ventanas van' : t.rama === 'proteccion' ? 'Las protecciones van' : 'Va';
+    return c ? { c, t: `${quien} en color ${String(c).toUpperCase()}` } : null;
+  }
+  const specsDe = (t) => {
+    const cd = colorDe(t);
+    const pre = t.rama === 'ventana' || t.rama === 'proteccion' ? 'Ventanas ' : 'Color ';
+    return (cd ? [{ t:pre + String(cd.c).toLowerCase(), sw:SW_COLOR[cd.c] }] : []).concat(resumenSpecs(t.tipo, t.especificaciones || {}));
+  };
+  // Todas las especificaciones, en una tabla (nombre arriba, valor abajo)
+  function specsTabla(t){
+    const e = t.especificaciones || {};
+    const f = [];
+    const add = (l, v, ancho) => { if(v !== undefined && v !== null && v !== '') f.push({ l, v:String(v), ancho }); };
+    const combo = t.tipo === 'Combo';
+    if(e.alto && e.ancho) add(combo ? 'Puerta' : 'Medidas', medidas(e));
+    if(combo && e.ventanas_alto && e.ventanas_ancho) add('2 ventanas y 2 protecciones', medidas({ alto:e.ventanas_alto, ancho:e.ventanas_ancho }) + ' c/u', true);
+    if(combo && e.ventanas_color) add('Color de las ventanas', e.ventanas_color);
+    if(e.aluminio) add('Aluminio', e.aluminio);
+    if(combo && e.variante) add('Protección en la puerta', e.variante === 'Con protección en puerta' ? 'Sí' : 'No');
+    if(e.vidrio_o_farquilla === 'Farquilla') add('Vidrio o farquilla', 'Farquilla');
+    else if(e.vidrio_o_farquilla === 'Vidrio') add('Vidrio', e.color_vidrio || 'Sí');
+    if(e.papel_ahumado === true) add('Papel ahumado', e.color_ahumado || 'Sí');
+    else if(e.papel_ahumado === false) add('Papel ahumado', 'Sin');
+    if(e.manillon === true) add('Manillón', e.manillon_tipo || 'Sí');
+    else if(e.manillon === false) add('Manillón', 'Sin');
+    if(e.cerradura) add('Cerradura', e.cerradura === 'Personalizada' ? (e.cerradura_detalle || 'Personalizada') : e.cerradura);
+    if(e.proteccion) add('Protección', 'Sí');
+    if(e.proteccion_sentido) add('La protección abre a la', e.proteccion_sentido);
+    if(e.marco_decorativo) add(t.tipo === 'Ventana' ? 'Marco en protección' : 'Marco decorativo', 'Sí');
+    if(e.mas_hojas) add('Hojas', 'Más de 2');
+    if(e.sentido) add('Abre a la', e.sentido);
+    if(e.posicion) add(t.tipo === 'Portón' ? 'Instalación' : 'Apertura', e.posicion);
+    if(e.bloque) add('Bloque', e.bloque);
+    return f.length ? `<div class="tj-specs">${f.map(x => `<div class="${x.ancho ? 'ancho' : ''}"><span>${esc(x.l)}</span>${esc(x.v)}</div>`).join('')}</div>` : '';
+  }
+  const refPedidoCorto = (t) => t.interna ? 'Para exhibición' : refPedido(t);
+  function topeHtml(t, cls){
+    if(!t.para_el) return '';
+    const tt = topeTexto(t.para_el);
+    return `<span class="${cls} ${tt.tarde ? 'tarde' : ''}">${esc(tt.t)}</span>`;
   }
 
-  // Tarjeta grande de "Hoy": lo que está haciendo, o el que le toca empezar
-  function hoyHtml(){
-    const a = activo();
-    const t = a || sugerido();
+  // Arriba: saludo y cuántos trabajos tiene para el sábado
+  function leadHtml(){
+    const n = trabajos.length;
+    if(!n) return '';
+    const tarde = trabajos.filter(t => t.para_el && topeTexto(t.para_el).tarde).length;
+    const topes = [...new Set(trabajos.map(t => t.para_el).filter(Boolean))].sort();
+    let txt = esc(n === 1 ? '1 trabajo' : n + ' trabajos');
+    if(tarde) txt += ` · <span class="tarde">${tarde === 1 ? '1 se pasó de su sábado' : tarde + ' se pasaron de su sábado'}</span>`;
+    else if(topes.length) txt += ' para el ' + esc(sabadoCorto(topes[0]));
+    return `<p class="hoy-lead">${txt}</p>`;
+  }
+
+  // Tarjeta "Ahora": lo que le toca, con un solo botón para terminarlo
+  function ahoraHtml(){
     if(!trabajos.length){
-      return `<h2 class="hoy-tit">¿Qué vas a hacer hoy?</h2>
-        <div class="hoy"><div class="hoy-vacio"><b>No tienes trabajos asignados</b><span>Te avisamos cuando Ray te asigne uno.</span></div></div>`;
+      return `<div class="hoy"><div class="hoy-vacio"><b>No tienes trabajos asignados</b><span>Te avisamos cuando Ray te asigne uno.</span></div></div>`;
     }
+    const t = ahora();
     if(!t){
-      return `<h2 class="hoy-tit">¿Qué vas a hacer hoy?</h2>
-        <div class="hoy"><div class="hoy-vacio"><b>Tus trabajos esperan a otro</b><span>Cuando terminen su parte, te toca a ti. Te avisamos.</span></div></div>`;
+      return leadHtml() + `<div class="hoy"><div class="hoy-vacio"><b>Tus trabajos esperan a otro</b><span>Cuando terminen su parte, te toca a ti. Te avisamos.</span></div></div>`;
     }
-    const chips = specsDe(t).slice(0, 4);
-    return `<h2 class="hoy-tit">${a ? 'Hoy estás haciendo' : '¿Qué vas a hacer hoy?'}</h2>
-      <div class="hoy ${a ? 'activo' : ''}">
-        <button class="hoy-foto" type="button" data-detalle="${t.id}" aria-label="Ver foto y detalles">
+    const etq = etiquetaFoto(t);
+    const chips = specsDe(t).slice(0, 3);
+    return leadHtml() + `
+      <div class="hoy">
+        <button class="hoy-foto" type="button" data-detalle="${t.id}" aria-label="Ver todo">
           ${t.foto ? `<img src="${esc(t.foto)}" alt="${esc(t.producto)}">` : `<span class="sin">${iconoTipo(t.tipo, 56)}</span>`}
-          ${a ? '<span class="hoy-en">En curso</span>' : ''}
-          <span class="ver">Ver detalles</span>
+          ${etq ? `<span class="hoy-badge">${esc(etq)}</span>` : ''}
+          <span class="ver">Ver todo</span>
         </button>
         <div class="hoy-txt">
-          <div class="hoy-etapa">${a ? 'Tu parte: ' : 'Te toca: '}${esc(t.nombre)}</div>
+          <div class="hoy-etapa">Ahora: ${esc(t.nombre)}</div>
           <div class="hoy-nom">${esc(t.producto)}</div>
-          <div class="hoy-sub">${esc([t.cantidad > 1 ? t.cantidad + ' unidades' : '', subTrabajo(t)].filter(Boolean).join(' · '))}</div>
+          <div class="hoy-sub">${esc([t.cantidad > 1 ? t.cantidad + ' unidades' : '', refPedidoCorto(t)].filter(Boolean).join(' · '))}${t.para_el ? ' · ' + topeHtml(t, 'hoy-tope') : ''}</div>
           ${chips.length ? `<div class="spec-chips">${specChipsHtml(chips)}</div>` : ''}
         </div>
-        <div class="hoy-acc">${a
-          ? `<button class="btn-primary" type="button" data-terminar-t="${a.id}">Marcar terminado</button>`
-          : `<button class="btn-primary" type="button" data-empezar="${t.id}">Empezar este</button>`}</div>
+        <div class="hoy-acc"><button class="btn-primary" type="button" data-terminar-t="${t.id}">Ya lo terminé · tomar foto</button></div>
       </div>`;
   }
 
-  // Filas largas con flecha (como en el Inicio del administrador)
-  function filasHtml(){
-    const n = trabajos.length;
-    const vp = pagos && pagos.vale_pendiente;
-    const filas = [];
-    let i = 0;
-    if(n) filas.push(`<button class="pend-fila naranja" type="button" data-ver="trabajos" style="--i:${i++}">
-      <span class="pend-ico">${ICON_LLAVE_P}</span><span class="pend-t">${n === 1 ? '1 trabajo por hacer' : n + ' trabajos por hacer'}</span>${CHEV}</button>`);
+  // "Después": los demás trabajos en una fila que se desliza; los que esperan a otro en gris
+  function despuesHtml(){
+    const a = ahora();
+    const resto = trabajos.filter(t => !a || t.id !== a.id);
+    if(!resto.length) return '';
+    const vistos = resto.length > MAX_DESPUES + 1 ? resto.slice(0, MAX_DESPUES) : resto;
+    const mini = (t) => {
+      const sub = t.espera ? `<span class="dp-s">Espera ${esc(t.espera.toLowerCase())}</span>`
+        : t.para_el ? topeHtml(t, 'dp-s') : `<span class="dp-s">${esc(refPedidoCorto(t))}</span>`;
+      return `<button class="dp ${t.espera ? 'gris' : ''}" type="button" data-detalle="${t.id}">
+        <span class="dp-foto">${fotoHtml(t, 26)}</span>
+        <span class="dp-etapa">${esc(t.nombre)}</span><span class="dp-nom">${esc(t.producto)}</span>${sub}</button>`;
+    };
+    const mas = resto.length > vistos.length
+      ? `<button class="dp dp-mas" type="button" data-ver="trabajos"><span class="dp-foto"><span>Ver todos</span><span>(${trabajos.length})</span></span></button>` : '';
+    return `<p class="despues-tit">Después</p><div class="despues">${vistos.map(mini).join('')}${mas}</div>`;
+  }
+
+  // Una sola fila de pagos: lo que cobra el sábado (y si tiene un vale esperando)
+  function pagosFilaHtml(){
     const pc = porCobrar();
-    filas.push(`<button class="pend-fila verde" type="button" data-ver="pagos" style="--i:${i++}">
-      <span class="pend-ico">${ICON_DINERO_P}</span><span class="pend-t">${pc < 0 ? 'Vales por descontar' : 'Te toca cobrar'} <span>· ${esc(dinero(Math.abs(pc)))}</span></span>${CHEV}</button>`);
-    if(vp) filas.push(`<div class="pend-fila amarillo" style="--i:${i++}">
-      <span class="pend-ico">${ICON_VALE_P}</span><span class="pend-t">Vale de ${esc(dinero(vp.monto))} <span>· esperando respuesta</span></span></div>`);
-    filas.push(`<button class="pend-fila teal" type="button" data-ver="historial" style="--i:${i++}">
-      <span class="pend-ico">${ICON_HIST_P}</span><span class="pend-t">Historial de pagos <span>· por semana</span></span>${CHEV}</button>`);
-    return `<div class="pend-lista">${filas.join('')}</div>`;
+    const vp = pagos && pagos.vale_pendiente;
+    const det = (pc < 0 ? 'vales por descontar ' + dinero(-pc) : 'cobras ' + dinero(pc) + ' el sábado') + (vp ? ' · vale esperando' : '');
+    return `<div class="pend-lista"><button class="pend-fila verde" type="button" data-ver="pagos" style="--i:0">
+      <span class="pend-ico">${ICON_DINERO_P}</span><span class="pend-t">Pagos y vales <span>· ${esc(det)}</span></span>${CHEV}</button></div>`;
   }
 
   function pintarInicioTrabajador(){
-    $('vistaTrabajo').innerHTML = hoyHtml() + filasHtml();
+    $('vistaTrabajo').innerHTML = ahoraHtml() + despuesHtml() + pagosFilaHtml();
   }
   function pintarCargando(){
     $('vistaTrabajo').innerHTML = '<div class="sk-linea" style="width:220px;height:26px;margin:6px 2px 14px"></div><div class="sk-hoy"></div>';
   }
 
-  // ---------- Lista de trabajos ----------
+  // ---------- Todos los trabajos (desde "Ver todos") ----------
   function trabajoHtml(t){
-    const a = activo();
-    const esActivo = a && a.id === t.id;
-    const det = [t.cantidad > 1 ? t.cantidad + ' unidades' : '', subTrabajo(t)].filter(Boolean).join(' · ');
-    const estado = esActivo ? '<span class="tr-estado curso">En curso</span>'
-      : t.espera ? `<span class="tr-estado bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</span>`
-      : a ? `<span class="tr-estado bloq">${ICON_CANDADO}Después del que tienes en curso</span>`
+    const det = [t.cantidad > 1 ? t.cantidad + ' unidades' : '', refPedidoCorto(t)].filter(Boolean).join(' · ');
+    const tt = t.para_el ? topeTexto(t.para_el) : null;
+    const estado = t.espera ? `<span class="tr-estado bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</span>`
+      : tt ? `<span class="tr-estado" style="${tt.tarde ? 'color:var(--danger)' : ''}">${esc(tt.t)}</span>`
       : t.monto != null ? `<span class="tr-estado">Ganas ${esc(dinero(t.monto))}</span>` : '';
-    // Con uno en curso, los demás se ven en gris (se pueden abrir para ver su foto)
-    const gris = !esActivo && (a || t.espera);
-    return `<button class="tr ${esActivo ? 'activo' : ''} ${gris ? 'gris' : ''}" type="button" data-detalle="${t.id}">
+    return `<button class="tr ${t.espera ? 'gris' : ''}" type="button" data-detalle="${t.id}">
       <span class="tr-foto">${fotoHtml(t, 24)}</span>
       <span style="min-width:0">
         <span class="tr-etapa" style="display:block">${esc(t.nombre)}</span>
@@ -138,43 +199,35 @@
   }
   function pintarTrabajos(){
     $('trabajosAyuda').classList.toggle('hidden', !trabajos.length);
-    $('trabajosAyuda').textContent = activo() ? 'Tienes uno en curso. Los demás quedan en espera hasta que lo termines.' : 'Toca uno para ver su foto y sus detalles.';
+    $('trabajosAyuda').textContent = 'Toca uno para ver su foto y todos sus detalles.';
     $('listaTrabajos').innerHTML = trabajos.length
       ? trabajos.map(trabajoHtml).join('')
       : '<div class="tr-vacio">No tienes trabajos pendientes. Te avisamos cuando te asignen uno.</div>';
   }
 
-  // ---------- Detalle: foto grande, modelo y especificaciones ----------
+  // ---------- Detalle: foto grande, color, todas las especificaciones y la nota ----------
   function pintarDetalle(){
     const t = trabajos.find(x => x.id === detalleId);
     if(!t){ cerrarHoja('sheetTrabajo'); return; }
-    const a = activo();
-    const esActivo = a && a.id === t.id;
-    const specs = specsDe(t);
-    const e = t.especificaciones || {};
-    const tipoColor = [t.tipo, e.color].filter(Boolean).join(' · ');
+    const etq = etiquetaFoto(t);
+    const cd = colorDe(t);
+    const tt = t.para_el ? topeTexto(t.para_el) : null;
     $('trabajoBody').innerHTML = `
-      <div ${heroAttrs(t.foto)}>${t.foto ? `<img src="${esc(t.foto)}" alt="${esc(t.producto)}">` : iconoTipo(t.tipo, 56)}${heroZoom(t.foto)}</div>
-      <div class="tj-parte">Tu parte: ${esc(t.nombre)}${esActivo ? ' · en curso' : ''}</div>
+      <div ${heroAttrs(t.foto)}>${t.foto ? `<img src="${esc(t.foto)}" alt="${esc(t.producto)}">` : iconoTipo(t.tipo, 56)}${etq ? `<span class="hoy-badge">${esc(etq)}</span>` : ''}${heroZoom(t.foto)}</div>
+      <div><span class="tj-parte">Tu parte: ${esc(t.nombre)}</span>${tt ? `<span class="tj-tope ${tt.tarde ? 'tarde' : ''}">${esc(tt.t)}</span>` : ''}</div>
       <div class="det-name" style="margin-top:10px">${esc(t.producto)}</div>
-      <div class="det-type">${esc(tipoColor)}</div>
+      <div class="det-type">${esc(t.tipo === 'Combo' ? 'Combo · 1 puerta + 2 ventanas + 2 protecciones' : (t.tipo || ''))}</div>
       <div class="tj-datos">
         ${t.cantidad > 1 ? `<span><b>${t.cantidad}</b> unidades</span>` : ''}
-        <span>${t.interna ? '<b>Para exhibición</b>' : `<b>${esc(refPedido(t))}</b>${t.fecha_entrega ? ' · entrega ' + esc(fechaCorta(t.fecha_entrega)) : ''}`}</span>
+        <span>${t.interna ? '<b>Para exhibición</b>' : `<b>${esc(refPedido(t))}</b>${t.fecha_entrega ? ' · entrega al cliente ' + esc(fechaCorta(t.fecha_entrega)) : ''}`}</span>
         ${t.monto != null ? `<span>Ganas <b>${esc(dinero(t.monto))}</b></span>` : ''}
       </div>
-      ${specs.length ? `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}`;
-    let pie;
-    if(esActivo){
-      pie = `<div class="det-foot"><button class="btn-secondary" type="button" data-pausar="${t.id}">Dejar para después</button><button class="btn-primary" type="button" data-terminar-t="${t.id}">Marcar terminado</button></div>`;
-    } else if(t.espera){
-      pie = `<div class="tj-bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</div>`;
-    } else if(a){
-      pie = `<div class="tj-bloq">${ICON_CANDADO}Primero termina el que empezaste</div>`;
-    } else {
-      pie = `<button class="btn-primary" type="button" data-empezar="${t.id}" style="width:100%">Empezar este</button>`;
-    }
-    $('trabajoFoot').innerHTML = pie;
+      ${cd ? `<div class="tj-color"><span class="sw ${SW_COLOR[cd.c] || ''}"></span>${esc(cd.t)}</div>` : ''}
+      ${specsTabla(t)}
+      ${t.notas ? `<div class="tj-nota"><b>Nota de la venta:</b> ${esc(t.notas)}</div>` : ''}`;
+    $('trabajoFoot').innerHTML = t.espera
+      ? `<div class="tj-bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</div>`
+      : `<button class="btn-primary" type="button" data-terminar-t="${t.id}" style="width:100%;white-space:nowrap">Ya lo terminé · tomar foto</button>`;
   }
   function abrirDetalle(id){
     if(!trabajos.some(x => x.id === id)) return;
@@ -184,7 +237,6 @@
     if(body) body.scrollTop = 0;
     abrirHoja('sheetTrabajo');
   }
-
   // ---------- Mis pagos ----------
   const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
   function diaCorto(iso){
@@ -316,29 +368,9 @@
     if(que === 'pagos' || que === 'historial'){ tabPagos = que === 'historial' ? 'historial' : 'cobrar'; pintarPagos(); abrirHoja('sheetPagos'); }
   }
 
-  // Empezar / dejar para después (desde la tarjeta de Hoy o el detalle)
-  async function cambiarTrabajo(b, empezar){
-    if(b.disabled) return;
-    b.disabled = true;
-    try{
-      const { error } = await db.rpc(empezar ? 'empezar_etapa' : 'pausar_etapa', { eid: Number(b.dataset.empezar || b.dataset.pausar) });
-      if(error) throw error;
-      toast(empezar ? 'Listo, a trabajar. Cuando lo termines, márcalo aquí.' : 'Lo dejaste para después');
-      if(empezar){ cerrarHoja('sheetTrabajo', true); cerrarHoja('sheetTrabajos', true); }
-      await refrescar();
-    } catch(err){
-      toast(err.message, 'error');
-    } finally {
-      if(document.body.contains(b)) b.disabled = false;
-    }
-  }
   function clicTrabajo(e){
     const bt = e.target.closest('[data-terminar-t]');
     if(bt){ abrirTerminar(Number(bt.dataset.terminarT)); return true; }
-    const be = e.target.closest('[data-empezar]');
-    if(be){ cambiarTrabajo(be, true); return true; }
-    const bp = e.target.closest('[data-pausar]');
-    if(bp){ cambiarTrabajo(bp, false); return true; }
     const bd = e.target.closest('[data-detalle]');
     if(bd){ abrirDetalle(Number(bd.dataset.detalle)); return true; }
     return false;
@@ -361,8 +393,10 @@
     fotoBlob = null;
     $('tFotoInput').value = '';
     $('tFotoPrev').innerHTML = ICON_CAMARA;
-    $('terminarTSub').textContent = `${t.nombre} · ${t.producto} · ${refPedido(t)}`;
+    $('terminarTSub').textContent = `${t.nombre} · ${t.producto} · ${refPedidoCorto(t)}`;
     abrirHoja('sheetTerminarT');
+    // "Ya lo terminé · tomar foto": abre la cámara de una vez (si la cierra, puede terminar sin foto)
+    try{ $('tFotoInput').click(); } catch(e){}
   }
   $('btnTFoto').addEventListener('click', () => $('tFotoInput').click());
   $('tFotoInput').addEventListener('change', async (e) => {
@@ -446,63 +480,29 @@
   }
 
   // ===========================================================================
-  // Administrador: vales por aprobar
+  // Administrador: vales por aprobar (se cuentan para Pendientes; se aprueban en Nómina)
   // ===========================================================================
-  let vales = [];
-  let alCambiarVales = null;
   async function cargarVales(){
     const { data, error } = await db.from('vales')
-      .select('id,monto,nota,creado_en,trabajador:perfiles!vales_trabajador_id_fkey(nombre)')
+      .select('id,monto,nota,creado_en,trabajador_id,trabajador:perfiles!vales_trabajador_id_fkey(nombre)')
       .eq('estado', 'pendiente').order('creado_en', { ascending:true });
     if(error) throw error;
-    vales = data || [];
-    return vales;
+    return data || [];
   }
-  function pintarVales(){
-    $('valesBody').innerHTML = vales.length ? vales.map(v => `
-      <div class="va" data-vale="${v.id}">
-        <span style="min-width:0"><span class="va-t">${esc((v.trabajador || {}).nombre || 'Trabajador')} · ${dinero(v.monto)}</span>
-        <span class="va-s">${esc([v.nota, fechaCorta(v.creado_en)].filter(Boolean).join(' · '))}</span></span>
-        <span class="va-acc"><button class="va-no" type="button" data-resolver="no">Rechazar</button><button class="va-si" type="button" data-resolver="si">Aprobar</button></span>
-      </div>`).join('') : '<div class="tr-vacio">No hay vales por aprobar.</div>';
-  }
-  async function abrirVales(){
-    try{ await cargarVales(); }
-    catch(err){ toast('No se pudieron cargar los vales: ' + ((err && err.message) || ''), 'error'); return; }
-    pintarVales();
-    abrirHoja('sheetVales');
-  }
-  $('valesBody').addEventListener('click', async (e) => {
-    const b = e.target.closest('[data-resolver]'); if(!b) return;
-    const fila = b.closest('[data-vale]');
-    const aprobar = b.dataset.resolver === 'si';
-    fila.querySelectorAll('button').forEach(x => x.disabled = true);
-    try{
-      const { error } = await db.rpc('resolver_vale', { vid: Number(fila.dataset.vale), aprobar });
-      if(error) throw error;
-      toast(aprobar ? 'Vale aprobado. Se le descuenta de lo que tiene por cobrar.' : 'Vale rechazado');
-      vales = vales.filter(v => String(v.id) !== fila.dataset.vale);
-      pintarVales();
-      if(!vales.length) cerrarHoja('sheetVales');
-      if(alCambiarVales) alCambiarVales();
-    } catch(err){
-      toast(err.message, 'error');
-      fila.querySelectorAll('button').forEach(x => x.disabled = false);
-    }
-  });
 
-  // Abrir lo que pide un aviso tocado (index.html?ver=trabajos|pagos|vales)
+  // Abrir lo que pide un aviso tocado (index.html?ver=trabajos|pagos|historial). Los avisos
+  // viejos de vales (ver=vales) ahora llevan a Nómina.
   function abrirSegunURL(p){
     const que = new URLSearchParams(location.search).get('ver');
     if(!que || !p) return;
     try{ history.replaceState(history.state, '', location.pathname); } catch(e){}
     if(p.rol === 'trabajador' && (que === 'trabajos' || que === 'pagos' || que === 'historial')) ver(que);
-    if(p.rol === 'admin' && que === 'vales') abrirVales();
+    if(p.rol === 'admin' && que === 'vales') location.href = 'nomina.html';
   }
 
   window.Trabajo = {
     iniciarTrabajador, salirTrabajador, refrescar, abrirSegunURL,
-    cargarVales, abrirVales, onValesCambian(fn){ alCambiarVales = fn; },
+    cargarVales,
     esTrabajador: () => !!perfil
   };
 })();

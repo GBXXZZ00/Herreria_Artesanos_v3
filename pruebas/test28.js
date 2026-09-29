@@ -90,18 +90,21 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
       v.estado=a.nuevo;v[a.nuevo+'_en']=iso();return j({id:v.id,estado:v.estado});
     }
     if(name==='cancelar_venta')return j({message:'Solo un administrador puede cancelar una venta'},400);
-    if(name==='asignar_etapa'){const e=DB.etapas.find(x=>x.id===a.eid);e.trabajador_id=a.tid;DB.notifs.push({para:a.tid,titulo:'Nuevo trabajo'});return j(null);}
+    if(name==='asignar_etapas'){
+      a.p.forEach(c=>{const e=DB.etapas.find(x=>x.id===c.eid);const libre=!etapasDeItem(e.venta_item_id).some(x=>x.rama===e.rama&&x.orden<e.orden&&x.estado==='pendiente');
+        if(c.tid&&c.tid!==e.trabajador_id&&libre)DB.notifs.push({para:c.tid,titulo:'Nuevo trabajo'});e.trabajador_id=c.tid;e.para_el=c.tid?c.para:null;});
+      return j(a.p.length);}
     if(name==='mis_trabajos'){
       const out=[];
       DB.ventas.filter(v=>v.estado==='en_produccion').forEach(v=>v.items.forEach(it=>etapasDeItem(it.id).forEach(e=>{
         if(e.trabajador_id!==user||e.estado!=='pendiente')return;
         const antes=etapasDeItem(it.id).find(x=>x.orden<e.orden&&x.estado==='pendiente');
         const mo=DB.modelos.find(z=>z.id===it.catalogo_id);
-        out.push({id:e.id,nombre:e.nombre,especialidad:e.especialidad,rama:e.rama,iniciada_en:e.iniciada_en,venta_id:v.id,interna:false,fecha_entrega:v.fecha_entrega,
+        out.push({id:e.id,nombre:e.nombre,especialidad:e.especialidad,rama:e.rama,unidades:1,para_el:e.para_el||null,notas:v.notas||null,foto_de:it.especificaciones.color,venta_id:v.id,interna:false,fecha_entrega:v.fecha_entrega,
           producto:it.nombre,tipo:it.tipo,cantidad:it.cantidad,foto:it.foto||(mo&&(mo.fotos[it.especificaciones.color]||Object.values(mo.fotos)[0]))||null,
           color:it.especificaciones.color,especificaciones:it.especificaciones,espera:antes?antes.nombre:null,monto:montoDe(it,e.especialidad)});
       })));
-      return j(out.sort((x,y)=>(x.iniciada_en?0:1)-(y.iniciada_en?0:1)));
+      return j(out.sort((x,y)=>(x.espera?1:0)-(y.espera?1:0)||x.id-y.id));
     }
     if(name==='empezar_etapa'){
       if(DB.etapas.some(e=>e.trabajador_id===user&&e.iniciada_en&&e.estado==='pendiente'))return j({message:'Primero termina el trabajo que ya empezaste'},400);
@@ -135,7 +138,7 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
       const t=PERFILES[a.tid];
       return j({trabajador:{id:t.id,nombre:t.nombre,especialidades:t.especialidades},semana:semanaDe(iso()),puede_pagar:!!P.confirma_abonos,
         trabajos:DB.etapas.filter(e=>e.trabajador_id===t.id&&e.estado==='hecha'&&!e.pago_id).map(itemNom),proxima:[],
-        vales:DB.vales.filter(x=>x.trabajador_id===t.id&&x.estado==='aprobado'&&!x.pago_id).map(valeNom),vale_pendiente:null,
+        vales:DB.vales.filter(x=>x.trabajador_id===t.id&&x.estado==='aprobado'&&!x.pago_id).map(valeNom),vale_pendiente:(v=>v?valeNom(v):null)(DB.vales.find(x=>x.trabajador_id===t.id&&x.estado==='pendiente')),
         pagos:DB.pagos.filter(q=>q.trabajador_id===t.id).map(recibo).reverse()});
     }
     if(name==='pagar_trabajador'){
@@ -148,7 +151,7 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
       return j({id:pid,monto:tm-vm});
     }
     if(name==='pedir_vale'){DB.vales.push({id:++DB.sec.vale,trabajador_id:user,monto:a.p_monto,nota:a.p_nota,estado:'pendiente',creado_en:iso()});return j({id:DB.sec.vale});}
-    if(name==='resolver_vale'){const x=DB.vales.find(z=>z.id===a.vid);x.estado=a.aprobar?'aprobado':'rechazado';return j(null);}
+    if(name==='resolver_vale'){if(!P.confirma_abonos)return j({message:'Solo Ray aprueba los vales'},400);const x=DB.vales.find(z=>z.id===a.vid);x.estado=a.aprobar?'aprobado':'rechazado';return j(null);}
     if(name==='seguimiento_publico'){
       const v=DB.ventas.find(x=>x.token_seguimiento===a.t);if(!v)return j({error:'no_existe'});
       const f=ventaCompleta(v);f.cliente={nombre:f.cliente.nombre,cedula:'V99•••766',telefono:'•••8877'};delete f.token_seguimiento;
@@ -257,38 +260,35 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  // ===== 4) Ray asigna Hierro a Jesús desde el pendiente de Inicio =====
  await r.goto(H+'index.html');await r.waitForSelector('.pend-fila');await r.waitForTimeout(800);
  ok('4. Inicio de Ray: "1 trabajo sin asignar" (naranja) y ya no hay pago por confirmar',(await texto(r,'.pend-fila.naranja')).includes('1 trabajo sin asignar')&&!(await r.$('.pend-fila.rojo')));
- async function asignar(nombre){
-   await r.goto(H+'produccion.html?abrir='+v.id);await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(800);
-   await r.click(`[data-asignar][data-nombre="${nombre}"]`);await r.waitForSelector('#sheetAsignar.open');
-   await r.click('.fila-t >> text=Jesús');await r.waitForTimeout(700);
- }
  await r.click('.pend-fila.naranja');await r.waitForURL('**/produccion.html**');await r.waitForSelector('.vcard');
  ok('   Producción muestra el pedido de Carla por asignar',(await texto(r,'#lista')).includes('Carla Prueba'));
  await r.screenshot({path:'shots5/e10-produccion.png'});
- await asignar('Hierro');
- ok('   Hierro queda asignado a Jesús y le llega el aviso',DB.etapas[0].trabajador_id==='u5'&&DB.notifs.length===1);
+ await r.goto(H+'produccion.html?abrir='+v.id);await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(800);
+ ok('   En la ficha hay un solo botón "Asignar trabajadores" y ningún "Marcar terminado"',(await r.$$('#fichaBody [data-asignar-todo]')).length===1 && !(await r.$('#fichaBody [data-terminar]')));
+ await r.click('#fichaBody [data-asignar-todo]');await r.waitForSelector('#sheetTodo.open');await r.waitForTimeout(300);
+ for(const e of DB.etapas) await r.click(`.at-op[data-eid="${e.id}"][data-tid="u5"]`);
+ await r.click('#btnGuardarTodo');await r.waitForTimeout(900);
+ ok('   Asigna los 3 pasos a Jesús de una vez, para este sábado; solo le llega el aviso del primero',DB.etapas.every(e=>e.trabajador_id==='u5'&&e.para_el)&&DB.notifs.length===1,DB.notifs);
  await r.screenshot({path:'shots5/e11-asignado.png'});
 
- // ===== 5) Jesús hace cada etapa (Ray asigna la siguiente cuando termina la anterior) =====
+ // ===== 5) Jesús hace cada etapa: siempre la tiene en "Ahora", con un solo botón =====
  const jz=await entrar(b,'u5','555555');pags.push(jz);
  const etapas=['Hierro','Masilla y pintura','Detalles'];
  for(let k=0;k<etapas.length;k++){
-   if(k>0){await asignar(etapas[k]);}
    await jz.goto(H+'index.html');await jz.waitForSelector('.hoy');await jz.waitForTimeout(500);
    const hoy=await texto(jz,'.hoy');
-   ok(`5.${k+1} Jesús ve "Te toca: ${etapas[k]}" con la foto, el modelo y el color`,hoy.includes('Te toca: '+etapas[k])&&hoy.includes('Imperial E2E')&&hoy.includes('Color negro')&&!!(await jz.$('.hoy-foto img')),hoy);
+   ok(`5.${k+1} Jesús ve "Ahora: ${etapas[k]}" con la foto, el modelo, el color y su sábado`,hoy.includes('Ahora: '+etapas[k])&&hoy.includes('Imperial E2E')&&hoy.includes('Color negro')&&hoy.includes('Para el sáb')&&!!(await jz.$('.hoy-foto img')),hoy);
    if(k===0){
+     ok('    Ve lo que viene después (en gris, espera a otro paso)',(await jz.$$('.despues .dp.gris')).length===2);
      await jz.screenshot({path:'shots5/e12-jesus-hoy.png'});
      await jz.click('.hoy-foto');await jz.waitForSelector('#sheetTrabajo.open');await jz.waitForTimeout(400);
-     ok('    El detalle muestra foto grande, "Manillón H" y cuánto gana ($20)',!!(await jz.$('#trabajoBody .hero img'))&&(await texto(jz,'#trabajoBody')).includes('Manillón H')&&(await texto(jz,'#trabajoBody')).includes('Ganas $20'));
+     const dj=await texto(jz,'#trabajoBody');
+     ok('    El detalle muestra foto grande, la franja del color, todas las especificaciones y cuánto gana ($20)',!!(await jz.$('#trabajoBody .hero img'))&&(await texto(jz,'.tj-color'))==='Va en color NEGRO'&&dj.includes('ManillónH')&&dj.includes('Ganas $20'));
      await jz.screenshot({path:'shots5/e13-jesus-detalle.png'});
-     await jz.click('#trabajoFoot [data-empezar]');await jz.waitForTimeout(900);
-   } else {
-     await jz.click('.hoy [data-empezar]');await jz.waitForTimeout(900);
+     await jz.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await jz.waitForTimeout(400);
    }
-   ok(`    Empieza y dice "Hoy estás haciendo"`,(await texto(jz,'.hoy-tit'))==='Hoy estás haciendo');
-   if(k===0) await jz.screenshot({path:'shots5/e14-jesus-en-curso.png'});
    await jz.click('.hoy [data-terminar-t]');await jz.waitForSelector('#sheetTerminarT.open');
+   if(k===0) await jz.screenshot({path:'shots5/e14-jesus-terminar.png'});
    await jz.setInputFiles('#tFotoInput',{name:'f.png',mimeType:'image/png',buffer:FOTO});await jz.waitForTimeout(800);
    await jz.click('#btnTConfirmar');
    const tt=await jz.waitForFunction(()=>{const t=document.getElementById('toast');return t&&t.classList.contains('show')&&/Sumaste|terminado/.test(t.textContent)&&t.textContent;},null,{timeout:6000}).then(h=>h.jsonValue()).catch(()=>jz.textContent('#toast'));
@@ -318,7 +318,11 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  await jz.click('#btnPedirVale');await jz.waitForTimeout(900);
  await r.goto(H+'index.html');await r.waitForSelector('.pend-fila.verde');await r.waitForTimeout(500);
  ok('   Ray ve "1 vale por aprobar · Jesús $10" (verde)',(await texto(r,'.pend-fila.verde')).includes('1 vale por aprobar')&&(await texto(r,'.pend-fila.verde')).includes('Jesús $10'));
- await r.click('.pend-fila.verde');await r.waitForSelector('#sheetVales.open');await r.click('[data-resolver="si"]');await r.waitForTimeout(900);
+ await r.click('.pend-fila.verde');await r.waitForURL('**/nomina.html?t=u5');await r.waitForSelector('#sheetTrab.open');await r.waitForTimeout(400);
+ ok('   Lo lleva a la Nómina de Jesús con el vale arriba para aprobar',(await texto(r,'.vp')).includes('Pide un vale')&&(await texto(r,'.vp')).includes('$10'));
+ await r.screenshot({path:'shots5/e15b-ray-vale.png'});
+ await r.click('.vp [data-resolver="si"]');await r.waitForTimeout(900);
+ ok('   Al aprobar se quita de arriba y ya descuenta',!(await r.$('.vp'))&&(await texto(r,'#trabBody')).includes('−$10'));
  await jz.goto(H+'index.html?ver=pagos');await jz.waitForSelector('#sheetPagos.open');await jz.waitForTimeout(500);
  ok('   El vale aprobado sale en rojo y resta: te toca cobrar $30',(await texto(jz,'.pg-mov.vale .pg-mov-m'))==='−$10'&&(await texto(jz,'.pg-cuenta-total b'))==='$30');
  await jz.screenshot({path:'shots5/e16-jesus-vale.png',fullPage:true});

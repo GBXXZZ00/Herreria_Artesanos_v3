@@ -1,12 +1,12 @@
 // Producción: pedidos en fabricación y órdenes para exhibición, sus productos y las
-// etapas de cada uno (asignar trabajador, marcar terminado, categoría de pago).
-// El administrador asigna y marca; la vendedora solo mira el avance (modo lectura,
-// sin montos ni botones).
+// etapas de cada uno (quién hace cada paso y para cuándo, categoría de pago).
+// El administrador asigna; cada trabajador marca terminado lo suyo desde su teléfono.
+// La vendedora solo mira el avance (modo lectura, sin montos ni botones).
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, fotoModelo, acabados, tieneColores,
-          estadoDesdeEspecificaciones, especificacionesDesdeEstado } = window.AH;
+  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, fotoModelo, fotoItem, etiquetaOtroColor, acabados, tieneColores,
+          estadoDesdeEspecificaciones, especificacionesDesdeEstado, sabados, sabadoCorto, topeTexto, medidas } = window.AH;
   const AV = window.AV;
   const S = window.Sesion;
   const $ = (id) => document.getElementById(id);
@@ -30,21 +30,35 @@
   // ---------------------------------------------------------------------------
   // La "etapa actual" de una rama es la primera pendiente en orden; las de antes ya
   // están hechas y las de después todavía no se pueden tocar.
+  const ORDEN_RAMA = { principal:1, ventana:2, proteccion:3 };
   function ramas(item){
     const porRama = {};
-    (item.etapas || []).forEach(e => { (porRama[e.rama] = porRama[e.rama] || []).push(e); });
+    (item.etapas || []).slice().sort((a, b) => (ORDEN_RAMA[a.rama] || 9) - (ORDEN_RAMA[b.rama] || 9))
+      .forEach(e => { (porRama[e.rama] = porRama[e.rama] || []).push(e); });
     Object.values(porRama).forEach(l => l.sort((a, b) => a.orden - b.orden));
     return porRama;
   }
+  // Título de cada bloque de un Combo: la puerta, las 2 ventanas y las 2 protecciones, con sus medidas
+  function tituloRama(it, rama){
+    const e = it.especificaciones || {};
+    const med = (a, b) => (a && b) ? ' · ' + medidas({ alto:a, ancho:b }) : '';
+    const cu = e.ventanas_alto && e.ventanas_ancho ? ' c/u' : '';
+    if(rama === 'ventana') return '2 ventanas' + med(e.ventanas_alto, e.ventanas_ancho) + cu;
+    if(rama === 'proteccion') return '2 protecciones' + med(e.ventanas_alto, e.ventanas_ancho) + cu;
+    return 'Puerta' + med(e.alto, e.ancho);
+  }
+  // Algún paso pendiente se pasó de su fecha tope
+  const pasoAtrasado = (e) => e.estado === 'pendiente' && e.para_el && topeTexto(e.para_el).tarde;
   function etapaActual(lista){
     return lista.find(e => e.estado === 'pendiente') || null;
   }
   // Solo los productos que se fabrican (una pieza de exhibición ya está hecha)
   const itemsFabrica = (v) => (v.items || []).filter(it => (it.etapas || []).length);
   function resumenPedido(v){
-    let total = 0, hechas = 0, sinAsignar = 0, sinCat = 0;
+    let total = 0, hechas = 0, sinAsignar = 0, sinCat = 0, pasosTarde = 0;
     itemsFabrica(v).forEach(it => {
       if(!it.categoria_pago_id) sinCat++;
+      pasosTarde += (it.etapas || []).filter(pasoAtrasado).length;
       Object.values(ramas(it)).forEach(lista => {
         total += lista.length;
         hechas += lista.filter(e => e.estado === 'hecha').length;
@@ -52,12 +66,13 @@
         if(act && !act.trabajador_id) sinAsignar++;
       });
     });
-    return { total, hechas, sinAsignar, sinCat };
+    return { total, hechas, sinAsignar, sinCat, pasosTarde };
   }
   function diasAtraso(v){
     if(!v.fecha_entrega) return null;
     return -AV.diasHasta(v.fecha_entrega); // positivo = atrasado
   }
+  const esAtrasado = (v) => (diasAtraso(v) || 0) > 0 || v._resumen.pasosTarde > 0;
   const nombreCategoria = (id) => (categorias.find(c => c.id === id) || {}).nombre || '';
   // Fecha corta en la hora del teléfono (terminada_en viene en UTC)
   function fechaDeHora(ts){
@@ -84,7 +99,7 @@
       }
       const [rv, rc] = await Promise.all([
         db.from('ventas')
-          .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,cantidad,categoria_pago_id,etapas(id,rama,nombre,orden,especialidad,estado,trabajador_id,foto,terminada_en,iniciada_en,monto,trabajador:perfiles(nombre)))')
+          .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,pieza_id,cantidad,categoria_pago_id,especificaciones,catalogo:catalogo(fotos),etapas(id,rama,nombre,orden,especialidad,estado,unidades,para_el,trabajador_id,foto,terminada_en,monto,trabajador:perfiles(nombre)))')
           .eq('estado', 'en_produccion'),
         db.from('categorias_pago').select('id,nombre').eq('activo', true).order('nombre', { ascending:true })
       ]);
@@ -121,7 +136,7 @@
       todos: pedidos.length,
       asignar: pedidos.filter(v => v._resumen.sinAsignar > 0).length,
       sincat: pedidos.filter(v => v._resumen.sinCat > 0).length,
-      atrasados: pedidos.filter(v => (diasAtraso(v) || 0) > 0).length
+      atrasados: pedidos.filter(esAtrasado).length
     };
     if(filtro === 'sincat' && !n.sincat) filtro = 'todos';
     $('chips').innerHTML = FILTROS.filter(f => f.id !== 'sincat' || n.sincat).map(f =>
@@ -139,7 +154,7 @@
     let vistos = pedidos;
     if(filtro === 'asignar') vistos = pedidos.filter(v => v._resumen.sinAsignar > 0);
     if(filtro === 'sincat') vistos = pedidos.filter(v => v._resumen.sinCat > 0);
-    if(filtro === 'atrasados') vistos = pedidos.filter(v => (diasAtraso(v) || 0) > 0);
+    if(filtro === 'atrasados') vistos = pedidos.filter(esAtrasado);
     const cont = $('lista');
     if(!vistos.length){
       cont.innerHTML = pedidos.length
@@ -153,6 +168,7 @@
       const plazo = da > 0 ? `<span class="plazo tarde">${da} ${da === 1 ? 'día' : 'días'} atrasada</span>`
         : v.fecha_entrega ? `<span class="plazo">Entrega ${AV.fechaCorta(v.fecha_entrega)}</span>` : '';
       const badge = lectura ? `<span class="plazo">${esc(enQueVa(v))}</span>`
+        : r.pasosTarde > 0 ? `<span class="plazo tarde">${r.pasosTarde === 1 ? '1 paso atrasado' : r.pasosTarde + ' pasos atrasados'}</span>`
         : r.sinAsignar > 0 ? `<span class="plazo">${r.sinAsignar} sin asignar</span>`
         : r.sinCat > 0 ? '<span class="plazo aviso">Sin categoría de pago</span>'
         : '<span class="plazo ok">Todo asignado</span>';
@@ -200,86 +216,85 @@
   function itemHtml(it){
     const grupos = ramas(it);
     const claves = Object.keys(grupos);
-    // Un Combo tiene dos líneas en paralelo (puerta y ventana): cada una en su propio
-    // bloque para que la línea que las conecta no salte de una rama a la otra.
-    const bloques = claves.map(r => grupos[r]).map((lista, idx) => {
+    // Un Combo tiene tres líneas en paralelo (puerta, 2 ventanas y 2 protecciones): cada una
+    // en su propio bloque para que la línea que las conecta no salte de una a otra.
+    const bloques = claves.map(r => {
+      const lista = grupos[r];
       const act = etapaActual(lista);
-      const etiqueta = claves.length > 1 ? `<p class="e-rama-tit">${idx === 0 ? 'Puerta' : 'Ventana'}</p>` : '';
+      const etiqueta = it.tipo === 'Combo' ? `<p class="e-rama-tit">${esc(tituloRama(it, r))}</p>` : '';
       return etiqueta + '<div class="e-rama">' + lista.map(e => {
         const cls = e.estado === 'hecha' ? 'hecha' : (act && act.id === e.id) ? 'actual' : '';
         const dot = e.estado === 'hecha'
           ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : '';
         let derecha = '', abajo = '';
-        if(lectura){
-          // Solo mirar: quién lo tiene y cuándo terminó, sin montos ni botones
-          if(e.estado === 'hecha') abajo = `<span class="e-hecha-info">Terminó${e.terminada_en ? ' el ' + esc(fechaDeHora(e.terminada_en)) : ''}${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}</span>`;
-          else if(cls === 'actual'){
-            derecha = e.trabajador ? `<span class="e-chip e-chip-ver"><span class="ini">${esc(inicial(e.trabajador.nombre))}</span>${esc(e.trabajador.nombre)}</span>` : '<span class="e-asignar off">Por asignar</span>';
-            if(e.iniciada_en) abajo = '<span class="e-hecha-info">Trabajando en esto</span>';
+        if(e.estado === 'hecha'){
+          const monto = !lectura && e.monto != null ? ` · <span class="e-monto">${dinero(e.monto)}</span>` : '';
+          abajo = `<span class="e-hecha-info">Terminó${e.terminada_en ? ' el ' + esc(fechaDeHora(e.terminada_en)) : ''}${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}${monto}</span>`;
+        } else {
+          // Pendiente: quién lo tiene (o "Por asignar") y para cuándo. Los botones están en "Asignar trabajadores".
+          derecha = e.trabajador_id
+            ? `<span class="e-chip"><span class="ini">${esc(inicial(e.trabajador ? e.trabajador.nombre : '?'))}</span>${esc(e.trabajador ? e.trabajador.nombre : '')}</span>`
+            : '<span class="e-por">Por asignar</span>';
+          const partes = [];
+          if(e.trabajador_id && e.para_el){
+            const tt = topeTexto(e.para_el);
+            partes.push(`<span class="e-tope ${tt.tarde ? 'tarde' : ''}">${esc(tt.t)}</span>`);
           }
-        } else if(e.estado === 'hecha'){
-          const monto = e.monto != null ? ` · <span class="e-monto">${dinero(e.monto)}</span>` : '';
-          abajo = `<span class="e-hecha-info">Terminó${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}${monto}</span>`;
-        } else if(cls !== 'actual'){
-          // Paso futuro: ya se puede dejar asignado; se empieza cuando termine el anterior
-          const antes = lista.slice(0, lista.indexOf(e)).reverse().find(x => x.estado === 'pendiente');
-          abajo = antes ? `<span class="e-hecha-info">Después de ${esc(antes.nombre.toLowerCase())}</span>` : '';
-          if(e.trabajador_id){
-            const nom = e.trabajador ? e.trabajador.nombre : '';
-            derecha = `<button class="e-chip" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}" aria-label="Cambiar a quién está asignada"><span class="ini">${esc(inicial(nom))}</span>${esc(nom)}</button>`;
-          } else if(it.categoria_pago_id){
-            derecha = `<button class="e-asignar sec" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}">Asignar</button>`;
-          } else {
-            derecha = '<span class="e-asignar off" aria-disabled="true">Asignar</span>';
+          if(cls !== 'actual'){
+            const antes = lista.slice(0, lista.indexOf(e)).reverse().find(x => x.estado === 'pendiente');
+            if(antes) partes.push(`<span class="e-hecha-info">Después de ${esc(antes.nombre.toLowerCase())}</span>`);
           }
-        } else if(cls === 'actual'){
-          if(e.trabajador_id){
-            const nom = e.trabajador ? e.trabajador.nombre : '';
-            derecha = `<button class="e-chip" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}" aria-label="Cambiar a quién está asignada"><span class="ini">${esc(inicial(nom))}</span>${esc(nom)}</button>`;
-            abajo = `${e.iniciada_en ? '<span class="e-hecha-info">Trabajando en esto</span>' : ''}<button class="e-terminar" data-terminar="${e.id}">Marcar terminado</button>`;
-          } else if(!it.categoria_pago_id){
-            // Sin categoría no se asigna: el aviso de arriba es el que lleva a elegirla
-            derecha = '<span class="e-asignar off" aria-disabled="true">Asignar</span>';
-          } else {
-            derecha = `<button class="e-asignar" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}">Asignar</button>`;
-          }
+          abajo = partes.join('');
         }
         return `<div class="etapa ${cls}"><div class="e-dot">${dot}</div><div class="e-cuerpo"><div class="e-linea"><div class="e-nom">${esc(e.nombre)}</div>${derecha}</div><div class="e-fila">${abajo}</div></div></div>`;
       }).join('') + '</div>';
     }).join('');
+    const fi = fotoItem(it);
+    const sub = it.tipo === 'Combo' ? 'Combo · 1 puerta + 2 ventanas + 2 protecciones' : (it.tipo || '');
+    const color = (it.especificaciones || {}).color;
     return `<div class="p-item">
       <div class="p-item-cab">
-        <div class="p-item-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="">` : iconoTipo(it.tipo, 22)}</div>
-        <div><div class="p-item-nom">${esc(it.nombre)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div><div class="p-item-cant">${esc(it.tipo || '')}</div>${catHtml(it)}</div>
+        <div class="p-item-foto">${fi.url ? `<img src="${esc(fi.url)}" alt="">` : iconoTipo(it.tipo, 22)}</div>
+        <div><div class="p-item-nom">${esc(it.nombre)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div><div class="p-item-cant">${esc(sub)}${color ? ' · ' + esc(color) : ''}</div>${catHtml(it)}</div>
       </div>
+      ${fi.otroColor ? `<p class="p-foto-otra">${esc(etiquetaOtroColor(fi, it.tipo))}.${lectura ? '' : ` Sube la foto en ${esc(String(fi.color).toLowerCase())} en Catálogo.`}</p>` : ''}
       ${catFaltaHtml(it)}
       ${bloques}
-      ${!lectura && it.categoria_pago_id && (it.etapas || []).filter(x => x.estado === 'pendiente').length > 1
-        ? `<button class="btn-asignar-todo" type="button" data-asignar-todo="${it.id}">Asignar todo el producto</button>` : ''}
+      ${!lectura && it.categoria_pago_id && (it.etapas || []).some(x => x.estado === 'pendiente')
+        ? `<button class="btn-asignar-todo" type="button" data-asignar-todo="${it.id}">Asignar trabajadores</button>` : ''}
     </div>`;
   }
   // ---------------------------------------------------------------------------
-  // Asignar todo el producto: un trabajador por paso, se guarda de una vez
+  // Asignar trabajadores: quién hace cada paso y para cuándo (este sábado o el próximo)
   // ---------------------------------------------------------------------------
-  let itemTodo = null, elegidos = {}, guardandoTodo = false;
+  let itemTodo = null, elegidos = {}, guardandoTodo = false, paraElegido = null, paraTocado = false;
   async function abrirAsignarTodo(iid){
     const v = pedidoActual; if(!v) return;
     const it = (v.items || []).find(x => x.id === iid); if(!it) return;
     const todos = await cargarTrabajadores();
-    itemTodo = it; elegidos = {};
-    const grupos = ramas(it), claves = Object.keys(grupos);
-    let html = '';
-    claves.forEach((r, idx) => {
-      const pend = grupos[r].filter(e => e.estado === 'pendiente');
-      if(!pend.length) return;
-      if(claves.length > 1) html += `<p class="e-rama-tit">${idx === 0 ? 'Puerta' : 'Ventana'}</p>`;
-      pend.forEach(e => {
+    itemTodo = it; elegidos = {}; paraTocado = false;
+    const sab = sabados();
+    const pend = (it.etapas || []).filter(e => e.estado === 'pendiente');
+    // Si todo lo asignado ya es para el próximo sábado, arranca ahí; si no, este sábado
+    paraElegido = pend.some(e => e.trabajador_id) && pend.filter(e => e.trabajador_id).every(e => e.para_el === sab.proximo) ? sab.proximo : sab.este;
+    const grupos = ramas(it);
+    let html = `<div class="at-cuando"><p class="field-label">¿Para cuándo?</p>
+      <div class="seg" role="radiogroup" id="segPara">
+        <button type="button" class="seg-op ${paraElegido === sab.este ? 'on' : ''}" data-para="${sab.este}" role="radio" aria-checked="${paraElegido === sab.este}">Este ${esc(sabadoCorto(sab.este))}</button>
+        <button type="button" class="seg-op ${paraElegido === sab.proximo ? 'on' : ''}" data-para="${sab.proximo}" role="radio" aria-checked="${paraElegido === sab.proximo}">Próximo ${esc(sabadoCorto(sab.proximo))}</button>
+      </div></div>`;
+    Object.keys(grupos).forEach(r => {
+      const pendR = grupos[r].filter(e => e.estado === 'pendiente');
+      if(!pendR.length) return;
+      if(it.tipo === 'Combo') html += `<p class="e-rama-tit">${esc(tituloRama(it, r))}</p>`;
+      pendR.forEach(e => {
         elegidos[e.id] = e.trabajador_id || '';
         const ops = todos.filter(t => (t.especialidades || []).includes(e.especialidad));
         // Si está asignado a alguien que ya no está activo, se muestra marcado para que se vea y se pueda cambiar
         const fuera = e.trabajador_id && !ops.some(t => t.id === e.trabajador_id)
           ? `<button type="button" class="at-op on" data-eid="${e.id}" data-tid="${esc(e.trabajador_id)}"><span class="ini">${esc(inicial(e.trabajador ? e.trabajador.nombre : '?'))}</span>${esc(e.trabajador ? e.trabajador.nombre : 'Otro')} (inactivo)</button>` : '';
-        html += `<div class="at-paso" data-eid="${e.id}"><p class="at-nom">${esc(e.nombre)}</p>
+        const tt = e.trabajador_id && e.para_el ? topeTexto(e.para_el) : null;
+        html += `<div class="at-paso" data-eid="${e.id}"><p class="at-nom">${esc(e.nombre)}${tt ? ` <span class="e-tope ${tt.tarde ? 'tarde' : ''}">${esc(tt.t)}</span>` : ''}</p>
           ${ops.length || fuera ? `<div class="at-ops">${fuera}${ops.map(t => `<button type="button" class="at-op ${e.trabajador_id === t.id ? 'on' : ''}" data-eid="${e.id}" data-tid="${esc(t.id)}"><span class="ini">${esc(inicial(t.nombre))}</span>${esc(t.nombre)}</button>`).join('')}
             <button type="button" class="at-op nadie ${e.trabajador_id ? '' : 'on'}" data-eid="${e.id}" data-tid="">Sin asignar</button></div>`
             : `<p class="at-vacio">Nadie tiene la especialidad ${esc(NOMBRE_ESPECIALIDAD[e.especialidad] || e.especialidad)}. Créalo en Usuarios.</p>`}
@@ -287,13 +302,21 @@
       });
     });
     $('todoTitulo').textContent = 'Asignar: ' + it.nombre;
-    $('todoBody').innerHTML = html || '<p class="at-vacio">No quedan pasos por asignar.</p>';
+    $('todoBody').innerHTML = html;
     pintarBotonTodo();
     abrirHoja('sheetTodo');
   }
+  // Cambia quien cambió de trabajador. Si se tocó "¿Para cuándo?", también los ya asignados con otra fecha.
   function cambiosTodo(){
-    return (itemTodo ? (itemTodo.etapas || []) : []).filter(e => e.estado === 'pendiente' && e.id in elegidos && (elegidos[e.id] || '') !== (e.trabajador_id || ''))
-      .map(e => ({ eid:e.id, tid:elegidos[e.id] || null }));
+    return (itemTodo ? (itemTodo.etapas || []) : []).filter(e => {
+      if(e.estado !== 'pendiente' || !(e.id in elegidos)) return false;
+      const tid = elegidos[e.id] || '';
+      if(tid !== (e.trabajador_id || '')) return true;
+      return paraTocado && !!tid && e.para_el !== paraElegido;
+    }).map(e => {
+      const tid = elegidos[e.id] || null;
+      return tid ? { eid:e.id, tid, para:paraElegido } : { eid:e.id, tid:null };
+    });
   }
   function pintarBotonTodo(){
     const n = cambiosTodo().length;
@@ -301,6 +324,13 @@
     $('btnGuardarTodo').textContent = n ? (n === 1 ? 'Guardar 1 cambio' : `Guardar ${n} cambios`) : 'Elige quién hace cada paso';
   }
   $('todoBody').addEventListener('click', (e) => {
+    const sp = e.target.closest('[data-para]');
+    if(sp){
+      paraElegido = sp.dataset.para; paraTocado = true;
+      $('segPara').querySelectorAll('.seg-op').forEach(x => { x.classList.toggle('on', x === sp); x.setAttribute('aria-checked', String(x === sp)); });
+      pintarBotonTodo();
+      return;
+    }
     const b = e.target.closest('.at-op'); if(!b) return;
     elegidos[b.dataset.eid] = b.dataset.tid;
     b.closest('.at-ops').querySelectorAll('.at-op').forEach(x => x.classList.toggle('on', x === b));
@@ -335,10 +365,6 @@
     if(v) pintarFicha(v); else cerrarHoja('sheetFicha');
   }
 
-  // ---------------------------------------------------------------------------
-  // Asignar trabajador
-  // ---------------------------------------------------------------------------
-  let etapaParaAsignar = null;
   async function cargarTrabajadores(){
     if(trabajadores.length) return trabajadores;
     const { data, error } = await db.from('perfiles').select('id,nombre,especialidades').eq('rol', 'trabajador').eq('activo', true);
@@ -353,41 +379,6 @@
     if(bo){ cancelarOrden(Number(bo.dataset.cancelarOrden), bo); return; }
     const bat = e.target.closest('[data-asignar-todo]');
     if(bat){ abrirAsignarTodo(Number(bat.dataset.asignarTodo)); return; }
-    const ba = e.target.closest('[data-asignar]');
-    if(ba){
-      etapaParaAsignar = { id:Number(ba.dataset.asignar), esp:ba.dataset.esp };
-      $('asignarTitulo').textContent = 'Asignar: ' + ba.dataset.nombre;
-      const todos = await cargarTrabajadores();
-      const filtrados = todos.filter(t => (t.especialidades || []).includes(ba.dataset.esp));
-      $('asignarSub').textContent = 'Solo se muestran trabajadores de ' + (NOMBRE_ESPECIALIDAD[ba.dataset.esp] || ba.dataset.esp);
-      $('listaTrabajadores').innerHTML = filtrados.length
-        ? filtrados.map(t => `<button class="fila-t" data-tid="${esc(t.id)}"><span class="u-avatar">${esc(inicial(t.nombre))}</span><span><span class="nom">${esc(t.nombre)}</span><span class="esp">${esc((t.especialidades || []).map(x => NOMBRE_ESPECIALIDAD[x] || x).join(' · '))}</span></span></button>`).join('')
-        : '<p class="field-error" style="display:block">No hay trabajadores activos con esa especialidad. Créalos en Usuarios.</p>';
-      abrirHoja('sheetAsignar');
-      return;
-    }
-    const bt = e.target.closest('[data-terminar]');
-    if(bt){
-      etapaParaTerminar = Number(bt.dataset.terminar);
-      fotoTerminarBlob = null;
-      $('terminarFotoPrev').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/></svg>';
-      $('terminarFotoInput').value = '';
-      abrirHoja('sheetTerminar');
-    }
-  });
-  $('listaTrabajadores').addEventListener('click', async (e) => {
-    const b = e.target.closest('[data-tid]'); if(!b || !etapaParaAsignar) return;
-    [...$('listaTrabajadores').children].forEach(x => x.disabled = true);
-    try{
-      const { error } = await db.rpc('asignar_etapa', { eid: etapaParaAsignar.id, tid: b.dataset.tid });
-      if(error) throw error;
-      cerrarHoja('sheetAsignar');
-      toast('Trabajador asignado. Le llegó el aviso.');
-      await refrescarFicha();
-    } catch(err){
-      toast(err.message, 'error');
-      [...$('listaTrabajadores').children].forEach(x => x.disabled = false);
-    }
   });
 
   // ---------------------------------------------------------------------------
@@ -437,45 +428,6 @@
       boton.disabled = false;
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Marcar terminado (con foto opcional)
-  // ---------------------------------------------------------------------------
-  let etapaParaTerminar = null;
-  let fotoTerminarBlob = null;
-  $('btnTerminarFoto').addEventListener('click', () => $('terminarFotoInput').click());
-  $('terminarFotoInput').addEventListener('change', async (e) => {
-    const f = e.target.files[0]; if(!f) return;
-    try{
-      fotoTerminarBlob = await comprimirFoto(f);
-      $('terminarFotoPrev').innerHTML = `<img src="${URL.createObjectURL(fotoTerminarBlob)}" alt="">`;
-    } catch(err){ toast('No se pudo procesar la foto', 'error'); }
-  });
-  $('btnConfirmarTerminar').addEventListener('click', async () => {
-    if(!etapaParaTerminar) return;
-    $('btnConfirmarTerminar').disabled = true;
-    try{
-      let fotoUrl = null;
-      if(fotoTerminarBlob){
-        const path = new Date().toISOString().slice(0, 7) + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
-        const { error: errSub } = await db.storage.from('etapas-fotos').upload(path, fotoTerminarBlob, { contentType:'image/jpeg' });
-        if(errSub) throw errSub;
-        fotoUrl = db.storage.from('etapas-fotos').getPublicUrl(path).data.publicUrl;
-      }
-      const { data, error } = await db.rpc('marcar_etapa_terminada', { eid: etapaParaTerminar, foto_url: fotoUrl });
-      if(error) throw error;
-      cerrarHoja('sheetTerminar');
-      cerrarHoja('sheetFicha');
-      toast(data && data.listo
-        ? (data.interna ? 'Listo. La pieza pasó a Entrega inmediata en el catálogo.' : 'Etapa terminada. El pedido quedó Listo y se avisó a quien lo vendió.')
-        : 'Etapa terminada');
-      await cargar();
-    } catch(err){
-      toast(err.message, 'error');
-    } finally {
-      $('btnConfirmarTerminar').disabled = false;
-    }
-  });
 
   // ---------------------------------------------------------------------------
   // Fabricar para exhibición (sin cliente): igual que agregar un producto en Nueva

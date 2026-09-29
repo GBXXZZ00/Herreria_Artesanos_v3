@@ -1,10 +1,11 @@
 // Nómina: cada trabajador con lo que se le debe esta semana (lunes a sábado, se paga el
 // sábado), sus vales y el historial de pagos. Lo ven los administradores; solo Ray
-// (quien confirma pagos) marca "Pagado" y anota vales. Todo lo calcula el servidor.
+// (quien confirma pagos) marca "Pagado", aprueba los vales que piden y anota vales.
+// Todo lo calcula el servidor.
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, resumenSpecs, specChipsHtml, heroAttrs, heroZoom, verFoto } = window.AH;
+  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, resumenSpecs, specChipsHtml, heroAttrs, heroZoom, verFoto, etiquetaOtroColor } = window.AH;
   const S = window.Sesion;
   const $ = (id) => document.getElementById(id);
 
@@ -18,6 +19,7 @@
   let tab = 'semana';
   let items = {};           // id → trabajo (para abrir su ficha)
   let pagando = false;
+  let resolviendo = false;
 
   // ---------- Fechas ----------
   const diaDe = (iso) => { const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
@@ -29,7 +31,12 @@
   }
   const nombreEsp = (l) => (l || []).map(e => ESPECIALIDAD[e] || e).join(', ');
   const inicial = (n) => (String(n || '?').trim()[0] || '?').toUpperCase();
-  const mensaje = (e) => { const m = String((e && e.message) || ''); return /fetch|network|Failed/i.test(m) ? 'Sin conexión. Revisa tu internet e intenta de nuevo' : (m || 'Algo salió mal'); };
+  const mensaje = (e) => {
+    const m = String((e && e.message) || '');
+    if(/fetch|network|Failed/i.test(m)) return 'Sin conexión. Revisa tu internet e intenta de nuevo';
+    if(/invalid input syntax|uuid/i.test(m)) return 'No se encontró ese trabajador';   // enlace mal copiado
+    return m || 'Algo salió mal';
+  };
   const suma = (l) => Math.round((l || []).reduce((a, x) => a + (Number(x.monto) || 0), 0) * 100) / 100;
 
   // ---------- Lista ----------
@@ -53,6 +60,7 @@
       const partes = [t.trabajos ? (t.trabajos === 1 ? '1 trabajo' : t.trabajos + ' trabajos') : 'Nada esta semana'];
       if(Number(t.vales_monto)) partes.push('vales −' + dinero(t.vales_monto));
       if(t.por_definir) partes.push(t.por_definir === 1 ? '1 sin monto' : t.por_definir + ' sin monto');
+      if(t.vale_pendiente != null) partes.push('pide vale ' + dinero(t.vale_pendiente));
       const u = t.ultimo_pago;
       return `<button class="n-card" type="button" data-trab="${esc(t.id)}" style="--i:${i}">
         <div class="n-top"><span class="n-av">${esc(inicial(t.nombre))}</span>
@@ -106,10 +114,18 @@
     const tot = suma(tr), tv = suma(va), neto = Math.round((tot - tv) * 100) / 100;
     const sinMonto = tr.filter(x => x.monto == null).length;
     let html = '';
+    // El vale que pidió: arriba, con Aprobar / Rechazar (solo Ray)
+    const vp = ficha.vale_pendiente;
+    if(vp){
+      html += `<div class="vp" data-vale="${esc(vp.id)}"><span style="min-width:0"><span class="vp-t">Pide un vale${vp.nota ? ' · ' + esc(vp.nota) : ''}</span>
+        <span class="vp-s">${esc(fechaHora(vp.fecha))} · <b>${esc(dinero(vp.monto))}</b></span></span>
+        ${ficha.puede_pagar ? '<span class="vp-acc"><button class="vp-no" type="button" data-resolver="no">Rechazar</button><button class="vp-si" type="button" data-resolver="si">Aprobar</button></span>'
+          : '<span class="vp-ray">Ray lo decide</span>'}</div>`;
+    }
     if(!tr.length && !va.length) html += `<div class="vacio-s">No tiene trabajos terminados esta semana.</div>`;
     if(tr.length) html += '<p class="tit">Trabajos terminados (hasta el sábado)</p>' + tr.map(filaItem).join('');
-    if(va.length || ficha.vale_pendiente){
-      html += '<p class="tit">Vales (se descuentan)</p>' + va.map(v => filaVale(v, false)).join('') + (ficha.vale_pendiente ? filaVale(ficha.vale_pendiente, true) : '');
+    if(va.length){
+      html += '<p class="tit">Vales (se descuentan)</p>' + va.map(v => filaVale(v, false)).join('');
     }
     if(tr.length || va.length){
       html += `<div class="cuenta">
@@ -130,7 +146,7 @@
         <button class="btn-primary" type="button" id="btnPagar" data-neto="${neto}" ${puede ? '' : 'disabled'}>${puede ? 'Marcar pagado ' + esc(dinero(neto)) : sinMonto ? 'Falta el monto de ' + (sinMonto === 1 ? 'un trabajo' : sinMonto + ' trabajos') : neto < 0 ? 'Los vales pasan lo trabajado' : 'Nada por pagar'}</button>
         <button class="btn-secondary" type="button" id="btnAnotarVale">Anotar un vale</button></div>`;
     } else {
-      $('trabFoot').innerHTML = '<p class="solo-ray">Solo Ray marca los pagos y anota vales.</p>';
+      $('trabFoot').innerHTML = '<p class="solo-ray">Solo Ray marca los pagos y aprueba o anota vales.</p>';
     }
   }
   function pintarHistorial(){
@@ -161,12 +177,31 @@
     const it = items[b.dataset.item]; if(it) abrirItem(it);
   });
 
+  // ---------- Aprobar o rechazar el vale que pidió ----------
+  $('trabBody').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-resolver]'); if(!b || resolviendo || !ficha) return;
+    const fila = b.closest('[data-vale]');
+    const aprobar = b.dataset.resolver === 'si';
+    const t = ficha.trabajador;
+    resolviendo = true;
+    fila.querySelectorAll('button').forEach(x => x.disabled = true);
+    try{
+      const { error } = await db.rpc('resolver_vale', { vid: Number(fila.dataset.vale), aprobar });
+      if(error) throw error;
+      toast(aprobar ? `Vale aprobado. Se descuenta en el próximo pago de ${t.nombre}.` : 'Vale rechazado. Le avisamos.');
+      await Promise.all([abrirTrabajador(t.id, 'semana'), cargar()]);
+    } catch(err){
+      toast(mensaje(err), 'error');
+      await abrirTrabajador(t.id).catch(() => {});
+    } finally { resolviendo = false; }
+  });
+
   // ---------- Ficha de un trabajo ----------
   function abrirItem(it){
     const e = it.especificaciones || {};
     const specs = resumenSpecs(it.tipo, e);
     $('itemBody').innerHTML = `
-      <div ${heroAttrs(it.foto)}>${it.foto ? `<img src="${esc(it.foto)}" alt="${esc(it.producto)}">` : iconoTipo(it.tipo, 56)}${heroZoom(it.foto)}</div>
+      <div ${heroAttrs(it.foto)}>${it.foto ? `<img src="${esc(it.foto)}" alt="${esc(it.producto)}">` : iconoTipo(it.tipo, 56)}${(() => { const lb = etiquetaOtroColor({ otroColor: !!(it.foto && it.foto_de && e.color && it.foto_de !== e.color), de: it.foto_de, color: e.color }, it.tipo); return lb ? `<span class="foto-otra">${esc(lb)}</span>` : ''; })()}${heroZoom(it.foto)}</div>
       <div class="d-parte">${esc(it.etapa)} · terminó ${esc(fechaHora(it.fecha))}</div>
       <div class="det-name" style="margin-top:10px">${esc(it.producto)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div>
       <div class="det-type">${esc([it.tipo, e.color].filter(Boolean).join(' · '))}</div>
@@ -254,7 +289,9 @@
     if(!p) return;
     if(p.rol !== 'admin'){ location.replace('index.html'); return; }
     await cargar();
-    const abrir = new URLSearchParams(location.search).get('trabajador');
-    if(abrir && /^[0-9a-f-]{36}$/i.test(abrir)) abrirTrabajador(abrir);
+    // nomina.html?t=ID (desde el aviso "Vale pedido" o el pendiente) abre a ese trabajador
+    const q = new URLSearchParams(location.search);
+    const abrir = q.get('t') || q.get('trabajador');
+    if(abrir && /^[\w-]{1,64}$/.test(abrir)) abrirTrabajador(abrir);
   })();
 })();

@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Producción · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=46">
+<link rel="stylesheet" href="assets/css/base.css?v=47">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   .p-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
@@ -38,7 +38,6 @@
   .etapa:not(.hecha):not(.actual) .e-nom{color:var(--ink-faint)}
   .e-fila{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
   .solo-lectura #btnNuevaOrden{display:none}
-  .e-asignar.sec{background:var(--surface);color:var(--accent);border:1.5px solid var(--accent)}
   .btn-asignar-todo{display:flex;align-items:center;justify-content:center;width:100%;height:46px;margin-top:14px;border:1.5px solid var(--accent);border-radius:14px;color:var(--accent);font-size:14.5px;font-weight:800;background:var(--surface);transition:transform 130ms var(--ease-out)}
   .btn-asignar-todo:active{transform:scale(0.98)}
   .at-paso{padding:12px 0}
@@ -55,23 +54,7 @@
   .e-chip .ini,.at-op .ini{padding:0;line-height:1}
   .e-chip{display:flex;align-items:center;gap:7px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--surface-2);font-size:13px;font-weight:700;flex-shrink:0}
   .e-chip .ini{width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;flex-shrink:0}
-  .e-asignar{padding:6px 14px;border-radius:999px;border:1px solid var(--line-strong);background:none;font-size:13px;font-weight:700;color:var(--ink-soft)}
-  .e-terminar{padding:7px 14px;border-radius:10px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:800;border:0;transition:transform 130ms var(--ease-out)}
-  .e-terminar:active{transform:scale(0.96)}
   .e-hecha-info{font-size:12px;color:var(--ink-faint)}
-
-  .lista-t{display:flex;flex-direction:column;gap:8px;margin-top:4px}
-  .fila-t{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-align:left;transition:transform 130ms var(--ease-out),border-color 160ms var(--ease-out),background-color 160ms var(--ease-out)}
-  .fila-t:active{transform:scale(0.98)}
-  .fila-t.sel{border-color:var(--accent);background:var(--accent-soft)}
-  .fila-t .u-avatar{width:38px;height:38px;font-size:14px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
-  .fila-t .nom{font-size:15px;font-weight:800;display:block}
-  .fila-t .esp{font-size:12.5px;color:var(--ink-soft);margin-top:1px;display:block}
-
-  .foto-opc{display:flex;align-items:center;gap:12px;margin-top:4px}
-  .foto-prev{width:56px;height:56px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
-  .foto-prev img{width:100%;height:100%;object-fit:cover}
-  .foto-btn{flex:1;height:44px;border:1px solid var(--line-strong);border-radius:12px;background:none;font-size:13.5px;font-weight:700;color:var(--ink-soft)}
 
   /* Categoría de pago de cada producto */
   .p-item-cab > div:last-child{min-width:0}
@@ -107,16 +90,23 @@
   /* Etapa: nombre a la izquierda, asignar / quién a la derecha */
   .e-linea{display:flex;align-items:center;gap:10px;min-height:30px}
   .e-linea .e-nom{flex:1;min-width:0}
-  .e-linea .e-asignar{padding:7px 15px;color:var(--accent);font-weight:800;white-space:nowrap;flex-shrink:0;transition:transform 130ms var(--ease-out)}
-  .e-linea .e-asignar:active{transform:scale(0.96)}
-  .e-linea .e-asignar.off{color:var(--ink-faint);background:var(--surface-2);border-color:transparent}
   .e-linea .e-chip{max-width:58%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:transform 130ms var(--ease-out)}
-  .e-linea .e-chip:active{transform:scale(0.96)}
   .e-fila:empty{display:none}
   .cat-falta{display:block;width:100%;text-align:left;font-size:13px;line-height:1.4;color:#8A5A00;background:#FFF1D6;border-radius:12px;padding:10px 12px;margin:0 0 14px;transition:transform 130ms var(--ease-out)}
   .cat-falta:active{transform:scale(0.98)}
   .cat-falta b{font-weight:800}
   #ordenBody .field-error{margin-top:6px}
+  /* Quién y para cuándo */
+  .e-por{font-size:12.5px;font-weight:700;color:#8A5A00;background:#FFF1D6;border-radius:999px;padding:5px 11px;white-space:nowrap;flex-shrink:0}
+  .e-tope{font-size:12px;font-weight:700;color:var(--ink-soft)}
+  .e-tope.tarde{color:var(--danger)}
+  .at-nom .e-tope{margin-left:6px;font-size:12px}
+  .at-cuando{margin-bottom:6px}
+  .seg{display:flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:3px}
+  .seg-op{flex:1;min-width:0;height:40px;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--ink-soft);white-space:nowrap;transition:transform 120ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .seg-op:active{transform:scale(0.97)}
+  .seg-op.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm)}
+  .p-foto-otra{font-size:12.5px;line-height:1.4;color:#8A5A00;background:#FFF1D6;border-radius:12px;padding:9px 12px;margin:-4px 0 14px}
 </style>
 </head>
 <body data-requiere-sesion="si" data-modo="produccion">
@@ -155,52 +145,20 @@
   <div class="sheet-body" id="fichaBody" style="padding-top:18px"></div>
 </section>
 
-<!-- Asignar trabajador a una etapa -->
-<div class="sheet-scrim scrim-top" id="scrimAsignar" data-cerrar="sheetAsignar"></div>
-<section class="sheet sheet-auto sheet-top" id="sheetAsignar" role="dialog" aria-modal="true" aria-labelledby="asignarTitulo">
-  <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title" id="asignarTitulo">Asignar</h2>
-    <button class="icon-btn" data-cerrar="sheetAsignar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </div>
-  <div class="sheet-body">
-    <p class="field-label" id="asignarSub" style="margin-bottom:10px"></p>
-    <div class="lista-t" id="listaTrabajadores"></div>
-  </div>
-</section>
-
-<!-- Asignar todo el producto (un trabajador por paso) -->
+<!-- Asignar trabajadores: quién hace cada paso y para cuándo -->
 <div class="sheet-scrim scrim-top" id="scrimTodo" data-cerrar="sheetTodo"></div>
 <section class="sheet sheet-auto sheet-top" id="sheetTodo" role="dialog" aria-modal="true" aria-labelledby="todoTitulo">
   <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title" id="todoTitulo">Asignar todo</h2>
+  <div class="sheet-head"><h2 class="sheet-title" id="todoTitulo">Asignar trabajadores</h2>
     <button class="icon-btn" data-cerrar="sheetTodo" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="sheet-body">
-    <p class="field-hint" style="margin:0 0 12px">Elige quién hace cada paso. Cada uno empieza cuando termine el anterior y le llega el aviso.</p>
+    <p class="field-hint" style="margin:0 0 12px">Elige quién hace cada paso. A cada uno le llega el aviso cuando le toque.</p>
     <div id="todoBody"></div>
   </div>
   <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarTodo" disabled>Elige quién hace cada paso</button></div>
 </section>
 
-<!-- Marcar etapa como terminada -->
-<div class="sheet-scrim scrim-top" id="scrimTerminar" data-cerrar="sheetTerminar"></div>
-<section class="sheet sheet-auto sheet-top" id="sheetTerminar" role="dialog" aria-modal="true" aria-labelledby="terminarTitulo">
-  <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title" id="terminarTitulo">Marcar terminado</h2>
-    <button class="icon-btn" data-cerrar="sheetTerminar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </div>
-  <div class="sheet-body">
-    <label class="field-label">Foto (opcional)</label>
-    <div class="foto-opc">
-      <div class="foto-prev" id="terminarFotoPrev"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/></svg></div>
-      <button type="button" class="foto-btn" id="btnTerminarFoto">Tomar foto</button>
-      <input type="file" accept="image/*" capture="environment" id="terminarFotoInput" class="hidden">
-    </div>
-  </div>
-  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnConfirmarTerminar">Marcar terminado</button></div>
-</section>
-
-<!-- Categoría de pago de un producto -->
 <div class="sheet-scrim scrim-top" id="scrimCatItem" data-cerrar="sheetCatItem"></div>
 <section class="sheet sheet-auto sheet-top" id="sheetCatItem" role="dialog" aria-modal="true" aria-labelledby="catItemTitulo">
   <div class="sheet-handle"></div>
@@ -242,14 +200,14 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=46"></script>
-<script src="assets/js/supabase-client.js?v=46"></script>
-<script src="assets/js/img-compress.js?v=46"></script>
-<script src="assets/js/comun.js?v=46"></script>
-<script src="assets/js/avisos.js?v=46"></script>
-<script src="assets/js/sesion.js?v=46"></script>
-<script src="assets/js/ventas-comun.js?v=46"></script>
-<script src="assets/js/specs-producto.js?v=46"></script>
-<script src="assets/js/produccion.js?v=46"></script>
+<script src="assets/vendor/supabase.js?v=47"></script>
+<script src="assets/js/supabase-client.js?v=47"></script>
+<script src="assets/js/img-compress.js?v=47"></script>
+<script src="assets/js/comun.js?v=47"></script>
+<script src="assets/js/avisos.js?v=47"></script>
+<script src="assets/js/sesion.js?v=47"></script>
+<script src="assets/js/ventas-comun.js?v=47"></script>
+<script src="assets/js/specs-producto.js?v=47"></script>
+<script src="assets/js/produccion.js?v=47"></script>
 </body>
 </html>

@@ -288,6 +288,53 @@
   }
   // Foto de una pieza disponible: la foto real si la tiene; si no, la del modelo en ese color.
   function fotoPieza(p, m){ return (p && p.foto) || fotoModelo(m, p && p.color); }
+  // Foto de un producto de un pedido: siempre la del catálogo en el color del pedido, así
+  // cuando se sube la foto que faltaba se ve sola en todos lados. Si ese color no tiene
+  // foto, la que haya, y se dice de qué color es (otroColor) para avisarle al trabajador.
+  // Acepta el producto con su modelo (it.catalogo.fotos) o ya resuelto por el servidor (foto_de).
+  function fotoItem(it){
+    it = it || {};
+    const color = ((it.especificaciones || {}).color) || it.color || null;
+    let url = it.foto || null;
+    let de = it.foto_de != null ? it.foto_de : null;
+    const f = it.catalogo && it.catalogo.fotos;
+    if(f && !it.pieza_id){
+      if(color && f[color]){ url = f[color]; de = color; }
+      else if(url){ de = Object.keys(f).find(k => f[k] === url) || null; }
+      else {
+        const k = ['Blanco', 'Negro'].concat(Object.keys(f)).find(k => f[k]);
+        url = k ? f[k] : null; de = k || null;
+      }
+    }
+    return { url, de, color, otroColor: !!(url && de && color && de !== color) };
+  }
+  // "Foto en blanco · el tuyo va en NEGRO"
+  // En un Combo el color del pedido es el de la puerta: "la puerta va en NEGRO"
+  function etiquetaOtroColor(fi, tipo){
+    return fi && fi.otroColor ? `Foto en ${String(fi.de).toLowerCase()} · ${tipo === 'Combo' ? 'la puerta' : 'el tuyo'} va en ${String(fi.color).toUpperCase()}` : '';
+  }
+  // Fechas tope del taller: la semana va de lunes a sábado y el domingo ya es de la siguiente.
+  function isoLocal(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function sabados(){
+    const d = new Date(); d.setHours(12, 0, 0, 0);
+    const dow = d.getDay();
+    d.setDate(d.getDate() + (dow === 0 ? 6 : 6 - dow));
+    const este = isoLocal(d);
+    d.setDate(d.getDate() + 7);
+    return { este, proximo: isoLocal(d), hoy: isoLocal(new Date()) };
+  }
+  function sabadoCorto(iso){
+    if(!iso) return '';
+    const [y, m, dd] = String(iso).slice(0, 10).split('-').map(Number);
+    const d = new Date(y, m - 1, dd);
+    return 'sáb ' + d.getDate() + ' ' + d.toLocaleDateString('es-VE', { month:'short' }).replace('.', '');
+  }
+  // Texto de la fecha tope de un trabajo pendiente: "Para el sáb 3 oct" o, si ya pasó, "Se pasó del sáb 26 sep"
+  function topeTexto(iso){
+    if(!iso) return { t:'', tarde:false };
+    const tarde = String(iso).slice(0, 10) < isoLocal(new Date());
+    return { t: (tarde ? 'Se pasó del ' : 'Para el ') + sabadoCorto(iso), tarde };
+  }
 
   // ---------------------------------------------------------------------------
   // Formatos
@@ -551,7 +598,7 @@
     heroAttrs, heroZoom, actualizarFondoHero, verFoto,
     TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
-    fotoModelo, fotoPieza, esc, numOrNull, montoOrNull, fmt, dinero, specChipsHtml, toast,
+    fotoModelo, fotoPieza, fotoItem, etiquetaOtroColor, sabados, sabadoCorto, topeTexto, esc, numOrNull, montoOrNull, fmt, dinero, specChipsHtml, toast,
     abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo,
     profundidad: prof, vistaInterna
   };

@@ -65,11 +65,13 @@
     perfilesCache = {}; (data || []).forEach(p => { perfilesCache[p.id] = p.nombre; });
     return perfilesCache;
   }
-  const SELECT_VENTA = '*, cliente:clientes(*), sede:sedes(id,nombre), items:venta_items(*), abonos(*)';
+  const SELECT_VENTA = '*, cliente:clientes(*), sede:sedes(id,nombre), items:venta_items(*, catalogo:catalogo(fotos)), abonos(*)';
   async function cargarVenta(id){
     const [{ data, error }, ps] = await Promise.all([db.from('ventas').select(SELECT_VENTA).eq('id', id).single(), perfiles()]);
     if(error) throw error;
     data.items.sort((a, b) => a.orden - b.orden);
+    // La foto de cada producto sale del catálogo en su color (se actualiza sola si la suben después)
+    data.items.forEach(it => { const f = window.AH.fotoItem(it); it.foto = f.url; it._foto = f; delete it.catalogo; });
     data.abonos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     data.vendedor = ps[data.vendedor_id] || '';
     return data;

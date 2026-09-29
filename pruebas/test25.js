@@ -1,4 +1,4 @@
-// Producción: categoría de pago por producto (sin ella no se asigna), "Asignar" a la derecha,
+// Producción: categoría de pago por producto (sin ella no se asigna), quién a la derecha,
 // fabricar para exhibición como en Nueva venta (tipo, modelo, especificaciones, categoría),
 // cancelar una orden interna, abrir un pedido desde un aviso y filtros por URL.
 const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
@@ -41,8 +41,8 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
     ventas.forEach(v=>v.items.forEach(it=>{if(it.id===bd.iid)it.categoria_pago_id=bd.cid;}));
     return j(null);
   }
-  if(u.includes('/rpc/asignar_etapa')){const bd=body();llamadas.push(['asignar',bd]);
-    ventas.forEach(v=>v.items.forEach(it=>it.etapas.forEach(e=>{if(e.id===bd.eid){e.trabajador_id=bd.tid;e.trabajador={nombre:'Jesús'};}})));return j(null);}
+  if(u.includes('/rpc/asignar_etapas')){const bd=body();bd.p.forEach(c=>llamadas.push(['asignar',c]));
+    ventas.forEach(v=>v.items.forEach(it=>it.etapas.forEach(e=>{const c=bd.p.find(x=>x.eid===e.id);if(c){e.trabajador_id=c.tid;e.trabajador=c.tid?{nombre:'Jesús'}:null;e.para_el=c.para;}})));return j(bd.p.length);}
   if(u.includes('/rpc/crear_orden_exhibicion')){
     const bd=body();llamadas.push(['crear_orden',bd]);
     const m=modelos.find(x=>x.id===bd.p.catalogo_id);
@@ -86,11 +86,10 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('El producto sin categoría avisa que primero hay que darla',ficha.includes('Primero dale una categoría de pago'));
  ok('La pieza sin etapas (ya hecha) no aparece',!ficha.includes('Puerta de exhibición vendida'));
  ok('La etapa terminada muestra lo que ganó',ficha.includes('Terminó · Jesús') && ficha.includes('$25'));
- ok('La etapa en curso dice "Trabajando en esto"',ficha.includes('Trabajando en esto'));
- ok('Sin categoría, "Asignar" está gris y no es un botón',!!(await a.$('span.e-asignar.off')) && !(await a.$('[data-asignar="3004"]')));
- ok('Una etapa ya asignada sin categoría conserva al trabajador y "Marcar terminado"',!!(await a.$('.e-chip[data-asignar="3005"]')) && !!(await a.$('[data-terminar="3005"]')));
+ ok('Sin categoría no hay botón para asignar ese producto',!(await a.$('[data-asignar-todo="302"]')) && !(await a.$('[data-asignar-todo="304"]')));
+ ok('Una etapa ya asignada sin categoría conserva al trabajador (sin "Marcar terminado")',(await a.$$eval('.e-chip',x=>x.map(c=>c.textContent))).some(t=>t.includes('Jesús')) && !(await a.$('[data-terminar]')));
  const mismaLinea=await a.$eval('.etapa.actual .e-linea',x=>{const n=x.querySelector('.e-nom').getBoundingClientRect(),b=x.lastElementChild.getBoundingClientRect();return Math.abs(n.top+n.height/2-(b.top+b.height/2))<8 && b.left>n.left;});
- ok('El botón de la derecha queda en la misma línea que la etapa',mismaLinea);
+ ok('Quién lo hace (o "Por asignar") queda en la misma línea que la etapa',mismaLinea);
  await a.screenshot({path:'shots5/p2-ficha.png'});
 
  // El botón gris lleva a elegir la categoría
@@ -99,10 +98,10 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.click('#listaCatItem [data-cid="8"]');await a.waitForTimeout(700);
  const ci=llamadas.find(x=>x[0]==='cat_item');
  ok('Se guardó la categoría del producto',ci&&ci[1].iid===302&&ci[1].cid===8,ci&&ci[1]);
- ok('Ahora se puede asignar Ensamblar',!!(await a.$('.e-asignar[data-asignar="3004"]')) && !(await a.$('.cat-falta[data-cat-item="302"]')));
- await a.click('[data-asignar="3004"]');await a.waitForSelector('#sheetAsignar.open');
- await a.click('.fila-t');await a.waitForTimeout(700);
- ok('Asignar funciona y el trabajador queda a la derecha',llamadas.some(x=>x[0]==='asignar'&&x[1].eid===3004) && (await a.textContent('.e-chip[data-asignar="3004"]')).includes('Jesús'));
+ ok('Ahora sale "Asignar trabajadores" para ese producto',!!(await a.$('[data-asignar-todo="302"]')) && !(await a.$('.cat-falta[data-cat-item="302"]')));
+ await a.click('[data-asignar-todo="302"]');await a.waitForSelector('#sheetTodo.open');
+ await a.click('.at-op[data-eid="3004"][data-tid="t1"]');await a.click('#btnGuardarTodo');await a.waitForTimeout(700);
+ ok('Asignar funciona y el trabajador queda a la derecha',llamadas.some(x=>x[0]==='asignar'&&x[1].eid===3004&&x[1].tid==='t1') && (await a.$$eval('#fichaBody .p-item',x=>x.map(c=>c.textContent))).some(t=>t.includes('Reja a medida') && t.includes('Jesús')));
  await a.screenshot({path:'shots5/p3-asignado.png'});
  await a.click('#sheetFicha [data-cerrar="sheetFicha"]');await a.waitForTimeout(400);
 

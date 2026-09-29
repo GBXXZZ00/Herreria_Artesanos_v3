@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=46">
+<link rel="stylesheet" href="assets/css/base.css?v=47">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -118,16 +118,12 @@
   .sin-perfil #btnNuevaVenta, .sin-perfil #modulos, .sin-perfil #menuModulos{display:none}
   .es-trabajador .page{padding-bottom:calc(var(--safe-b) + 32px)}
   /* "Hoy": lo que hace ahora o lo que le toca */
-  .hoy-tit{font-size:25px;font-weight:800;letter-spacing:-0.5px;line-height:1.15;margin:4px 2px 12px}
   .hoy{border-radius:22px;background:var(--surface);border:1px solid var(--line);box-shadow:0 12px 30px rgba(23,85,92,0.12);overflow:hidden;margin-bottom:16px;opacity:0;transform:translateY(8px);animation:tileIn 380ms var(--ease-out) forwards}
-  .hoy.activo{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 14px 32px rgba(23,85,92,0.18)}
   .hoy-foto{display:block;width:100%;aspect-ratio:4/3;background:var(--surface-2);position:relative;overflow:hidden;color:var(--ink-faint);transition:opacity 140ms var(--ease-out)}
   .hoy-foto:active{opacity:.85}
   .hoy-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
   .hoy-foto .sin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
   .hoy-foto .ver{position:absolute;right:10px;bottom:10px;height:30px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,0.94);box-shadow:var(--shadow-sm);font-size:12.5px;font-weight:800;color:var(--ink);display:flex;align-items:center}
-  .hoy-en{position:absolute;left:10px;top:10px;height:28px;padding:0 11px;border-radius:999px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:6px}
-  .hoy-en::before{content:'';width:7px;height:7px;border-radius:50%;background:#7FE3D0}
   .hoy-txt{padding:14px 16px 0}
   .hoy-etapa{font-size:13px;font-weight:800;color:var(--accent)}
   .hoy-nom{font-size:20px;font-weight:800;letter-spacing:-0.3px;line-height:1.2;margin-top:2px}
@@ -136,6 +132,27 @@
   .hoy .spec-chip{height:28px;padding:0 10px;font-size:12.5px}
   .hoy-acc{padding:14px 16px 16px}
   .hoy-acc .btn-primary{width:100%}
+  .hoy-lead{font-size:16px;font-weight:700;color:var(--ink);margin:2px 2px 12px}
+  .hoy-lead .tarde{color:var(--danger);font-weight:700}
+  .hoy-badge{position:absolute;z-index:2;left:10px;top:10px;max-width:calc(100% - 20px);padding:6px 11px;border-radius:999px;background:rgba(28,26,23,0.78);color:#fff;font-size:12.5px;font-weight:800;line-height:1.25;text-align:left}
+  .hoy-tope{font-weight:700}
+  .hoy-tope.tarde{color:var(--danger)}
+  .hoy-acc .btn-primary{white-space:nowrap}
+  /* "Después": los demás trabajos, se deslizan a la derecha */
+  .despues-tit{font-size:14px;font-weight:800;color:var(--ink-soft);margin:4px 2px 8px}
+  .despues{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -18px 16px;padding:2px 18px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .despues::-webkit-scrollbar{display:none}
+  .dp{flex:0 0 112px;scroll-snap-align:start;text-align:left;transition:transform 130ms var(--ease-out)}
+  .dp:active{transform:scale(0.97)}
+  .dp-foto{display:flex;align-items:center;justify-content:center;width:112px;height:90px;border-radius:14px;background:var(--surface-2);overflow:hidden;color:var(--ink-faint)}
+  .dp-foto img{width:100%;height:100%;object-fit:cover}
+  .dp-etapa{display:block;font-size:12px;font-weight:800;color:var(--accent);margin-top:6px;line-height:1.25}
+  .dp-nom{display:block;font-size:13.5px;font-weight:800;line-height:1.25}
+  .dp-s{display:block;font-size:12px;color:var(--ink-soft);margin-top:1px;line-height:1.25}
+  .dp-s.tarde{color:var(--danger);font-weight:700}
+  .dp.gris .dp-foto{opacity:.5}
+  .dp.gris .dp-etapa,.dp.gris .dp-nom{color:var(--ink-faint)}
+  .dp-mas .dp-foto{background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:800;flex-direction:column;gap:2px}
   .hoy-vacio{padding:22px 18px;text-align:center}
   .hoy-vacio b{display:block;font-size:17px;font-weight:800}
   .hoy-vacio span{display:block;font-size:14px;color:var(--ink-soft);margin-top:4px}
@@ -152,7 +169,6 @@
   .tr-lista{display:flex;flex-direction:column;gap:8px}
   .tr{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:1px solid var(--line);border-radius:16px;background:var(--surface);text-align:left;transition:transform 140ms var(--ease-out)}
   .tr:active{transform:scale(0.98)}
-  .tr.activo{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
   .tr.gris{background:var(--surface-2);border-color:transparent}
   .tr.gris .tr-foto{opacity:.5}
   .tr.gris .tr-etapa,.tr.gris .tr-nom{color:var(--ink-faint)}
@@ -163,7 +179,6 @@
   .tr-det{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
   .tr-estado{display:flex;align-items:flex-start;gap:5px;line-height:1.3;font-size:12px;font-weight:800;margin-top:4px;color:var(--ink-soft)}
   .tr-estado svg{flex-shrink:0;margin-top:1px}
-  .tr-estado.curso{color:var(--accent)}
   .tr-estado.bloq{color:var(--ink-faint)}
   .tr .chev{flex-shrink:0;margin-left:auto;color:var(--ink-faint)}
   .tr-vacio{text-align:center;padding:36px 12px;color:var(--ink-soft);font-size:15px}
@@ -172,6 +187,16 @@
   .tj-parte{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:800;margin-top:12px}
   .tj-datos{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:14px;color:var(--ink-soft)}
   .tj-datos b{color:var(--ink)}
+  .tj-color{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--ink);color:#fff;font-size:16px;font-weight:800}
+  .tj-color .sw{width:22px;height:22px;border-radius:50%;border:2px solid #fff;flex-shrink:0}
+  .tj-specs{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:14px}
+  .tj-specs div{font-size:15px;font-weight:700;line-height:1.25;min-width:0}
+  .tj-specs span{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:1px}
+  .tj-specs .ancho{grid-column:1 / -1}
+  .tj-nota{margin-top:14px;padding:11px 13px;border-radius:12px;background:#FFF4DB;color:#5C4700;font-size:14px;line-height:1.4}
+  .tj-nota b{font-weight:800}
+  .tj-tope{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:#FFF4DB;color:#8A5A00;font-size:13px;font-weight:800;margin:12px 0 0 6px}
+  .tj-tope.tarde{background:#FDECEA;color:var(--danger)}
   .tj-bloq{display:flex;align-items:center;gap:8px;justify-content:center;height:54px;border-radius:16px;background:var(--surface-2);color:var(--ink-soft);font-size:14.5px;font-weight:700;width:100%}
 
   /* Mis pagos */
@@ -209,15 +234,6 @@
   .pg-sem[open] .ac-chev{transform:rotate(180deg)}
   .pg-sem-body{padding:0 14px 8px;border-top:1px solid var(--line)}
 
-  .va{display:flex;align-items:center;gap:12px;padding:14px 0}
-  .va + .va{border-top:1px solid var(--line)}
-  .va-t{display:block;font-size:15.5px;font-weight:800}
-  .va-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
-  .va-acc{margin-left:auto;display:flex;gap:8px;flex-shrink:0}
-  .va-acc button{height:38px;padding:0 13px;border-radius:12px;font-size:13.5px;font-weight:800;white-space:nowrap;transition:transform 130ms var(--ease-out)}
-  .va-acc button:active{transform:scale(0.96)}
-  .va-si{background:var(--accent);color:#fff}
-  .va-no{border:1px solid var(--line-strong);color:var(--ink-soft)}
   .foto-opc{display:flex;align-items:center;gap:12px;margin-top:4px}
   .foto-prev{width:56px;height:56px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
   .foto-prev img{width:100%;height:100%;object-fit:cover}
@@ -429,25 +445,15 @@
   <div class="sheet-foot"><button class="btn-primary" type="button" id="btnPedirVale">Pedir vale</button></div>
 </section>
 
-<!-- Administrador: vales por aprobar -->
-<div class="sheet-scrim" id="scrimVales" data-cerrar="sheetVales"></div>
-<section class="sheet sheet-auto" id="sheetVales" role="dialog" aria-modal="true" aria-labelledby="valesTitulo">
-  <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title" id="valesTitulo">Vales por aprobar</h2>
-    <button class="icon-btn" data-cerrar="sheetVales" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </div>
-  <div class="sheet-body" id="valesBody"></div>
-</section>
-
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=46"></script>
-<script src="assets/js/supabase-client.js?v=46"></script>
-<script src="assets/js/img-compress.js?v=46"></script>
-<script src="assets/js/comun.js?v=46"></script>
-<script src="assets/js/avisos.js?v=46"></script>
-<script src="assets/js/sesion.js?v=46"></script>
-<script src="assets/js/mi-trabajo.js?v=46"></script>
+<script src="assets/vendor/supabase.js?v=47"></script>
+<script src="assets/js/supabase-client.js?v=47"></script>
+<script src="assets/js/img-compress.js?v=47"></script>
+<script src="assets/js/comun.js?v=47"></script>
+<script src="assets/js/avisos.js?v=47"></script>
+<script src="assets/js/sesion.js?v=47"></script>
+<script src="assets/js/mi-trabajo.js?v=47"></script>
 <script>
 (function(){
   'use strict';
@@ -677,12 +683,11 @@
   const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
 
   // Un pendiente = una línea: color según qué es, título corto y detalle
-  // p = { color:'rojo'|'naranja'|'verde'|'azul'|'amarillo'|'teal', icono, titulo, detalle, href | vales:true }
+  // p = { color:'rojo'|'naranja'|'verde'|'azul'|'amarillo'|'teal', icono, titulo, detalle, href }
   function filaPendiente(p, i){
     const dentro = `<span class="pend-ico">${ICONOS[p.icono]}</span>
       <span class="pend-t">${esc(p.titulo)}${p.detalle ? ` <span>· ${esc(p.detalle)}</span>` : ''}</span>${CHEV}`;
-    return p.vales ? `<button class="pend-fila ${p.color}" type="button" style="--i:${i}" data-abrir-vales>${dentro}</button>`
-      : `<a class="pend-fila ${p.color}" href="${esc(p.href)}" style="--i:${i}" data-modulo>${dentro}</a>`;
+    return `<a class="pend-fila ${p.color}" href="${esc(p.href)}" style="--i:${i}" data-modulo>${dentro}</a>`;
   }
 
   let estadoNotif = null;
@@ -729,17 +734,20 @@
     cont.innerHTML = html;
   }
 
-  // Taller: vales por aprobar, trabajos sin asignar y lo que falta para calcular pagos
+  // Taller: vales por aprobar, trabajos sin asignar o atrasados, fotos que faltan y lo que falta para calcular pagos
   async function pendientesTaller(){
     const pend = [];
-    const [rVales, rProd, rCats, rMod, rNom] = await Promise.all([
+    const [rVales, rProd, rCats, rMod, rNom, rFotos] = await Promise.all([
       window.Trabajo.cargarVales().then(d => ({ data:d }), () => ({ data:[] })),
-      db.from('ventas').select('id,items:venta_items(categoria_pago_id,etapas(rama,orden,estado,trabajador_id))').eq('estado', 'en_produccion'),
+      db.from('ventas').select('id,items:venta_items(categoria_pago_id,etapas(rama,orden,estado,trabajador_id,para_el))').eq('estado', 'en_produccion'),
       db.from('categorias_pago').select('id', { count:'exact', head:true }),
       db.from('catalogo').select('id', { count:'exact', head:true }).is('categoria_pago_id', null),
-      db.rpc('nomina_semana')
+      db.rpc('nomina_semana'),
+      db.from('venta_items').select('catalogo_id,especificaciones,catalogo:catalogo(id,nombre,fotos),venta:ventas!inner(estado)')
+        .in('venta.estado', ['confirmada', 'en_produccion', 'lista']).not('catalogo_id', 'is', null).is('pieza_id', null)
     ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
-    let sinAsignar = 0, sinCat = 0;
+    let sinAsignar = 0, sinCat = 0, atrasados = 0;
+    const hoyIso = window.AH.sabados().hoy;
     const enTaller = ((rProd && rProd.data) || []).length;
     ((rProd && rProd.data) || []).forEach(v => (v.items || []).forEach(it => {
       const et = it.etapas || [];
@@ -747,6 +755,7 @@
       if(!it.categoria_pago_id) sinCat++;
       const ramas = {};
       et.forEach(e => (ramas[e.rama] = ramas[e.rama] || []).push(e));
+      atrasados += et.filter(e => e.estado === 'pendiente' && e.trabajador_id && e.para_el && e.para_el < hoyIso).length;
       Object.values(ramas).forEach(l => {
         const act = l.sort((a, b) => a.orden - b.orden).find(e => e.estado === 'pendiente');
         if(act && !act.trabajador_id) sinAsignar++;
@@ -762,11 +771,29 @@
     if(ep) ep.innerHTML = !(rProd && rProd.data) ? 'Pedidos en fabricación'
       : sinAsignar ? `<span class="num">${sinAsignar} sin asignar</span>` : enTaller ? `${enTaller} en taller` : 'Taller libre';
     if(sinAsignar) pend.push({ color:'naranja', icono:'persona', titulo: plural(sinAsignar, '1 trabajo sin asignar', 'trabajos sin asignar'), href:'produccion.html?filtro=asignar' });
+    if(atrasados) pend.push({ color:'amarillo', icono:'reloj', titulo: plural(atrasados, '1 trabajo pasó su sábado', 'trabajos pasaron su sábado'), href:'produccion.html?filtro=atrasados' });
+    // Vales: se aprueban en Nómina (Ray). Con uno solo, lleva directo a ese trabajador.
     const vales = rVales.data || [];
     if(vales.length){
       const total = vales.reduce((a, v) => a + Number(v.monto), 0);
-      pend.push({ color:'verde', icono:'vale', vales:true, titulo: plural(vales.length, '1 vale por aprobar', 'vales por aprobar'),
-        detalle: (vales.length === 1 ? ((vales[0].trabajador || {}).nombre || '') + ' ' : '') + window.AH.dinero(total) });
+      const uno = vales.length === 1 || vales.every(v => v.trabajador_id === vales[0].trabajador_id);
+      pend.push({ color:'verde', icono:'vale', titulo: plural(vales.length, '1 vale por aprobar', 'vales por aprobar'),
+        detalle: (uno ? ((vales[0].trabajador || {}).nombre || '') + ' ' : '') + window.AH.dinero(total),
+        href: 'nomina.html' + (uno ? '?t=' + encodeURIComponent(vales[0].trabajador_id) : '') });
+    }
+    // Modelos vendidos en un color que no tiene foto en el catálogo
+    const sinFoto = new Map();
+    ((rFotos && rFotos.data) || []).forEach(it => {
+      const m = it.catalogo, col = (it.especificaciones || {}).color;
+      if(!m || !col) return;
+      const f = m.fotos || {};
+      if(!f[col]) sinFoto.set(m.id, { m, col });
+    });
+    if(sinFoto.size){
+      const l = [...sinFoto.values()];
+      pend.push({ color:'teal', icono:'catalogo', titulo: plural(l.length, '1 modelo sin foto en un color', 'modelos sin foto en un color'),
+        detalle: l.length === 1 ? l[0].m.nombre + ' en ' + String(l[0].col).toLowerCase() : l.slice(0, 2).map(x => x.m.nombre).join(', ') + (l.length > 2 ? '…' : ''),
+        href: l.length === 1 ? 'catalogo.html?editar=' + l[0].m.id : 'catalogo.html' });
     }
     const nCats = rCats && typeof rCats.count === 'number' ? rCats.count : null;
     if(nCats === 0){
@@ -823,8 +850,6 @@
     fila(atrasados, 'naranja', 'alerta', '1 pedido atrasado', 'pedidos atrasados', 'ventas.html?filtro=activas');
     return pend;
   }
-  document.addEventListener('click', (e) => { if(e.target.closest('[data-abrir-vales]')) window.Trabajo.abrirVales(); });
-  window.Trabajo.onValesCambian(() => pintarAvisosAdmin(perfilActual));
 
   async function activarNotif(){
     if(!window.Avisos) return;

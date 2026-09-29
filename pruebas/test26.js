@@ -1,5 +1,6 @@
-// Inicio del trabajador (sus trabajos: empezar uno a la vez, terminar; sus pagos y vales)
-// y avisos del administrador (vales por aprobar, trabajos sin asignar, falta categoría).
+// Inicio del trabajador: "Ahora" con un solo botón para terminar, fila "Después" que se desliza,
+// detalle con todas las especificaciones, fecha tope, una fila de pagos y vales. Y los pendientes
+// del administrador (vales que llevan a Nómina, trabajos sin asignar o atrasados, fotos que faltan).
 const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
 const now=Math.floor(Date.now()/1000);
@@ -11,10 +12,12 @@ const GIF='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAE
 const hace=(n)=>{const d=new Date();d.setDate(d.getDate()-n);d.setHours(12);return d.toISOString();};
 // Semana de lunes a sábado: el domingo cuenta para la semana siguiente (igual que el servidor)
 const semanaDe=(iso)=>{const d=new Date(iso);d.setHours(12);d.setDate(d.getDate()+1);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const iso=(d)=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const SAB=(()=>{const d=new Date();d.setHours(12,0,0,0);const w=d.getDay();d.setDate(d.getDate()+(w===0?6:6-w));const este=iso(d);d.setDate(d.getDate()-7);return {este,pasado:iso(d)};})();
 let trabajos=[
-  {id:501,nombre:'Hierro',especialidad:'herrero',rama:'principal',iniciada_en:null,venta_id:40,interna:false,fecha_entrega:dia(3),producto:'Puerta Lineal',tipo:'Puerta Multilock',foto:GIF,cantidad:1,color:'Blanco',medidas:'2 × 1 m',especificaciones:{color:'Blanco',alto:2,ancho:1,manillon:true,manillon_tipo:'H',sentido:'Derecha',cerradura:'Multilock'},espera:null,monto:25},
-  {id:502,nombre:'Ensamblar',especialidad:'ventanero',rama:'ventana',iniciada_en:null,venta_id:41,interna:false,fecha_entrega:dia(6),producto:'Combo Imperial',tipo:'Combo',foto:null,cantidad:2,color:'Negro',medidas:'2 × 1 m',especificaciones:{color:'Negro',alto:2,ancho:1,ventanas_alto:1,ventanas_ancho:1},espera:null,monto:null},
-  {id:503,nombre:'Detalles',especialidad:'acabados',rama:'principal',iniciada_en:null,venta_id:40,interna:false,fecha_entrega:dia(3),producto:'Puerta Lineal',tipo:'Puerta Multilock',foto:GIF,cantidad:1,color:'Blanco',medidas:'2 × 1 m',especificaciones:{color:'Blanco'},espera:'Masilla y pintura',monto:5}
+  {id:501,nombre:'Hierro',especialidad:'herrero',rama:'principal',unidades:1,para_el:SAB.este,venta_id:40,interna:false,fecha_entrega:dia(3),notas:null,producto:'Puerta Lineal',tipo:'Puerta Multilock',foto:GIF,foto_de:'Blanco',cantidad:1,color:'Blanco',especificaciones:{color:'Blanco',alto:2,ancho:1,manillon:true,manillon_tipo:'H',sentido:'Derecha',posicion:'Afuera',bloque:'15',vidrio_o_farquilla:'Vidrio',color_vidrio:'Negro'},espera:null,monto:25},
+  {id:502,nombre:'Ensamblar 2 ventanas',especialidad:'ventanero',rama:'ventana',unidades:2,para_el:SAB.este,venta_id:41,interna:false,fecha_entrega:dia(6),notas:'El cliente quiere las ventanas con seguro por dentro',producto:'Combo Imperial',tipo:'Combo',foto:GIF,foto_de:'Blanco',cantidad:2,color:'Negro',especificaciones:{color:'Negro',alto:2,ancho:1,ventanas_alto:1.2,ventanas_ancho:1,ventanas_color:'Negro',variante:'Sin protección en puerta'},espera:null,monto:null},
+  {id:503,nombre:'Detalles',especialidad:'acabados',rama:'principal',unidades:1,para_el:SAB.este,venta_id:40,interna:false,fecha_entrega:dia(3),notas:null,producto:'Puerta Lineal',tipo:'Puerta Multilock',foto:GIF,foto_de:'Blanco',cantidad:1,color:'Blanco',especificaciones:{color:'Blanco'},espera:'Masilla y pintura',monto:5}
 ];
 let pagos={
   trabajos:[
@@ -34,7 +37,7 @@ let pagos={
      trabajos:[{id:370,etapa:'Detalles',producto:'Ventana Real',venta_id:28,interna:false,fecha:hace(16),monto:25}],vales:[]}
 ]
 };
-let vales=[{id:9,monto:20,nota:'pasaje',creado_en:new Date().toISOString(),trabajador:{nombre:'Jesús'}}];
+let vales=[{id:9,monto:20,nota:'pasaje',creado_en:new Date().toISOString(),trabajador_id:'u5',trabajador:{nombre:'Jesús'}}];
 const llamadas=[];
 
 function mock(ctx,user,rol,nombre){return ctx.route('**/*.supabase.co/**',async r=>{const req=r.request();const u=decodeURIComponent(req.url());const m=req.method();
@@ -58,6 +61,7 @@ function mock(ctx,user,rol,nombre){return ctx.route('**/*.supabase.co/**',async 
     pagos.vale_pendiente={id:10,monto:bd.p_monto,fecha:new Date().toISOString()};return j({id:10});}
   if(u.includes('/rpc/resolver_vale')){const bd=body();llamadas.push(['resolver',bd]);vales=vales.filter(v=>v.id!==bd.vid);return j(null);}
   if(u.includes('/vales'))return j(vales);
+  if(u.includes('/venta_items'))return j([{catalogo_id:12,especificaciones:{color:'Negro'},catalogo:{id:12,nombre:'Combo Lineal',fotos:{Blanco:GIF}},venta:{estado:'en_produccion'}},{catalogo_id:13,especificaciones:{color:'Blanco'},catalogo:{id:13,nombre:'Taco',fotos:{Blanco:GIF}},venta:{estado:'lista'}}]);
   if(u.includes('/perfiles')){
     if(u.includes('id=eq'))return j({id:user,usuario:nombre.toLowerCase(),nombre,rol,sede_id:1,confirma_abonos:false});
     return j([{usuario:nombre.toLowerCase(),nombre,rol,orden:1}]);
@@ -67,6 +71,7 @@ function mock(ctx,user,rol,nombre){return ctx.route('**/*.supabase.co/**',async 
   if(u.includes('/ventas')){
     if(u.includes('estado=eq.en_produccion'))return j([{id:40,items:[
       {categoria_pago_id:null,etapas:[{rama:'principal',orden:1,estado:'hecha',trabajador_id:'x'},{rama:'principal',orden:2,estado:'pendiente',trabajador_id:null}]},
+      {categoria_pago_id:7,etapas:[{rama:'principal',orden:1,estado:'pendiente',trabajador_id:'x',para_el:SAB.pasado}]},
       {categoria_pago_id:7,etapas:[]}
     ]}]);
     return j([]);
@@ -87,59 +92,61 @@ async function entrar(b,user,rol,nombre){
  const t=await entrar(b,'u5','trabajador','Jesús');t.on('pageerror',e=>err.push('trab:'+e.message));
  await t.waitForSelector('.hoy');
  ok('Trabajador no ve "Nueva venta", módulos ni menú de abajo',!(await t.isVisible('#btnNuevaVenta')) && !(await t.isVisible('#modulos')) && !(await t.isVisible('#menuModulos')));
- ok('Mensaje grande: "¿Qué vas a hacer hoy?"',(await t.textContent('.hoy-tit'))==='¿Qué vas a hacer hoy?');
- ok('Le sugiere el que le toca, con foto, nombre y especificaciones',(await t.textContent('.hoy')).includes('Te toca: Hierro') && (await t.textContent('.hoy-nom'))==='Puerta Lineal' && !!(await t.$('.hoy-foto img')) && (await t.textContent('.hoy .spec-chips')).includes('2 × 1 m') && (await t.textContent('.hoy .spec-chip'))==='Color blanco');
- ok('Filas largas con flecha: trabajos por hacer, te toca cobrar, historial',(await t.textContent('#vistaTrabajo .pend-fila.naranja')).includes('3 trabajos por hacer') && (await t.textContent('#vistaTrabajo .pend-fila.verde')).includes('Te toca cobrar · $60') && (await t.textContent('#vistaTrabajo .pend-fila.teal')).includes('Historial de pagos') && (await t.$$('#vistaTrabajo .pend-fila .chev')).length===3);
+ ok('Arriba dice cuántos trabajos tiene y para qué sábado',(await t.textContent('.hoy-lead')).startsWith('3 trabajos para el sáb'));
+ ok('Tarjeta "Ahora": el que le toca, con foto, nombre y especificaciones',(await t.textContent('.hoy-etapa'))==='Ahora: Hierro' && (await t.textContent('.hoy-nom'))==='Puerta Lineal' && !!(await t.$('.hoy-foto img')) && (await t.textContent('.hoy .spec-chips')).includes('2 × 1 m') && (await t.textContent('.hoy .spec-chip'))==='Color blanco');
+ ok('Un solo botón: "Ya lo terminé · tomar foto" (sin Empezar ni Dejar para después)',(await t.textContent('.hoy [data-terminar-t="501"]'))==='Ya lo terminé · tomar foto' && !(await t.$('[data-empezar]')) && !(await t.$('[data-pausar]')));
+ ok('Fila "Después" con los demás; el que espera a otro en gris',(await t.$$('.despues .dp')).length===2 && (await t.textContent('.dp.gris')).includes('Espera masilla y pintura') && (await t.textContent('.dp[data-detalle="502"]')).includes('Para el sáb'));
+ ok('Una sola fila de pagos: "Pagos y vales · cobras $60 el sábado"',(await t.$$('#vistaTrabajo .pend-fila')).length===1 && (await t.textContent('#vistaTrabajo .pend-fila.verde')).includes('Pagos y vales · cobras $60 el sábado'));
  ok('Ve la fila de avisos del teléfono como en el Inicio',!!(await t.$('#avisosAdmin .notif-fila')));
  await t.screenshot({path:'shots5/t1-inicio.png',fullPage:true});
 
- // Foto → detalle con todas las especificaciones
- await t.click('.hoy-foto');await t.waitForSelector('#sheetTrabajo.open');
+ // Foto → detalle con TODAS las especificaciones en tabla y la franja del color
+ await t.click('.hoy-foto');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
  const det=await t.textContent('#trabajoBody');
- ok('Detalle: foto grande, modelo, su parte y todas las especificaciones',!!(await t.$('#trabajoBody .hero img')) && det.includes('Puerta Lineal') && det.includes('Tu parte: Hierro') && det.includes('Manillón H') && det.includes('Abre a la derecha') && det.includes('Ganas $25') && det.includes('N° 40'));
+ ok('Detalle: foto grande, su parte, fecha tope, pedido y lo que gana',!!(await t.$('#trabajoBody .hero img')) && det.includes('Tu parte: Hierro') && det.includes('Para el sáb') && det.includes('N° 40') && det.includes('Ganas $25'));
+ ok('Franja del color: "Va en color BLANCO"',(await t.textContent('.tj-color'))==='Va en color BLANCO');
+ const tabla=await t.$$eval('.tj-specs > div',x=>x.map(d=>d.textContent));
+ ok('Tabla con todas las especificaciones',['Medidas2 × 1 m','VidrioNegro','ManillónH','Abre a laDerecha','AperturaAfuera','Bloque15'].every(v=>tabla.includes(v)),tabla);
+ ok('Abajo, el mismo botón para terminar',(await t.textContent('#trabajoFoot [data-terminar-t="501"]'))==='Ya lo terminé · tomar foto');
  await t.screenshot({path:'shots5/t2-detalle.png'});
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
-
- // Lista de trabajos
- await t.click('#vistaTrabajo [data-ver="trabajos"]');await t.waitForSelector('#sheetTrabajos.open');
- ok('Lista sus 3 trabajos con foto',(await t.$$('#listaTrabajos .tr')).length===3 && (await t.$$('#listaTrabajos .tr-foto img')).length===2);
- ok('Muestra cuánto gana',(await t.textContent('#listaTrabajos')).includes('Ganas $25'));
- ok('El que espera otra etapa lo dice',(await t.textContent('#listaTrabajos')).includes('Espera que terminen Masilla y pintura'));
- ok('La lista no tiene botones de acción (se ve la foto antes de empezar)',!(await t.$('#listaTrabajos [data-empezar]')));
- await t.screenshot({path:'shots5/t3-trabajos.png'});
- await t.click('#listaTrabajos [data-detalle="503"]');await t.waitForSelector('#sheetTrabajo.open');
- ok('Detalle del bloqueado: no se puede empezar y dice por qué',!(await t.$('#trabajoFoot [data-empezar]')) && (await t.textContent('#trabajoFoot')).includes('Espera que terminen Masilla y pintura'));
+ // El Combo: foto en otro color, las ventanas en su color, las medidas de las ventanas y la nota
+ await t.click('.dp[data-detalle="502"]');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
+ const dc=await t.textContent('#trabajoBody');
+ ok('Si la foto es de otro color, lo dice sobre la foto',(await t.textContent('#trabajoBody .hoy-badge'))==='Foto en blanco · las ventanas van en NEGRO');
+ ok('Las ventanas van en su color',(await t.textContent('.tj-color'))==='Las ventanas van en color NEGRO');
+ ok('Dice que es 1 puerta + 2 ventanas + 2 protecciones, con medidas de las ventanas',dc.includes('1 puerta + 2 ventanas + 2 protecciones') && dc.includes('2 ventanas y 2 protecciones1.2 × 1 m c/u') && dc.includes('2 unidades'));
+ ok('La nota de la venta',(await t.textContent('.tj-nota')).includes('seguro por dentro'));
+ await t.screenshot({path:'shots5/t2b-detalle-combo.png',fullPage:true});
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
- await t.click('#listaTrabajos [data-detalle="502"]');await t.waitForSelector('#sheetTrabajo.open');
- ok('Sin foto muestra el ícono y las unidades',!(await t.$('#trabajoBody .hero img')) && (await t.textContent('#trabajoBody')).includes('2 unidades'));
- await t.click('#trabajoFoot [data-empezar="502"]');await t.waitForTimeout(800);
- ok('Empezar llama al servidor y cierra las hojas',llamadas.some(x=>x[0]==='empezar'&&x[1].eid===502) && !(await t.$('#sheetTrabajo.open')) && !(await t.$('#sheetTrabajos.open')));
- ok('Inicio: "Hoy estás haciendo" con su trabajo en curso',(await t.textContent('.hoy-tit'))==='Hoy estás haciendo' && (await t.textContent('.hoy-nom'))==='Combo Imperial' && !!(await t.$('.hoy.activo .hoy-en')) && !!(await t.$('.hoy [data-terminar-t="502"]')));
- await t.screenshot({path:'shots5/t4-activo.png',fullPage:true});
+ await t.click('.dp[data-detalle="503"]');await t.waitForSelector('#sheetTrabajo.open');
+ ok('El que espera a otro: se ve todo pero sin botón, dice qué espera',!(await t.$('#trabajoFoot [data-terminar-t]')) && (await t.textContent('#trabajoFoot')).includes('Espera que terminen Masilla y pintura'));
+ await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
 
- // Otro trabajo queda bloqueado mientras hay uno en curso
- await t.click('#vistaTrabajo [data-ver="trabajos"]');await t.waitForSelector('#sheetTrabajos.open');
- ok('El empezado queda arriba y dice "En curso"',(await t.textContent('#listaTrabajos .tr.activo')).includes('En curso'));
- ok('Se siguen viendo todos, y los demás en gris',(await t.$$('#listaTrabajos .tr')).length===3 && (await t.$$('#listaTrabajos .tr.gris')).length===2 && (await t.textContent('#trabajosAyuda')).includes('Tienes uno en curso'));
- await t.screenshot({path:'shots5/t3b-trabajos-gris.png'});
- await t.click('#listaTrabajos [data-detalle="501"]');await t.waitForSelector('#sheetTrabajo.open');
- ok('Los demás dicen "Primero termina el que empezaste"',(await t.textContent('#trabajoFoot')).includes('Primero termina el que empezaste'));
- await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(300);
- await t.click('#listaTrabajos [data-detalle="502"]');await t.waitForSelector('#sheetTrabajo.open');
- await t.click('#trabajoFoot [data-pausar="502"]');await t.waitForTimeout(700);
- ok('"Dejar para después" lo libera',llamadas.some(x=>x[0]==='pausar') && !!(await t.$('#trabajoFoot [data-empezar="502"]')));
- await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(300);
- await t.click('#sheetTrabajos [data-cerrar="sheetTrabajos"]');await t.waitForTimeout(400);
-
- // Empezar desde Inicio y marcar terminado
- await t.click('.hoy [data-empezar="501"]');await t.waitForTimeout(700);
- ok('Empezar desde la tarjeta de Hoy',(await t.textContent('.hoy-tit'))==='Hoy estás haciendo' && (await t.textContent('.hoy-nom'))==='Puerta Lineal');
+ // Terminar desde "Ahora"
  await t.click('.hoy [data-terminar-t="501"]');await t.waitForSelector('#sheetTerminarT.open');
  ok('La hoja de terminar dice cuál es',(await t.textContent('#terminarTSub')).includes('Hierro · Puerta Lineal · N° 40'));
+ await t.screenshot({path:'shots5/t3-terminar.png'});
  await t.click('#btnTConfirmar');await t.waitForTimeout(700);
  ok('Se llamó a marcar terminado',llamadas.some(x=>x[0]==='terminar'&&x[1].eid===501));
  ok('Le dice cuánto sumó',(await t.textContent('#toast')).includes('Sumaste $25'));
- ok('Inicio se actualiza: 2 por hacer y $85 por cobrar',(await t.textContent('#vistaTrabajo .pend-fila.naranja')).includes('2 trabajos por hacer') && (await t.textContent('#vistaTrabajo .pend-fila.verde')).includes('$85'));
+ ok('Inicio se actualiza: ahora el Combo y $85 por cobrar',(await t.textContent('.hoy-etapa'))==='Ahora: Ensamblar 2 ventanas' && (await t.textContent('#vistaTrabajo .pend-fila.verde')).includes('$85') && (await t.textContent('.hoy .hoy-badge'))==='Foto en blanco · las ventanas van en NEGRO');
+
+ // Con muchos trabajos: la fila muestra 4 y "Ver todos"; uno atrasado se dice arriba
+ for(let i=0;i<5;i++) trabajos.push({id:600+i,nombre:'Detalles',especialidad:'acabados',rama:'principal',unidades:1,para_el:i===0?SAB.pasado:SAB.este,venta_id:50+i,interna:false,fecha_entrega:dia(9),notas:null,producto:'Puerta '+(i+1),tipo:'Puerta Multilock',foto:null,foto_de:null,cantidad:1,color:'Blanco',especificaciones:{color:'Blanco'},espera:null,monto:5});
+ await t.reload();await t.waitForSelector('.hoy');await t.waitForTimeout(500);
+ ok('Arriba avisa del que se pasó de su sábado',(await t.textContent('.hoy-lead')).includes('1 se pasó de su sábado'));
+ ok('La fila "Después" muestra 4 y "Ver todos (7)"',(await t.$$('.despues .dp:not(.dp-mas)')).length===4 && (await t.textContent('.dp-mas')).includes('(7)'));
+ await t.screenshot({path:'shots5/t4-muchos.png',fullPage:true});
+ await t.click('.dp-mas');await t.waitForSelector('#sheetTrabajos.open');
+ ok('"Ver todos" abre la lista con los 7',(await t.$$('#listaTrabajos .tr')).length===7 && (await t.textContent('#listaTrabajos')).includes('Se pasó del sáb') && (await t.$$('#listaTrabajos .tr.gris')).length===1);
+ await t.click('#listaTrabajos [data-detalle="603"]');await t.waitForSelector('#sheetTrabajo.open');
+ ok('Desde la lista se abre el detalle con su botón',!!(await t.$('#trabajoFoot [data-terminar-t="603"]')));
+ await t.screenshot({path:'shots5/t3b-trabajos.png'});
+ await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(300);
+ await t.click('#sheetTrabajos [data-cerrar="sheetTrabajos"]');await t.waitForTimeout(400);
+ trabajos=trabajos.filter(x=>x.id<600);
+ await t.reload();await t.waitForSelector('.hoy');await t.waitForTimeout(400);
 
  // Mis pagos: por cobrar
  await t.click('#vistaTrabajo [data-ver="pagos"]');await t.waitForSelector('#sheetPagos.open');
@@ -171,7 +178,7 @@ async function entrar(b,user,rol,nombre){
  ok('Se pidió el vale con monto y nota',va&&va[1].p_monto===15&&va[1].p_nota==='medicinas',va&&va[1]);
  ok('El vale sale "Por aprobar" sin restar y no deja pedir otro',(await t.textContent('#pagosBody')).includes('Por aprobar') && (await t.textContent('.pg-cuenta-total b'))==='$85' && !(await t.$('#btnAbrirVale')));
  await t.click('#sheetPagos [data-cerrar="sheetPagos"]');await t.waitForTimeout(400);
- ok('En Inicio: fila amarilla del vale esperando respuesta',(await t.textContent('#vistaTrabajo .pend-fila.amarillo')).includes('Vale de $15'));
+ ok('En Inicio: la fila de pagos dice que hay un vale esperando',(await t.textContent('#vistaTrabajo .pend-fila.verde')).includes('vale esperando'));
 
  // Aviso tocado
  await t.goto('http://127.0.0.1:8765/index.html?ver=pagos');await t.waitForSelector('#sheetPagos.open',{timeout:8000});
@@ -182,38 +189,36 @@ async function entrar(b,user,rol,nombre){
  // Sin trabajos
  trabajos=[];
  await t.goto('http://127.0.0.1:8765/index.html');await t.waitForSelector('.hoy');
- ok('Sin trabajos: mensaje claro y sin fila de trabajos',(await t.textContent('.hoy')).includes('No tienes trabajos asignados') && !(await t.$('#vistaTrabajo .pend-fila.naranja')));
+ ok('Sin trabajos: mensaje claro y sin fila "Después"',(await t.textContent('.hoy')).includes('No tienes trabajos asignados') && !(await t.$('.despues')));
 
  // ---------- Administrador ----------
  const a=await entrar(b,'u2','admin','Ray');a.on('pageerror',e=>err.push('admin:'+e.message));
- await a.waitForSelector('[data-abrir-vales]');
+ await a.waitForSelector('.pend-fila');await a.waitForTimeout(500);
  const av=await a.textContent('#avisosAdmin');
- ok('Admin ve "1 vale por aprobar"',av.includes('1 vale por aprobar') && av.includes('Jesús'));
+ ok('Admin ve "1 vale por aprobar" y lleva a la Nómina de Jesús',av.includes('1 vale por aprobar') && av.includes('Jesús') && !!(await a.$('a.pend-fila.verde[href="nomina.html?t=u5"]')));
  ok('Admin ve "1 trabajo sin asignar"',av.includes('1 trabajo sin asignar'));
+ ok('Admin ve "1 trabajo pasó su sábado" en amarillo y lleva a Atrasados',(await a.textContent('.pend-fila.amarillo')).includes('1 trabajo pasó su sábado') && !!(await a.$('a.pend-fila.amarillo[href="produccion.html?filtro=atrasados"]')));
+ ok('Admin ve el modelo vendido en un color sin foto, y lleva a editarlo',av.includes('1 modelo sin foto en un color') && av.includes('Combo Lineal en negro') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=12"]')));
  ok('Admin ve "En producción: 1 producto sin categoría"',av.includes('En producción: 1 producto sin categoría'));
  ok('Admin ve "En catálogo: 3 modelos sin categoría"',av.includes('En catálogo: 3 modelos sin categoría'));
  ok('Los avisos llevan al lugar correcto',!!(await a.$('a.pend-fila[href="produccion.html?filtro=asignar"]')) && !!(await a.$('a.pend-fila[href="produccion.html?filtro=sincat"]')) && !!(await a.$('a.pend-fila[href="categorias-pago.html"]')));
- ok('Los pendientes van en una sola caja con su contador',(await a.$$('#avisosAdmin .pend')).length===1 && (await a.$$('.pend-fila')).length===4 && (await a.textContent('.pend-n'))==='4');
- ok('Cada pendiente tiene su color: naranja, verde, azul y teal con ícono de catálogo',!!(await a.$('.pend-fila.naranja')) && !!(await a.$('.pend-fila.verde')) && (await a.textContent('.pend-fila.azul')).includes('producto sin categoría') && (await a.textContent('.pend-fila.teal')).includes('modelos sin categoría'));
+ ok('Los pendientes van en una sola caja con su contador',(await a.$$('#avisosAdmin .pend')).length===1 && (await a.$$('.pend-fila')).length===6 && (await a.textContent('.pend-n'))==='6');
+ ok('Ya no hay hoja de vales en el Inicio',!(await a.$('#sheetVales')) && !(await a.$('[data-abrir-vales]')));
  ok('El aviso de notificaciones va aparte',!!(await a.$('#avisosAdmin > .notif-fila')));
  ok('Admin sigue viendo sus módulos',await a.isVisible('#modulos') && await a.isVisible('#btnNuevaVenta'));
- ok('La cajita Producción dice cuántos hay en taller',(await a.textContent('#cuenta-produccion'))==='1 sin asignar',await a.textContent('#cuenta-produccion'));
+ ok('La cajita Producción dice cuántos hay sin asignar',(await a.textContent('#cuenta-produccion'))==='1 sin asignar',await a.textContent('#cuenta-produccion'));
  await a.screenshot({path:'shots5/t6-admin.png',fullPage:true});
  // Minimizar pendientes
  await a.click('[data-pend-toggle]');await a.waitForTimeout(300);
- ok('Al tocar "Pendientes" se esconden y queda el número con puntos de color',!(await a.isVisible('.pend-lista')) && (await a.textContent('.pend-n'))==='4' && (await a.$$('.pend.cerrado .pend-puntos i')).length===4 && (await a.textContent('.pend-accion'))==='Ver');
+ ok('Al tocar "Pendientes" se esconden y queda el número con puntos de color',!(await a.isVisible('.pend-lista')) && (await a.textContent('.pend-n'))==='6' && (await a.$$('.pend.cerrado .pend-puntos i')).length===6 && (await a.textContent('.pend-accion'))==='Ver');
  await a.screenshot({path:'shots5/t6b-admin-cerrado.png'});
  await a.reload();await a.waitForSelector('.pend');await a.waitForTimeout(500);
  ok('El teléfono recuerda que los dejaste cerrados',!(await a.isVisible('.pend-lista')));
  await a.click('[data-pend-toggle]');await a.waitForTimeout(300);
  ok('Otro toque los vuelve a mostrar',await a.isVisible('.pend-lista') && (await a.textContent('.pend-accion'))==='Ocultar');
- await a.click('[data-abrir-vales]');await a.waitForSelector('#sheetVales.open');
- ok('Hoja con el vale de Jesús',(await a.textContent('#valesBody')).includes('Jesús · $20'));
- await a.screenshot({path:'shots5/t7-vales.png'});
- await a.click('[data-resolver="si"]');await a.waitForTimeout(800);
- const rv=llamadas.find(x=>x[0]==='resolver');
- ok('Aprobar llama al servidor',rv&&rv[1].vid===9&&rv[1].aprobar===true,rv&&rv[1]);
- ok('La hoja se cierra y el aviso desaparece',!(await a.$('#sheetVales.open')) && !(await a.textContent('#avisosAdmin')).includes('vale por aprobar'));
+ // Un aviso viejo de vale (index.html?ver=vales) lleva a Nómina
+ await a.goto('http://127.0.0.1:8765/index.html?ver=vales');await a.waitForURL('**/nomina.html',{timeout:8000}).catch(()=>{});
+ ok('Un aviso viejo de vale abre Nómina',a.url().includes('nomina.html'));
 
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

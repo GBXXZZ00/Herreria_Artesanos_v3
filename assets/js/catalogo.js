@@ -1175,5 +1175,11 @@
 
   // Arranque
   pintarChips();
-  cargarDatos();
+  // catalogo.html?editar=ID abre ese modelo para editarlo (desde el pendiente "falta foto en un color")
+  const editarAlCargar = Number(new URLSearchParams(location.search).get('editar')) || null;
+  cargarDatos().then(() => {
+    if(!editarAlCargar || !buscarModelo(editarAlCargar)) return;
+    try{ history.replaceState(history.state, '', location.pathname); } catch(e){}
+    abrirForm(editarAlCargar);
+  });
 })();
