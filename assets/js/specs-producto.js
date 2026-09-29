@@ -104,10 +104,8 @@
   function tocar(prod, target){
     const o = target.closest('.opt[data-g]');
     if(o && o.dataset.g !== '__tipo'){
-      if(o.dataset.g === '__color'){
-        prod.color = o.dataset.v;
-        if(prod.tipo === 'Combo') prod.estado.ventanas_color = o.dataset.v;  // las ventanas van del mismo color
-      } else prod.estado[o.dataset.g] = o.dataset.v;
+      if(o.dataset.g === '__color') prod.color = o.dataset.v;   // un solo color para todo el producto
+      else prod.estado[o.dataset.g] = o.dataset.v;
       return true;
     }
     const t = target.closest('.tchip[data-k]');

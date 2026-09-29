@@ -75,9 +75,9 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  // Combo: bloques y color de ventanas
  await p.click('#btnAgregar');await w();await p.click('[data-origen="catalogo"]');await w();await p.click('[data-modelo="8"]');await w(500);
  const zonas=await p.$$eval('#prodBody .zona',x=>x.map(z=>z.textContent.trim()));ok('Combo separa Puerta y Ventanas',zonas.join()==='Puerta,Ventanas',zonas);
- ok('Ventanas del color de la puerta (Negro)',await p.$eval('.opt[data-g="ventanas_color"].selected',x=>x.dataset.v)==='Negro');
+ ok('El combo tiene un solo color (no hay "Color de las ventanas")',!(await p.$('.opt[data-g="ventanas_color"]')) && !(await p.textContent('#prodBody')).includes('Color de las ventanas'));
  await p.click('.opt[data-g="__color"][data-v="Blanco"]');await w(200);
- ok('Cambia el color de la puerta y las ventanas lo siguen',await p.$eval('.opt[data-g="ventanas_color"].selected',x=>x.dataset.v)==='Blanco');
+ ok('Se cambia el color de todo el combo',await p.$eval('.opt[data-g="__color"].selected',x=>x.dataset.v)==='Blanco');
  await p.screenshot({path:'shots4/v6-combo.png',fullPage:false});
  await p.evaluate(()=>{const b=document.getElementById('prodBody');b.scrollTop=b.scrollHeight;});await w(200);await p.screenshot({path:'shots4/v6b-combo.png'});
  await p.click('#sheetProducto .icon-btn[data-cerrar]');await w(500);

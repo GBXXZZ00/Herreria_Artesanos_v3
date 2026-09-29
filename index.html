@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=48">
+<link rel="stylesheet" href="assets/css/base.css?v=49">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -147,6 +147,7 @@
   .hoy-etapa.haciendo{display:flex;align-items:center;gap:7px}
   /* ¿Con cuál empiezas? */
   .hoy.elegir{padding:16px 0 16px}
+  #vistaTrabajo.sin-entrada .hoy,#vistaTrabajo.sin-entrada .pend-fila{animation:none;opacity:1;transform:none}
   .el-tit{font-size:22px;font-weight:800;letter-spacing:-0.3px;line-height:1.2;padding:0 16px}
   .el-sub{font-size:14px;color:var(--ink-soft);padding:2px 16px 10px}
   .el-op{display:flex;align-items:center;gap:12px;width:calc(100% - 16px);margin:0 8px;padding:9px 10px;border-radius:14px;text-align:left;border:2px solid transparent;transition:transform 130ms var(--ease-out)}
@@ -275,20 +276,18 @@
   .t-ayuda{font-size:13px;color:var(--ink-soft);text-align:center;margin:8px 0 0}
   .t-ayuda.ok{color:#1B6B3A;font-weight:700}
   /* Ordena el trabajo */
-  .ord-f{display:flex;align-items:center;gap:10px;padding:9px 0;transition:opacity 160ms var(--ease-out)}
-  .ord-f + .ord-f{border-top:1px solid var(--line)}
-  .ord-f.movido{animation:ordMov 260ms var(--ease-out)}
-  @keyframes ordMov{from{opacity:.4;transform:scale(0.98)}to{opacity:1;transform:none}}
-  .ord-n{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+  .ord-f{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border-radius:14px;text-align:left;transition:transform 130ms var(--ease-out)}
+  .ord-f + .ord-f{margin-top:2px}
+  .ord-f:active{transform:scale(0.98)}
+  .ord-n{width:34px;height:34px;border-radius:50%;border:2px dashed var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;color:#fff;transition:transform 160ms var(--ease-out)}
+  .ord-f.on .ord-n{border:0;background:var(--accent);transform:scale(1.04)}
   .ord-t{min-width:0}
-  .ord-t b{display:block;font-size:15px;font-weight:800;line-height:1.25}
-  .ord-t span{display:block;font-size:12.5px;color:var(--ink-soft);line-height:1.3}
+  .ord-t b{display:block;font-size:15.5px;font-weight:800;line-height:1.25}
+  .ord-t span{display:block;font-size:13px;color:var(--ink-soft);line-height:1.3}
   .ord-t span.tarde{color:var(--danger);font-weight:700}
   .ord-f.gris .ord-t b{color:var(--ink-faint)}
-  .ord-fl{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
-  .ord-fl button{width:44px;height:44px;border:1px solid var(--line-strong);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--ink);transition:transform 120ms var(--ease-out)}
-  .ord-fl button:active{transform:scale(0.94)}
-  .ord-fl button:disabled{opacity:.25}
+  .ord-otra{display:block;margin:10px auto 0}
+  .ord-otra:disabled{opacity:.35}
   /* Mis pagos: lo que cobra y cada trabajo con sus dos fotos */
   .pg-cobra{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:16px;background:var(--surface-2);margin:2px 0 4px}
   .pg-cobra span{font-size:14px;color:var(--ink-soft)}
@@ -482,10 +481,11 @@
     <button class="icon-btn" data-cerrar="sheetOrden" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="sheet-body">
-    <p class="field-hint" style="margin:0 0 6px">Sube arriba lo que harás primero.</p>
+    <p class="field-hint" style="margin:0 0 8px">Toca los trabajos en el orden en que los vas a hacer.</p>
     <div id="listaOrden"></div>
+    <button class="el-link ord-otra" type="button" id="btnOrdenDeNuevo" disabled>Empezar de nuevo</button>
   </div>
-  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarOrden" style="width:100%;white-space:nowrap">Guardar orden</button></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarOrden" style="width:100%;white-space:nowrap;background:var(--accent)" disabled>Guardar orden</button></div>
 </section>
 
 <!-- Trabajador: lo que hizo (foto del catálogo y la suya) -->
@@ -541,13 +541,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=48"></script>
-<script src="assets/js/supabase-client.js?v=48"></script>
-<script src="assets/js/img-compress.js?v=48"></script>
-<script src="assets/js/comun.js?v=48"></script>
-<script src="assets/js/avisos.js?v=48"></script>
-<script src="assets/js/sesion.js?v=48"></script>
-<script src="assets/js/mi-trabajo.js?v=48"></script>
+<script src="assets/vendor/supabase.js?v=49"></script>
+<script src="assets/js/supabase-client.js?v=49"></script>
+<script src="assets/js/img-compress.js?v=49"></script>
+<script src="assets/js/comun.js?v=49"></script>
+<script src="assets/js/avisos.js?v=49"></script>
+<script src="assets/js/sesion.js?v=49"></script>
+<script src="assets/js/mi-trabajo.js?v=49"></script>
 <script>
 (function(){
   'use strict';

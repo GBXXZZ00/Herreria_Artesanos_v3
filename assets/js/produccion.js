@@ -461,7 +461,7 @@
     const color = tieneColores(m.tipo) ? ((cols[0] && cols[0].key) || 'Blanco') : null;
     return {
       origen:'catalogo', catalogo_id:m.id, tipo:m.tipo, nombre:m.nombre, color,
-      estado: Object.assign(estadoDesdeEspecificaciones(m.tipo, m.especificaciones_base, 'pedido'), m.tipo === 'Combo' && color ? { ventanas_color: color } : {}),
+      estado: estadoDesdeEspecificaciones(m.tipo, m.especificaciones_base, 'pedido'),
       extraProteccion:'', precio:'', precioManual:false, cantidad:1
     };
   }

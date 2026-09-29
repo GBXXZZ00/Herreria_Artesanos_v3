@@ -815,11 +815,6 @@
       : (f.Blanco ? 'Blanco' : (f.Negro ? 'Negro' : 'Blanco'));
     sedePieza = p && p.sede_id ? p.sede_id : (sedes[0] ? sedes[0].id : null);
     cantidadPieza = p ? (p.cantidad || 1) : 1;
-    // Las ventanas del combo salen del mismo color que la puerta, salvo que ya estuviera guardado otro
-    if(m.tipo === 'Combo'){
-      if(p && p.especificaciones && p.especificaciones.ventanas_color) estado._ventanasColorTocado = p.especificaciones.ventanas_color !== p.color;
-      else estado.ventanas_color = colorPieza || 'Blanco';
-    }
 
     $('formTitulo').textContent = p ? 'Editar pieza' : 'Entrega inmediata';
     $('formSub').textContent = m.nombre;
@@ -849,7 +844,6 @@
       const g = opt.dataset.g;
       estado[g] = opt.dataset.v;
       tocados.add(g);
-      if(g === 'ventanas_color') estado._ventanasColorTocado = true;
       const hayDependientes = esquema(tipoActual, modoEsquema()).grupos.some(h => h.si && typeof h.si === 'object' && h.si.g === g);
       if(hayDependientes){ pintarSpecs(); return; }
       opt.parentElement.querySelectorAll('.opt').forEach(o => { const s = o === opt; o.classList.toggle('selected', s); o.setAttribute('aria-pressed', s); });
@@ -881,7 +875,6 @@
     colorPieza = b.dataset.color;
     pintarColorSede();
     pintarFotos(); // la foto de respaldo cambia al color elegido
-    if(tipoActual === 'Combo' && !estado._ventanasColorTocado){ estado.ventanas_color = colorPieza; pintarSpecs(); }
   });
   $('optsSede').addEventListener('click', (e)=>{
     const b = e.target.closest('[data-sede]');

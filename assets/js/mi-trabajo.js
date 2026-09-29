@@ -17,7 +17,6 @@
   const MAX_DESPUES = 4;   // en la fila "Después"; si hay más, "Ver todos"
   const MAX_OPC = 4;       // en "¿Con cuál empiezas?"; si hay más, "Ver todos"
   const ICON_ORDEN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>';
-  const FLECHA = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d === 'up' ? 'M12 19V5M5 12l7-7 7 7' : 'M12 5v14M5 12l7 7 7-7'}"/></svg>`;
 
   function fechaCorta(iso){
     if(!iso) return '';
@@ -65,20 +64,23 @@
   function etiquetaFoto(t){
     const fi = fotoInfo(t);
     if(!fi.otroColor) return '';
-    const quien = t.rama === 'ventana' ? 'las ventanas van' : t.rama === 'proteccion' ? 'las protecciones van' : t.tipo === 'Combo' ? 'la puerta va' : 'el tuyo va';
+    const quien = t.tipo === 'Combo' ? 'el combo va' : 'el tuyo va';
     return `Foto en ${String(fi.de).toLowerCase()} · ${quien} en ${String(fi.color).toUpperCase()}`;
   }
-  // Color de lo que hace: las ventanas y sus protecciones de un Combo van en el color de las ventanas
+  // Color de lo que hace: un solo color para todo el producto (puerta, ventanas y protecciones)
+  // (Pedidos viejos: si las ventanas se vendieron de otro color, se respeta ese dato)
+  const ventanasOtroColor = (e) => !!(e.ventanas_color && e.color && e.ventanas_color !== e.color);
   function colorDe(t){
     const e = t.especificaciones || {};
-    const c = (t.rama === 'ventana' || t.rama === 'proteccion') ? (e.ventanas_color || e.color) : (e.color || t.color);
-    const quien = t.rama === 'ventana' ? 'Las ventanas van' : t.rama === 'proteccion' ? 'Las protecciones van' : 'Va';
-    return c ? { c, t: `${quien} en color ${String(c).toUpperCase()}` } : null;
+    if((t.rama === 'ventana' || t.rama === 'proteccion') && ventanasOtroColor(e)){
+      return { c: e.ventanas_color, t: `Las ventanas van en color ${String(e.ventanas_color).toUpperCase()}` };
+    }
+    const c = e.color || t.color;
+    return c ? { c, t: `Va en color ${String(c).toUpperCase()}` } : null;
   }
   const specsDe = (t) => {
     const cd = colorDe(t);
-    const pre = t.rama === 'ventana' || t.rama === 'proteccion' ? 'Ventanas ' : 'Color ';
-    return (cd ? [{ t:pre + String(cd.c).toLowerCase(), sw:SW_COLOR[cd.c] }] : []).concat(resumenSpecs(t.tipo, t.especificaciones || {}));
+    return (cd ? [{ t:'Color ' + String(cd.c).toLowerCase(), sw:SW_COLOR[cd.c] }] : []).concat(resumenSpecs(t.tipo, t.especificaciones || {}));
   };
   // Todas las especificaciones, en una tabla (nombre arriba, valor abajo)
   function specsTabla(t){
@@ -88,7 +90,7 @@
     const combo = t.tipo === 'Combo';
     if(e.alto && e.ancho) add(combo ? 'Puerta' : 'Medidas', medidas(e));
     if(combo && e.ventanas_alto && e.ventanas_ancho) add('2 ventanas y 2 protecciones', medidas({ alto:e.ventanas_alto, ancho:e.ventanas_ancho }) + ' c/u', true);
-    if(combo && e.ventanas_color) add('Color de las ventanas', e.ventanas_color);
+    if(combo && ventanasOtroColor(e)) add('Color de las ventanas', e.ventanas_color);
     if(e.aluminio) add('Aluminio', e.aluminio);
     if(combo && e.variante) add('Protección en la puerta', e.variante === 'Con protección en puerta' ? 'Sí' : 'No');
     if(e.vidrio_o_farquilla === 'Farquilla') add('Vidrio o farquilla', 'Farquilla');
@@ -193,7 +195,7 @@
         : `<span class="el-s">${esc(refPedidoCorto(t))}</span>`;
       return `<div class="el-op ${t.espera ? 'gris' : ''} ${sel ? 'sel' : ''}" ${t.espera ? 'aria-disabled="true"' : `role="radio" tabindex="0" aria-checked="${sel}" data-elegir="${t.id}"`}>
         <span class="el-foto">${fotoHtml(t, 22)}</span>
-        <span style="min-width:0">
+        <span class="el-txt" style="min-width:0">
           <span class="el-etapa">${esc(t.nombre)}${t.id === sigue ? '<span class="el-sigue">Sigue</span>' : ''}</span>
           <span class="el-nom">${esc(t.producto)}</span>${sub}
           ${sel ? `<button type="button" class="el-ver" data-detalle="${t.id}">Ver todo</button>` : ''}
@@ -242,8 +244,12 @@
       <span class="pend-ico">${ICON_DINERO_P}</span><span class="pend-t">Pagos y vales <span>· ${esc(det)}</span></span>${CHEV}</button></div>`;
   }
 
+  // La animación de entrada solo la primera vez: al repintar (elegir, volver a la app) no parpadea
   function pintarInicioTrabajador(){
-    $('vistaTrabajo').innerHTML = ahoraHtml() + despuesHtml() + pagosFilaHtml();
+    const v = $('vistaTrabajo');
+    if(v.dataset.pintado) v.classList.add('sin-entrada');
+    v.innerHTML = ahoraHtml() + despuesHtml() + pagosFilaHtml();
+    v.dataset.pintado = '1';
   }
   function pintarCargando(){
     $('vistaTrabajo').innerHTML = '<div class="sk-linea" style="width:220px;height:26px;margin:6px 2px 14px"></div><div class="sk-hoy"></div>';
@@ -495,11 +501,23 @@
     if(bd){ abrirDetalle(Number(bd.dataset.detalle)); return true; }
     return false;
   }
+  // Marcar otro: solo cambia la marca y el botón, sin volver a dibujar (las fotos no parpadean)
   function elegir(id){
-    if(id === elegidoId || !disponibles().some(x => x.id === id)) return;
+    const t = disponibles().find(x => x.id === id);
+    if(id === elegidoId || !t) return;
     elegidoId = id;
-    pintarInicioTrabajador();
-    const op = $('vistaTrabajo').querySelector(`[data-elegir="${id}"]`);
+    const v = $('vistaTrabajo');
+    v.querySelectorAll('[data-elegir]').forEach(op => {
+      const sel = Number(op.dataset.elegir) === id;
+      op.classList.toggle('sel', sel);
+      op.setAttribute('aria-checked', String(sel));
+      const ver = op.querySelector('.el-ver');
+      if(!sel && ver) ver.remove();
+      if(sel && !ver) op.querySelector('.el-txt').insertAdjacentHTML('beforeend', `<button type="button" class="el-ver" data-detalle="${id}">Ver todo</button>`);
+    });
+    const b = v.querySelector('.el-btn');
+    if(b){ b.dataset.empezar = String(id); b.textContent = 'Empezar ' + t.producto; }
+    const op = v.querySelector(`[data-elegir="${id}"]`);
     if(op) op.focus({ preventScroll:true });
   }
   $('vistaTrabajo').addEventListener('click', (e) => {
@@ -545,48 +563,51 @@
     }
   }
 
-  // ---------- Ordena el trabajo ----------
-  function pintarOrden(movido){
+  // ---------- Ordena el trabajo: toca los trabajos en el orden en que los vas a hacer ----------
+  let ordenTocados = [];    // ids en el orden en que los tocó
+  function pintarOrden(){
     const ep = enProceso();
     const lista = ordenLocal.map(id => trabajos.find(x => x.id === id)).filter(Boolean);
-    $('listaOrden').innerHTML = lista.map((t, i) => {
+    $('listaOrden').innerHTML = lista.map((t) => {
+      const n = ordenTocados.indexOf(t.id) + 1;
       const tt = t.para_el ? topeTrab(t.para_el) : null;
       const sub = t.espera ? `${t.nombre} · espera ${t.espera.toLowerCase()}` : [t.nombre, tt ? tt.t : refPedidoCorto(t)].join(' · ');
-      return `<div class="ord-f ${t.espera ? 'gris' : ''} ${t.id === movido ? 'movido' : ''}">
-        <span class="ord-n">${i + 1}</span>
+      return `<button type="button" class="ord-f ${t.espera ? 'gris' : ''} ${n ? 'on' : ''}" data-tocar="${t.id}" aria-pressed="${!!n}">
+        <span class="ord-n">${n || ''}</span>
         <span class="ord-t"><b>${esc(t.producto)}</b><span class="${tt && tt.tarde && !t.espera ? 'tarde' : ''}">${esc(sub)}</span></span>
-        <span class="ord-fl">
-          <button type="button" data-mover="${t.id}" data-dir="-1" aria-label="Subir" ${i === 0 ? 'disabled' : ''}>${FLECHA('up')}</button>
-          <button type="button" data-mover="${t.id}" data-dir="1" aria-label="Bajar" ${i === lista.length - 1 ? 'disabled' : ''}>${FLECHA('down')}</button>
-        </span>
-      </div>`;
+      </button>`;
     }).join('') + (ep ? `<p class="field-hint" style="margin:10px 0 0">Ahora estás haciendo ${esc(ep.nombre)} · ${esc(ep.producto)}.</p>` : '');
+    $('btnOrdenDeNuevo').disabled = !ordenTocados.length;
+    $('btnGuardarOrden').disabled = !ordenTocados.length;
   }
   function abrirOrden(){
     const ep = enProceso();
     ordenLocal = trabajos.filter(t => !ep || t.id !== ep.id).map(t => t.id);
     if(ordenLocal.length < 2) return;
+    ordenTocados = [];
     pintarOrden();
     abrirHoja('sheetOrden');
   }
+  // Tocar uno le pone el siguiente número; tocar uno que ya tiene número se lo quita
   $('listaOrden').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-mover]');
-    if(!b || b.disabled) return;
-    const id = Number(b.dataset.mover), dir = Number(b.dataset.dir);
-    const i = ordenLocal.indexOf(id), k = i + dir;
-    if(i < 0 || k < 0 || k >= ordenLocal.length) return;
-    ordenLocal.splice(i, 1);
-    ordenLocal.splice(k, 0, id);
-    pintarOrden(id);
-    const nb = $('listaOrden').querySelector(`[data-mover="${id}"][data-dir="${dir}"]`);
-    if(nb && !nb.disabled) nb.focus({ preventScroll:true });
+    const b = e.target.closest('[data-tocar]');
+    if(!b) return;
+    const id = Number(b.dataset.tocar);
+    const k = ordenTocados.indexOf(id);
+    if(k >= 0) ordenTocados.splice(k, 1); else ordenTocados.push(id);
+    pintarOrden();
+    const nb = $('listaOrden').querySelector(`[data-tocar="${id}"]`);
+    if(nb) nb.focus({ preventScroll:true });
   });
+  $('btnOrdenDeNuevo').addEventListener('click', () => { ordenTocados = []; pintarOrden(); });
   $('btnGuardarOrden').addEventListener('click', async () => {
     const btn = $('btnGuardarOrden');
-    if(btn.disabled || !ordenLocal.length) return;
+    if(btn.disabled || !ordenTocados.length) return;
     btn.disabled = true;
+    // Primero los que tocó, en ese orden; los que no tocó quedan después, como estaban
+    const ids = ordenTocados.concat(ordenLocal.filter(id => !ordenTocados.includes(id)));
     try{
-      const { error } = await db.rpc('ordenar_mis_trabajos', { p_ids: ordenLocal });
+      const { error } = await db.rpc('ordenar_mis_trabajos', { p_ids: ids });
       if(error) throw error;
       cerrarHoja('sheetOrden', true);
       elegidoId = null;
@@ -595,9 +616,13 @@
     } catch(err){
       toast((err && err.message) || 'No se pudo guardar. Revisa tu internet.', 'error');
       await refrescar(true);
-      if(!ordenLocal.every(id => trabajos.some(t => t.id === id))) cerrarHoja('sheetOrden', true);
+      // Si su lista cambió mientras tanto (entró o salió un trabajo), se cierra para volver a ordenar
+      const ep = enProceso();
+      const ahoraIds = trabajos.filter(t => !ep || t.id !== ep.id).map(t => t.id);
+      if(ahoraIds.length !== ordenLocal.length || ahoraIds.some(id => !ordenLocal.includes(id))) cerrarHoja('sheetOrden', true);
+      else pintarOrden();
     } finally {
-      btn.disabled = false;
+      btn.disabled = !ordenTocados.length;
     }
   });
   $('listaTrabajos').addEventListener('click', clicTrabajo);
@@ -722,6 +747,8 @@
     perfil = null;
     document.body.classList.remove('es-trabajador');
     $('vistaTrabajo').classList.add('hidden');
+    $('vistaTrabajo').classList.remove('sin-entrada');
+    delete $('vistaTrabajo').dataset.pintado;
     $('vistaTrabajo').innerHTML = '';
   }
 

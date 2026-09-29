@@ -178,7 +178,7 @@
     const color = tieneColores(m.tipo) ? ((cols[0] && cols[0].key) || 'Blanco') : null;
     abrirProducto({
       origen:'catalogo', catalogo_id:m.id, tipo:m.tipo, nombre:m.nombre, color,
-      estado: Object.assign(estadoDesdeEspecificaciones(m.tipo, m.especificaciones_base, 'pedido'), m.tipo === 'Combo' && color ? { ventanas_color: color } : {}),
+      estado: estadoDesdeEspecificaciones(m.tipo, m.especificaciones_base, 'pedido'),
       extraProteccion:'', precio:'', precioManual:false, cantidad:1
     }, null);
   });
@@ -332,7 +332,6 @@
           prod.estado = estadoDesdeEspecificaciones(t, {}, 'pedido');
           const col = acabados(t).find(a => a.sw);
           prod.color = tieneColores(t) && col ? col.key : null;
-          if(t === 'Combo' && prod.color) prod.estado.ventanas_color = prod.color;
         } else { prod.estado = {}; prod.color = null; }
         $('campoMedTipo').classList.remove('invalid');
         pintarProducto(); return;

@@ -19,7 +19,7 @@ const iso=(d)=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+St
 const SAB=(()=>{const d=new Date();d.setHours(12,0,0,0);const w=d.getDay();d.setDate(d.getDate()+(w===0?6:6-w));const este=iso(d);d.setDate(d.getDate()-7);const pasado=iso(d);d.setDate(d.getDate()-7);return {este,pasado,dosAtras:iso(d)};})();
 let trabajos=[
   {id:501,nombre:'Hierro',especialidad:'herrero',rama:'principal',unidades:1,para_el:SAB.este,venta_id:40,interna:false,fecha_entrega:dia(3),notas:null,producto:'Puerta Lineal',tipo:'Puerta Multilock',foto:GIF,foto_de:'Blanco',cantidad:1,color:'Blanco',especificaciones:{color:'Blanco',alto:2,ancho:1,manillon:true,manillon_tipo:'H',sentido:'Derecha',posicion:'Afuera',bloque:'15',vidrio_o_farquilla:'Vidrio',color_vidrio:'Negro'},espera:null,monto:25},
-  {id:502,nombre:'Ensamblar 2 ventanas',especialidad:'ventanero',rama:'ventana',unidades:2,para_el:SAB.este,venta_id:41,interna:false,fecha_entrega:dia(6),notas:'El cliente quiere las ventanas con seguro por dentro',producto:'Combo Imperial',tipo:'Combo',foto:GIF,foto_de:'Blanco',cantidad:2,color:'Negro',especificaciones:{color:'Negro',alto:2,ancho:1,ventanas_alto:1.2,ventanas_ancho:1,ventanas_color:'Negro',variante:'Sin protección en puerta'},espera:null,monto:null},
+  {id:502,nombre:'Ensamblar 2 ventanas',especialidad:'ventanero',rama:'ventana',unidades:2,para_el:SAB.este,venta_id:41,interna:false,fecha_entrega:dia(6),notas:'El cliente quiere las ventanas con seguro por dentro',producto:'Combo Imperial',tipo:'Combo',foto:GIF,foto_de:'Blanco',cantidad:2,color:'Negro',especificaciones:{color:'Negro',alto:2,ancho:1,ventanas_alto:1.2,ventanas_ancho:1,variante:'Sin protección en puerta'},espera:null,monto:null},
   {id:503,nombre:'Detalles',especialidad:'acabados',rama:'principal',unidades:1,para_el:SAB.este,venta_id:40,interna:false,fecha_entrega:dia(3),notas:null,producto:'Puerta Lineal',tipo:'Puerta Multilock',foto:GIF,foto_de:'Blanco',cantidad:1,color:'Blanco',especificaciones:{color:'Blanco'},espera:'Masilla y pintura',monto:5}
 ];
 let pagos={
@@ -110,7 +110,9 @@ async function entrar(b,user,rol,nombre){
  ok('Una sola fila de pagos: "Pagos y vales · cobras $60 el sábado"',(await t.$$('#vistaTrabajo .pend-fila')).length===1 && (await t.textContent('#vistaTrabajo .pend-fila.verde')).includes('Pagos y vales · cobras $60 el sábado'));
  ok('Ve la fila de avisos del teléfono como en el Inicio',!!(await t.$('#avisosAdmin .notif-fila')));
  await t.screenshot({path:'shots5/t1-elegir.png',fullPage:true});
+ const img0=await t.$('.el-op[data-elegir="501"] .el-foto img');const hoy0=await t.$('.hoy.elegir');
  await t.click('.el-op[data-elegir="502"]');await t.waitForTimeout(150);
+ ok('Al marcar otro no se vuelve a dibujar (las fotos no parpadean)',await img0.evaluate(x=>x.isConnected) && await hoy0.evaluate(x=>x.isConnected && getComputedStyle(x).opacity==='1'));
  ok('Tocar otro lo marca y cambia el botón',(await t.getAttribute('.el-op.sel','data-elegir'))==='502' && (await t.textContent('.hoy [data-empezar]'))==='Empezar Combo Imperial');
  await t.focus('.el-op.sel');await t.keyboard.press('ArrowUp');await t.waitForTimeout(150);
  ok('Con el teclado (flechas) también se marca otro',(await t.getAttribute('.el-op.sel','data-elegir'))==='501');
@@ -121,11 +123,17 @@ async function entrar(b,user,rol,nombre){
  ok('"Ver todo" abre el detalle con "Empezar este trabajo"',(await t.textContent('#trabajoFoot [data-empezar="502"]'))==='Empezar este trabajo');
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
 
- // Ordena el trabajo
+ // Ordena el trabajo (tocar en orden)
  await t.click('.hoy [data-ordenar]');await t.waitForSelector('#sheetOrden.open');await t.waitForTimeout(300);
- ok('"Ordena el trabajo": sus 3 trabajos numerados, sin subir el primero ni bajar el último',(await t.$$('#listaOrden .ord-f')).length===3 && (await t.textContent('#ordenTitulo'))==='Ordena el trabajo' && await t.isDisabled('#listaOrden .ord-f:first-child [data-dir="-1"]') && await t.isDisabled('#listaOrden .ord-f:last-child [data-dir="1"]'));
- await t.click('#listaOrden [data-mover="502"][data-dir="-1"]');await t.waitForTimeout(150);
- ok('Subir cambia el orden en la hoja',(await t.$$eval('#listaOrden .ord-t b',x=>x.map(y=>y.textContent))).join('|')==='Combo Imperial|Puerta Lineal|Puerta Lineal' && (await t.textContent('#listaOrden .ord-f:first-child .ord-n'))==='1');
+ ok('"Ordena el trabajo": dice qué hacer, 3 trabajos sin número y sin flechas',(await t.$$('#listaOrden .ord-f')).length===3 && (await t.textContent('#sheetOrden .field-hint')).includes('Toca los trabajos en el orden') && (await t.$$('#listaOrden .ord-f.on')).length===0 && !(await t.$('#listaOrden svg')));
+ ok('Sin tocar ninguno no se puede guardar',await t.isDisabled('#btnGuardarOrden') && await t.isDisabled('#btnOrdenDeNuevo'));
+ await t.click('#listaOrden [data-tocar="503"]');await t.click('#listaOrden [data-tocar="501"]');await t.waitForTimeout(100);
+ ok('Tocar pone 1, 2… en el orden en que los toca',(await t.textContent('#listaOrden [data-tocar="503"] .ord-n'))==='1' && (await t.textContent('#listaOrden [data-tocar="501"] .ord-n'))==='2' && (await t.textContent('#listaOrden [data-tocar="502"] .ord-n'))==='');
+ await t.click('#listaOrden [data-tocar="503"]');await t.waitForTimeout(100);
+ ok('Tocar uno con número se lo quita y los demás se corren',(await t.textContent('#listaOrden [data-tocar="503"] .ord-n'))==='' && (await t.textContent('#listaOrden [data-tocar="501"] .ord-n'))==='1');
+ await t.click('#btnOrdenDeNuevo');await t.waitForTimeout(100);
+ ok('"Empezar de nuevo" borra los números',(await t.$$('#listaOrden .ord-f.on')).length===0);
+ await t.click('#listaOrden [data-tocar="502"]');await t.waitForTimeout(100);
  await t.screenshot({path:'shots5/t1b-ordenar.png'});
  await t.click('#btnGuardarOrden');await t.waitForTimeout(700);
  const lo=llamadas.find(x=>x[0]==='ordenar');
@@ -159,8 +167,13 @@ async function entrar(b,user,rol,nombre){
  // El Combo (en "Después"): no se puede empezar mientras hace otro
  await t.click('.dp[data-detalle="502"]');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
  const dc=await t.textContent('#trabajoBody');
- ok('Si la foto es de otro color, lo dice sobre la foto',(await t.textContent('#trabajoBody .hoy-badge'))==='Foto en blanco · las ventanas van en NEGRO');
- ok('Las ventanas van en su color',(await t.textContent('.tj-color'))==='Las ventanas van en color NEGRO');
+ ok('Si la foto es de otro color, lo dice sobre la foto',(await t.textContent('#trabajoBody .hoy-badge'))==='Foto en blanco · el combo va en NEGRO');
+ ok('Un solo color para todo el combo',(await t.textContent('.tj-color'))==='Va en color NEGRO' && !(await t.textContent('#trabajoBody')).includes('Color de las ventanas'));
+ { const x=trabajos.find(t=>t.id===502); x.especificaciones.ventanas_color='Blanco'; }
+ await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);await t.evaluate(()=>window.Trabajo.refrescar());await t.waitForTimeout(400);
+ await t.click('.dp[data-detalle="502"]');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
+ ok('Pedido viejo con ventanas de otro color: se sigue diciendo',(await t.textContent('.tj-color'))==='Las ventanas van en color BLANCO' && (await t.textContent('#trabajoBody')).includes('Color de las ventanasBlanco'));
+ delete trabajos.find(t=>t.id===502).especificaciones.ventanas_color;
  ok('Dice que es 1 puerta + 2 ventanas + 2 protecciones, con medidas de las ventanas',dc.includes('1 puerta + 2 ventanas + 2 protecciones') && dc.includes('2 ventanas y 2 protecciones1.2 × 1 m c/u') && dc.includes('2 unidades'));
  ok('La nota de la venta',(await t.textContent('.tj-nota')).includes('seguro por dentro'));
  ok('Mientras hace otro: "Primero termina Hierro · Puerta Lineal", sin botones',(await t.textContent('#trabajoFoot')).includes('Primero termina Hierro · Puerta Lineal') && !(await t.$('#trabajoFoot button')));

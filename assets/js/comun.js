@@ -134,8 +134,7 @@
         { g:'sentido', label:'Sentido de apertura', opts:OPC_SENTIDO, def:'Derecha' },
         { g:'posicion', label:'Posición de apertura', opts:OPC_POSICION, def:'Afuera' },
         { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'10' },
-        { g:'ventanas_medidas', label:'Medidas de las 2 ventanas', tipo:'medidas', keys:['ventanas_alto','ventanas_ancho'], def:[1, 1], zona:'ventanas' },
-        { g:'ventanas_color', label:'Color de las ventanas', opts:OPC_COLOR, def:'Blanco', zona:'ventanas' }
+        { g:'ventanas_medidas', label:'Medidas de las 2 ventanas', tipo:'medidas', keys:['ventanas_alto','ventanas_ancho'], def:[1, 1], zona:'ventanas' }
       ]
     },
     'Puerta de Madera': {
@@ -148,7 +147,7 @@
     }
   };
   // Grupos que se guardan tal cual (mismo nombre de campo y valor)
-  const DIRECTOS = ['sentido', 'posicion', 'bloque', 'aluminio', 'proteccion_sentido', 'cerradura', 'ventanas_color'];
+  const DIRECTOS = ['sentido', 'posicion', 'bloque', 'aluminio', 'proteccion_sentido', 'cerradura'];
 
   // Esquema según dónde se usa: 'modelo' (catálogo) o 'pedido' (pieza disponible / venta).
   function esquema(tipo, modo){
@@ -254,7 +253,8 @@
     if(e.posicion) out.push({ t:(tipo === 'Portón' ? 'Instalación ' : 'Apertura ') + e.posicion.toLowerCase() });
     if(e.bloque) out.push({ t:'Bloque ' + e.bloque });
     if(e.ventanas_alto && e.ventanas_ancho) out.push({ t:`Ventanas ${fmt.format(e.ventanas_alto)} × ${fmt.format(e.ventanas_ancho)} m` });
-    if(e.ventanas_color) out.push({ t:'Ventanas ' + e.ventanas_color.toLowerCase(), sw:SW_COLOR[e.ventanas_color] });
+    // Pedidos viejos con las ventanas de otro color (ya no se puede elegir)
+    if(e.ventanas_color && e.color && e.ventanas_color !== e.color) out.push({ t:'Ventanas ' + e.ventanas_color.toLowerCase(), sw:SW_COLOR[e.ventanas_color] });
     return out;
   }
 
