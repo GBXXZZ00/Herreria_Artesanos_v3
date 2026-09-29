@@ -76,7 +76,7 @@ function mock(ctx,user,rol,nombre){return ctx.route('**/*.supabase.co/**',async 
     return j([{usuario:nombre.toLowerCase(),nombre,rol,orden:1}]);
   }
   if(u.includes('/categorias_pago'))return m==='HEAD'?head(2):j([]);
-  if(u.includes('/catalogo'))return m==='HEAD'?head(u.includes('categoria_pago_id=is.null')?3:37):j([]);
+  if(u.includes('/catalogo'))return m==='HEAD'?head(u.includes('categoria_pago_id=is.null')?3:37):u.includes('tipo=eq.Combo')?j([{id:21,nombre:'Combo Viejo',especificaciones_base:{alto:2,ancho:1}},{id:22,nombre:'Combo Bien',especificaciones_base:{alto:2,ancho:1,ventanas_alto:1.2,ventanas_ancho:1}}]):j([]);
   if(u.includes('/ventas')){
     if(u.includes('estado=eq.en_produccion'))return j([{id:40,items:[
       {categoria_pago_id:null,etapas:[{rama:'principal',orden:1,estado:'hecha',trabajador_id:'x'},{rama:'principal',orden:2,estado:'pendiente',trabajador_id:null}]},
@@ -297,9 +297,10 @@ async function entrar(b,user,rol,nombre){
  ok('Admin ve "1 trabajo pasó su sábado" en amarillo y lleva a Atrasados',(await a.textContent('.pend-fila.amarillo')).includes('1 trabajo pasó su sábado') && !!(await a.$('a.pend-fila.amarillo[href="produccion.html?filtro=atrasados"]')));
  ok('Admin ve el modelo vendido en un color sin foto, y lleva a editarlo',av.includes('1 modelo sin foto en un color') && av.includes('Combo Lineal en negro') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=12"]')));
  ok('Admin ve "En producción: 1 producto sin categoría"',av.includes('En producción: 1 producto sin categoría'));
+ ok('Admin ve "1 combo sin medidas de las ventanas" y lleva a editarlo',av.includes('1 combo sin medidas de las ventanas') && av.includes('Combo Viejo') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=21"]')));
  ok('Admin ve "En catálogo: 3 modelos sin categoría"',av.includes('En catálogo: 3 modelos sin categoría'));
  ok('Los avisos llevan al lugar correcto',!!(await a.$('a.pend-fila[href="produccion.html?filtro=asignar"]')) && !!(await a.$('a.pend-fila[href="produccion.html?filtro=sincat"]')) && !!(await a.$('a.pend-fila[href="categorias-pago.html"]')));
- ok('Los pendientes van en una sola caja con su contador',(await a.$$('#avisosAdmin .pend')).length===1 && (await a.$$('.pend-fila')).length===6 && (await a.textContent('.pend-n'))==='6');
+ ok('Los pendientes van en una sola caja con su contador',(await a.$$('#avisosAdmin .pend')).length===1 && (await a.$$('.pend-fila')).length===7 && (await a.textContent('.pend-n'))==='7');
  ok('Ya no hay hoja de vales en el Inicio',!(await a.$('#sheetVales')) && !(await a.$('[data-abrir-vales]')));
  ok('El aviso de notificaciones va aparte',!!(await a.$('#avisosAdmin > .notif-fila')));
  ok('Admin sigue viendo sus módulos',await a.isVisible('#modulos') && await a.isVisible('#btnNuevaVenta'));
@@ -307,7 +308,7 @@ async function entrar(b,user,rol,nombre){
  await a.screenshot({path:'shots5/t6-admin.png',fullPage:true});
  // Minimizar pendientes
  await a.click('[data-pend-toggle]');await a.waitForTimeout(300);
- ok('Al tocar "Pendientes" se esconden y queda el número con puntos de color',!(await a.isVisible('.pend-lista')) && (await a.textContent('.pend-n'))==='6' && (await a.$$('.pend.cerrado .pend-puntos i')).length===6 && (await a.textContent('.pend-accion'))==='Ver');
+ ok('Al tocar "Pendientes" se esconden y queda el número con puntos de color',!(await a.isVisible('.pend-lista')) && (await a.textContent('.pend-n'))==='7' && (await a.$$('.pend.cerrado .pend-puntos i')).length===7 && (await a.textContent('.pend-accion'))==='Ver');
  await a.screenshot({path:'shots5/t6b-admin-cerrado.png'});
  await a.reload();await a.waitForSelector('.pend');await a.waitForTimeout(500);
  ok('El teléfono recuerda que los dejaste cerrados',!(await a.isVisible('.pend-lista')));

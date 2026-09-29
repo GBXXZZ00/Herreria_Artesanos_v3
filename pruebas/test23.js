@@ -61,6 +61,20 @@ const llamadas=[];
  const crea=llamadas.find(x=>x[0]==='crear');
  ok('Un modelo nuevo sin elegir categoría se guarda con categoria_pago_id null',crea&&crea[1].categoria_pago_id===null,crea&&crea[1]);
 
+ // Combo: en el catálogo se guardan las medidas de la puerta y de las 2 ventanas (son fijas al vender)
+ await p.click('#btnNuevo');await espera();await p.click('#tipoGrid [data-elegir="Combo"]');await espera(600);
+ ok('El combo pide las medidas de las 2 ventanas',!!(await p.$('#specs [data-mkey="ventanas_alto"]')) && (await p.textContent('#specs')).includes('Medidas de las 2 ventanas'));
+ await p.fill('#fNombre','Combo Nuevo');await p.fill('#fPrecio','600');
+ await p.fill('#specs [data-mkey="ventanas_alto"]','');await espera(100);
+ await p.click('#btnGuardar');await espera(500);
+ ok('Sin las medidas de las ventanas no se guarda y marca el campo',!llamadas.some(x=>x[0]==='crear'&&x[1].nombre==='Combo Nuevo') && await p.isVisible('#specs .field.invalid .field-error'));
+ await p.screenshot({path:'shots4/c-combo-medidas.png'});
+ await p.fill('#specs [data-mkey="ventanas_alto"]','1,2');await espera(100);
+ ok('Al escribir se quita el error',!(await p.$('#specs .field.invalid')));
+ await p.click('#btnGuardar');await espera(600);
+ const cc=llamadas.find(x=>x[0]==='crear'&&x[1].nombre==='Combo Nuevo');
+ ok('Guarda el combo con las medidas de las ventanas',cc&&cc[1].especificaciones_base.ventanas_alto===1.2&&cc[1].especificaciones_base.ventanas_ancho===1,cc&&cc[1].especificaciones_base);
+
  // El campo NO aparece al marcar una pieza de entrega inmediata
  await p.click('.card[data-id="4"]');await espera();await p.click('#detalleFoot [data-accion="marcar"]');await espera(600);
  ok('El campo no aparece en el formulario de pieza',!(await p.isVisible('#campoCategoria')));

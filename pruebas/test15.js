@@ -7,7 +7,9 @@ const sesion={access_token:jwt,token_type:'bearer',expires_in:3600,expires_at:no
 const GIF='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
 const modelos=[{id:4,nombre:'Lineal',tipo:'Puerta Multilock',fotos:{Blanco:GIF,Negro:GIF},especificaciones_base:{vidrio_o_farquilla:'Vidrio',color_vidrio:'Negro',manillon:false,marco_decorativo:true,proteccion:false},precio_base:200},
  {id:6,nombre:'Ventana Clásica',tipo:'Ventana',fotos:{Blanco:GIF},especificaciones_base:{papel_ahumado:true,color_ahumado:'Espejo',proteccion:false},precio_base:0}];
-modelos.push({id:8,nombre:'Combo Imperial',tipo:'Combo',fotos:{Negro:GIF},especificaciones_base:{variante:'Sin protección en puerta'},precio_base:500});
+modelos.push({id:8,nombre:'Combo Imperial',tipo:'Combo',fotos:{Negro:GIF},especificaciones_base:{variante:'Sin protección en puerta',alto:2.1,ancho:1,ventanas_alto:1.2,ventanas_ancho:1},precio_base:500});
+modelos.push({id:9,nombre:'Combo Viejo',tipo:'Combo',fotos:{Negro:GIF},especificaciones_base:{variante:'Sin protección en puerta',alto:2,ancho:1},precio_base:450});
+modelos.push({id:7,nombre:'Ventana Protegida',tipo:'Ventana',fotos:{Blanco:GIF},especificaciones_base:{papel_ahumado:false,proteccion:true},precio_base:0});
 const piezas=[{id:9,catalogo_id:4,cantidad:2,estado:'disponible',precio:250,sede_id:1,color:'Blanco',especificaciones:{sentido:'Derecha'}}];
 const H='http://127.0.0.1:8765/';
 const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+(x!==undefined?'  → '+JSON.stringify(x):''));if(!c)fallas++;};
@@ -63,8 +65,16 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  await p.click('[data-modelo="6"]');await w(500);
  const inputs=await p.$$('#prodBody [data-mkey]');await inputs[0].fill('1,2');await inputs[1].fill('1.5');await w(200);
  ok('Ventana: 1.8 m² × $90',(await p.inputValue('#pPrecio'))==='162',await p.inputValue('#pPrecio'));
- await p.click('.tchip[data-k="proteccion"]');await w(200);await p.click('.opt[data-g="aluminio"][data-v="Ecobel"]');await w(200);
- ok('Ventana Ecobel con protección: 1.8 × $220',(await p.inputValue('#pPrecio'))==='396',await p.inputValue('#pPrecio'));
+ ok('Ventana sin protección: la protección viene del modelo y no se puede marcar',(await p.textContent('#prodBody .prot-fija'))==='Sin protección' && !(await p.$('.tchip[data-k="proteccion"]')) && !(await p.$('.tchip[data-k="marco_decorativo"]')));
+ await p.click('.opt[data-g="aluminio"][data-v="Ecobel"]');await w(200);
+ ok('Ventana Ecobel sin protección: 1.8 × $120',(await p.inputValue('#pPrecio'))==='216',await p.inputValue('#pPrecio'));
+ await p.click('#sheetProducto .icon-btn[data-cerrar]');await w(500);
+ await p.click('#btnAgregar');await w();await p.click('[data-origen="catalogo"]');await w();
+ await p.click('[data-modelo="7"]');await w(500);
+ const inputs2=await p.$$('#prodBody [data-mkey]');await inputs2[0].fill('1,2');await inputs2[1].fill('1.5');await w(200);
+ await p.click('.opt[data-g="aluminio"][data-v="Ecobel"]');await w(200);
+ ok('Ventana con protección del modelo: dice "Con protección", no se puede quitar, y cobra 1.8 × $220',(await p.textContent('#prodBody .prot-fija'))==='Con protección' && !(await p.$('.tchip[data-k="proteccion"]')) && !!(await p.$('.tchip[data-k="marco_decorativo"]')) && (await p.inputValue('#pPrecio'))==='396',await p.inputValue('#pPrecio'));
+ await p.screenshot({path:'shots4/v5-ventana-prot.png'});
  await p.click('#prodBody [data-cant="1"]');await w(100);
  await p.click('#btnProdListo');await w(500);
  // Entrega inmediata
@@ -78,12 +88,24 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  ok('El combo tiene un solo color (no hay "Color de las ventanas")',!(await p.$('.opt[data-g="ventanas_color"]')) && !(await p.textContent('#prodBody')).includes('Color de las ventanas'));
  await p.click('.opt[data-g="__color"][data-v="Blanco"]');await w(200);
  ok('Se cambia el color de todo el combo',await p.$eval('.opt[data-g="__color"].selected',x=>x.dataset.v)==='Blanco');
+ ok('Combo: las medidas de la puerta y de las ventanas vienen del modelo y no se pueden cambiar',!(await p.$('#prodBody [data-mkey]')) && (await p.$$eval('#prodBody .med-fija',x=>x.map(y=>y.textContent))).join('|')==='2.1 × 1 m|1.2 × 1 m' && (await p.textContent('#prodBody')).includes('Las medidas del combo son fijas'),await p.$$eval('#prodBody .med-fija',x=>x.map(y=>y.textContent)));
+ ok('Combo: aluminio Panorámica por defecto, precio del modelo',(await p.$eval('.opt[data-g="aluminio"].selected',x=>x.dataset.v))==='Panorámica' && (await p.inputValue('#pPrecio'))==='500');
+ await p.click('.opt[data-g="aluminio"][data-v="Ecobel"]');await w(200);
+ ok('Combo con Ecobel suma $80',(await p.inputValue('#pPrecio'))==='580' && (await p.textContent('#desglose')).includes('Ecobel $80'),await p.inputValue('#pPrecio'));
  await p.screenshot({path:'shots4/v6-combo.png',fullPage:false});
  await p.evaluate(()=>{const b=document.getElementById('prodBody');b.scrollTop=b.scrollHeight;});await w(200);await p.screenshot({path:'shots4/v6b-combo.png'});
  await p.click('#sheetProducto .icon-btn[data-cerrar]');await w(500);
+ // Combo al que le faltan las medidas de las ventanas en el catálogo: no se puede agregar
+ await p.click('#btnAgregar');await w();await p.click('[data-origen="catalogo"]');await w();await p.click('[data-modelo="9"]');await w(500);
+ ok('Combo sin medidas de ventanas: lo dice arriba en rojo',(await p.textContent('#prodBody .aviso-falta')).includes('le faltan las medidas de las 2 ventanas') && (await p.textContent('#prodBody')).includes('Falta en el Catálogo'));
+ await p.fill('#pPrecio','450');await p.click('#btnProdListo');await w(400);
+ ok('Y no deja agregarlo a la venta',await p.isVisible('#sheetProducto') && (await p.textContent('#toast')).includes('Complétalas'));
+ await p.screenshot({path:'shots4/v6c-combo-sin-medidas.png'});
+ await p.click('#sheetProducto .icon-btn[data-cerrar]');await w(300);
+ const conf=await p.$('.confirm-si, [data-confirm-si]');if(conf) await conf.click();await w(400);
  // A medida
  await p.click('#btnAgregar');await w();await p.click('[data-origen="medida"]');await w(400);
- ok('A medida: primero se elige el tipo',(await p.$$('.opt[data-g="__tipo"]')).length===6&&!(await p.$('#pPrecio')));
+ ok('A medida: primero se elige el tipo (sin Combo: si las medidas son otras, no es combo)',(await p.$$('.opt[data-g="__tipo"]')).length===5&&!(await p.$('.opt[data-g="__tipo"][data-v="Combo"]'))&&!(await p.$('#pPrecio')));
  await p.click('#btnProdListo');await w(200);ok('Sin tipo no deja agregar',await p.$eval('#campoMedTipo',x=>x.classList.contains('invalid')));
  await p.click('.opt[data-g="__tipo"][data-v="Ventana"]');await w(300);
  ok('Ventana a medida: mismas especificaciones que el catálogo',!!(await p.$('[data-mkey="alto"]'))&&!!(await p.$('.opt[data-g="aluminio"]'))&&!!(await p.$('.opt[data-g="__color"]')));

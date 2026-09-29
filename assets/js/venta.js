@@ -255,7 +255,7 @@
     if(prod.origen === 'medida'){
       $('prodTitulo').textContent = prodIndex == null ? 'Trabajo a medida' : 'Editar trabajo';
       const elegido = prod.tipo === 'A medida' ? 'Otro' : prod.tipo;
-      html = `<div class="field" id="campoMedTipo">${optsHtml({ g:'__tipo', label:'¿Qué vas a fabricar?', cols:2, opts:[...TIPOS, 'Otro'].map(t => ({ v:t })) }, elegido).replace(/^<div class="field">|<\/div>$/g, '')}
+      html = `<div class="field" id="campoMedTipo">${optsHtml({ g:'__tipo', label:'¿Qué vas a fabricar?', cols:2, opts:[...TIPOS.filter(t => t !== 'Combo' || prod.tipo === 'Combo'), 'Otro'].map(t => ({ v:t })) }, elegido).replace(/^<div class="field">|<\/div>$/g, '')}
         <div class="field-error">Elige qué vas a fabricar</div></div>`;
       if(!prod.tipo){ html += '<div class="field-hint" style="margin-top:-6px">Así se piden las mismas medidas y detalles que en el catálogo.</div>'; }
       else {
@@ -376,6 +376,8 @@
     if($('campoProt') && !(montoOrNull(prod.extraProteccion) > 0)){ $('campoProt').classList.add('invalid'); ok = false; }
     const precio = montoOrNull($('pPrecio').value);
     if(!(precio > 0)){ $('campoPrecio').classList.add('invalid'); ok = false; }
+    const falta = SP.faltaEnModelo(prod, modeloDe(prod));
+    if(falta){ toast(falta, 'error'); const a = $('prodBody').querySelector('.aviso-falta'); if(a) a.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     if(!ok){ const f = $('prodBody').querySelector('.field.invalid'); if(f) f.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     prod.precio = precio;
     if(prod.origen === 'catalogo'){
@@ -868,7 +870,8 @@
           color: conTipo ? (e.color || null) : null, especificaciones: conTipo ? e : {}, estado: conTipo ? estadoDesdeEspecificaciones(it.tipo, e, 'pedido') : {} });
       }
       if(it.pieza_id) return Object.assign(base, { origen:'pieza', pieza_id: it.pieza_id, catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e, precioManual:true, fijo: !cot });
-      return Object.assign(base, { origen:'catalogo', catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e,
+      // guardado: ya estaba en la venta, conserva sus medidas y su protección (las reglas nuevas son para lo que se agrega)
+      return Object.assign(base, { origen:'catalogo', catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e, guardado:true,
         estado: estadoDesdeEspecificaciones(it.tipo, e, 'pedido'), extraProteccion: e.monto_proteccion || '', precioManual:true });
     });
     auto.nombre = auto.tel = auto.ced = false;

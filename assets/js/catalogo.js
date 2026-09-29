@@ -632,6 +632,7 @@
           </div>
         </div>
         <div class="field-hint">En metros</div>
+        <div class="field-error">Escribe el alto y el ancho</div>
       </div>`;
   }
 
@@ -719,6 +720,7 @@
   function limpiarErrores(){
     $('campoNombre').classList.remove('invalid');
     $('campoPrecio').classList.remove('invalid');
+    $('specs').querySelectorAll('.field.invalid').forEach(f => f.classList.remove('invalid'));
   }
 
   function aplicarModo(){
@@ -864,7 +866,7 @@
   });
   $('specs').addEventListener('input', (e)=>{
     const mk = e.target.dataset.mkey;
-    if(mk){ estado[mk] = e.target.value; tocados.add(mk); if(mk === 'alto' || mk === 'ancho') estado._medidasTocadas = true; }
+    if(mk){ const f = e.target.closest('.field'); if(f) f.classList.remove('invalid'); estado[mk] = e.target.value; tocados.add(mk); if(mk === 'alto' || mk === 'ancho') estado._medidasTocadas = true; }
     const tx = e.target.dataset.texto;
     if(tx){ estado[tx] = e.target.value; tocados.add(tx); }
   });
@@ -1034,6 +1036,13 @@
     let primerError = null;
     if(!nombre){ $('campoNombre').classList.add('invalid'); primerError = primerError || $('campoNombre'); }
     if(!(precio > 0)){ $('campoPrecio').classList.add('invalid'); primerError = primerError || $('campoPrecio'); }
+    // El combo tiene medidas fijas: hacen falta las de la puerta y las de las 2 ventanas
+    if(tipoActual === 'Combo'){
+      ['alto', 'ancho', 'ventanas_alto', 'ventanas_ancho'].forEach(k => {
+        const inp = $('specs').querySelector(`[data-mkey="${k}"]`);
+        if(!(numOrNull(estado[k]) > 0) && inp){ const f = inp.closest('.field'); f.classList.add('invalid'); primerError = primerError || f; }
+      });
+    }
     if(primerError){ primerError.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
     if(!db){ toast('Sin conexión con la base de datos', 'error'); return; }
 

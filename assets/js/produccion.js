@@ -591,6 +591,8 @@
       if(o.sede == null) falla('campoOSede');
       if($('campoProt') && !(montoOrNull(o.prod.extraProteccion) > 0)) falla('campoProt');
       if(!(montoOrNull($('fPrecio').value) > 0)) falla('campoPrecio');
+      const falta = SP.faltaEnModelo(o.prod, o.modelo);
+      if(falta){ toast(falta, 'error'); return; }
     }
     if(primero){ primero.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     const precio = montoOrNull($('fPrecio').value);

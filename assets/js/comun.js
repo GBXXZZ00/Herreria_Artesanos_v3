@@ -89,7 +89,8 @@
         { g:'variante', label:'Protección en la puerta', opts:OPC_VARIANTE, def:'Con protección en puerta', cols:2 },
         { g:'vidrio', label:'Vidrio o farquilla de la puerta', opts:OPC_VIDRIO, def:'Negro' },
         { g:'manillon', label:'Manillón de la puerta', opts:OPC_MANILLON, def:'Sin' },
-        { g:'ahumado', label:'Papel ahumado de las ventanas', opts:OPC_AHUMADO, def:'Espejo', zona:'ventanas' }
+        { g:'ahumado', label:'Papel ahumado de las ventanas', opts:OPC_AHUMADO, def:'Espejo', zona:'ventanas' },
+        { g:'ventanas_medidas', label:'Medidas de las 2 ventanas', tipo:'medidas', keys:['ventanas_alto','ventanas_ancho'], def:[1, 1], zona:'ventanas' }
       ],
       extras:[ { k:'marco_decorativo', label:'Marco decorativo en la puerta' } ]
     },
@@ -134,7 +135,7 @@
         { g:'sentido', label:'Sentido de apertura', opts:OPC_SENTIDO, def:'Derecha' },
         { g:'posicion', label:'Posición de apertura', opts:OPC_POSICION, def:'Afuera' },
         { g:'bloque', label:'Tipo de bloque', opts:OPC_BLOQUE, def:'10' },
-        { g:'ventanas_medidas', label:'Medidas de las 2 ventanas', tipo:'medidas', keys:['ventanas_alto','ventanas_ancho'], def:[1, 1], zona:'ventanas' }
+        { g:'aluminio', label:'Aluminio de las ventanas', opts:OPC_ALUMINIO, def:'Panorámica', zona:'ventanas' }
       ]
     },
     'Puerta de Madera': {

@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=49">
+<link rel="stylesheet" href="assets/css/base.css?v=50">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -541,13 +541,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=49"></script>
-<script src="assets/js/supabase-client.js?v=49"></script>
-<script src="assets/js/img-compress.js?v=49"></script>
-<script src="assets/js/comun.js?v=49"></script>
-<script src="assets/js/avisos.js?v=49"></script>
-<script src="assets/js/sesion.js?v=49"></script>
-<script src="assets/js/mi-trabajo.js?v=49"></script>
+<script src="assets/vendor/supabase.js?v=50"></script>
+<script src="assets/js/supabase-client.js?v=50"></script>
+<script src="assets/js/img-compress.js?v=50"></script>
+<script src="assets/js/comun.js?v=50"></script>
+<script src="assets/js/avisos.js?v=50"></script>
+<script src="assets/js/sesion.js?v=50"></script>
+<script src="assets/js/mi-trabajo.js?v=50"></script>
 <script>
 (function(){
   'use strict';
@@ -831,14 +831,15 @@
   // Taller: vales por aprobar, trabajos sin asignar o atrasados, fotos que faltan y lo que falta para calcular pagos
   async function pendientesTaller(){
     const pend = [];
-    const [rVales, rProd, rCats, rMod, rNom, rFotos] = await Promise.all([
+    const [rVales, rProd, rCats, rMod, rNom, rFotos, rCombos] = await Promise.all([
       window.Trabajo.cargarVales().then(d => ({ data:d }), () => ({ data:[] })),
       db.from('ventas').select('id,items:venta_items(categoria_pago_id,etapas(rama,orden,estado,trabajador_id,para_el))').eq('estado', 'en_produccion'),
       db.from('categorias_pago').select('id', { count:'exact', head:true }),
       db.from('catalogo').select('id', { count:'exact', head:true }).is('categoria_pago_id', null),
       db.rpc('nomina_semana'),
       db.from('venta_items').select('catalogo_id,especificaciones,catalogo:catalogo(id,nombre,fotos),venta:ventas!inner(estado)')
-        .in('venta.estado', ['confirmada', 'en_produccion', 'lista']).not('catalogo_id', 'is', null).is('pieza_id', null)
+        .in('venta.estado', ['confirmada', 'en_produccion', 'lista']).not('catalogo_id', 'is', null).is('pieza_id', null),
+      db.from('catalogo').select('id,nombre,especificaciones_base').eq('tipo', 'Combo')
     ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
     let sinAsignar = 0, sinCat = 0, atrasados = 0;
     const hoyIso = window.AH.sabados().hoy;
@@ -888,6 +889,16 @@
       pend.push({ color:'teal', icono:'catalogo', titulo: plural(l.length, '1 modelo sin foto en un color', 'modelos sin foto en un color'),
         detalle: l.length === 1 ? l[0].m.nombre + ' en ' + String(l[0].col).toLowerCase() : l.slice(0, 2).map(x => x.m.nombre).join(', ') + (l.length > 2 ? '…' : ''),
         href: l.length === 1 ? 'catalogo.html?editar=' + l[0].m.id : 'catalogo.html' });
+    }
+    // Combos sin las medidas de sus 2 ventanas: no se pueden vender hasta completarlas
+    const combosSin = ((rCombos && rCombos.data) || []).filter(m => {
+      const e = m.especificaciones_base || {};
+      return !(Number(e.ventanas_alto) > 0 && Number(e.ventanas_ancho) > 0);
+    });
+    if(combosSin.length){
+      pend.push({ color:'teal', icono:'catalogo', titulo: plural(combosSin.length, '1 combo sin medidas de las ventanas', 'combos sin medidas de las ventanas'),
+        detalle: combosSin.length === 1 ? combosSin[0].nombre : 'no se pueden vender',
+        href: combosSin.length === 1 ? 'catalogo.html?editar=' + combosSin[0].id : 'catalogo.html' });
     }
     const nCats = rCats && typeof rCats.count === 'number' ? rCats.count : null;
     if(nCats === 0){

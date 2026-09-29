@@ -14,7 +14,9 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
 const PNG=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==','base64');
 const ventaCache={id:21,estado:'confirmada',total:500,creado_en:new Date().toISOString(),actualizado_en:new Date().toISOString(),confirmada_en:new Date().toISOString(),fecha_entrega:new Date(Date.now()+5*864e5).toISOString().slice(0,10),vendedor_id:'u3',cliente:{nombre:'Pedro Cache',cedula:'V1',telefono:'584140000000'},items:[{nombre:'Lineal',cantidad:1,orden:0}],abonos:[{id:1,monto:250,tipo:'abono',estado:'confirmado'}]};
 const ventaEd={id:30,estado:'cotizacion',cliente_id:3,sede_id:1,vendedor_id:'u3',descuento:5,instalacion:0,traslado:15,subtotal:180,total:190,vence_en:new Date(Date.now()+9*864e5).toISOString().slice(0,10),creado_en:new Date().toISOString(),actualizado_en:new Date().toISOString(),notas:'',cliente:{id:3,nombre:'María González',telefono:'584141234567',cedula:'V12345678'},
- items:[{id:1,venta_id:30,catalogo_id:null,pieza_id:null,a_medida:true,tipo:'Ventana',nombre:'Ventana baño',especificaciones:{alto:1,ancho:2,aluminio:'Ecobel',color:'Negro',descripcion:'Con rejilla'},foto:null,precio_unitario:180,cantidad:1,orden:0}],abonos:[]};
+ items:[{id:1,venta_id:30,catalogo_id:null,pieza_id:null,a_medida:true,tipo:'Ventana',nombre:'Ventana baño',especificaciones:{alto:1,ancho:2,aluminio:'Ecobel',color:'Negro',descripcion:'Con rejilla'},foto:null,precio_unitario:180,cantidad:1,orden:0},
+  {id:2,venta_id:30,catalogo_id:8,pieza_id:null,a_medida:false,tipo:'Combo',nombre:'Combo Imperial',especificaciones:{alto:2.5,ancho:1.1,ventanas_alto:1.3,ventanas_ancho:1.1,color:'Negro',variante:'Sin protección en puerta'},foto:null,precio_unitario:500,cantidad:1,orden:1},
+  {id:3,venta_id:30,catalogo_id:6,pieza_id:null,a_medida:false,tipo:'Ventana',nombre:'Ventana Clásica',especificaciones:{alto:1,ancho:1,proteccion:true,color:'Blanco'},foto:null,precio_unitario:190,cantidad:1,orden:2}],abonos:[]};
 (async()=>{ const b=await chromium.launch(); try{
  const ctx=await b.newContext({...devices['iPhone 13']});const err=[];let rpc=null,rpcEd=null;let lentas=false;
  await ctx.route('**/*.supabase.co/**',async r=>{const req=r.request();const u=decodeURIComponent(req.url());const j=(x,st=200)=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'content-range','content-range':'0-1/2'},body:JSON.stringify(x)});
@@ -80,6 +82,17 @@ const ventaEd={id:30,estado:'cotizacion',cliente_id:3,sede_id:1,vendedor_id:'u3'
  ok('Editar: respeta el precio escrito',(await p.inputValue('#pPrecio'))==='180');
  await p.click('#btnProdListo');await w(300);await p.click('#btnGuardar');await w(1200);
  ok('Editar: envía traslado',rpcEd&&rpcEd.p.venta.traslado===15&&rpcEd.p.items[0].especificaciones.aluminio==='Ecobel',rpcEd&&rpcEd.p.venta);
+ // Lo que ya estaba guardado conserva sus datos aunque el modelo no tenga las medidas de las ventanas
+ await p.goto(H+'venta.html?editar=30');await w(1500);
+ await p.click('#items [data-editar="1"]');await w(400);
+ ok('Editar un combo viejo: no lo traba y conserva sus medidas',!(await p.$('#prodBody .aviso-falta')) && (await p.$$eval('#prodBody .med-fija',x=>x.map(y=>y.textContent))).join('|')==='2.5 × 1.1 m|1.3 × 1.1 m',await p.$$eval('#prodBody .med-fija',x=>x.map(y=>y.textContent)));
+ await p.click('#btnProdListo');await w(700);
+ ok('Se guarda el cambio del combo viejo',!(await p.isVisible('#sheetProducto')),[await p.textContent('#toast'),await p.$$eval('#prodBody .field.invalid',x=>x.map(y=>y.id||y.textContent.slice(0,40)))]);
+ await p.click('#items [data-editar="2"]');await w(400);
+ ok('Editar una ventana vieja con protección: la conserva',(await p.textContent('#prodBody .prot-fija'))==='Con protección');
+ await p.click('#btnProdListo');await w(300);
+ rpcEd=null;await p.click('#btnGuardar');await w(1200);
+ ok('Envía el combo y la ventana tal como estaban',rpcEd&&rpcEd.p.items[1].especificaciones.ventanas_alto===1.3&&rpcEd.p.items[1].especificaciones.alto===2.5&&rpcEd.p.items[2].especificaciones.proteccion===true,rpcEd&&rpcEd.p.items.map(x=>x.especificaciones));
  // 4) Lista desde la copia local
  await p.goto(H+'ventas.html');await p.waitForSelector('.vcard');await w(300);
  ok('Guarda copia local de la lista',await p.evaluate(()=>!!localStorage.getItem('ah_cache_ventas')));
