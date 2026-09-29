@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Nueva venta · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=51">
+<link rel="stylesheet" href="assets/css/base.css?v=52">
 <style>
   .page{padding:4px 18px calc(150px + var(--safe-b))}
   .sec{margin-top:22px}
@@ -109,6 +109,19 @@
   .btn-wa[disabled]{opacity:.7}
   .btn-wa .spinner{border-color:rgba(255,255,255,.35);border-top-color:#fff}
   .f-fijo{font-size:15px;font-weight:700;color:var(--ink-soft)}
+
+  /* Cotización | Venta */
+  .modo-venta{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:4px;margin-top:12px;border-radius:14px;background:var(--surface-2)}
+  .modo-venta button{position:relative;z-index:1;height:42px;border-radius:11px;font-size:15.5px;font-weight:800;color:var(--ink-soft);white-space:nowrap;transition:color 160ms var(--ease-out),transform 120ms var(--ease-out)}
+  .modo-venta button:active{transform:scale(0.97)}
+  .modo-venta button.on{color:var(--accent)}
+  .modo-fondo{position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:42px;border-radius:11px;background:var(--surface);box-shadow:0 1px 3px rgba(20,40,40,.12);transition:transform 220ms var(--ease-out)}
+  .modo-venta.en-venta .modo-fondo{transform:translateX(100%)}
+  /* Producto al que le faltan detalles para fabricar */
+  .item.falta{border-color:var(--danger)}
+  .item-falta{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;font-weight:800;color:var(--danger);text-align:left;transition:transform 120ms var(--ease-out)}
+  .item-falta:active{transform:scale(0.97)}
+  .item-falta svg{flex-shrink:0;width:14px;height:14px}
 </style>
 </head>
 <body data-requiere-sesion="si">
@@ -118,13 +131,20 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
   </button>
   <div class="topbar-text">
-    <div class="topbar-title">Nueva venta</div>
-    <div class="topbar-sub" id="subVenta">Cotización o venta</div>
+    <div class="topbar-title">Nueva cotización</div>
+    <div class="topbar-sub" id="subVenta">Solo lo que cambia el precio</div>
   </div>
 </header>
 
 <main class="page" id="pagina">
   <div id="avisoBorrador"></div>
+
+  <!-- Cotización o venta -->
+  <div class="modo-venta" id="modoVenta" role="group" aria-label="Qué vas a hacer">
+    <span class="modo-fondo" aria-hidden="true"></span>
+    <button type="button" class="on" aria-pressed="true" data-modo="cotizacion">Cotización</button>
+    <button type="button" aria-pressed="false" data-modo="venta">Venta</button>
+  </div>
 
   <!-- 1. Cliente -->
   <section class="sec" style="--i:0">
@@ -197,30 +217,9 @@
 <div class="foot-venta" id="pie">
   <div class="foot-fila">
     <div class="foot-total"><span>Total</span><b id="pieTotal">$0</b></div>
-    <button class="btn-primary" type="button" id="btnGuardar">Guardar</button>
+    <button class="btn-primary" type="button" id="btnGuardar">Guardar cotización</button>
   </div>
 </div>
-
-<!-- Guardar como cotización o como venta -->
-<div class="sheet-scrim" id="scrimGuardar" data-cerrar="sheetGuardar"></div>
-<section class="sheet sheet-auto" id="sheetGuardar" role="dialog" aria-modal="true" aria-labelledby="guardarTitulo">
-  <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title" id="guardarTitulo">¿Cómo la guardamos?</h2>
-    <button class="icon-btn" data-cerrar="sheetGuardar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </div>
-  <div class="sheet-body">
-    <div class="origenes">
-      <button class="origen" type="button" id="optCotizacion">
-        <span class="ini-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
-        <span><span class="origen-t">Cotización</span><span class="origen-s">El cliente lo va a pensar. Vale 20 días</span></span>
-      </button>
-      <button class="origen" type="button" id="optVenta">
-        <span class="ini-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span>
-        <span><span class="origen-t">Venta</span><span class="origen-s">El cliente ya pagó todo o una parte</span></span>
-      </button>
-    </div>
-  </div>
-</section>
 
 <div class="hidden" id="menuModulos" data-activo="venta"></div>
 
@@ -300,14 +299,14 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=51"></script>
-<script src="assets/js/supabase-client.js?v=51"></script>
-<script src="assets/js/img-compress.js?v=51"></script>
-<script src="assets/js/comun.js?v=51"></script>
-<script src="assets/js/avisos.js?v=51"></script>
-<script src="assets/js/sesion.js?v=51"></script>
-<script src="assets/js/ventas-comun.js?v=51"></script>
-<script src="assets/js/specs-producto.js?v=51"></script>
-<script src="assets/js/venta.js?v=51"></script>
+<script src="assets/vendor/supabase.js?v=52"></script>
+<script src="assets/js/supabase-client.js?v=52"></script>
+<script src="assets/js/img-compress.js?v=52"></script>
+<script src="assets/js/comun.js?v=52"></script>
+<script src="assets/js/avisos.js?v=52"></script>
+<script src="assets/js/sesion.js?v=52"></script>
+<script src="assets/js/ventas-comun.js?v=52"></script>
+<script src="assets/js/specs-producto.js?v=52"></script>
+<script src="assets/js/venta.js?v=52"></script>
 </body>
 </html>

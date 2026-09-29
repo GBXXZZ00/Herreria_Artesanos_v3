@@ -4,7 +4,7 @@
 // prod = { origen, tipo, estado, color, extraProteccion, ... }; modelo = fila del catálogo (o null).
 (function(){
   'use strict';
-  const { acabados, tieneColores, esquema, grupoActivo, esc, numOrNull, montoOrNull, dinero, medidas } = window.AH;
+  const { acabados, tieneColores, esquema, grupoActivo, esc, numOrNull, montoOrNull, dinero, medidas, esFab, faltanDetalles } = window.AH;
 
   const TARIFA_VENTANA = { 'Panorámica':[90, 190], 'Ecobel':[120, 220] }; // $/m² sin y con protección
   const PRECIO_MANILLON = 20;
@@ -53,9 +53,11 @@
     if(prod.tipo === 'Ventana'){
       const alto = numOrNull(s.alto) || 0, ancho = numOrNull(s.ancho) || 0;
       const area = r2(alto * ancho);
-      const tarifa = (TARIFA_VENTANA[s.aluminio] || TARIFA_VENTANA['Panorámica'])[s.proteccion ? 1 : 0];
+      // Sin aluminio elegido no hay precio: se elige siempre (Panorámica o Ecobel)
+      if(!TARIFA_VENTANA[s.aluminio]) return { total:0, texto:'elige el aluminio para ver el precio', sinAluminio:true };
+      const tarifa = TARIFA_VENTANA[s.aluminio][s.proteccion ? 1 : 0];
       total = r2(area * tarifa);
-      partes.push(`${area} m² × $${tarifa} (${s.aluminio || 'Panorámica'}${s.proteccion ? ' con protección' : ''})`);
+      partes.push(`${area} m² × $${tarifa} (${s.aluminio}${s.proteccion ? ' con protección' : ''})`);
     } else {
       total = Number(modelo && modelo.precio_base) || 0;
       partes.push(`Modelo ${dinero(total)}`);
@@ -70,12 +72,17 @@
     return { total: r2(total), texto: partes.join(' + ') };
   }
 
-  function optsHtml(grupo, sel){
+  // mal: el campo se marca en rojo con su error debajo (falta elegirlo)
+  // Solo la etiqueta y las opciones (para meterlas en un campo propio con su error)
+  function optsCuerpo(grupo, sel){
     const cols = grupo.cols || grupo.opts.length;
-    return `<div class="field"><span class="field-label">${esc(grupo.label)}</span>
+    return `<span class="field-label">${esc(grupo.label)}</span>
       <div class="opts" style="--cols:${cols}">${grupo.opts.map(o => `
         <button type="button" class="opt ${o.v === sel ? 'selected' : ''}" data-g="${grupo.g}" data-v="${esc(o.v)}" aria-pressed="${o.v === sel}">${o.sw ? `<span class="swatch ${o.sw}"></span>` : ''}${esc(o.t || o.v)}</button>`).join('')}
-      </div></div>`;
+      </div>`;
+  }
+  function optsHtml(grupo, sel, mal){
+    return `<div class="field ${mal ? 'invalid' : ''}" data-campo="${grupo.g}">${optsCuerpo(grupo, sel)}<div class="field-error">Elige una opción</div></div>`;
   }
   function medidasHtml(prod, label, kA, kB){
     const s = prod.estado;
@@ -92,15 +99,30 @@
       ${a > 0 && b > 0 ? `<div class="med-fija">${esc(medidas({ alto:a, ancho:b }))}</div>` : '<div class="med-fija falta">Falta en el Catálogo</div>'}
       ${ayuda ? `<div class="field-hint">${esc(ayuda)}</div>` : ''}</div>`;
   }
-  function grupoHtml(prod, g, fijas){
+  // ver: qué mostrar ('cotizacion' esconde lo de fabricar); faltan: campos por marcar en rojo
+  function grupoHtml(prod, g, fijas, ver){
+    ver = ver || {};
+    if(ver.modo === 'cotizacion' && esFab(g.g)) return '';
     if(g.tipo === 'medidas') return fijas ? medidaFijaHtml(prod, g.label, g.keys[0], g.keys[1]) : medidasHtml(prod, g.label, g.keys[0], g.keys[1]);
     if(g.tipo === 'texto') return `<div class="field"><label class="field-label">${esc(g.label)}</label><input class="input" type="text" data-texto="${g.g}" value="${esc(prod.estado[g.g] || '')}" placeholder="${esc(g.placeholder || '')}" autocomplete="off"></div>`;
-    return optsHtml(g, prod.estado[g.g]);
+    return optsHtml(g, prod.estado[g.g], (ver.faltan || []).includes(g.g));
+  }
+  // Lo que falta en un producto: el aluminio de la ventana (siempre) y, al vender, los detalles de instalación
+  function faltanEn(prod, modo){
+    if(prod.origen === 'pieza' || !prod.tipo) return [];
+    const s = prod.estado || {};
+    const l = [];
+    if(prod.tipo === 'Ventana' && !s.aluminio) l.push('aluminio');
+    if(modo === 'venta') faltanDetalles(prod.tipo, s).forEach(g => l.push(g));
+    return l;
   }
   const ICON_PUERTA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="1.5"/><path d="M15 11v2.5"/></svg>';
   const ICON_VENTANA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M12 4.5v15M3.5 12h17"/></svg>';
 
-  function specsHtml(prod, modelo){
+  // ver = { modo:'cotizacion'|'venta', marcar:true } (sin ver se muestra todo, como en exhibición)
+  function specsHtml(prod, modelo, ver){
+    ver = Object.assign({}, ver || {});
+    ver.faltan = ver.marcar ? faltanEn(prod, ver.modo || 'venta') : [];
     aplicarFijas(prod, modelo);
     const esq = esquema(prod.tipo, 'pedido');
     const s = prod.estado;
@@ -117,8 +139,8 @@
     const dependeDeGrupo = (g) => g.si && typeof g.si === 'object';
     const dependeDeExtra = (g) => g.si && typeof g.si === 'string';
     esq.grupos.filter(g => !g.si && !g.zona).forEach(g => {
-      html += grupoHtml(prod, g);
-      esq.grupos.filter(h => dependeDeGrupo(h) && h.si.g === g.g && grupoActivo(h, s)).forEach(h => { html += grupoHtml(prod, h); });
+      html += grupoHtml(prod, g, false, ver);
+      esq.grupos.filter(h => dependeDeGrupo(h) && h.si.g === g.g && grupoActivo(h, s)).forEach(h => { html += grupoHtml(prod, h, false, ver); });
     });
     if(esq.extras.length){
       // Ventana del catálogo: la protección la trae el modelo (no se toca) y el marco solo si lleva protección
@@ -132,7 +154,7 @@
       if(protFija) html += `<div class="field"><span class="field-label">Protección</span><div class="prot-fija ${s.proteccion ? 'si' : ''}">${s.proteccion ? 'Con protección' : 'Sin protección'}</div><div class="field-hint">Viene del modelo. Para otra opción, elige otro modelo.</div></div>`;
       if(chips) html += `<div class="field"><span class="field-label">Extras</span><div class="toggles">${chips}</div></div>`;
     }
-    esq.grupos.filter(g => dependeDeExtra(g) && grupoActivo(g, s) && !g.zona).forEach(g => { html += grupoHtml(prod, g); });
+    esq.grupos.filter(g => dependeDeExtra(g) && grupoActivo(g, s) && !g.zona).forEach(g => { html += grupoHtml(prod, g, false, ver); });
     if(pideMontoProteccion(prod, modelo)){
       html += `<div class="field" id="campoProt"><label class="field-label" for="pProt">Monto de la protección</label>
         <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="pProt" data-precio-extra type="text" inputmode="decimal" autocomplete="off" value="${esc(prod.extraProteccion || '')}"></div>
@@ -141,7 +163,7 @@
     const zona = esq.grupos.filter(g => g.zona && grupoActivo(g, s));
     if(zona.length){
       html += `<div class="zona">${ICON_VENTANA}Ventanas</div>`;
-      zona.forEach(g => { html += grupoHtml(prod, g, fijas); });
+      zona.forEach(g => { html += grupoHtml(prod, g, fijas, ver); });
       html += '<div class="zona-fin"></div>';
     }
     return html;
@@ -151,6 +173,7 @@
   function tocar(prod, target){
     const o = target.closest('.opt[data-g]');
     if(o && o.dataset.g !== '__tipo'){
+      const campo = o.closest('.field.invalid'); if(campo) campo.classList.remove('invalid');
       if(o.dataset.g === '__color') prod.color = o.dataset.v;   // un solo color para todo el producto
       else prod.estado[o.dataset.g] = o.dataset.v;
       return true;
@@ -174,5 +197,5 @@
     return false;
   }
 
-  window.SpecsProducto = { TARIFA_VENTANA, PRECIO_MANILLON, ECOBEL_COMBO, calcular, pideMontoProteccion, optsHtml, specsHtml, tocar, escribir, faltaEnModelo };
+  window.SpecsProducto = { TARIFA_VENTANA, PRECIO_MANILLON, ECOBEL_COMBO, calcular, pideMontoProteccion, optsHtml, optsCuerpo, specsHtml, tocar, escribir, faltaEnModelo, faltanEn };
 })();

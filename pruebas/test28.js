@@ -221,15 +221,17 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  const y=await entrar(b,'u3','333333');pags.push(y);
  await y.click('#btnNuevaVenta');await y.waitForURL('**/venta.html');await y.waitForTimeout(900);
  await y.fill('#cCedula','99.887.766');await y.waitForTimeout(700);await y.fill('#cNombre','Carla Prueba');await y.fill('#cTel','04149998877');
+ await y.click('#modoVenta [data-modo="venta"]');await y.waitForTimeout(200);
  await y.click('#btnAgregar');await y.waitForTimeout(400);await y.click('[data-origen="catalogo"]');await y.waitForTimeout(400);
  await y.click(`[data-modelo="${mid}"]`);await y.waitForTimeout(500);
  ok('2. En la venta el modelo trae su precio del catálogo',(await y.inputValue('#pPrecio'))==='300',await y.inputValue('#pPrecio'));
  await y.click('.opt[data-g="__color"][data-v="Negro"]');await y.waitForTimeout(200);
  await y.click('.opt[data-g="manillon"][data-v="H"]');await y.waitForTimeout(200);
+ for(const [gg,vv] of [['sentido','Derecha'],['posicion','Afuera'],['bloque','15']]){await y.click(`.opt[data-g="${gg}"][data-v="${vv}"]`);await y.waitForTimeout(100);}
  await y.screenshot({path:'shots5/e3-venta-producto.png'});
  await y.click('#btnProdListo');await y.waitForTimeout(500);
  ok('   El producto queda en la venta con su total',(await y.$$('#items .item')).length===1&&(await texto(y,'#pieTotal'))==='$320',await texto(y,'#pieTotal'));
- await y.click('#btnGuardar');await y.waitForTimeout(500);await y.click('#optVenta');await y.waitForTimeout(600);
+ await y.click('#btnGuardar');await y.waitForTimeout(700);
  await y.click('[data-metodo="Zelle"]');
  await y.setInputFiles('#aComprobante',{name:'c.png',mimeType:'image/png',buffer:PNG});await y.waitForTimeout(700);
  await y.screenshot({path:'shots5/e4-venta-pago.png'});

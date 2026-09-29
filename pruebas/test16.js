@@ -95,11 +95,14 @@ const rpcs=[];
  ok('Nombre del PDF',dl.suggestedFilename()==='Cotizacion-2-Maria-Gonzalez.pdf',dl.suggestedFilename());
  // Convertir
  await p.click('#fichaBody [data-accion="convertir"]');await w(500);
+ ok('Convertir: primero se revisan los detalles para fabricar (ya elegidos)',(await p.textContent('#accionTitulo'))==='Detalles para fabricar'&&!!(await p.$('#accionBody [data-g="sentido"].selected')));
+ await p.click('#btnAccion');await w(400);
  ok('Convertir: abono 50% sugerido',(await p.inputValue('#aMonto'))==='125');
  await p.click('#btnAccion');await w(300);ok('Convertir pide método',await p.$eval('#campoMetodo',x=>x.classList.contains('invalid')));
  ok('Convertir pide comprobante',await p.$eval('#campoComp',x=>x.classList.contains('invalid')));
  await p.setInputFiles('#aComprobante',{name:'c.png',mimeType:'image/png',buffer:PNG});await w(700);
  await p.click('#accionBody [data-metodo="Binance"]');await p.click('#btnAccion');await w(1500);
+ ok('Guarda los detalles antes de convertir',rpcs.some(x=>x[0]==='completar_detalles'&&x[1].vid===2));
  const conv=rpcs.find(x=>x[0]==='convertir_en_venta');ok('Convertir envía abono y fecha',conv&&conv[1].vid===2&&conv[1].a.monto===125&&conv[1].a.metodo==='Binance'&&/^\d{4}-\d{2}-\d{2}$/.test(conv[1].a.fecha_entrega),conv&&conv[1]);
  ok('La cotización sale de la lista',!(await p.$('.vcard[data-id="2"]')));
  // Atrás → Inicio

@@ -16,7 +16,7 @@ const ventaCache={id:21,estado:'confirmada',total:500,creado_en:new Date().toISO
 const ventaEd={id:30,estado:'cotizacion',cliente_id:3,sede_id:1,vendedor_id:'u3',descuento:5,instalacion:0,traslado:15,subtotal:180,total:190,vence_en:new Date(Date.now()+9*864e5).toISOString().slice(0,10),creado_en:new Date().toISOString(),actualizado_en:new Date().toISOString(),notas:'',cliente:{id:3,nombre:'María González',telefono:'584141234567',cedula:'V12345678'},
  items:[{id:1,venta_id:30,catalogo_id:null,pieza_id:null,a_medida:true,tipo:'Ventana',nombre:'Ventana baño',especificaciones:{alto:1,ancho:2,aluminio:'Ecobel',color:'Negro',descripcion:'Con rejilla'},foto:null,precio_unitario:180,cantidad:1,orden:0},
   {id:2,venta_id:30,catalogo_id:8,pieza_id:null,a_medida:false,tipo:'Combo',nombre:'Combo Imperial',especificaciones:{alto:2.5,ancho:1.1,ventanas_alto:1.3,ventanas_ancho:1.1,color:'Negro',variante:'Sin protección en puerta'},foto:null,precio_unitario:500,cantidad:1,orden:1},
-  {id:3,venta_id:30,catalogo_id:6,pieza_id:null,a_medida:false,tipo:'Ventana',nombre:'Ventana Clásica',especificaciones:{alto:1,ancho:1,proteccion:true,color:'Blanco'},foto:null,precio_unitario:190,cantidad:1,orden:2}],abonos:[]};
+  {id:3,venta_id:30,catalogo_id:6,pieza_id:null,a_medida:false,tipo:'Ventana',nombre:'Ventana Clásica',especificaciones:{alto:1,ancho:1,proteccion:true,aluminio:'Panorámica',color:'Blanco'},foto:null,precio_unitario:190,cantidad:1,orden:2}],abonos:[]};
 (async()=>{ const b=await chromium.launch(); try{
  const ctx=await b.newContext({...devices['iPhone 13']});const err=[];let rpc=null,rpcEd=null;let lentas=false;
  await ctx.route('**/*.supabase.co/**',async r=>{const req=r.request();const u=decodeURIComponent(req.url());const j=(x,st=200)=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'content-range','content-range':'0-1/2'},body:JSON.stringify(x)});
@@ -41,7 +41,7 @@ const ventaEd={id:30,estado:'cotizacion',cliente_id:3,sede_id:1,vendedor_id:'u3'
  await p.click('#btnNuevaVenta');await p.waitForURL('**/venta.html');await w(900);
  await p.fill('#cCedula','12.345.678');await w(900);
  await p.click('#btnAgregar');await w();await p.click('[data-origen="pieza"]');await w(400);await p.click('[data-pieza="9"]');await w(400);await p.click('#btnProdListo');await w(400);
- await p.click('#btnGuardar');await w(400);await p.click('#optVenta');await w(600);
+ await p.click('#modoVenta [data-modo="venta"]');await w(200);await p.click('#btnGuardar');await w(600);
  ok('Exhibición: pago completo por defecto',await p.$eval('[data-modo-pago="completo"]',x=>x.classList.contains('selected'))&&await p.$eval('#campoAbono',x=>x.classList.contains('hidden')));
  const hoy=await p.evaluate(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');});
  ok('Exhibición: entrega hoy',(await p.inputValue('#aFecha'))===hoy,await p.inputValue('#aFecha'));
@@ -56,6 +56,7 @@ const ventaEd={id:30,estado:'cotizacion',cliente_id:3,sede_id:1,vendedor_id:'u3'
  await p.fill('#cCedula','12.345.678');await w(900);
  await p.click('#btnAgregar');await w();await p.click('[data-origen="medida"]');await w(400);
  await p.click('.opt[data-g="__tipo"][data-v="Ventana"]');await w(300);
+ await p.click('.opt[data-g="aluminio"][data-v="Panorámica"]');await w(150);
  await p.fill('[data-mkey="alto"]','1');await p.fill('[data-mkey="ancho"]','2');
  await p.click('.opt[data-g="__color"][data-v="Negro"]');await w(200);
  await p.fill('#pDesc','Con rejilla');await p.click('#btnProdListo');await w(400);
@@ -66,7 +67,7 @@ const ventaEd={id:30,estado:'cotizacion',cliente_id:3,sede_id:1,vendedor_id:'u3'
  await p.click('#items [data-editar="0"]');await w(400);
  ok('Al editar conserva tipo y medidas',await p.$eval('.opt[data-g="__tipo"].selected',x=>x.dataset.v)==='Ventana'&&(await p.inputValue('[data-mkey="ancho"]'))==='2');
  await p.click('#btnProdListo');await w(400);
- await p.click('#btnGuardar');await w(400);await p.click('#optVenta');await w(600);
+ await p.click('#modoVenta [data-modo="venta"]');await w(200);await p.click('#btnGuardar');await w(600);
  ok('Por encargo: pago parcial por defecto',await p.$eval('[data-modo-pago="parcial"]',x=>x.classList.contains('selected')));
  await p.click('[data-metodo="Zelle"]');await p.setInputFiles('#aComprobante',{name:'c.png',mimeType:'image/png',buffer:PNG});await w(700);
  await p.click('#btnConfListo');await p.waitForSelector('.listo');await w(400);

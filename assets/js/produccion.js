@@ -505,7 +505,7 @@
     const cuerpo = $('ordenBody');
     const scroll = cuerpo.scrollTop;
     const o = orden;
-    let html = `<div class="field" id="campoOTipo">${SP.optsHtml({ g:'__otipo', label:'¿Qué vas a fabricar?', cols:2, opts: tiposConModelos().map(t => ({ v:t })) }, o.tipo).replace(/^<div class="field">|<\/div>$/g, '')}
+    let html = `<div class="field" id="campoOTipo">${SP.optsCuerpo({ g:'__otipo', label:'¿Qué vas a fabricar?', cols:2, opts: tiposConModelos().map(t => ({ v:t })) }, o.tipo)}
       ${fieldErr('eOTipo', 'Elige qué vas a fabricar')}</div>`;
     if(o.tipo){
       const m = o.modelo;
@@ -520,12 +520,12 @@
     if(o.modelo){
       if(!o.modelo.categoria_pago_id){
         html += categorias.length
-          ? `<div class="field" id="campoOCat">${SP.optsHtml({ g:'__ocat', label:'Categoría de pago', cols:1, opts: categorias.map(c => ({ v:String(c.id), t:c.nombre })) }, o.cat == null ? null : String(o.cat)).replace(/^<div class="field">|<\/div>$/g, '')}
+          ? `<div class="field" id="campoOCat">${SP.optsCuerpo({ g:'__ocat', label:'Categoría de pago', cols:1, opts: categorias.map(c => ({ v:String(c.id), t:c.nombre })) }, o.cat == null ? null : String(o.cat))}
               <p class="field-hint aviso">Este modelo no tiene. La que elijas queda guardada en el modelo.</p>${fieldErr('eOCat', 'Elige la categoría de pago')}</div>`
           : `<div class="field"><p class="field-error" style="display:block">Este modelo no tiene categoría de pago y todavía no hay ninguna. Créalas en Mi cuenta › Categorías de pago.</p></div>`;
       }
-      html += SP.specsHtml(o.prod, o.modelo);
-      html += `<div class="field" id="campoOSede">${SP.optsHtml({ g:'__osede', label:'Sede donde quedará', cols:2, opts: sedes.map(x => ({ v:String(x.id), t:x.nombre })) }, o.sede == null ? null : String(o.sede)).replace(/^<div class="field">|<\/div>$/g, '')}
+      html += SP.specsHtml(o.prod, o.modelo, { marcar: !!o.marcar });   // en exhibición se ve todo; el aluminio de la ventana se elige
+      html += `<div class="field" id="campoOSede">${SP.optsCuerpo({ g:'__osede', label:'Sede donde quedará', cols:2, opts: sedes.map(x => ({ v:String(x.id), t:x.nombre })) }, o.sede == null ? null : String(o.sede))}
         ${fieldErr('eSede', 'Elige dónde quedará la pieza')}</div>`;
       html += `<div class="field"><span class="field-label">Cantidad</span>
         <div class="stepper"><button type="button" data-cant="-1" aria-label="Una menos">−</button><span id="cantValor">${o.prod.cantidad}</span><button type="button" data-cant="1" aria-label="Una más">+</button></div></div>`;
@@ -628,6 +628,11 @@
       if(!(montoOrNull($('fPrecio').value) > 0)) falla('campoPrecio');
       const falta = SP.faltaEnModelo(o.prod, o.modelo);
       if(falta){ toast(falta, 'error'); return; }
+      if(SP.faltanEn(o.prod, 'venta').length){
+        o.marcar = true; pintarOrden();
+        const f = $('ordenBody').querySelector('.field.invalid'); if(f) f.scrollIntoView({ block:'center', behavior:'smooth' });
+        toast('Elige lo que está en rojo', 'error'); return;
+      }
     }
     if(primero){ primero.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     const precio = montoOrNull($('fPrecio').value);

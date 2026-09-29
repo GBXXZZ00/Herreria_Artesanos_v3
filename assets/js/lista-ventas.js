@@ -2,7 +2,8 @@
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, dinero, montoOrNull: numOrNull, toast, abrirHoja, cerrarHoja, iconoTipo, verFoto, antesDeCerrar } = window.AH;
+  const { esc, dinero, montoOrNull: numOrNull, toast, abrirHoja, cerrarHoja, iconoTipo, verFoto, antesDeCerrar,
+          esquema, grupoActivo, esFab, FAB_INSTALACION, faltanDetalles, estadoDesdeEspecificaciones, especificacionesDesdeEstado } = window.AH;
   const AV = window.AV;
   const $ = (id) => document.getElementById(id);
   const MODO = document.body.dataset.modo;             // 'cotizaciones' | 'ventas'
@@ -572,6 +573,8 @@
   // Hoja de acción: convertir en venta, registrar pago, confirmar pago, cancelar
   // ---------------------------------------------------------------------------
   let acc = null;
+  // Lo que se completa al convertir (el resto de la cotización no cambia)
+  const DETALLE_CLAVES = ['aluminio', 'sentido', 'posicion', 'bloque', 'proteccion_sentido', 'vidrio_o_farquilla', 'color_vidrio', 'papel_ahumado', 'color_ahumado', 'cerradura', 'cerradura_detalle'];
   function uuid(){
     if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
     const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
@@ -583,17 +586,54 @@
     const r = AV.resta(v);
     acc = { tipo, monto:'', metodo:null, fecha: AV.habiles(20), blob:null, foto:null, motivo:'', guardando:false, clave: uuid(), abono: tipo === 'confirmar' ? v.abonos.find(a => a.id === abonoId) : null, nota:'' };
     if(tipo === 'convertir'){
+      // Primero los detalles para fabricar: la cotización no los pedía (vidrio y ahumado venían del modelo)
+      acc.det = v.items.filter(it => !it.pieza_id && gruposDet(it, it.especificaciones || {}).length)
+        .map(it => ({ id: it.id, it, s: estadoDesdeEspecificaciones(it.tipo, it.especificaciones, 'pedido', true), marcar:false }));
+      acc.tocado = false;
+      acc.paso = acc.det.length ? 'detalles' : 'pago';
       const inm = AV.soloInmediata(v.items);   // exhibición: pago completo y entrega hoy
       acc.modo = inm ? 'completo' : 'parcial';
       acc.monto = String(inm ? Number(v.total) : Math.round(v.total * 50) / 100);
       if(inm) acc.fecha = AV.iso(new Date());
     }
     if(tipo === 'abono'){ acc.modo = 'completo'; acc.monto = String(r); }
-    $('accionTitulo').textContent = tipo === 'confirmar' ? 'Confirmar pago' : tipo === 'convertir' ? 'Convertir en venta' : tipo === 'abono' ? 'Registrar pago' : (AV.esCotizacion(v) ? 'Descartar cotización' : 'Cancelar venta');
-    $('btnAccion').textContent = tipo === 'confirmar' ? 'Sí llegó, confirmar' : tipo === 'convertir' ? 'Guardar venta' : tipo === 'abono' ? 'Guardar pago' : (AV.esCotizacion(v) ? 'Descartar' : 'Cancelar venta');
     $('btnAccion').style.background = tipo === 'cancelar' ? 'var(--danger)' : '';
     pintarAccion();
     abrirHoja('sheetAccion');
+  }
+  function tituloAccion(){
+    const tipo = acc.tipo, v = actual;
+    const det = tipo === 'convertir' && acc.paso === 'detalles';
+    $('accionTitulo').textContent = det ? 'Detalles para fabricar' : tipo === 'confirmar' ? 'Confirmar pago' : tipo === 'convertir' ? 'Convertir en venta' : tipo === 'abono' ? 'Registrar pago' : (AV.esCotizacion(v) ? 'Descartar cotización' : 'Cancelar venta');
+    $('btnAccion').textContent = det ? 'Seguir al pago' : tipo === 'confirmar' ? 'Sí llegó, confirmar' : tipo === 'convertir' ? 'Guardar venta' : tipo === 'abono' ? 'Guardar pago' : (AV.esCotizacion(v) ? 'Descartar' : 'Cancelar venta');
+  }
+  // Qué se pregunta de cada producto al convertir: lo de fabricar y, si una ventana vieja no lo tiene, el aluminio
+  function gruposDet(it, s){
+    if(!window.AH.TIPOS.includes(it.tipo)) return [];
+    const sinAluminio = it.tipo === 'Ventana' && !(it.especificaciones || {}).aluminio;
+    return esquema(it.tipo, 'pedido').grupos.filter(g => (esFab(g.g) || (sinAluminio && g.g === 'aluminio')) && grupoActivo(g, s));
+  }
+  const faltanDet = (d) => [...faltanDetalles(d.it.tipo, d.s), ...(d.it.tipo === 'Ventana' && !d.s.aluminio ? ['aluminio'] : [])];
+  // Detalles para fabricar de un producto de la cotización (hacia dónde abre, bloque, vidrio…)
+  function detGrupoHtml(d, i, g){
+    if(g.tipo === 'texto') return `<div class="field"><label class="field-label" for="dt${i}-${g.g}">${esc(g.label)}</label>
+      <input class="input" type="text" id="dt${i}-${g.g}" data-det="${i}" data-texto="${g.g}" value="${esc(d.s[g.g] || '')}" placeholder="${esc(g.placeholder || '')}" autocomplete="off"></div>`;
+    const sel = d.s[g.g];
+    const mal = d.marcar && (FAB_INSTALACION.includes(g.g) || g.g === 'aluminio') && !sel;
+    return `<div class="field ${mal ? 'invalid' : ''}" data-campo="${g.g}"><span class="field-label">${esc(g.label)}</span>
+      <div class="opts" style="--cols:${g.cols || g.opts.length}">${g.opts.map(o => `<button type="button" class="opt ${o.v === sel ? 'selected' : ''}" data-det="${i}" data-g="${g.g}" data-v="${esc(o.v)}" aria-pressed="${o.v === sel}">${o.sw ? `<span class="swatch ${o.sw}"></span>` : ''}${esc(o.t || o.v)}</button>`).join('')}</div>
+      <div class="field-error">Elige una opción</div></div>`;
+  }
+  function detallesHtml(){
+    return `<p class="det-intro">Revisa y completa cómo se fabrica cada uno. Sin esto no se puede vender.</p>` + acc.det.map((d, i) => {
+      const it = d.it;
+      const grupos = gruposDet(it, d.s);
+      return `<div class="det-item">
+        <div class="det-cab"><span class="det-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="">` : iconoTipo(it.tipo, 22)}</span>
+          <span style="min-width:0"><span class="det-nom">${esc(it.nombre)}</span><span class="det-tipo">${esc(it.tipo)}${it.cantidad > 1 ? ' · ' + it.cantidad + ' unidades' : ''}</span></span></div>
+        ${grupos.map(g => detGrupoHtml(d, i, g)).join('')}
+      </div>`;
+    }).join('');
   }
   function metodosHtml(label){
     return `<div class="field" id="campoMetodo"><span class="field-label">${label}</span>
@@ -603,6 +643,11 @@
   function pintarAccion(){
     const v = actual;
     let html = '';
+    tituloAccion();
+    if(acc.tipo === 'convertir' && acc.paso === 'detalles'){
+      $('accionBody').innerHTML = detallesHtml();
+      return;
+    }
     if(acc.tipo === 'confirmar'){
       const a = acc.abono;
       html = `<div class="conf-total"><span>Pago · ${esc(a.metodo)}</span><b>${dinero(a.monto)}</b></div>
@@ -619,7 +664,8 @@
         ${AV.esCotizacion(v) ? '' : '<div class="f-nota">Si tenía piezas de entrega inmediata, vuelven a la tienda.</div>'}`;
     } else {
       const base = acc.tipo === 'convertir' ? Number(v.total) : AV.resta(v);
-      html = `<div class="conf-total"><span>${acc.tipo === 'convertir' ? 'Total de la venta' : 'Resta por pagar'}</span><b>${dinero(base)}</b></div>
+      html = `${acc.tipo === 'convertir' && acc.det.length ? '<button type="button" class="det-volver" data-det-volver>Volver a los detalles</button>' : ''}
+        <div class="conf-total"><span>${acc.tipo === 'convertir' ? 'Total de la venta' : 'Resta por pagar'}</span><b>${dinero(base)}</b></div>
         ${AV.modoPagoHtml(acc.modo, acc.tipo === 'abono' ? 'Paga lo que resta' : 'Pago completo')}
         <div class="field ${acc.modo === 'completo' ? 'hidden' : ''}" id="campoMonto"><label class="field-label" for="aMonto">Monto del pago en dólares</label>
           <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="aMonto" type="text" inputmode="decimal" autocomplete="off" value="${esc(acc.monto)}"></div>
@@ -647,6 +693,7 @@
     $('campoMonto').classList.toggle('invalid', m > tope);
   }
   $('accionBody').addEventListener('input', (e) => {
+    if(e.target.dataset.det && e.target.dataset.texto){ acc.det[+e.target.dataset.det].s[e.target.dataset.texto] = e.target.value; acc.tocado = true; return; }
     if(e.target.id === 'aMonto'){ acc.monto = e.target.value; avisoMonto(); }
     if(e.target.id === 'aMotivo') acc.motivo = e.target.value;
     if(e.target.id === 'aNota') acc.nota = e.target.value;
@@ -670,6 +717,14 @@
       return;
     }
     if(e.target.closest('[data-no-llego]')){ guardarConfirmacion(false); return; }
+    const od = e.target.closest('.opt[data-det]');
+    if(od){
+      acc.det[+od.dataset.det].s[od.dataset.g] = od.dataset.v;
+      acc.tocado = true;
+      const sc = $('accionBody').scrollTop; pintarAccion(); $('accionBody').scrollTop = sc;
+      return;
+    }
+    if(e.target.closest('[data-det-volver]')){ acc.paso = 'detalles'; pintarAccion(); $('accionBody').scrollTop = 0; return; }
     const mp = e.target.closest('[data-modo-pago]');
     if(mp){
       const v = actual;
@@ -714,6 +769,17 @@
   $('btnAccion').addEventListener('click', async () => {
     if(!acc || acc.guardando) return;
     if(acc.tipo === 'confirmar'){ guardarConfirmacion(true); return; }
+    if(acc.tipo === 'convertir' && acc.paso === 'detalles'){
+      let falta = false;
+      acc.det.forEach(d => { d.marcar = true; if(faltanDet(d).length) falta = true; });
+      pintarAccion();
+      if(falta){
+        const f = $('accionBody').querySelector('.field.invalid'); if(f) f.scrollIntoView({ block:'center', behavior:'smooth' });
+        toast('Elige lo que está en rojo', 'error'); return;
+      }
+      acc.paso = 'pago'; pintarAccion(); $('accionBody').scrollTop = 0;
+      return;
+    }
     const v = actual;
     const btn = $('btnAccion');
     let primero = null;
@@ -743,7 +809,20 @@
         const comprobante = await subirComprobante();
         const tope = acc.tipo === 'convertir' ? Number(v.total) : AV.resta(v);
         const a = { monto: Math.round((acc.modo === 'completo' ? tope : (numOrNull(acc.monto) || 0)) * 100) / 100, metodo: acc.metodo, comprobante, clave: acc.clave };
-        if(acc.tipo === 'convertir'){ a.fecha_entrega = acc.fecha; res = await db.rpc('convertir_en_venta', { vid: v.id, a }); }
+        if(acc.tipo === 'convertir'){
+          if(acc.det.length){
+            const items = acc.det.map(d => {
+              const e = especificacionesDesdeEstado(d.it.tipo, d.s, 'pedido');
+              const out = {};
+              DETALLE_CLAVES.forEach(k => { if(e[k] !== undefined && e[k] !== null) out[k] = e[k]; });
+              if((d.it.especificaciones || {}).aluminio) delete out.aluminio;   // el aluminio solo se completa si no lo tenía
+              return { id: d.id, e: out };
+            });
+            const rd = await db.rpc('completar_detalles', { vid: v.id, items });
+            if(rd.error) throw new Error(rd.error.message);
+          }
+          a.fecha_entrega = acc.fecha; res = await db.rpc('convertir_en_venta', { vid: v.id, a });
+        }
         else res = await db.rpc('registrar_abono', { vid: v.id, a });
       }
       if(res.error) throw new Error(res.error.message);
@@ -764,7 +843,8 @@
       btn.disabled = false; btn.textContent = txt;
     }
   });
-  antesDeCerrar.sheetAccion = () => !(acc && acc.guardando);
+  antesDeCerrar.sheetAccion = () => !(acc && acc.guardando) &&
+    (!(acc && acc.tipo === 'convertir' && acc.tocado) || confirm('¿Salir sin guardar? Se pierden los detalles que elegiste.'));
 
   window.addEventListener('scroll', () => $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
   // Al volver de editar (página guardada por el navegador), se actualiza todo

@@ -32,6 +32,7 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  for(const d of '333333') await p.click(`#pinTeclado [data-t="${d}"]`);
  await p.waitForSelector('#vInicio.entra');await w(500);await p.screenshot({path:'shots4/v0-inicio.png'});
  await p.click('#btnNuevaVenta');await p.waitForURL('**/venta.html');await w(900);
+ ok('Arriba: Cotización | Venta, empieza en cotización',await p.$eval('#modoVenta [data-modo="cotizacion"]',x=>x.classList.contains('on'))&&(await p.textContent('#btnGuardar'))==='Guardar cotización'&&(await p.textContent('.topbar-title'))==='Nueva cotización');
  ok('Sede por defecto de Yulimar = Cumbres',await p.textContent('#optsSede .opt.selected')==='Cumbres de Maracaibo');
  await p.screenshot({path:'shots4/v1-vacio.png'});
  // Validación vacía
@@ -50,6 +51,8 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  await p.click('#btnAgregar');await w();await p.click('[data-origen="catalogo"]');await w();
  await p.click('[data-modelo="4"]');await w(500);
  ok('Precio sugerido del modelo',(await p.inputValue('#pPrecio'))==='200',await p.inputValue('#pPrecio'));
+ ok('Cotización: no pide detalles para fabricar (sentido, bloque, vidrio)',!(await p.$('.opt[data-g="sentido"]'))&&!(await p.$('.opt[data-g="bloque"]'))&&!(await p.$('.opt[data-g="vidrio"]'))&&!!(await p.$('.opt[data-g="manillon"]')));
+ ok('Botón dice Agregar a la cotización',(await p.textContent('#btnProdListo'))==='Agregar a la cotización');
  ok('Marco decorativo viene marcado del catálogo',await p.$eval('.tchip[data-k="marco_decorativo"]',x=>x.classList.contains('on')));
  await p.click('.opt[data-g="manillon"][data-v="H"]');await w(200);
  ok('Manillón suma $20',(await p.inputValue('#pPrecio'))==='220',await p.inputValue('#pPrecio'));
@@ -64,6 +67,12 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  await p.click('#btnAgregar');await w();await p.click('[data-origen="catalogo"]');await w();
  await p.click('[data-modelo="6"]');await w(500);
  const inputs=await p.$$('#prodBody [data-mkey]');await inputs[0].fill('1,2');await inputs[1].fill('1.5');await w(200);
+ ok('Ventana: el aluminio no viene marcado y sin él no hay precio',!(await p.$('.opt[data-g="aluminio"].selected'))&&(await p.textContent('#desglose')).includes('elige el aluminio'));
+ await p.fill('#pPrecio','100');await p.click('#btnProdListo');await w(300);
+ ok('Sin aluminio no deja agregar la ventana (aunque sea cotización)',await p.isVisible('#sheetProducto')&&await p.$eval('[data-campo="aluminio"]',x=>x.classList.contains('invalid')));
+ await p.click('.opt[data-g="aluminio"][data-v="Panorámica"]');await w(200);
+ ok('Al elegirlo se quita el rojo',!(await p.$eval('[data-campo="aluminio"]',x=>x.classList.contains('invalid'))));
+ await p.click('#usarSugerido');await w(200);
  ok('Ventana: 1.8 m² × $90',(await p.inputValue('#pPrecio'))==='162',await p.inputValue('#pPrecio'));
  ok('Ventana sin protección: la protección viene del modelo y no se puede marcar',(await p.textContent('#prodBody .prot-fija'))==='Sin protección' && !(await p.$('.tchip[data-k="proteccion"]')) && !(await p.$('.tchip[data-k="marco_decorativo"]')));
  await p.click('.opt[data-g="aluminio"][data-v="Ecobel"]');await w(200);
@@ -109,6 +118,7 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  await p.click('#btnProdListo');await w(200);ok('Sin tipo no deja agregar',await p.$eval('#campoMedTipo',x=>x.classList.contains('invalid')));
  await p.click('.opt[data-g="__tipo"][data-v="Ventana"]');await w(300);
  ok('Ventana a medida: mismas especificaciones que el catálogo',!!(await p.$('[data-mkey="alto"]'))&&!!(await p.$('.opt[data-g="aluminio"]'))&&!!(await p.$('.opt[data-g="__color"]')));
+ await p.click('.opt[data-g="aluminio"][data-v="Panorámica"]');await w(200);
  await p.fill('[data-mkey="alto"]','1');await p.fill('[data-mkey="ancho"]','2');await w(200);
  const pv=await p.inputValue('#pPrecio');ok('Ventana a medida: precio por m²',Number(pv)>0&&(await p.textContent('#desglose')).includes('2 m²'),[pv,await p.textContent('#desglose')]);
  await p.screenshot({path:'shots4/v8-medida-ventana.png'});
@@ -129,16 +139,32 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  await p.evaluate(()=>window.scrollTo(0,99999));await w(300);await p.screenshot({path:'shots4/v3-cierre.png'});
  await p.evaluate(()=>window.scrollTo(0,0));
  await p.screenshot({path:'shots4/v3b-lista.png',fullPage:true});
+ // Pasa a venta: los que no tienen detalles se marcan
+ await p.click('#modoVenta [data-modo="venta"]');await w(400);
+ ok('En venta: título, botón "Continuar al pago"',(await p.textContent('#btnGuardar'))==='Continuar al pago'&&(await p.textContent('.topbar-title'))==='Nueva venta');
+ ok('Marca los 2 que no tienen detalles (puerta y ventana con protección)',(await p.$$('#items .item.falta')).length===2&&(await p.textContent('#items')).includes('Completar detalles'),(await p.$$('#items .item.falta')).length);
+ await p.evaluate(()=>window.scrollTo(0,0));await w(300);await p.screenshot({path:'shots4/v9-modo-venta.png'});
  // Borrador: salir y volver
  await p.goBack({waitUntil:'commit'});await p.waitForSelector('#vInicio.entra');await w(500);
  ok('Atrás desde Nueva venta → Inicio',p.url().endsWith('index.html'));
  await p.click('#btnNuevaVenta');await p.waitForURL('**/venta.html');await w(1000);
  ok('Al volver se recupera lo que llevaba',(await p.$$('#items .item')).length===4&&(await p.textContent('#pieTotal'))==='$1,462',await p.textContent('#pieTotal'));
- // Confirmar venta
- await p.click('#btnGuardar');await w(500);
- ok('Guardar pregunta cotización o venta',await p.isVisible('#optVenta')&&await p.isVisible('#optCotizacion'));
- await p.screenshot({path:'shots4/v7-elegir.png'});
- await p.click('#optVenta');await w(600);
+ ok('El borrador recuerda que era venta',await p.$eval('#modoVenta [data-modo="venta"]',x=>x.classList.contains('on')));
+ // Confirmar venta: primero los detalles que faltan
+ await p.click('#btnGuardar');await w(600);
+ ok('Continuar abre el primer producto sin detalles, con lo que falta en rojo',await p.isVisible('#sheetProducto')&&!!(await p.$('[data-campo="sentido"].invalid'))&&!!(await p.$('[data-campo="posicion"].invalid'))&&!!(await p.$('[data-campo="bloque"].invalid'))&&!!(await p.$('[data-campo="proteccion_sentido"].invalid'))&&!!(await p.$('.opt[data-g="vidrio"].selected')));
+ ok('Hacia dónde abre no viene marcado',!(await p.$('.opt[data-g="sentido"].selected')));
+ await p.screenshot({path:'shots4/v7-faltan-detalles.png'});
+ await p.click('#btnProdListo');await w(300);
+ ok('Sin elegirlos no deja guardar',await p.isVisible('#sheetProducto'));
+ for(const [g,v] of [['sentido','Izquierda'],['posicion','Adentro'],['bloque','15'],['proteccion_sentido','Derecha']]){await p.click(`.opt[data-g="${g}"][data-v="${v}"]`);await w(120);}
+ ok('Al elegirlos se quita el rojo',!(await p.$('#prodBody .field.invalid')));
+ await p.click('#btnProdListo');await w(500);
+ await p.click('#btnGuardar');await w(600);
+ ok('Luego abre la ventana con protección: falta el bloque',await p.isVisible('#sheetProducto')&&!!(await p.$('[data-campo="bloque"].invalid'))&&(await p.textContent('#prodBody .prod-nombre'))==='Ventana Protegida');
+ await p.click('.opt[data-g="bloque"][data-v="10"]');await w(120);await p.click('#btnProdListo');await w(500);
+ ok('Ya no queda ninguno marcado',(await p.$$('#items .item.falta')).length===0);
+ await p.click('#btnGuardar');await w(600);
  ok('Por encargo: pago parcial 50% por defecto',(await p.inputValue('#aMonto'))==='731'&&await p.$eval('[data-modo-pago="parcial"]',x=>x.classList.contains('selected')),await p.inputValue('#aMonto'));
  await p.click('[data-modo-pago="completo"]');await w(200);ok('Pago completo oculta el monto',await p.$eval('#campoAbono',x=>x.classList.contains('hidden')));
  await p.click('[data-modo-pago="parcial"]');await w(200);
@@ -162,7 +188,7 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  ok('Abono y comprobante enviados',P&&P.abono.monto===500&&P.abono.metodo==='Zelle'&&/^\d{4}-\d{2}\//.test(P.abono.comprobante||'')&&!!subido,P&&P.abono);
  ok('Instalación y traslado enviados por separado',P&&P.venta.instalacion===20&&P.venta.traslado===10&&P.venta.descuento===10,P&&P.venta);
  ok('Cédula normalizada',P&&P.cliente.cedula==='V12345678',P&&P.cliente);
- ok('Items: pieza, a medida, specs',P&&P.items.length===4&&P.items[2].pieza_id===9&&P.items[3].a_medida===true&&P.items[0].especificaciones.manillon===true&&P.items[0].especificaciones.monto_proteccion===80&&P.items[1].cantidad===2,P&&P.items.map(i=>[i.nombre,i.precio_unitario,i.cantidad]));
+ ok('Items: pieza, a medida, specs',P&&P.items.length===4&&P.items[2].pieza_id===9&&P.items[3].a_medida===true&&P.items[0].especificaciones.manillon===true&&P.items[0].especificaciones.sentido==='Izquierda'&&P.items[0].especificaciones.proteccion_sentido==='Derecha'&&P.items[1].especificaciones.bloque==='10'&&P.items[0].especificaciones.monto_proteccion===80&&P.items[1].cantidad===2,P&&P.items.map(i=>[i.nombre,i.precio_unitario,i.cantidad]));
  ok('Borrador borrado al terminar',await p.evaluate(()=>localStorage.getItem('ah_borrador_venta'))===null);
  ok('Botones de mensaje y PDF presentes',!!(await p.$('#btnMsj'))&&!!(await p.$('#btnPdf')));
  await p.click('#btnIrInicio');await p.waitForSelector('#vInicio.entra');ok('Volver a Inicio',p.url().endsWith('index.html'));

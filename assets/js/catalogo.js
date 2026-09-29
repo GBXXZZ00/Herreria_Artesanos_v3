@@ -606,7 +606,7 @@
   function optsHtml(grupo, sel){
     const cols = grupo.cols || grupo.opts.length;
     return `
-      <div class="field">
+      <div class="field" data-campo="${grupo.g}">
         <span class="field-label">${esc(grupo.label)}</span>
         <div class="opts" style="--cols:${cols}">
           ${grupo.opts.map(o => `
@@ -614,6 +614,7 @@
               ${o.sw ? `<span class="swatch ${o.sw}"></span>` : ''}${esc(o.t || o.v)}
             </button>`).join('')}
         </div>
+        <div class="field-error">Elige una opción</div>
       </div>`;
   }
 
@@ -846,6 +847,7 @@
       const g = opt.dataset.g;
       estado[g] = opt.dataset.v;
       tocados.add(g);
+      const campo = opt.closest('.field.invalid'); if(campo) campo.classList.remove('invalid');
       const hayDependientes = esquema(tipoActual, modoEsquema()).grupos.some(h => h.si && typeof h.si === 'object' && h.si.g === g);
       if(hayDependientes){ pintarSpecs(); return; }
       opt.parentElement.querySelectorAll('.opt').forEach(o => { const s = o === opt; o.classList.toggle('selected', s); o.setAttribute('aria-pressed', s); });
@@ -940,6 +942,9 @@
     limpiarErrores();
     const precio = numOrNull($('fPrecio').value);
     if(!(precio > 0)){ $('campoPrecio').classList.add('invalid'); $('campoPrecio').scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+    // La ventana siempre lleva su aluminio (Panorámica o Ecobel)
+    const campoAl = $('specs').querySelector('[data-campo="aluminio"]');
+    if(campoAl && !estado.aluminio){ campoAl.classList.add('invalid'); campoAl.scrollIntoView({ behavior:'smooth', block:'center' }); toast('Elige el aluminio', 'error'); return; }
     if(!db){ toast('Sin conexión con la base de datos', 'error'); return; }
     const m = modeloPieza;
     const btn = $('btnGuardar');

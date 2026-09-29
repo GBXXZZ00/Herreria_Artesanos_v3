@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Cotizaciones · Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
-<link rel="stylesheet" href="assets/css/base.css?v=51">
+<link rel="stylesheet" href="assets/css/base.css?v=52">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   #scrimAccion{z-index:50} #sheetAccion{z-index:51}
@@ -72,6 +72,16 @@
   .aviso-50{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#8A5A00;background:#FFF4DC;padding:9px 12px;border-radius:12px;margin-top:8px}
   .resta-t{font-size:14px;color:var(--ink-soft);margin-top:8px}
   .resta-t b{color:var(--ink)}
+  /* Convertir: detalles para fabricar */
+  .det-intro{font-size:14px;color:var(--ink-soft);margin:0 0 14px;line-height:1.4}
+  .det-item + .det-item{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+  .det-cab{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .det-foto{width:52px;height:52px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .det-foto img{width:100%;height:100%;object-fit:cover}
+  .det-nom{display:block;font-size:16px;font-weight:800;line-height:1.25}
+  .det-tipo{display:block;font-size:13px;color:var(--ink-soft);margin-top:1px}
+  .det-volver{font-size:14px;font-weight:800;color:var(--accent);margin:0 0 12px;transition:transform 120ms var(--ease-out)}
+  .det-volver:active{transform:scale(0.97)}
   .conf-total{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px;border-radius:var(--radius);background:var(--surface-2);margin-bottom:6px}
   .conf-total span{font-size:15px;color:var(--ink-soft)}
   .conf-total b{font-size:22px;font-weight:800}
@@ -131,13 +141,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=51"></script>
-<script src="assets/js/supabase-client.js?v=51"></script>
-<script src="assets/js/img-compress.js?v=51"></script>
-<script src="assets/js/comun.js?v=51"></script>
-<script src="assets/js/avisos.js?v=51"></script>
-<script src="assets/js/sesion.js?v=51"></script>
-<script src="assets/js/ventas-comun.js?v=51"></script>
-<script src="assets/js/lista-ventas.js?v=51"></script>
+<script src="assets/vendor/supabase.js?v=52"></script>
+<script src="assets/js/supabase-client.js?v=52"></script>
+<script src="assets/js/img-compress.js?v=52"></script>
+<script src="assets/js/comun.js?v=52"></script>
+<script src="assets/js/avisos.js?v=52"></script>
+<script src="assets/js/sesion.js?v=52"></script>
+<script src="assets/js/ventas-comun.js?v=52"></script>
+<script src="assets/js/lista-ventas.js?v=52"></script>
 </body>
 </html>

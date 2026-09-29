@@ -151,6 +151,10 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.click('#listaModelos [data-mid="3"]');await a.waitForTimeout(400);
  ok('Modelo con categoría no la pide',!(await a.$('#campoOCat')));
  await a.fill('[data-mkey="alto"]','1.5');await a.fill('[data-mkey="ancho"]','2');await a.waitForTimeout(150);
+ ok('Ventana en exhibición: el aluminio no viene marcado',!(await a.$('#ordenBody .opt[data-g="aluminio"].selected')));
+ await a.click('#btnCrearOrden');await a.waitForTimeout(300);
+ ok('Sin aluminio no deja mandarla a fabricar',await a.isVisible('#sheetOrden')&&!!(await a.$('#ordenBody [data-campo="aluminio"].invalid')));
+ await a.click('#ordenBody .opt[data-g="aluminio"][data-v="Panorámica"]');await a.waitForTimeout(150);
  ok('Ventana: precio sugerido por m²',(await a.inputValue('#fPrecio'))==='270',await a.inputValue('#fPrecio'));
  await a.click('#ordenBody [data-g="__otipo"][data-v="Puerta Multilock"]');
  ok('Cambiar el tipo borra el modelo',!(await a.$('[data-mkey="alto"]')) && (await a.textContent('#btnModelo')).includes('Elige un modelo'));

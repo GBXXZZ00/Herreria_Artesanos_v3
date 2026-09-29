@@ -108,7 +108,7 @@
   // el modelo de catálogo no lleva sentido, posición ni bloque).
   const PEDIDO = {
     'Ventana': {
-      antes:[ { g:'aluminio', label:'Aluminio', opts:OPC_ALUMINIO, def:'Panorámica' } ],
+      antes:[ { g:'aluminio', label:'Aluminio', opts:OPC_ALUMINIO, def:null, requerido:true } ],
       despues:[ { g:'bloque', label:'Tipo de bloque (protección)', opts:OPC_BLOQUE, def:'15', si:'proteccion' } ]
     },
     'Portón': {
@@ -159,6 +159,21 @@
     const todos = [...extra.antes, ...base.grupos, ...extra.despues];
     return { medidas: base.medidas, grupos: [...todos.filter(g => !g.zona), ...todos.filter(g => g.zona)], extras: base.extras };
   }
+  // Detalles para fabricar: no hacen falta para cotizar, sí para vender. Los de instalación
+  // (hacia dónde abre, adentro o afuera, bloque, hacia dónde abre la protección) nunca vienen
+  // marcados de antemano; los de diseño (vidrio, ahumado, cerradura) vienen del modelo.
+  const FAB_INSTALACION = ['sentido', 'posicion', 'bloque', 'proteccion_sentido'];
+  const FAB_DISENO = ['vidrio', 'ahumado', 'cerradura', 'cerradura_detalle'];
+  const esFab = (g) => FAB_INSTALACION.includes(g) || FAB_DISENO.includes(g);
+  const NOMBRE_FAB = { sentido:'hacia dónde abre', posicion:'adentro o afuera', bloque:'el bloque', proteccion_sentido:'hacia dónde abre la protección' };
+  // Qué detalles de instalación le faltan (sirve con lo de la pantalla o con lo guardado: se llaman igual)
+  function faltanDetalles(tipo, s){
+    if(!TIPOS.includes(tipo)) return [];
+    s = s || {};
+    return esquema(tipo, 'pedido').grupos
+      .filter(g => FAB_INSTALACION.includes(g.g) && grupoActivo(g, s) && !s[g.g])
+      .map(g => g.g);
+  }
   // Un grupo condicional se muestra y se guarda solo si aplica.
   function grupoActivo(gr, s){
     if(!gr.si) return true;
@@ -204,7 +219,8 @@
   }
 
   // Lo contrario: a partir de campos guardados, lo que se ve en pantalla.
-  function estadoDesdeEspecificaciones(tipo, e, modo){
+  // sinInstalacion: para un producto nuevo en una venta, los detalles de instalación no vienen marcados
+  function estadoDesdeEspecificaciones(tipo, e, modo, sinInstalacion){
     e = e || {};
     const esq = esquema(tipo, modo);
     const s = {
@@ -226,6 +242,8 @@
         v = e.variante;
       } else if(DIRECTOS.includes(g) && e[g]){
         v = e[g];
+      } else if(sinInstalacion && FAB_INSTALACION.includes(g)){
+        v = null;
       }
       s[g] = v;
     });
@@ -599,6 +617,7 @@
     heroAttrs, heroZoom, actualizarFondoHero, verFoto,
     TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
+    FAB_INSTALACION, esFab, NOMBRE_FAB, faltanDetalles,
     fotoModelo, fotoPieza, fotoItem, etiquetaOtroColor, sabados, sabadoCorto, topeTexto, esc, numOrNull, montoOrNull, fmt, dinero, specChipsHtml, toast,
     abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo,
     profundidad: prof, vistaInterna

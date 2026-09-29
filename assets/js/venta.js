@@ -20,6 +20,8 @@
   let guardando = false;
   let terminado = false;
   let cargado = false;
+  // Cotización: solo lo que cambia el precio. Venta: también los detalles para fabricar.
+  let modo = 'cotizacion';
   const editId = +(new URLSearchParams(location.search).get('editar') || 0) || null;   // editar una cotización o venta
   let editVenta = null;      // hasta que se recupere el borrador no se sobrescribe
 
@@ -96,9 +98,11 @@
     if(it.origen === 'pieza') partes.unshift('Entrega inmediata');
     return partes.join(' · ');
   }
+  // En modo venta, qué productos todavía no tienen sus detalles para fabricar
+  const faltaItem = (it) => SP.faltanEn(it, modo).length > 0;
   function pintarItems(){
     $('items').innerHTML = items.length ? items.map((it, i) => `
-      <div class="item" style="--i:${i}">
+      <div class="item ${faltaItem(it) ? 'falta' : ''}" style="--i:${i}">
         <div class="item-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="">` : iconoTipo(it.tipo, 26)}</div>
         <div class="item-txt">
           <div class="item-nombre">${esc(it.nombre)}</div>
@@ -107,6 +111,7 @@
             <span class="item-cant">${it.cantidad} × ${dinero(it.precio)}</span>
             <span class="item-precio">${dinero(subtotalItem(it))}</span>
           </div>
+          ${faltaItem(it) ? `<button type="button" class="item-falta" data-editar="${i}">${ICON_ALERTA}Completar detalles</button>` : ''}
         </div>
         <div class="item-acc">
           <button type="button" data-editar="${i}" aria-label="Editar ${esc(it.nombre)}">${ICON_EDIT}</button>
@@ -120,7 +125,7 @@
   }
   $('items').addEventListener('click', (e) => {
     const ed = e.target.closest('[data-editar]');
-    if(ed){ abrirProducto(items[+ed.dataset.editar], +ed.dataset.editar); return; }
+    if(ed){ const it = items[+ed.dataset.editar]; abrirProducto(it, +ed.dataset.editar, faltaItem(it)); return; }
     const q = e.target.closest('[data-quitar]');
     if(q){
       const it = items[+q.dataset.quitar];
@@ -178,7 +183,7 @@
     const color = tieneColores(m.tipo) ? ((cols[0] && cols[0].key) || 'Blanco') : null;
     abrirProducto({
       origen:'catalogo', catalogo_id:m.id, tipo:m.tipo, nombre:m.nombre, color,
-      estado: estadoDesdeEspecificaciones(m.tipo, m.especificaciones_base, 'pedido'),
+      estado: estadoDesdeEspecificaciones(m.tipo, m.especificaciones_base, 'pedido', true),
       extraProteccion:'', precio:'', precioManual:false, cantidad:1
     }, null);
   });
@@ -226,8 +231,7 @@
   // Especificaciones y precio: el mismo motor que usa Producción (specs-producto.js)
   const calcular = (it) => SP.calcular(it, modeloDe(it));
   const pideMontoProteccion = (it) => SP.pideMontoProteccion(it, modeloDe(it));
-  const optsHtml = SP.optsHtml;
-  const specsHtml = () => SP.specsHtml(prod, modeloDe(prod));
+  const specsHtml = () => SP.specsHtml(prod, modeloDe(prod), { modo, marcar: !!prod.marcar });
 
   function cantidadHtml(max){
     if(prod.fijo) return `<div class="field"><span class="field-label">Cantidad</span><div class="f-fijo">${prod.cantidad} (ya vendida)</div></div>`;
@@ -255,7 +259,7 @@
     if(prod.origen === 'medida'){
       $('prodTitulo').textContent = prodIndex == null ? 'Trabajo a medida' : 'Editar trabajo';
       const elegido = prod.tipo === 'A medida' ? 'Otro' : prod.tipo;
-      html = `<div class="field" id="campoMedTipo">${optsHtml({ g:'__tipo', label:'¿Qué vas a fabricar?', cols:2, opts:[...TIPOS.filter(t => t !== 'Combo' || prod.tipo === 'Combo'), 'Otro'].map(t => ({ v:t })) }, elegido).replace(/^<div class="field">|<\/div>$/g, '')}
+      html = `<div class="field" id="campoMedTipo">${SP.optsCuerpo({ g:'__tipo', label:'¿Qué vas a fabricar?', cols:2, opts:[...TIPOS.filter(t => t !== 'Combo' || prod.tipo === 'Combo'), 'Otro'].map(t => ({ v:t })) }, elegido)}
         <div class="field-error">Elige qué vas a fabricar</div></div>`;
       if(!prod.tipo){ html += '<div class="field-hint" style="margin-top:-6px">Así se piden las mismas medidas y detalles que en el catálogo.</div>'; }
       else {
@@ -295,7 +299,7 @@
     }
     $('prodBody').innerHTML = html;
     $('prodBody').scrollTop = scroll;
-    $('btnProdListo').textContent = prodIndex == null ? 'Agregar a la venta' : 'Guardar cambios';
+    $('btnProdListo').textContent = prodIndex != null ? 'Guardar cambios' : modo === 'venta' ? 'Agregar a la venta' : 'Agregar a la cotización';
   }
 
   // Solo se actualiza el precio (sin repintar todo, para no perder el foco del teclado)
@@ -307,14 +311,18 @@
     if(d) d.innerHTML = `Sugerido: <b>${dinero(c.total)}</b> · ${esc(c.texto)}`;
   }
 
-  function abrirProducto(it, index){
+  // marcar: se abre con lo que falta ya en rojo
+  function abrirProducto(it, index, marcar){
     prod = JSON.parse(JSON.stringify(it));
     if(it.fotoBlob) prod.fotoBlob = it.fotoBlob;
+    prod.marcar = !!marcar;
     prodIndex = index;
     prodSucio = false;
     pintarProducto();
     $('prodBody').scrollTop = 0;
     abrirHoja('sheetProducto');
+    // Lo que falta se ve de una vez
+    if(marcar) setTimeout(() => { const f = $('prodBody').querySelector('.field.invalid'); if(f) f.scrollIntoView({ block:'center', behavior:'smooth' }); }, 320);
   }
   antesDeCerrar.sheetProducto = () => !prodSucio || confirm('¿Salir sin agregar este producto?');
 
@@ -325,11 +333,12 @@
       if(o.dataset.g === '__tipo'){
         const t = o.dataset.v;
         prod.tipo = t === 'Otro' ? 'A medida' : t;
+        prod.marcar = false;
         prod.precioManual = false;
         prod.precio = '';                                              // el precio de otro tipo no sirve
         if(/ a medida$/.test(prod.nombre || '')) prod.nombre = '';     // nombre automático del tipo anterior
         if(t !== 'Otro'){
-          prod.estado = estadoDesdeEspecificaciones(t, {}, 'pedido');
+          prod.estado = estadoDesdeEspecificaciones(t, {}, 'pedido', true);
           const col = acabados(t).find(a => a.sw);
           prod.color = tieneColores(t) && col ? col.key : null;
         } else { prod.estado = {}; prod.color = null; }
@@ -378,6 +387,15 @@
     if(!(precio > 0)){ $('campoPrecio').classList.add('invalid'); ok = false; }
     const falta = SP.faltaEnModelo(prod, modeloDe(prod));
     if(falta){ toast(falta, 'error'); const a = $('prodBody').querySelector('.aviso-falta'); if(a) a.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
+    // Aluminio de la ventana siempre; al vender, también los detalles para fabricar
+    const faltan = SP.faltanEn(prod, modo);
+    if(faltan.length){
+      prod.marcar = true;
+      pintarProducto();
+      const f = $('prodBody').querySelector('.field.invalid'); if(f) f.scrollIntoView({ block:'center', behavior:'smooth' });
+      toast(faltan.length === 1 && faltan[0] === 'aluminio' ? 'Elige el aluminio' : 'Faltan detalles para fabricar', 'error');
+      return;
+    }
     if(!ok){ const f = $('prodBody').querySelector('.field.invalid'); if(f) f.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     prod.precio = precio;
     if(prod.origen === 'catalogo'){
@@ -388,6 +406,7 @@
       prod.nombre = String(prod.nombre || '').trim() || prod.tipo + ' a medida';
       prod.especificaciones = conSpecs(prod) ? especificacionesDesdeEstado(prod.tipo, prod.estado, 'pedido') : {};
     }
+    delete prod.marcar;
     if(prodIndex == null) items.push(prod); else items[prodIndex] = prod;
     prodSucio = false;
     cerrarHoja('sheetProducto', true);
@@ -476,7 +495,7 @@
       if(!hayDatos()){ localStorage.removeItem(BORRADOR); return; }
       localStorage.setItem(BORRADOR, JSON.stringify({
         tel:$('cTel').value, nombre:$('cNombre').value, cedula:$('cCedula').value,
-        desc:$('vDesc').value, inst:$('vInst').value, tras:$('vTras').value, notas:$('vNotas').value, sedeId, extras,
+        desc:$('vDesc').value, inst:$('vInst').value, tras:$('vTras').value, notas:$('vNotas').value, sedeId, extras, modo,
         items: items.map(it => { const c = Object.assign({}, it); delete c.fotoBlob; if(c.origen === 'medida' && String(c.foto || '').startsWith('blob:')) c.foto = null; return c; })
       }));
     } catch(e){}
@@ -489,6 +508,7 @@
     if(b.extras){ extras.inst = !!b.extras.inst; extras.tras = !!b.extras.tras; if(b.extras.desc === false) b.desc = ''; }   // borradores viejos: descuento apagado no cuenta
     $('vDesc').value = b.desc || ''; $('vInst').value = b.inst || ''; $('vTras').value = b.tras || ''; $('vNotas').value = b.notas || '';
     if(b.sedeId) sedeId = b.sedeId;
+    if(b.modo === 'venta' || b.modo === 'cotizacion') modo = b.modo;
     // Las piezas de entrega inmediata que ya no están se quitan
     items = (b.items || []).filter(it => it.origen !== 'pieza' || piezas.some(p => p.id === it.pieza_id && p.cantidad >= it.cantidad));
     $('avisoBorrador').innerHTML = `<div class="borrador"><span>Seguimos con la venta que dejaste sin terminar.</span><button type="button" id="btnDescartar">Empezar de cero</button></div>`;
@@ -503,6 +523,7 @@
     ['cTel', 'cNombre', 'cCedula', 'vDesc', 'vInst', 'vTras', 'vNotas'].forEach(id => { $(id).value = ''; });
     extras.inst = false; extras.tras = false; pintarExtrasCierre();
     items = []; clienteExistente = null; ultimaBusqueda = '';
+    modo = 'cotizacion'; pintarModo();
     sedeId = (perfil && perfil.sede_id) || (sedes[0] && sedes[0].id) || null;
     $('avisoCliente').innerHTML = ''; $('avisoBorrador').innerHTML = '';
     document.querySelectorAll('.field.invalid').forEach(f => f.classList.remove('invalid'));
@@ -591,10 +612,42 @@
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Cotización o venta: se elige arriba y cambia lo que se pide y el botón final
+  // ---------------------------------------------------------------------------
+  function pintarModo(){
+    const venta = modo === 'venta';
+    document.querySelectorAll('#modoVenta [data-modo]').forEach(b => { const on = b.dataset.modo === modo; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    $('modoVenta').classList.toggle('en-venta', venta);
+    if(!editId){
+      document.querySelector('.topbar-title').textContent = venta ? 'Nueva venta' : 'Nueva cotización';
+      $('subVenta').textContent = venta ? 'Con los detalles para fabricar' : 'Solo lo que cambia el precio';
+      $('btnGuardar').textContent = venta ? 'Continuar al pago' : 'Guardar cotización';
+    }
+  }
+  $('modoVenta').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-modo]');
+    if(!b || b.dataset.modo === modo) return;
+    modo = b.dataset.modo;
+    pintarModo();
+    pintarItems();
+  });
+  // Al vender: si un producto no tiene sus detalles, se abre para completarlos
+  function detallesCompletos(){
+    const i = items.findIndex(faltaItem);
+    if(i < 0) return true;
+    toast('Completa los detalles para fabricar', 'error');
+    abrirProducto(items[i], i, true);
+    return false;
+  }
+
   $('btnGuardar').addEventListener('click', () => {
     if(!validar()) return;
     if(editId && $('vFecha') && !$('vFecha').value){ $('campoFechaEd').classList.add('invalid'); $('campoFechaEd').scrollIntoView({ block:'center', behavior:'smooth' }); return; }
-    if(editId) guardarEdicion(); else abrirHoja('sheetGuardar');
+    if(!detallesCompletos()) return;
+    if(editId){ guardarEdicion(); return; }
+    if(modo === 'cotizacion'){ guardar(false, null, $('btnGuardar')); return; }
+    abrirPago();
   });
   async function guardarEdicion(){
     if(guardando) return;
@@ -618,20 +671,15 @@
       btn.disabled = false; btn.textContent = 'Guardar cambios';
     } finally { guardando = false; }
   }
-  $('optCotizacion').addEventListener('click', () => {
-    cerrarHoja('sheetGuardar', true);
-    guardar(false, null, $('btnGuardar'));
-  });
-  $('optVenta').addEventListener('click', () => {
-    cerrarHoja('sheetGuardar', true);
+  function abrirPago(){
     const t = totales();
     // Exhibición (todo de entrega inmediata): pago completo y se entrega hoy. Lo demás: 50%.
     const inm = window.AV.soloInmediata(items);
-    const modo = inm ? 'completo' : 'parcial';
-    conf = { modo, monto: String(inm ? t.total : r2(t.total * 0.5)), metodo:null, fecha: inm ? hoyISO() : habiles(20), comprobante:null, blob:null, clave: conf && conf.clave ? conf.clave : uuid() };
+    const modoPago = inm ? 'completo' : 'parcial';
+    conf = { modo: modoPago, monto: String(inm ? t.total : r2(t.total * 0.5)), metodo:null, fecha: inm ? hoyISO() : habiles(20), comprobante:null, blob:null, clave: conf && conf.clave ? conf.clave : uuid() };
     pintarConfirmar();
     abrirHoja('sheetConfirmar');
-  });
+  }
 
   // ---------------------------------------------------------------------------
   // Confirmar venta: pago (completo o parcial), método, comprobante y fecha de entrega
@@ -834,6 +882,8 @@
     const v = await window.AV.cargarVenta(editId);
     editVenta = v;
     const cot = v.estado === 'cotizacion';
+    modo = cot ? 'cotizacion' : 'venta';
+    $('modoVenta').classList.add('hidden');
     document.title = `Editar N° ${v.id} · Herrería Artesanos`;
     document.querySelector('.topbar-title').textContent = cot ? `Editar cotización` : `Editar venta`;
     $('subVenta').textContent = `N° ${v.id} · ${v.cliente.nombre}`;
@@ -867,12 +917,12 @@
       if(it.a_medida){
         const conTipo = TIPOS.includes(it.tipo);
         return Object.assign(base, { origen:'medida', descripcion: e.descripcion || '', precioManual:true,
-          color: conTipo ? (e.color || null) : null, especificaciones: conTipo ? e : {}, estado: conTipo ? estadoDesdeEspecificaciones(it.tipo, e, 'pedido') : {} });
+          color: conTipo ? (e.color || null) : null, especificaciones: conTipo ? e : {}, estado: conTipo ? estadoDesdeEspecificaciones(it.tipo, e, 'pedido', true) : {} });
       }
       if(it.pieza_id) return Object.assign(base, { origen:'pieza', pieza_id: it.pieza_id, catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e, precioManual:true, fijo: !cot });
       // guardado: ya estaba en la venta, conserva sus medidas y su protección (las reglas nuevas son para lo que se agrega)
       return Object.assign(base, { origen:'catalogo', catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e, guardado:true,
-        estado: estadoDesdeEspecificaciones(it.tipo, e, 'pedido'), extraProteccion: e.monto_proteccion || '', precioManual:true });
+        estado: estadoDesdeEspecificaciones(it.tipo, e, 'pedido', true), extraProteccion: e.monto_proteccion || '', precioManual:true });
     });
     auto.nombre = auto.tel = auto.ced = false;
     if(!cot) $('avisoBorrador').innerHTML = `<div class="borrador"><span>Es una venta confirmada: lo que cambies se refleja en el pedido y el PDF.</span></div>`;
@@ -893,6 +943,7 @@
       sedeId = (perfil && perfil.sede_id) || (sedes[0] && sedes[0].id) || null;
       if(editId){ if(await cargarEdicion() === false){ cargado = true; return; } } else cargarBorrador();
       cargado = true;
+      pintarModo();
       pintarExtrasCierre();
       pintarSedes();
       pintarItems();
