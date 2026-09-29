@@ -220,6 +220,18 @@
         } else if(e.estado === 'hecha'){
           const monto = e.monto != null ? ` · <span class="e-monto">${dinero(e.monto)}</span>` : '';
           abajo = `<span class="e-hecha-info">Terminó${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}${monto}</span>`;
+        } else if(cls !== 'actual'){
+          // Paso futuro: ya se puede dejar asignado; se empieza cuando termine el anterior
+          const antes = lista.slice(0, lista.indexOf(e)).reverse().find(x => x.estado === 'pendiente');
+          abajo = antes ? `<span class="e-hecha-info">Después de ${esc(antes.nombre.toLowerCase())}</span>` : '';
+          if(e.trabajador_id){
+            const nom = e.trabajador ? e.trabajador.nombre : '';
+            derecha = `<button class="e-chip" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}" aria-label="Cambiar a quién está asignada"><span class="ini">${esc(inicial(nom))}</span>${esc(nom)}</button>`;
+          } else if(it.categoria_pago_id){
+            derecha = `<button class="e-asignar sec" type="button" data-asignar="${e.id}" data-esp="${esc(e.especialidad)}" data-nombre="${esc(e.nombre)}">Asignar</button>`;
+          } else {
+            derecha = '<span class="e-asignar off" aria-disabled="true">Asignar</span>';
+          }
         } else if(cls === 'actual'){
           if(e.trabajador_id){
             const nom = e.trabajador ? e.trabajador.nombre : '';
@@ -242,8 +254,81 @@
       </div>
       ${catFaltaHtml(it)}
       ${bloques}
+      ${!lectura && it.categoria_pago_id && (it.etapas || []).filter(x => x.estado === 'pendiente').length > 1
+        ? `<button class="btn-asignar-todo" type="button" data-asignar-todo="${it.id}">Asignar todo el producto</button>` : ''}
     </div>`;
   }
+  // ---------------------------------------------------------------------------
+  // Asignar todo el producto: un trabajador por paso, se guarda de una vez
+  // ---------------------------------------------------------------------------
+  let itemTodo = null, elegidos = {}, guardandoTodo = false;
+  async function abrirAsignarTodo(iid){
+    const v = pedidoActual; if(!v) return;
+    const it = (v.items || []).find(x => x.id === iid); if(!it) return;
+    const todos = await cargarTrabajadores();
+    itemTodo = it; elegidos = {};
+    const grupos = ramas(it), claves = Object.keys(grupos);
+    let html = '';
+    claves.forEach((r, idx) => {
+      const pend = grupos[r].filter(e => e.estado === 'pendiente');
+      if(!pend.length) return;
+      if(claves.length > 1) html += `<p class="e-rama-tit">${idx === 0 ? 'Puerta' : 'Ventana'}</p>`;
+      pend.forEach(e => {
+        elegidos[e.id] = e.trabajador_id || '';
+        const ops = todos.filter(t => (t.especialidades || []).includes(e.especialidad));
+        // Si está asignado a alguien que ya no está activo, se muestra marcado para que se vea y se pueda cambiar
+        const fuera = e.trabajador_id && !ops.some(t => t.id === e.trabajador_id)
+          ? `<button type="button" class="at-op on" data-eid="${e.id}" data-tid="${esc(e.trabajador_id)}"><span class="ini">${esc(inicial(e.trabajador ? e.trabajador.nombre : '?'))}</span>${esc(e.trabajador ? e.trabajador.nombre : 'Otro')} (inactivo)</button>` : '';
+        html += `<div class="at-paso" data-eid="${e.id}"><p class="at-nom">${esc(e.nombre)}</p>
+          ${ops.length || fuera ? `<div class="at-ops">${fuera}${ops.map(t => `<button type="button" class="at-op ${e.trabajador_id === t.id ? 'on' : ''}" data-eid="${e.id}" data-tid="${esc(t.id)}"><span class="ini">${esc(inicial(t.nombre))}</span>${esc(t.nombre)}</button>`).join('')}
+            <button type="button" class="at-op nadie ${e.trabajador_id ? '' : 'on'}" data-eid="${e.id}" data-tid="">Sin asignar</button></div>`
+            : `<p class="at-vacio">Nadie tiene la especialidad ${esc(NOMBRE_ESPECIALIDAD[e.especialidad] || e.especialidad)}. Créalo en Usuarios.</p>`}
+        </div>`;
+      });
+    });
+    $('todoTitulo').textContent = 'Asignar: ' + it.nombre;
+    $('todoBody').innerHTML = html || '<p class="at-vacio">No quedan pasos por asignar.</p>';
+    pintarBotonTodo();
+    abrirHoja('sheetTodo');
+  }
+  function cambiosTodo(){
+    return (itemTodo ? (itemTodo.etapas || []) : []).filter(e => e.estado === 'pendiente' && e.id in elegidos && (elegidos[e.id] || '') !== (e.trabajador_id || ''))
+      .map(e => ({ eid:e.id, tid:elegidos[e.id] || null }));
+  }
+  function pintarBotonTodo(){
+    const n = cambiosTodo().length;
+    $('btnGuardarTodo').disabled = !n;
+    $('btnGuardarTodo').textContent = n ? (n === 1 ? 'Guardar 1 cambio' : `Guardar ${n} cambios`) : 'Elige quién hace cada paso';
+  }
+  $('todoBody').addEventListener('click', (e) => {
+    const b = e.target.closest('.at-op'); if(!b) return;
+    elegidos[b.dataset.eid] = b.dataset.tid;
+    b.closest('.at-ops').querySelectorAll('.at-op').forEach(x => x.classList.toggle('on', x === b));
+    pintarBotonTodo();
+  });
+  $('btnGuardarTodo').addEventListener('click', async () => {
+    const cambios = cambiosTodo();
+    if(!cambios.length || guardandoTodo) return;
+    const btn = $('btnGuardarTodo');
+    guardandoTodo = true; btn.disabled = true;
+    try{
+      const { error } = await db.rpc('asignar_etapas', { p: cambios });
+      if(error) throw error;
+      cerrarHoja('sheetTodo', true);
+      toast('Listo. A cada uno le llega el aviso cuando le toque.');
+      await refrescarFicha();
+    } catch(err){
+      const red = /fetch|network/i.test(String(err.message));
+      toast(red ? 'Sin conexión. Intenta de nuevo' : err.message, 'error');
+      if(red){ btn.disabled = false; }
+      else {
+        // Algo cambió en el taller mientras la hoja estaba abierta: se vuelve a pintar con lo último
+        cerrarHoja('sheetTodo', true);
+        await refrescarFicha();
+      }
+    } finally { guardandoTodo = false; }
+  });
+
   async function refrescarFicha(){
     await cargar();
     const v = pedidoActual && pedidos.find(x => x.id === pedidoActual.id);
@@ -266,6 +351,8 @@
     if(bc){ abrirCatItem(Number(bc.dataset.catItem)); return; }
     const bo = e.target.closest('[data-cancelar-orden]');
     if(bo){ cancelarOrden(Number(bo.dataset.cancelarOrden), bo); return; }
+    const bat = e.target.closest('[data-asignar-todo]');
+    if(bat){ abrirAsignarTodo(Number(bat.dataset.asignarTodo)); return; }
     const ba = e.target.closest('[data-asignar]');
     if(ba){
       etapaParaAsignar = { id:Number(ba.dataset.asignar), esp:ba.dataset.esp };

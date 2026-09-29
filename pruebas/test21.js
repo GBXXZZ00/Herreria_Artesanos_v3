@@ -39,15 +39,21 @@ let ventas=[
     ]}
   ]}
 ];
-const llamadas=[];
+const llamadas=[];let fallarTodo=false;
 
 function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{const req=r.request();const u=decodeURIComponent(req.url());const j=(x,st=200)=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(x)});
   if(u.includes('/auth/v1/token'))return j(ses(user));
   if(u.includes('/auth/v1/user'))return j({id:user});
-  if(u.includes('/rpc/asignar_etapa')){
+  if(/\/rpc\/asignar_etapa$/.test(u.split('?')[0])){
     const body=JSON.parse(req.postData()||'{}');llamadas.push(['asignar_etapa',body]);
     for(const v of ventas) for(const it of v.items) for(const e of it.etapas) if(e.id===body.eid){ e.trabajador_id=body.tid; e.trabajador={nombre:(porId(body.tid)||{}).nombre||''}; }
     return j({});
+  }
+  if(u.includes('/rpc/asignar_etapas')){
+    const body=JSON.parse(req.postData()||'{}');llamadas.push(['asignar_etapas',body]);
+    if(fallarTodo)return j({message:'Esta etapa ya no se puede asignar'},400);
+    body.p.forEach(c=>{ for(const v of ventas) for(const it of v.items) for(const e of it.etapas) if(e.id===c.eid){ e.trabajador_id=c.tid; e.trabajador=c.tid?{nombre:(porId(c.tid)||{}).nombre||''}:null; } });
+    return j(body.p.length);
   }
   if(u.includes('/rpc/marcar_etapa_terminada')){
     const body=JSON.parse(req.postData()||'{}');llamadas.push(['marcar_etapa_terminada',body]);
@@ -114,7 +120,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.click('.vcard >> nth=0');await a.waitForSelector('#sheetFicha.open');
  ok('Hierro se ve terminado con quién lo hizo',(await a.textContent('#fichaBody')).includes('Terminó · Jesús') || (await a.textContent('#fichaBody')).includes('Terminó'));
  ok('Masilla y pintura es la etapa actual, sin asignar',!!(await a.$('[data-asignar][data-nombre="Masilla y pintura"]')));
- ok('Detalles todavía no muestra botón (etapa futura)',(await a.$$('#fichaBody [data-asignar], #fichaBody [data-terminar]')).length===2); // Masilla (asignar) + Ensamblar (asignar)
+ ok('Detalles (paso futuro) ya se puede asignar y dice después de qué va',!!(await a.$('[data-asignar][data-nombre="Detalles"]')) && (await a.textContent('#fichaBody')).includes('Después de masilla y pintura') && !(await a.$('#fichaBody [data-terminar]')));
  await a.screenshot({path:'shots5/s2-ficha.png',fullPage:true});
 
  // Asignar Masilla y pintura: solo debe salir Pedro (especialidad masilla_pintura)
@@ -148,8 +154,31 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('La ficha del Combo muestra la etiqueta "Ventana"',fichaCombo.includes('Ventana'));
  ok('Hierro (rama puerta) es su etapa actual, sin asignar',!!(await a.$('[data-asignar][data-nombre="Hierro"]')));
  ok('Ensamblar (rama ventana) también es actual y sin asignar, en paralelo',!!(await a.$('[data-asignar][data-nombre="Ensamblar"]')));
- ok('Las dos ramas del Combo tienen su propia etapa actual accionable a la vez',(await a.$$('#fichaBody [data-asignar]')).length===2);
+ ok('Las dos ramas del Combo tienen su propia etapa actual a la vez',(await a.$$('#fichaBody .etapa.actual')).length===2);
+ // Asignar todo el producto de una vez
+ ok('Botón "Asignar todo el producto"',!!(await a.$('[data-asignar-todo="104"]')));
+ await a.click('[data-asignar-todo="104"]');await a.waitForSelector('#sheetTodo.open');
+ ok('La hoja lista los 4 pasos pendientes con quién puede hacer cada uno',(await a.$$('#todoBody .at-paso')).length===4 && (await a.textContent('.at-paso[data-eid="1007"]')).includes('Pedro') && !(await a.textContent('.at-paso[data-eid="1007"]')).includes('Luis'));
+ ok('Sin cambios el botón está apagado',await a.$eval('#btnGuardarTodo',x=>x.disabled));
+ await a.click('.at-op[data-eid="1006"][data-tid="t1"]');await a.click('.at-op[data-eid="1007"][data-tid="t2"]');await a.click('.at-op[data-eid="1008"][data-tid="t1"]');await a.click('.at-op[data-eid="1009"][data-tid="t3"]');
+ ok('Dice cuántos cambios va a guardar',(await a.textContent('#btnGuardarTodo'))==='Guardar 4 cambios');
+ await a.screenshot({path:'shots5/s6-asignar-todo.png'});
+ await a.click('#btnGuardarTodo');await a.waitForTimeout(700);
+ const at=llamadas.find(x=>x[0]==='asignar_etapas');
+ ok('Se guardan los 4 de una vez',at && at[1].p.length===4 && at[1].p.find(x=>x.eid===1007).tid==='t2',at&&at[1]);
+ ok('La ficha muestra a cada uno en su paso',(await a.textContent('#fichaBody')).includes('Pedro') && (await a.textContent('#fichaBody')).includes('Luis') && !(await a.$('#sheetTodo.open')));
+ await a.screenshot({path:'shots5/s7-todo-asignado.png',fullPage:true});
  await a.screenshot({path:'shots5/s5-combo.png',fullPage:true});
+ // Si algo cambió mientras la hoja estaba abierta: avisa, cierra y vuelve a pintar con lo último
+ for(const v of ventas) for(const it of v.items) for(const e of it.etapas) if(e.id===1008){ e.trabajador_id='t9'; e.trabajador={nombre:'Mario'}; }
+ fallarTodo=true;
+ await a.click('[data-asignar-todo="104"]');await a.waitForSelector('#sheetTodo.open');await a.waitForTimeout(300);
+ await a.click('.at-op[data-eid="1009"][data-tid=""]');await a.click('#btnGuardarTodo');await a.waitForTimeout(900);
+ ok('Si el servidor dice que algo cambió: lo avisa y cierra la hoja',(await a.textContent('#toast')).includes('ya no se puede asignar') && !(await a.$('#sheetTodo.open')));
+ fallarTodo=false;await a.waitForTimeout(400);
+ await a.click('[data-asignar-todo="104"]');await a.waitForSelector('#sheetTodo.open');await a.waitForTimeout(300);
+ ok('Un trabajador inactivo asignado sale marcado como "(inactivo)" para poder cambiarlo',((await a.textContent('.at-op.on[data-eid="1008"]'))||'').includes('Mario (inactivo)'));
+ ok('   y sin cambios el botón sigue apagado',await a.$eval('#btnGuardarTodo',x=>x.disabled));
 
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

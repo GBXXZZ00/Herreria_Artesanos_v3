@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Producción · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=45">
+<link rel="stylesheet" href="assets/css/base.css?v=46">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   .p-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
@@ -38,6 +38,21 @@
   .etapa:not(.hecha):not(.actual) .e-nom{color:var(--ink-faint)}
   .e-fila{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
   .solo-lectura #btnNuevaOrden{display:none}
+  .e-asignar.sec{background:var(--surface);color:var(--accent);border:1.5px solid var(--accent)}
+  .btn-asignar-todo{display:flex;align-items:center;justify-content:center;width:100%;height:46px;margin-top:14px;border:1.5px solid var(--accent);border-radius:14px;color:var(--accent);font-size:14.5px;font-weight:800;background:var(--surface);transition:transform 130ms var(--ease-out)}
+  .btn-asignar-todo:active{transform:scale(0.98)}
+  .at-paso{padding:12px 0}
+  .at-paso + .at-paso{border-top:1px solid var(--line)}
+  .at-nom{font-size:15px;font-weight:800;margin:0 0 8px}
+  .at-ops{display:flex;flex-wrap:wrap;gap:8px}
+  .at-op{display:flex;align-items:center;gap:7px;height:38px;padding:0 13px 0 5px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:13.5px;font-weight:700;color:var(--ink-soft);background:var(--surface);transition:transform 120ms var(--ease-out)}
+  .at-op:active{transform:scale(0.96)}
+  .at-op .ini{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  .at-op.nadie{padding:0 13px}
+  .at-op.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .at-op.on .ini{background:var(--accent);color:#fff}
+  .at-vacio{font-size:13px;color:var(--ink-soft);margin:0}
+  .e-chip .ini,.at-op .ini{padding:0;line-height:1}
   .e-chip{display:flex;align-items:center;gap:7px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--surface-2);font-size:13px;font-weight:700;flex-shrink:0}
   .e-chip .ini{width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;flex-shrink:0}
   .e-asignar{padding:6px 14px;border-radius:999px;border:1px solid var(--line-strong);background:none;font-size:13px;font-weight:700;color:var(--ink-soft)}
@@ -153,6 +168,20 @@
   </div>
 </section>
 
+<!-- Asignar todo el producto (un trabajador por paso) -->
+<div class="sheet-scrim scrim-top" id="scrimTodo" data-cerrar="sheetTodo"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetTodo" role="dialog" aria-modal="true" aria-labelledby="todoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="todoTitulo">Asignar todo</h2>
+    <button class="icon-btn" data-cerrar="sheetTodo" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="field-hint" style="margin:0 0 12px">Elige quién hace cada paso. Cada uno empieza cuando termine el anterior y le llega el aviso.</p>
+    <div id="todoBody"></div>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarTodo" disabled>Elige quién hace cada paso</button></div>
+</section>
+
 <!-- Marcar etapa como terminada -->
 <div class="sheet-scrim scrim-top" id="scrimTerminar" data-cerrar="sheetTerminar"></div>
 <section class="sheet sheet-auto sheet-top" id="sheetTerminar" role="dialog" aria-modal="true" aria-labelledby="terminarTitulo">
@@ -213,14 +242,14 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=45"></script>
-<script src="assets/js/supabase-client.js?v=45"></script>
-<script src="assets/js/img-compress.js?v=45"></script>
-<script src="assets/js/comun.js?v=45"></script>
-<script src="assets/js/avisos.js?v=45"></script>
-<script src="assets/js/sesion.js?v=45"></script>
-<script src="assets/js/ventas-comun.js?v=45"></script>
-<script src="assets/js/specs-producto.js?v=45"></script>
-<script src="assets/js/produccion.js?v=45"></script>
+<script src="assets/vendor/supabase.js?v=46"></script>
+<script src="assets/js/supabase-client.js?v=46"></script>
+<script src="assets/js/img-compress.js?v=46"></script>
+<script src="assets/js/comun.js?v=46"></script>
+<script src="assets/js/avisos.js?v=46"></script>
+<script src="assets/js/sesion.js?v=46"></script>
+<script src="assets/js/ventas-comun.js?v=46"></script>
+<script src="assets/js/specs-producto.js?v=46"></script>
+<script src="assets/js/produccion.js?v=46"></script>
 </body>
 </html>

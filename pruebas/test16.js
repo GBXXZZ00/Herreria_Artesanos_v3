@@ -37,6 +37,7 @@ const rpcs=[];
     if(name==='registrar_abono'){if(pag(v)+a.a.monto>v.total)return j({message:'El abono es mayor que lo que resta por pagar'},400);v.abonos.push({id:10,tipo:'abono',monto:a.a.monto,metodo:a.a.metodo,fecha:new Date().toISOString(),registrado_por:'u1'});v.actualizado_en=new Date().toISOString();return j({id:v.id});}
     if(name==='cambiar_estado_venta'){v.estado=a.nuevo;v.actualizado_en=new Date().toISOString();return j({id:v.id});}
     if(name==='cancelar_venta'){const p=pag(v);if(p>0)v.abonos.push({id:11,tipo:'devolucion',monto:p,metodo:a.metodo_devolucion,fecha:new Date().toISOString()});v.estado='cancelada';v.cancelada_en=new Date().toISOString();v.cancelada_motivo=a.motivo;return j({id:v.id});}
+    if(name==='avance_venta')return j({total:5,hechas:3,actuales:['Masilla y pintura']});
     if(name==='marcar_paso'){if(a.paso==='mensaje'){v.mensaje_en=new Date().toISOString();v.mensaje_estado=v.estado;v.mensaje_por='u1';}else{v.pdf_en=new Date().toISOString();v.pdf_por='u1';}return j({id:v.id});}
     if(name==='pedir_produccion'){v.produccion_pedida_en=new Date().toISOString();v.produccion_pedida_por='u1';return j({id:v.id});}
     if(name==='seguimiento_publico'){const x=ventas.find(z=>z.token_seguimiento===a.t);if(!x)return j({error:'no_existe'});return j(Object.assign({},full(x),{cliente:{nombre:cli.nombre,cedula:'V12•••678',telefono:'•••4567'}}));}
@@ -132,7 +133,8 @@ const rpcs=[];
  await p.goBack({waitUntil:'commit'});await w(500);await p.click('.vcard[data-id="1"]');await w(1500);
  if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}
  ok('En producción no se puede devolver a Confirmada',!(await p.$('#fichaBody [data-retro]')));
- ok('Siguiente: "Marcar como Lista"',(await p.textContent('#fichaBody .btn-guia[data-estado="lista"]')).includes('Marcar como Lista'));
+ ok('En producción no hay botón "Marcar como Lista": sale el avance del taller',!(await p.$('#fichaBody [data-estado="lista"]')) && (await p.textContent('#fichaBody .avance-taller')).includes('3 de 5 pasos') && (await p.textContent('#fichaBody .avance-taller')).includes('Ahora en masilla y pintura'));
+ await p.screenshot({path:'shots4/l5-avance.png'});
  ok('En producción ya no deja editar',(await p.textContent('#fichaBody')).includes('No se puede editar'));
  // Cancelar con devolución
  if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}

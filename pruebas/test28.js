@@ -151,7 +151,9 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
     if(name==='resolver_vale'){const x=DB.vales.find(z=>z.id===a.vid);x.estado=a.aprobar?'aprobado':'rechazado';return j(null);}
     if(name==='seguimiento_publico'){
       const v=DB.ventas.find(x=>x.token_seguimiento===a.t);if(!v)return j({error:'no_existe'});
-      const f=ventaCompleta(v);f.cliente={nombre:f.cliente.nombre,cedula:'V99•••766',telefono:'•••8877'};delete f.token_seguimiento;return j(f);
+      const f=ventaCompleta(v);f.cliente={nombre:f.cliente.nombre,cedula:'V99•••766',telefono:'•••8877'};delete f.token_seguimiento;
+      f.items=f.items.map(it=>{const x=Object.assign({},it,{pasos:it.etapas.map(e=>({nombre:e.nombre,rama:e.rama,orden:e.orden,estado:e.estado,terminada_en:e.terminada_en,trabajando:!!e.iniciada_en,foto:e.foto}))});delete x.etapas;return x;});
+      return j(f);
     }
     return j(null);
   }
@@ -292,6 +294,17 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
    const tt=await jz.waitForFunction(()=>{const t=document.getElementById('toast');return t&&t.classList.contains('show')&&/Sumaste|terminado/.test(t.textContent)&&t.textContent;},null,{timeout:6000}).then(h=>h.jsonValue()).catch(()=>jz.textContent('#toast'));
    ok(`    Termina con foto y le dice cuánto sumó`,/Sumaste \$(20|15|5)/.test(tt),tt);
    await jz.waitForTimeout(900);
+   if(k===0){
+     // El cliente ve el avance real en su seguimiento
+     const c0x=await b.newContext({...devices['iPhone 13']});await mock(c0x,'x');const c0=await c0x.newPage();c0._err=[];c0.on('pageerror',e=>c0._err.push('cliente0: '+e.message));pags.push(c0);
+     await c0.goto(H+'seguimiento.html?t='+TOKEN);await c0.waitForSelector('.pt');
+     ok('    El cliente ve "Tu Imperial E2E va en masilla y pintura"',(await texto(c0,'.estado-grande')).includes('Tu Imperial E2E va en masilla y pintura'),await texto(c0,'.estado-grande'));
+     ok('    Y en su producto: Hierro terminado con la foto del trabajador, Masilla es el siguiente',(await texto(c0,'.pt-p.hecho')).includes('Hierro')&&(await texto(c0,'.pt-p.hecho')).includes('Terminado el')&&!!(await c0.$('.pt-p.hecho .pt-foto img'))&&(await texto(c0,'.pt-p.actual')).includes('Masilla y pintura'));
+     ok('    Sin nombres de trabajadores',!(await texto(c0,'main')).includes('Jesús'));
+     await c0.waitForTimeout(800);await c0.screenshot({path:'shots5/e14b-seguimiento-avance.png',fullPage:true});
+     await c0.click('.pt-foto');await c0.waitForTimeout(500);
+     ok('    Tocar la foto la abre grande',await c0.$eval('.visor',x=>x.classList.contains('open')).catch(()=>false));
+   }
  }
  ok('6. Al terminar la última etapa el pedido queda Listo solo',v.estado==='lista');
  ok('   Las fotos del trabajador quedan guardadas en cada etapa',DB.etapas.every(e=>!!e.foto));

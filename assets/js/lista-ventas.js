@@ -367,13 +367,15 @@
     let masHtml = `<div class="grid-acciones">${grid.join('')}</div>`;
     if(!editable(v) && v.estado !== 'cancelada' && v.estado !== 'entregada') masHtml += `<div class="f-nota">No se puede editar: ya está ${esc(AV.ESTADOS[v.estado].t.toLowerCase())}.</div>`;
     // Un pedido en producción no se devuelve a "Confirmada" (si hace falta, se cancela)
-    if(esAdmin && k > 0 && v.estado !== 'en_produccion') masHtml += `<button type="button" class="f-link-chico" data-retro="${pv[k - 1]}">${ICON_UNDO}Devolver a "${esc(AV.ESTADOS[pv[k - 1]].t)}"</button>`;
+    // No se devuelve a Confirmada un pedido en producción, ni a producción uno que el taller ya terminó
+    if(esAdmin && k > 0 && v.estado !== 'en_produccion' && pv[k - 1] !== 'en_produccion') masHtml += `<button type="button" class="f-link-chico" data-retro="${pv[k - 1]}">${ICON_UNDO}Devolver a "${esc(AV.ESTADOS[pv[k - 1]].t)}"</button>`;
     // Descartar una cotización lo hace quien vende; cancelar una venta, solo un administrador
     const puedeCancelar = v.estado !== 'cancelada' && v.estado !== 'entregada' && (cot || esAdmin);
     if(puedeCancelar) masHtml += `<button type="button" class="btn-peligro" data-accion="cancelar">${ICON_CANCELAR}${cot ? 'Descartar cotización' : 'Cancelar venta'}</button>`;
     html += acordeon('mas', 'Más opciones', puedeCancelar ? 'Editar, PDF, seguimiento, cancelar' : 'Editar, PDF y seguimiento', masHtml);
 
     $('fichaBody').innerHTML = html;
+    if(v.estado === 'en_produccion') cargarAvance(v.id);
     pintarPie();
   }
 
@@ -399,9 +401,22 @@
   const soloInmediata = (v) => (v.items || []).length > 0 && v.items.every(it => it.pieza_id);
   const pasosDe = (v) => soloInmediata(v) ? PASOS.filter(p => p !== 'en_produccion') : PASOS;
   const SIGUIENTE = {
-    en_produccion: { t:'Marcar como Lista', s:'Ya está fabricado y listo para entregar' },
-    lista:         { t:'Marcar como Entregada', s:'El cliente ya lo recibió' }
+    lista:         { t:'Marcar como Entregada', s:'El cliente ya se lo llevó' }
   };
+  // Cuántos pasos lleva el taller y en cuál va (sin montos ni nombres)
+  async function cargarAvance(vid){
+    try{
+      const { data, error } = await db.rpc('avance_venta', { vid });
+      if(error || !data) return;
+      const el = document.querySelector(`[data-avance="${vid}"]`);
+      if(!el) return;
+      const t = Number(data.total) || 0, h = Number(data.hechas) || 0;
+      const act = (data.actuales || []).map(x => String(x).toLowerCase());
+      el.querySelector('.bg-t').textContent = t ? `En fabricación · ${h} de ${t} pasos` : 'En fabricación';
+      if(act.length) el.querySelector('.bg-s').textContent = 'Ahora en ' + act.join(' y ') + '. Pasa solo a Lista al terminar.';
+      requestAnimationFrame(() => { const b = el.querySelector('.av-barra i'); if(b) b.style.transform = `scaleX(${t ? h / t : 0})`; });
+    } catch(e){}
+  }
   function estadoBloque(v){
     if(v.estado === 'cancelada') return '';
     const PV = pasosDe(v);
@@ -415,6 +430,11 @@
     if(sig === 'en_produccion'){
       const espera = AV.porConfirmar(v.abonos).length > 0;
       html += `<div class="btn-guia espera"><span class="bg-t">${espera ? (puedeConfirmar ? 'Falta que confirmes el pago' : 'Espera que Ray confirme el pago') : 'Falta un pago confirmado'}</span><span class="bg-s">${espera ? 'Al confirmarlo pasa solo a producción' : 'Registra un pago: cuando Ray lo confirme pasa a producción'}</span></div>`;
+      return html;
+    }
+    // En producción no hay botón: queda Lista sola cuando el taller termina el último paso
+    if(v.estado === 'en_produccion'){
+      html += `<div class="btn-guia hecho avance-taller" data-avance="${v.id}"><span class="bg-t">En fabricación</span><span class="bg-s">Pasa solo a Lista cuando el taller termine el último paso</span><span class="av-barra"><i style="transform:scaleX(0)"></i></span></div>`;
       return html;
     }
     const info = sig === 'lista' && v.estado === 'confirmada' ? { t:'Marcar como Lista', s:'Ya está en tienda, lista para entregar' } : SIGUIENTE[v.estado];
