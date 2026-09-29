@@ -1,6 +1,7 @@
 // Producción: pedidos en fabricación y órdenes para exhibición, sus productos y las
 // etapas de cada uno (asignar trabajador, marcar terminado, categoría de pago).
-// Solo lo usan los administradores.
+// El administrador asigna y marca; la vendedora solo mira el avance (modo lectura,
+// sin montos ni botones).
 (function(){
   'use strict';
   const db = window.db;
@@ -17,7 +18,9 @@
   let pedidos = [];
   let trabajadores = [];
   let categorias = [];
-  const FILTROS = [ { id:'todos', t:'Todos' }, { id:'asignar', t:'Por asignar' }, { id:'sincat', t:'Sin categoría' }, { id:'atrasados', t:'Atrasados' } ];
+  let lectura = false;   // vendedora: solo mirar
+  const FILTROS_ADMIN = [ { id:'todos', t:'Todos' }, { id:'asignar', t:'Por asignar' }, { id:'sincat', t:'Sin categoría' }, { id:'atrasados', t:'Atrasados' } ];
+  let FILTROS = FILTROS_ADMIN;
   const params = new URLSearchParams(location.search);
   let filtro = FILTROS.some(f => f.id === params.get('filtro')) ? params.get('filtro') : 'todos';
   let abrirAlCargar = Number(params.get('abrir')) || null;
@@ -56,6 +59,17 @@
     return -AV.diasHasta(v.fecha_entrega); // positivo = atrasado
   }
   const nombreCategoria = (id) => (categorias.find(c => c.id === id) || {}).nombre || '';
+  // Fecha corta en la hora del teléfono (terminada_en viene en UTC)
+  function fechaDeHora(ts){
+    const d = new Date(ts);
+    return isNaN(d) ? '' : AV.fechaCorta(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+  }
+  // En qué va un pedido (para la vendedora): la etapa actual de cada línea
+  function enQueVa(v){
+    const act = [];
+    itemsFabrica(v).forEach(it => Object.values(ramas(it)).forEach(l => { const a = etapaActual(l); if(a && !act.includes(a.nombre)) act.push(a.nombre); }));
+    return act.length ? 'En ' + act.join(' y ').toLowerCase() : 'Casi listo';
+  }
   const tituloPedido = (v) => v.interna ? 'Para exhibición' : ((v.cliente || {}).nombre || 'Sin nombre');
 
   // ---------------------------------------------------------------------------
@@ -63,6 +77,11 @@
   // ---------------------------------------------------------------------------
   async function cargar(){
     try{
+      if(lectura){
+        const { data, error } = await db.rpc('produccion_lectura');
+        if(error) throw error;
+        return mostrarPedidos(data || []);
+      }
       const [rv, rc] = await Promise.all([
         db.from('ventas')
           .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,cantidad,categoria_pago_id,etapas(id,rama,nombre,orden,especialidad,estado,trabajador_id,foto,terminada_en,iniciada_en,monto,trabajador:perfiles(nombre)))')
@@ -72,7 +91,14 @@
       if(rv.error) throw rv.error;
       if(rc.error) toast('No se pudieron cargar las categorías de pago', 'error');
       categorias = rc.data || [];
-      pedidos = (rv.data || []).map(v => Object.assign(v, { _resumen: resumenPedido(v) }));
+      mostrarPedidos(rv.data || []);
+    } catch(e){
+      $('lista').innerHTML = '<div class="vacio"><h3>No se pudo cargar</h3><p>Revisa tu internet y toca actualizar.</p></div>';
+      toast((e && e.message) || 'No se pudo cargar', 'error');
+    }
+  }
+  function mostrarPedidos(lista){
+      pedidos = lista.map(v => Object.assign(v, { _resumen: resumenPedido(v) }));
       pedidos.sort((a, b) => {
         const da = diasAtraso(a) || 0, db_ = diasAtraso(b) || 0;
         if((da > 0) !== (db_ > 0)) return db_ > 0 ? 1 : -1;
@@ -88,10 +114,6 @@
         abrirAlCargar = null;
         if(v) pintarFicha(v);
       }
-    } catch(e){
-      $('lista').innerHTML = '<div class="vacio"><h3>No se pudo cargar</h3><p>Revisa tu internet y toca actualizar.</p></div>';
-      toast((e && e.message) || 'No se pudo cargar', 'error');
-    }
   }
 
   function pintarChips(){
@@ -122,7 +144,7 @@
     if(!vistos.length){
       cont.innerHTML = pedidos.length
         ? '<div class="vacio"><h3>Nada por aquí</h3><p>Ningún pedido coincide con este filtro.</p></div>'
-        : '<div class="vacio"><h3>El taller está libre</h3><p>Cuando un pedido pase a producción aparece aquí. Con el botón + puedes fabricar algo para exhibición.</p></div>';
+        : `<div class="vacio"><h3>El taller está libre</h3><p>Cuando un pedido pase a producción aparece aquí.${lectura ? '' : ' Con el botón + puedes fabricar algo para exhibición.'}</p></div>`;
       return;
     }
     cont.innerHTML = vistos.map((v, i) => {
@@ -130,7 +152,8 @@
       const da = diasAtraso(v);
       const plazo = da > 0 ? `<span class="plazo tarde">${da} ${da === 1 ? 'día' : 'días'} atrasada</span>`
         : v.fecha_entrega ? `<span class="plazo">Entrega ${AV.fechaCorta(v.fecha_entrega)}</span>` : '';
-      const badge = r.sinAsignar > 0 ? `<span class="plazo">${r.sinAsignar} sin asignar</span>`
+      const badge = lectura ? `<span class="plazo">${esc(enQueVa(v))}</span>`
+        : r.sinAsignar > 0 ? `<span class="plazo">${r.sinAsignar} sin asignar</span>`
         : r.sinCat > 0 ? '<span class="plazo aviso">Sin categoría de pago</span>'
         : '<span class="plazo ok">Todo asignado</span>';
       const prod = itemsFabrica(v).map(it => it.nombre + (it.cantidad > 1 ? ' ×' + it.cantidad : '')).join(', ');
@@ -162,16 +185,16 @@
     $('fichaBody').innerHTML = `
       <p class="field-label" style="margin-bottom:2px">${cab}</p>
       ${itemsFabrica(v).map(it => itemHtml(it)).join('')}
-      ${v.interna ? `<button class="btn-cancelar-orden" type="button" data-cancelar-orden="${v.id}">Cancelar esta orden</button>` : ''}`;
+      ${v.interna && !lectura ? `<button class="btn-cancelar-orden" type="button" data-cancelar-orden="${v.id}">Cancelar esta orden</button>` : ''}`;
     abrirHoja('sheetFicha');
   }
   function catHtml(it){
-    if(!it.categoria_pago_id) return '';
+    if(lectura || !it.categoria_pago_id) return '';
     return `<button class="p-cat" type="button" data-cat-item="${it.id}"><span>Pago: ${esc(nombreCategoria(it.categoria_pago_id) || 'Categoría')}</span></button>`;
   }
   // Sin categoría no se asigna: el aviso lleva directo a elegirla
   function catFaltaHtml(it){
-    if(it.categoria_pago_id) return '';
+    if(lectura || it.categoria_pago_id) return '';
     return `<button class="cat-falta" type="button" data-cat-item="${it.id}"><b>Primero dale una categoría de pago.</b> Sin ella no se puede asignar. Toca aquí.</button>`;
   }
   function itemHtml(it){
@@ -187,7 +210,14 @@
         const dot = e.estado === 'hecha'
           ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : '';
         let derecha = '', abajo = '';
-        if(e.estado === 'hecha'){
+        if(lectura){
+          // Solo mirar: quién lo tiene y cuándo terminó, sin montos ni botones
+          if(e.estado === 'hecha') abajo = `<span class="e-hecha-info">Terminó${e.terminada_en ? ' el ' + esc(fechaDeHora(e.terminada_en)) : ''}${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}</span>`;
+          else if(cls === 'actual'){
+            derecha = e.trabajador ? `<span class="e-chip e-chip-ver"><span class="ini">${esc(inicial(e.trabajador.nombre))}</span>${esc(e.trabajador.nombre)}</span>` : '<span class="e-asignar off">Por asignar</span>';
+            if(e.iniciada_en) abajo = '<span class="e-hecha-info">Trabajando en esto</span>';
+          }
+        } else if(e.estado === 'hecha'){
           const monto = e.monto != null ? ` · <span class="e-monto">${dinero(e.monto)}</span>` : '';
           abajo = `<span class="e-hecha-info">Terminó${e.trabajador ? ' · ' + esc(e.trabajador.nombre) : ''}${monto}</span>`;
         } else if(cls === 'actual'){
@@ -554,7 +584,13 @@
   (async function(){
     const p = await S.requerir();
     if(!p) return;
-    if(p.rol !== 'admin'){ location.replace('index.html'); return; }
+    if(p.rol !== 'admin' && p.rol !== 'vendedor'){ location.replace('index.html'); return; }
+    if(p.rol === 'vendedor'){
+      lectura = true;
+      FILTROS = FILTROS_ADMIN.filter(f => f.id === 'todos' || f.id === 'atrasados');
+      if(!FILTROS.some(f => f.id === filtro)) filtro = 'todos';
+      document.body.classList.add('solo-lectura');
+    }
     cargar();
   })();
 })();

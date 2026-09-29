@@ -58,6 +58,11 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
     if(faltan===0) v.estado='lista';
     return j({venta_id:vid, listo:faltan===0});
   }
+  if(u.includes('/rpc/produccion_lectura')){
+    if(rol!=='admin'&&rol!=='vendedor')return j({message:'No autorizado'},400);
+    return j(ventas.filter(v=>v.estado==='en_produccion').map(v=>({id:v.id,fecha_entrega:v.fecha_entrega,interna:false,cliente:v.cliente,
+      items:v.items.map(it=>({id:it.id,nombre:it.nombre,tipo:it.tipo,foto:it.foto,cantidad:1,etapas:it.etapas.map(e=>({id:e.id,rama:e.rama,nombre:e.nombre,orden:e.orden,estado:e.estado,trabajador_id:e.trabajador_id,iniciada_en:null,terminada_en:e.terminada_en,trabajador:e.trabajador}))}))})));
+  }
   if(u.includes('/perfiles')){
     if(u.includes('rol=eq.trabajador')) return j(trabajadores);
     if(u.includes('id=eq')) return j({id:user,usuario:rol==='admin'?'raymundo':'yulimar',nombre:rol==='admin'?'Ray':'Yulimar',rol,sede_id:1,confirma_abonos:false});
@@ -71,15 +76,25 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
   return j([]);});}
 
 (async()=>{ const b=await chromium.launch(); const err=[]; try{
- // Vendedora: no ve Producción en el menú de abajo
+ // Vendedora: ve Producción solo para mirar (sin montos ni botones)
  const cy=await b.newContext({...devices['iPhone 13']});await mock(cy,'u3','vendedor');
  const y=await cy.newPage();y.on('pageerror',e=>err.push('vend:'+e.message));
  await y.goto('http://127.0.0.1:8765/index.html');await y.waitForSelector('.quien-btn');await y.click('.quien-btn');
  for(const d of '333333') await y.click(`#pinTeclado [data-t="${d}"]`);
- await y.waitForSelector('#vInicio.entra');
- ok('Vendedora no ve "Producción" en el menú de abajo',!(await y.$('a.nav-item[href="produccion.html"]')));
- await y.goto('http://127.0.0.1:8765/produccion.html');await y.waitForURL('**/index.html');
- ok('Vendedora no puede entrar a producción directo',y.url().includes('index.html'));
+ await y.waitForSelector('#vInicio.entra');await y.waitForTimeout(800);
+ ok('Vendedora ve "Producción" en el menú de abajo',!!(await y.$('a.nav-item[href="produccion.html"]')));
+ ok('Su cajita Producción dice cuántos hay en taller',(await y.textContent('#cuenta-produccion'))==='3 pedidos en taller',await y.textContent('#cuenta-produccion'));
+ await y.click('a.nav-item[href="produccion.html"]');await y.waitForSelector('.vcard');
+ ok('Vendedora ve los 3 pedidos en taller',(await y.$$('.vcard')).length===3);
+ ok('Solo chips Todos y Atrasados, sin botón +',(await y.$$eval('#chips .chip',x=>x.map(c=>c.dataset.f))).join()==='todos,atrasados' && !(await y.isVisible('#btnNuevaOrden')));
+ ok('Cada pedido dice en qué va',(await y.textContent('.vcard >> nth=0')).includes('En masilla y pintura'));
+ await y.screenshot({path:'shots5/s0-vendedora-lista.png'});
+ await y.click('.vcard >> nth=0');await y.waitForSelector('#sheetFicha.open');
+ const fv=await y.textContent('#fichaBody');
+ ok('Ficha: sin botones de asignar ni terminar, sin categoría de pago',!(await y.$('#fichaBody [data-asignar]')) && !(await y.$('#fichaBody [data-terminar]')) && !(await y.$('#fichaBody [data-cat-item]')) && !fv.includes('Pago:'));
+ ok('Ficha: dice quién terminó (sin montos) y qué falta asignar',fv.includes('Terminó') && fv.includes('Jesús') && !fv.includes('$') && fv.includes('Por asignar'));
+ await y.screenshot({path:'shots5/s0b-vendedora-ficha.png'});
+ await y.click('#sheetFicha [data-cerrar="sheetFicha"]').catch(()=>{});
 
  // Admin: entra a Producción
  const ca=await b.newContext({...devices['iPhone 13']});await mock(ca,'u2','admin');

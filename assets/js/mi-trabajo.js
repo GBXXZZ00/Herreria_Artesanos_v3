@@ -120,8 +120,11 @@
     const det = [t.cantidad > 1 ? t.cantidad + ' unidades' : '', subTrabajo(t)].filter(Boolean).join(' · ');
     const estado = esActivo ? '<span class="tr-estado curso">En curso</span>'
       : t.espera ? `<span class="tr-estado bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</span>`
+      : a ? `<span class="tr-estado bloq">${ICON_CANDADO}Después del que tienes en curso</span>`
       : t.monto != null ? `<span class="tr-estado">Ganas ${esc(dinero(t.monto))}</span>` : '';
-    return `<button class="tr ${esActivo ? 'activo' : ''}" type="button" data-detalle="${t.id}">
+    // Con uno en curso, los demás se ven en gris (se pueden abrir para ver su foto)
+    const gris = !esActivo && (a || t.espera);
+    return `<button class="tr ${esActivo ? 'activo' : ''} ${gris ? 'gris' : ''}" type="button" data-detalle="${t.id}">
       <span class="tr-foto">${fotoHtml(t, 24)}</span>
       <span style="min-width:0">
         <span class="tr-etapa" style="display:block">${esc(t.nombre)}</span>
@@ -133,6 +136,7 @@
   }
   function pintarTrabajos(){
     $('trabajosAyuda').classList.toggle('hidden', !trabajos.length);
+    $('trabajosAyuda').textContent = activo() ? 'Tienes uno en curso. Los demás quedan en espera hasta que lo termines.' : 'Toca uno para ver su foto y sus detalles.';
     $('listaTrabajos').innerHTML = trabajos.length
       ? trabajos.map(trabajoHtml).join('')
       : '<div class="tr-vacio">No tienes trabajos pendientes. Te avisamos cuando te asignen uno.</div>';

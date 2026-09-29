@@ -41,11 +41,12 @@
     const { data } = await db.auth.getSession();
     return data && data.session ? data.session : null;
   }
-  // Producción solo lo usan los administradores (Gualfredo/Ray): al resto no se le
-  // muestra el botón del menú de abajo.
+  // Producción la usan los administradores y la vendedora (solo mirar): al resto no se
+  // le muestra el botón del menú de abajo.
   function ocultarProduccionSiNoAdmin(p){
-    // Solo se quita si sabemos el rol (si no se pudo leer el perfil, no se esconde nada)
-    if(!p || !p.rol || p.rol === 'admin') return;
+    // Solo se quita si sabemos el rol (si no se pudo leer el perfil, no se esconde nada).
+    // La vendedora sí la ve (solo para mirar el avance).
+    if(!p || !p.rol || p.rol === 'admin' || p.rol === 'vendedor') return;
     const cont = document.getElementById('menuModulos');
     const item = cont && cont.querySelector('a.nav-item[href="produccion.html"]');
     if(item) item.remove();

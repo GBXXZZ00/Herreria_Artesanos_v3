@@ -114,6 +114,8 @@ async function entrar(b,user,rol,nombre){
  // Otro trabajo queda bloqueado mientras hay uno en curso
  await t.click('#vistaTrabajo [data-ver="trabajos"]');await t.waitForSelector('#sheetTrabajos.open');
  ok('El empezado queda arriba y dice "En curso"',(await t.textContent('#listaTrabajos .tr.activo')).includes('En curso'));
+ ok('Se siguen viendo todos, y los demás en gris',(await t.$$('#listaTrabajos .tr')).length===3 && (await t.$$('#listaTrabajos .tr.gris')).length===2 && (await t.textContent('#trabajosAyuda')).includes('Tienes uno en curso'));
+ await t.screenshot({path:'shots5/t3b-trabajos-gris.png'});
  await t.click('#listaTrabajos [data-detalle="501"]');await t.waitForSelector('#sheetTrabajo.open');
  ok('Los demás dicen "Primero termina el que empezaste"',(await t.textContent('#trabajoFoot')).includes('Primero termina el que empezaste'));
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(300);

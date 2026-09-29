@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=43">
+<link rel="stylesheet" href="assets/css/base.css?v=44">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -153,6 +153,9 @@
   .tr{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:1px solid var(--line);border-radius:16px;background:var(--surface);text-align:left;transition:transform 140ms var(--ease-out)}
   .tr:active{transform:scale(0.98)}
   .tr.activo{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .tr.gris{background:var(--surface-2);border-color:transparent}
+  .tr.gris .tr-foto{opacity:.5}
+  .tr.gris .tr-etapa,.tr.gris .tr-nom{color:var(--ink-faint)}
   .tr-foto{width:68px;height:68px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
   .tr-foto img{width:100%;height:100%;object-fit:cover}
   .tr-etapa{font-size:12px;font-weight:800;color:var(--accent)}
@@ -438,13 +441,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=43"></script>
-<script src="assets/js/supabase-client.js?v=43"></script>
-<script src="assets/js/img-compress.js?v=43"></script>
-<script src="assets/js/comun.js?v=43"></script>
-<script src="assets/js/avisos.js?v=43"></script>
-<script src="assets/js/sesion.js?v=43"></script>
-<script src="assets/js/mi-trabajo.js?v=43"></script>
+<script src="assets/vendor/supabase.js?v=44"></script>
+<script src="assets/js/supabase-client.js?v=44"></script>
+<script src="assets/js/img-compress.js?v=44"></script>
+<script src="assets/js/comun.js?v=44"></script>
+<script src="assets/js/avisos.js?v=44"></script>
+<script src="assets/js/sesion.js?v=44"></script>
+<script src="assets/js/mi-trabajo.js?v=44"></script>
 <script>
 (function(){
   'use strict';
@@ -645,6 +648,10 @@
     llave: svg('<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>'),
     persona: svg('<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>'),
     vale: svg('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'),
+    check: svg('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/>'),
+    enviar: svg('<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>'),
+    reloj: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    alerta: svg('<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/>'),
     catalogo: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/>'),
     etiqueta: svg('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>')
   };
@@ -670,7 +677,7 @@
   const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
 
   // Un pendiente = una línea: color según qué es, título corto y detalle
-  // p = { color:'rojo'|'naranja'|'verde'|'azul'|'teal', icono, titulo, detalle, href | vales:true }
+  // p = { color:'rojo'|'naranja'|'verde'|'azul'|'amarillo'|'teal', icono, titulo, detalle, href | vales:true }
   function filaPendiente(p, i){
     const dentro = `<span class="pend-ico">${ICONOS[p.icono]}</span>
       <span class="pend-t">${esc(p.titulo)}${p.detalle ? ` <span>· ${esc(p.detalle)}</span>` : ''}</span>${CHEV}`;
@@ -696,6 +703,7 @@
       } catch(e){}
     }
     if(admin) pend.push(...await pendientesTaller());
+    if(p && p.rol === 'vendedor') pend.push(...await pendientesVendedor(p));
 
     // Se pueden minimizar (el teléfono recuerda cómo los dejaste); cerrados muestran un
     // puntito del color de cada pendiente para que no se pierdan de vista
@@ -761,6 +769,50 @@
       const nMod = rMod && typeof rMod.count === 'number' ? rMod.count : 0;
       if(nMod) pend.push({ color:'teal', icono:'catalogo', titulo: plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html' });
     }
+    return pend;
+  }
+  // Vendedora: lo que le toca hacer con SUS ventas (y cuántos pedidos hay en taller)
+  const diaLocal = (iso) => { if(!iso) return null; const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
+  const diasHasta = (iso) => { const f = diaLocal(iso); if(!f) return null; const h = new Date(); h.setHours(0, 0, 0, 0); return Math.round((f - h) / 86400000); };
+  const ms = (x) => x ? new Date(x).getTime() : 0;
+  async function pendientesVendedor(p){
+    const pend = [];
+    const [rv, rp] = await Promise.all([
+      db.from('ventas').select('id,estado,vence_en,fecha_entrega,mensaje_en,mensaje_estado,cliente:clientes(nombre),abonos(tipo,estado,fecha,confirmado_en)')
+        .eq('vendedor_id', p.id).eq('interna', false).in('estado', ['cotizacion', 'confirmada', 'en_produccion', 'lista']),
+      db.rpc('produccion_lectura')
+    ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
+    const ep = $('cuenta-produccion');
+    if(ep){ const n = (rp && rp.data) ? rp.data.length : null; ep.textContent = n === null ? 'Avance de los pedidos' : n ? (n === 1 ? '1 pedido en taller' : n + ' pedidos en taller') : 'Taller libre'; }
+    if(!rv || rv.error || !rv.data) window.AH.toast('No se pudieron cargar tus pendientes. Revisa tu internet.', 'error');
+    const ventas = (rv && rv.data) || [];
+    const nombre = (v) => (v.cliente || {}).nombre || '';
+    const fila = (lista, color, icono, uno, varios, filtroVarios) => {
+      if(!lista.length) return;
+      pend.push({ color, icono, titulo: plural(lista.length, uno, varios),
+        detalle: lista.length === 1 ? nombre(lista[0]) : lista.slice(0, 3).map(v => 'N° ' + v.id).join(', ') + (lista.length > 3 ? '…' : ''),
+        href: lista.length === 1 ? (lista[0].estado === 'cotizacion' ? 'cotizaciones.html' : 'ventas.html') + '?abrir=' + lista[0].id : filtroVarios });
+    };
+    const activas = ventas.filter(v => v.estado !== 'cotizacion');
+    const abonos = (v) => (v.abonos || []).filter(a => a.tipo === 'abono');
+    // El último movimiento de pagos fue un "no llegó" (si ya registró otro pago, no sale)
+    const noLlego = activas.filter(v => {
+      const rech = abonos(v).filter(a => a.estado === 'rechazado');
+      if(!rech.length) return false;
+      const ultRech = Math.max(...rech.map(a => ms(a.confirmado_en || a.fecha)));
+      return !abonos(v).some(a => a.estado !== 'rechazado' && ms(a.fecha) > ultRech);
+    });
+    const ultimaConf = (v) => Math.max(0, ...abonos(v).filter(a => a.estado === 'confirmado').map(a => ms(a.confirmado_en)));
+    // Listo: falta el mensaje de "ya está listo". Pago confirmado: no le ha escrito desde que se confirmó.
+    const listos = activas.filter(v => v.estado === 'lista' && !(v.mensaje_en && v.mensaje_estado === 'lista' && ms(v.mensaje_en) >= ultimaConf(v)));
+    const seguimiento = activas.filter(v => (v.estado === 'confirmada' || v.estado === 'en_produccion') && ultimaConf(v) > 0 && !(v.mensaje_en && ms(v.mensaje_en) >= ultimaConf(v)));
+    const vencen = ventas.filter(v => v.estado === 'cotizacion' && (d => d !== null && d >= 0 && d <= 3)(diasHasta(v.vence_en)));
+    const atrasados = activas.filter(v => (v.estado === 'confirmada' || v.estado === 'en_produccion') && (d => d !== null && d < 0)(diasHasta(v.fecha_entrega)));
+    fila(noLlego, 'rojo', 'dinero', '1 pago no llegó', 'pagos no llegaron', 'ventas.html?filtro=cobrar');
+    fila(listos, 'verde', 'check', '1 pedido listo: avísale', 'pedidos listos: avísales', 'ventas.html?filtro=avisar');
+    fila(seguimiento, 'azul', 'enviar', '1 pago confirmado: avísale', 'pagos confirmados: avísales', 'ventas.html?filtro=avisar');
+    fila(vencen, 'amarillo', 'reloj', '1 cotización por vencer', 'cotizaciones por vencer', 'cotizaciones.html');
+    fila(atrasados, 'naranja', 'alerta', '1 pedido atrasado', 'pedidos atrasados', 'ventas.html?filtro=activas');
     return pend;
   }
   document.addEventListener('click', (e) => { if(e.target.closest('[data-abrir-vales]')) window.Trabajo.abrirVales(); });
