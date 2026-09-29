@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Nómina · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=45">
+<style>
+  .page{padding-bottom:calc(var(--safe-b) + 110px)}
+  .n-lista{display:flex;flex-direction:column;gap:10px;padding:14px 18px 0}
+  .n-card{display:block;width:100%;text-align:left;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-sm);transition:transform 140ms var(--ease-out);opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms)}
+  .n-card:active{transform:scale(0.98)}
+  .n-top{display:flex;align-items:center;gap:12px}
+  .n-av{width:42px;height:42px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .n-nom{font-size:17px;font-weight:800}
+  .n-s{font-size:13px;color:var(--ink-soft);margin-top:1px}
+  .n-monto{margin-left:auto;text-align:right;flex-shrink:0}
+  .n-monto b{display:block;font-size:22px;font-weight:800;color:var(--accent);letter-spacing:-0.3px}
+  .n-monto b.cero{color:var(--ink-faint)}
+  .n-est{display:inline-block;font-size:11.5px;font-weight:800;border-radius:999px;padding:2px 8px;margin-top:2px;background:#FCEFB4;color:#6B5500}
+  .n-ult{display:flex;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft)}
+  .n-ult b{color:var(--ink)}
+  .n-vacio{text-align:center;padding:60px 20px;color:var(--ink-soft);font-size:15px}
+
+  .t-sub{font-size:13.5px;color:var(--ink-soft);margin:-4px 0 12px}
+  .t-tabs{margin:0 0 12px;padding:2px 0}
+  .tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:14px 2px 4px}
+  .tit:first-child{margin-top:2px}
+  .mov{display:flex;align-items:center;gap:10px;width:100%;padding:9px 2px;text-align:left;border-radius:0;transition:background-color 140ms var(--ease-out)}
+  button.mov:active{background:var(--surface-2)}
+  .mov + .mov{border-top:1px solid var(--line)}
+  .mov-foto{width:46px;height:46px;border-radius:10px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .mov-foto img{width:100%;height:100%;object-fit:contain}
+  .mov-t{display:block;font-size:14.5px;font-weight:700}
+  .mov-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .mov-s b{color:var(--ink);font-weight:700}
+  .mov-m{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:15px;font-weight:800;white-space:nowrap;flex-shrink:0}
+  .mov-m .chev{color:var(--ink-faint)}
+  .mov-m.gris{color:var(--ink-faint);font-size:13px;font-weight:700}
+  .mov.vale .mov-t,.rojo{color:#B42318}
+  .pill-p{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;background:#FCEFB4;color:#6B5500;vertical-align:1px}
+  .cuenta{margin-top:14px;padding:14px 16px;border-radius:18px;background:var(--surface-2)}
+  .cf{display:flex;justify-content:space-between;font-size:14.5px;color:var(--ink-soft);padding:3px 0}
+  .cf b{color:var(--ink)}
+  .ct{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line-strong);margin-top:8px;padding-top:10px}
+  .ct span{font-size:15px;font-weight:800}
+  .ct b{font-size:30px;font-weight:800;letter-spacing:-0.6px;color:var(--accent)}
+  .aviso-m{font-size:12.5px;color:#8A5A00;margin-top:8px}
+  .vacio-s{text-align:center;padding:30px 12px;color:var(--ink-soft);font-size:14.5px}
+  .solo-ray{text-align:center;font-size:13px;color:var(--ink-soft);margin-top:10px}
+  .pie-dos{display:flex;flex-direction:column;gap:8px}
+  .pie-dos .btn-secondary{width:100%}
+
+  .rec{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+  .rec + .rec{margin-top:8px}
+  .rec summary{list-style:none;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+  .rec summary::-webkit-details-marker{display:none}
+  .rec-t{display:block;font-size:15px;font-weight:800}
+  .rec-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .rec-ok{margin-left:auto;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;background:#DDF2E6;color:#1B6B3A;flex-shrink:0}
+  .rec .ac-chev{color:var(--ink-faint);flex-shrink:0;transition:transform 200ms var(--ease-out)}
+  .rec[open] .ac-chev{transform:rotate(180deg)}
+  .rec-body{padding:0 14px 10px;border-top:1px solid var(--line)}
+  .rec-por{font-size:12.5px;color:var(--ink-soft);padding:10px 2px 2px}
+
+  .d-parte{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:800;margin-top:12px}
+  .d-datos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .d-dato{background:var(--surface-2);border-radius:14px;padding:10px 12px;min-width:0}
+  .d-dato span{display:block;font-size:12px;color:var(--ink-soft);font-weight:700}
+  .d-dato b{display:block;font-size:15px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .d-suya{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--ink-soft)}
+  .d-suya button{width:56px;height:56px;border-radius:12px;overflow:hidden;background:var(--surface-2);flex-shrink:0}
+  .d-suya img{width:100%;height:100%;object-fit:cover}
+  .d-link{display:flex;align-items:center;justify-content:center;height:50px;margin-top:16px;border:1.5px solid var(--line-strong);border-radius:14px;font-weight:700;color:var(--accent);text-decoration:none;transition:transform 130ms var(--ease-out)}
+  .d-link:active{transform:scale(0.98)}
+  .bs-caja{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+</style>
+</head>
+<body data-requiere-sesion="si">
+
+<header class="topbar" id="topbar">
+  <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+  <div class="topbar-text">
+    <div class="topbar-title">Nómina</div>
+    <div class="topbar-sub" id="subtitulo">Cargando</div>
+  </div>
+  <button class="icon-btn" id="btnActualizar" aria-label="Actualizar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button>
+</header>
+
+<main class="page">
+  <section class="n-lista" id="lista" aria-live="polite">
+    <div class="sk-vcard"></div><div class="sk-vcard"></div>
+  </section>
+</main>
+
+<div class="bottom-nav-wrap" id="menuModulos" data-activo="nomina"></div>
+
+<!-- Un trabajador: esta semana e historial de pagos -->
+<div class="sheet-scrim" id="scrimTrab" data-cerrar="sheetTrab"></div>
+<section class="sheet" id="sheetTrab" role="dialog" aria-modal="true" aria-labelledby="trabNombre">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="trabNombre">Trabajador</h2>
+    <button class="icon-btn" data-cerrar="sheetTrab" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="t-sub" id="trabSub"></p>
+    <div class="chips t-tabs" id="trabTabs" role="tablist">
+      <button class="chip active" type="button" role="tab" data-tab="semana">Esta semana</button>
+      <button class="chip" type="button" role="tab" data-tab="historial">Historial de pagos</button>
+    </div>
+    <div id="trabBody"></div>
+  </div>
+  <div class="sheet-foot" id="trabFoot"></div>
+</section>
+
+<!-- Un trabajo: de qué cliente y pedido es -->
+<div class="sheet-scrim scrim-top" id="scrimItem" data-cerrar="sheetItem"></div>
+<section class="sheet sheet-hero sheet-top" id="sheetItem" role="dialog" aria-modal="true" aria-label="Trabajo">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetItem" aria-label="Cerrar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sheet-body" id="itemBody"></div>
+</section>
+
+<!-- Anotar un vale (Ray) -->
+<div class="sheet-scrim scrim-top" id="scrimVale" data-cerrar="sheetVale"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetVale" role="dialog" aria-modal="true" aria-labelledby="valeTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="valeTitulo">Anotar un vale</h2>
+    <button class="icon-btn" data-cerrar="sheetVale" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field" id="campoValeMonto">
+      <label class="field-label" for="valeMonto">Monto en dólares</label>
+      <div class="input-affix"><span class="affix">$</span><input class="input" id="valeMonto" type="text" inputmode="decimal" autocomplete="off"></div>
+      <p class="field-error">Escribe un monto mayor a 0</p>
+    </div>
+    <div class="field">
+      <label class="field-label" for="valeNota">Para qué (opcional)</label>
+      <input class="input" id="valeNota" type="text" maxlength="120" autocomplete="off">
+    </div>
+    <button class="tchip" type="button" id="btnValeBs" aria-pressed="false"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Se dio en bolívares</button>
+    <div class="bs-caja hidden" id="cajaBs" style="margin-top:12px">
+      <div class="field" id="campoValeBs">
+        <label class="field-label" for="valeBs">Bolívares</label>
+        <input class="input" id="valeBs" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+      <div class="field" id="campoValeTasa">
+        <label class="field-label" for="valeTasa">Tasa (Bs por $)</label>
+        <input class="input" id="valeTasa" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+    </div>
+    <p class="field-hint" id="valeAyuda">Queda aprobado y se descuenta en su próximo pago.</p>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarVale">Anotar vale</button></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/vendor/supabase.js?v=45"></script>
+<script src="assets/js/supabase-client.js?v=45"></script>
+<script src="assets/js/comun.js?v=45"></script>
+<script src="assets/js/sesion.js?v=45"></script>
+<script src="assets/js/nomina.js?v=45"></script>
+</body>
+</html>

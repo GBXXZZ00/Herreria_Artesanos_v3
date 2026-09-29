@@ -9,7 +9,8 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
 
 const GIF='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
 const hace=(n)=>{const d=new Date();d.setDate(d.getDate()-n);d.setHours(12);return d.toISOString();};
-const lunes=(n)=>{const d=new Date();d.setHours(12);d.setDate(d.getDate()-((d.getDay()+6)%7)-7*n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+// Semana de lunes a sábado: el domingo cuenta para la semana siguiente (igual que el servidor)
+const semanaDe=(iso)=>{const d=new Date(iso);d.setHours(12);d.setDate(d.getDate()+1);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 let trabajos=[
   {id:501,nombre:'Hierro',especialidad:'herrero',rama:'principal',iniciada_en:null,venta_id:40,interna:false,fecha_entrega:dia(3),producto:'Puerta Lineal',tipo:'Puerta Multilock',foto:GIF,cantidad:1,color:'Blanco',medidas:'2 × 1 m',especificaciones:{color:'Blanco',alto:2,ancho:1,manillon:true,manillon_tipo:'H',sentido:'Derecha',cerradura:'Multilock'},espera:null,monto:25},
   {id:502,nombre:'Ensamblar',especialidad:'ventanero',rama:'ventana',iniciada_en:null,venta_id:41,interna:false,fecha_entrega:dia(6),producto:'Combo Imperial',tipo:'Combo',foto:null,cantidad:2,color:'Negro',medidas:'2 × 1 m',especificaciones:{color:'Negro',alto:2,ancho:1,ventanas_alto:1,ventanas_ancho:1},espera:null,monto:null},
@@ -17,16 +18,21 @@ let trabajos=[
 ];
 let pagos={
   trabajos:[
-    {id:400,etapa:'Hierro',producto:'Puerta Colonial',tipo:'Puerta Multilock',ref:'N° 38',fecha:hace(0),monto:30},
-    {id:401,etapa:'Masilla y pintura',producto:'Ventana Simple',tipo:'Ventana',ref:'N° 39',fecha:hace(0),monto:null},
-    {id:399,etapa:'Hierro',producto:'Portón Real',tipo:'Portón',ref:'N° 35',fecha:hace(7),monto:40}
+    {id:400,etapa:'Hierro',producto:'Puerta Colonial',tipo:'Puerta Multilock',venta_id:38,interna:false,fecha:hace(0),semana:semanaDe(hace(0)),monto:30},
+    {id:401,etapa:'Masilla y pintura',producto:'Ventana Simple',tipo:'Ventana',venta_id:39,interna:false,fecha:hace(0),semana:semanaDe(hace(0)),monto:null},
+    {id:399,etapa:'Hierro',producto:'Portón Real',tipo:'Portón',venta_id:35,interna:false,fecha:hace(7),semana:semanaDe(hace(7)),monto:40},
+    {id:398,etapa:'Detalles',producto:'Reja Domingo',tipo:'Ventana',venta_id:36,interna:false,fecha:hace(0),semana:'2099-01-05',monto:7}
   ],
   vales:[{id:7,monto:10,nota:'pasaje',fecha:hace(1)}],
   vale_pendiente:null,
-  semanas:[
-    {semana:lunes(0),trabajos:[{etapa:'Hierro',producto:'Puerta Colonial',ref:'N° 38',fecha:hace(0),monto:30,pagado:false}],vales:[{monto:10,nota:'pasaje',fecha:hace(1),pagado:false}],pagado_en:null},
-    {semana:lunes(2),trabajos:[{etapa:'Hierro',producto:'Puerta Real',ref:'N° 30',fecha:hace(15),monto:50,pagado:true}],vales:[],pagado_en:hace(12)}
-  ]
+  semana_actual:semanaDe(new Date().toISOString()),
+  semana_pago:semanaDe(new Date().toISOString()),
+  pagos:[
+    {id:2,pagado_en:hace(2),semana:semanaDe(hace(9)),monto:40,trabajos_monto:50,vales_monto:10,pagado_por:'Ray',
+     trabajos:[{id:380,etapa:'Hierro',producto:'Puerta Real',venta_id:30,interna:false,fecha:hace(10),monto:50}],vales:[{id:3,monto:10,nota:'comida',fecha:hace(11),monto_bs:400,tasa:40}]},
+    {id:1,pagado_en:hace(9),semana:semanaDe(hace(16)),monto:25,trabajos_monto:25,vales_monto:0,pagado_por:'Ray',
+     trabajos:[{id:370,etapa:'Detalles',producto:'Ventana Real',venta_id:28,interna:false,fecha:hace(16),monto:25}],vales:[]}
+]
 };
 let vales=[{id:9,monto:20,nota:'pasaje',creado_en:new Date().toISOString(),trabajador:{nombre:'Jesús'}}];
 const llamadas=[];
@@ -46,7 +52,7 @@ function mock(ctx,user,rol,nombre){return ctx.route('**/*.supabase.co/**',async 
   if(u.includes('/rpc/pausar_etapa')){const bd=body();llamadas.push(['pausar',bd]);trabajos.find(t=>t.id===bd.eid).iniciada_en=null;trabajos.sort((x,y)=>(x.iniciada_en?0:1)-(y.iniciada_en?0:1)||x.fecha_entrega.localeCompare(y.fecha_entrega));return j(null);}
   if(u.includes('/rpc/marcar_etapa_terminada')){const bd=body();llamadas.push(['terminar',bd]);
     const t=trabajos.find(x=>x.id===bd.eid);trabajos=trabajos.filter(x=>x.id!==bd.eid);
-    pagos.trabajos.unshift({id:t.id,etapa:t.nombre,producto:t.producto,tipo:t.tipo,ref:'N° '+t.venta_id,fecha:new Date().toISOString(),monto:t.monto});
+    pagos.trabajos.unshift({id:t.id,etapa:t.nombre,producto:t.producto,tipo:t.tipo,venta_id:t.venta_id,interna:false,fecha:new Date().toISOString(),semana:semanaDe(new Date().toISOString()),monto:t.monto});
     return j({venta_id:t.venta_id,listo:false,interna:false,monto:t.monto});}
   if(u.includes('/rpc/pedir_vale')){const bd=body();llamadas.push(['vale',bd]);
     pagos.vale_pendiente={id:10,monto:bd.p_monto,fecha:new Date().toISOString()};return j({id:10});}
@@ -141,14 +147,17 @@ async function entrar(b,user,rol,nombre){
  ok('Por cobrar: esta semana y semana pasada',pg.includes('Esta semana') && pg.includes('Semana pasada'));
  ok('Vales en rojo que restan',(await t.textContent('#pagosBody .pg-mov.vale .pg-mov-m.rojo'))==='−$10');
  ok('Suma abajo: trabajos, vales y "Te toca cobrar"',(await t.textContent('.pg-cuenta')).includes('Trabajos$95') && (await t.textContent('.pg-cuenta')).includes('−$10') && (await t.textContent('.pg-cuenta-total b'))==='$85');
+ ok('Lo del domingo sale "Para la próxima semana" y no suma',pg.includes('Para la próxima semana') && pg.includes('Reja Domingo'));
  ok('Sin monto dice "Por definir" y avisa',pg.includes('Por definir') && pg.includes('1 trabajo todavía no tiene monto'));
  await t.screenshot({path:'shots5/t5-pagos.png',fullPage:true});
 
  // Historial
  await t.click('[data-pg-tab="historial"]');await t.waitForTimeout(200);
  const hi=await t.textContent('#pagosBody');
- ok('Historial por semana: esta semana por cobrar, otra pagada',(await t.$$('.pg-sem')).length===2 && hi.includes('Esta semana') && hi.includes('Por cobrar') && hi.includes('Pagado'));
- ok('La semana abierta muestra lo que hizo y el neto',(await t.textContent('.pg-sem[open]')).includes('Puerta Colonial') && (await t.textContent('.pg-sem[open] .pg-sem-m b'))==='$20');
+ ok('Historial: un recibo por cada pago de Ray',(await t.$$('.pg-sem')).length===2 && (await t.$$('.pg-sem .pg-est.pagado')).length===2);
+ const rec=await t.textContent('.pg-sem[open]');
+ ok('El último recibo abierto: qué hizo, el vale en rojo (dado en Bs), cuánto le pagaron y quién',rec.includes('Puerta Real') && rec.includes('N° 30') && rec.includes('dado en Bs 400') && (await t.textContent('.pg-sem[open] .pg-mov.vale .pg-mov-m'))==='−$10' && (await t.textContent('.pg-sem[open] .pg-cuenta-total b'))==='$40' && rec.includes('Pagado por Ray'));
+ ok('La semana del recibo va de lunes a sábado',/\d+ al \d+ \w+/.test(await t.textContent('.pg-sem[open] .pg-sem-s')));
  await t.screenshot({path:'shots5/t6-historial.png',fullPage:true});
 
  // Vale
@@ -181,8 +190,8 @@ async function entrar(b,user,rol,nombre){
  const av=await a.textContent('#avisosAdmin');
  ok('Admin ve "1 vale por aprobar"',av.includes('1 vale por aprobar') && av.includes('Jesús'));
  ok('Admin ve "1 trabajo sin asignar"',av.includes('1 trabajo sin asignar'));
- ok('Admin ve "1 producto sin categoría de pago"',av.includes('1 producto sin categoría'));
- ok('Admin ve "3 modelos sin categoría de pago"',av.includes('3 modelos sin categoría'));
+ ok('Admin ve "En producción: 1 producto sin categoría"',av.includes('En producción: 1 producto sin categoría'));
+ ok('Admin ve "En catálogo: 3 modelos sin categoría"',av.includes('En catálogo: 3 modelos sin categoría'));
  ok('Los avisos llevan al lugar correcto',!!(await a.$('a.pend-fila[href="produccion.html?filtro=asignar"]')) && !!(await a.$('a.pend-fila[href="produccion.html?filtro=sincat"]')) && !!(await a.$('a.pend-fila[href="categorias-pago.html"]')));
  ok('Los pendientes van en una sola caja con su contador',(await a.$$('#avisosAdmin .pend')).length===1 && (await a.$$('.pend-fila')).length===4 && (await a.textContent('.pend-n'))==='4');
  ok('Cada pendiente tiene su color: naranja, verde, azul y teal con ícono de catálogo',!!(await a.$('.pend-fila.naranja')) && !!(await a.$('.pend-fila.verde')) && (await a.textContent('.pend-fila.azul')).includes('producto sin categoría') && (await a.textContent('.pend-fila.teal')).includes('modelos sin categoría'));

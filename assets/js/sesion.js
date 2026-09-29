@@ -44,12 +44,16 @@
   // Producción la usan los administradores y la vendedora (solo mirar): al resto no se
   // le muestra el botón del menú de abajo.
   function ocultarProduccionSiNoAdmin(p){
-    // Solo se quita si sabemos el rol (si no se pudo leer el perfil, no se esconde nada).
-    // La vendedora sí la ve (solo para mirar el avance).
-    if(!p || !p.rol || p.rol === 'admin' || p.rol === 'vendedor') return;
+    // Solo se ajusta si sabemos el rol (si no se pudo leer el perfil, no se esconde nada).
+    // La vendedora sí la ve (solo para mirar el avance). Si en el mismo teléfono entró
+    // antes otra persona sin Producción, el menú se vuelve a pintar completo.
+    if(!p || !p.rol) return;
     const cont = document.getElementById('menuModulos');
-    const item = cont && cont.querySelector('a.nav-item[href="produccion.html"]');
-    if(item) item.remove();
+    if(!cont) return;
+    const item = cont.querySelector('a.nav-item[href="produccion.html"]');
+    const la_ve = p.rol === 'admin' || p.rol === 'vendedor';
+    if(la_ve && !item) pintarMenu();
+    if(!la_ve && item) item.remove();
   }
   async function perfil(){
     // Si el rol no se pudo leer, se vuelve a intentar la próxima vez (no se queda "sin rol")

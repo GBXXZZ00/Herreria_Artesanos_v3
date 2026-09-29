@@ -1,4 +1,4 @@
-// Inicio de la vendedora: sus pendientes (solo de SUS ventas), cada uno con su color y
+// Inicio de la vendedora: sus pendientes (de todas las ventas, también las que crea el admin), cada uno con su color y
 // a dónde lleva. Y que no ve los pendientes del administrador.
 const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -43,7 +43,7 @@ let urlVentas='';
   if(u.includes('/rpc/produccion_lectura'))return j([{id:40,items:[]},{id:35,items:[]},{id:36,items:[]}]);
   if(u.includes('/abonos'))return j([{id:1,venta_id:99,monto:50,metodo:'Zelle'}]); // no debe usarse (no confirma pagos)
   if(u.includes('/ventas')){
-    if(u.includes('vendedor_id=eq.u3')){urlVentas=u;return j(ventas);}
+    if(u.includes('estado=in.')){urlVentas=u;return j(ventas);}
     return j([]);
   }
   if(m==='HEAD')return r.fulfill({status:200,headers:{'content-range':'*/0','access-control-expose-headers':'content-range','access-control-allow-origin':'*'},body:''});
@@ -53,7 +53,7 @@ let urlVentas='';
  for(const d of '333333') await y.click(`#pinTeclado [data-t="${d}"]`);
  await y.waitForSelector('#vInicio.entra');await y.waitForSelector('.pend-fila');await y.waitForTimeout(500);
  const txt=async(sel)=>((await y.textContent(sel))||'').replace(/\s+/g,' ');
- ok('Solo pide SUS ventas (vendedor_id = ella)',urlVentas.includes('vendedor_id=eq.u3'));
+ ok('Pide todas las ventas, no solo las suyas',!!urlVentas && !urlVentas.includes('vendedor_id'));
  ok('Rojo: "1 pago no llegó · Luis Rojas" (el que ya tiene otro pago no sale)',(await txt('.pend-fila.rojo')).includes('1 pago no llegó · Luis Rojas'));
  ok('   lleva a esa venta',(await y.getAttribute('.pend-fila.rojo','href'))==='ventas.html?abrir=31');
  ok('Verde: "1 pedido listo: avísale · María Soto" (el ya avisado no sale)',(await txt('.pend-fila.verde')).includes('1 pedido listo: avísale · María Soto'));

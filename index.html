@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=44">
+<link rel="stylesheet" href="assets/css/base.css?v=45">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -441,13 +441,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=44"></script>
-<script src="assets/js/supabase-client.js?v=44"></script>
-<script src="assets/js/img-compress.js?v=44"></script>
-<script src="assets/js/comun.js?v=44"></script>
-<script src="assets/js/avisos.js?v=44"></script>
-<script src="assets/js/sesion.js?v=44"></script>
-<script src="assets/js/mi-trabajo.js?v=44"></script>
+<script src="assets/vendor/supabase.js?v=45"></script>
+<script src="assets/js/supabase-client.js?v=45"></script>
+<script src="assets/js/img-compress.js?v=45"></script>
+<script src="assets/js/comun.js?v=45"></script>
+<script src="assets/js/avisos.js?v=45"></script>
+<script src="assets/js/sesion.js?v=45"></script>
+<script src="assets/js/mi-trabajo.js?v=45"></script>
 <script>
 (function(){
   'use strict';
@@ -586,12 +586,12 @@
 
   function pintarModulos(p){
     const mods = S.MODULOS.filter(m => m.id !== 'inicio');
-    if(p && p.rol === 'admin') mods.push({ id:'nomina', nombre:'Nómina', href:null, listo:false, icon:ICON_NOMINA });
+    if(p && p.rol === 'admin') mods.push({ id:'nomina', nombre:'Nómina', href:'nomina.html', listo:true, icon:ICON_NOMINA });
     // Primero los módulos que ya funcionan, a lo ancho; luego los que vienen
     const listos = mods.filter(m => m.listo), pronto = mods.filter(m => !m.listo);
     let i = 0;
     $('modulos').innerHTML = listos.map(m => `
-      <a class="ini-tile" href="${m.href}" style="--i:${i++}">
+      <a class="ini-tile" href="${m.href}" data-modulo style="--i:${i++}">
         <span class="ini-ico">${S.iconoModulo(m, 24)}</span>
         <span><span class="ini-nombre">${m.nombre}</span><span class="ini-cuenta" id="cuenta-${m.id}"><span class="sk-linea" style="display:block;width:90px;margin-top:4px"></span></span></span>
       </a>`).join('') + pronto.map(m => `
@@ -732,11 +732,12 @@
   // Taller: vales por aprobar, trabajos sin asignar y lo que falta para calcular pagos
   async function pendientesTaller(){
     const pend = [];
-    const [rVales, rProd, rCats, rMod] = await Promise.all([
+    const [rVales, rProd, rCats, rMod, rNom] = await Promise.all([
       window.Trabajo.cargarVales().then(d => ({ data:d }), () => ({ data:[] })),
       db.from('ventas').select('id,items:venta_items(categoria_pago_id,etapas(rama,orden,estado,trabajador_id))').eq('estado', 'en_produccion'),
       db.from('categorias_pago').select('id', { count:'exact', head:true }),
-      db.from('catalogo').select('id', { count:'exact', head:true }).is('categoria_pago_id', null)
+      db.from('catalogo').select('id', { count:'exact', head:true }).is('categoria_pago_id', null),
+      db.rpc('nomina_semana')
     ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
     let sinAsignar = 0, sinCat = 0;
     const enTaller = ((rProd && rProd.data) || []).length;
@@ -751,6 +752,12 @@
         if(act && !act.trabajador_id) sinAsignar++;
       });
     }));
+    const en = $('cuenta-nomina');
+    if(en){
+      const l = (rNom && rNom.data && rNom.data.trabajadores) || null;
+      const total = l ? l.reduce((a, t) => a + Math.max(0, Number(t.neto) || 0), 0) : 0;
+      en.innerHTML = !l ? 'Pagos de la semana' : total > 0 ? `<span class="num">${window.AH.dinero(total)} por pagar</span>` : 'Semana al día';
+    }
     const ep = $('cuenta-produccion');
     if(ep) ep.innerHTML = !(rProd && rProd.data) ? 'Pedidos en fabricación'
       : sinAsignar ? `<span class="num">${sinAsignar} sin asignar</span>` : enTaller ? `${enTaller} en taller` : 'Taller libre';
@@ -765,13 +772,14 @@
     if(nCats === 0){
       pend.push({ color:'azul', icono:'etiqueta', titulo:'Crea las categorías de pago', detalle:'para calcular pagos', href:'categorias-pago.html' });
     } else if(nCats){
-      if(sinCat) pend.push({ color:'azul', icono:'etiqueta', titulo: plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'produccion.html?filtro=sincat' });
+      if(sinCat) pend.push({ color:'azul', icono:'etiqueta', titulo: 'En producción: ' + plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'produccion.html?filtro=sincat' });
       const nMod = rMod && typeof rMod.count === 'number' ? rMod.count : 0;
-      if(nMod) pend.push({ color:'teal', icono:'catalogo', titulo: plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html' });
+      if(nMod) pend.push({ color:'teal', icono:'catalogo', titulo: 'En catálogo: ' + plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html' });
     }
     return pend;
   }
-  // Vendedora: lo que le toca hacer con SUS ventas (y cuántos pedidos hay en taller)
+  // Vendedora: lo que le toca hacer con las ventas (todas: también gestiona las que crea
+  // el administrador) y cuántos pedidos hay en taller
   const diaLocal = (iso) => { if(!iso) return null; const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
   const diasHasta = (iso) => { const f = diaLocal(iso); if(!f) return null; const h = new Date(); h.setHours(0, 0, 0, 0); return Math.round((f - h) / 86400000); };
   const ms = (x) => x ? new Date(x).getTime() : 0;
@@ -779,7 +787,7 @@
     const pend = [];
     const [rv, rp] = await Promise.all([
       db.from('ventas').select('id,estado,vence_en,fecha_entrega,mensaje_en,mensaje_estado,cliente:clientes(nombre),abonos(tipo,estado,fecha,confirmado_en)')
-        .eq('vendedor_id', p.id).eq('interna', false).in('estado', ['cotizacion', 'confirmada', 'en_produccion', 'lista']),
+        .eq('interna', false).in('estado', ['cotizacion', 'confirmada', 'en_produccion', 'lista']),
       db.rpc('produccion_lectura')
     ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
     const ep = $('cuenta-produccion');

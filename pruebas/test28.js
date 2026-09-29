@@ -38,6 +38,13 @@ function ventaCompleta(v){
   });
 }
 const llamadas=[];
+DB.pagos=[];
+const semanaDe=(x)=>{const d=new Date(x);d.setHours(12);d.setDate(d.getDate()+1);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+function itemNom(e){const it=DB.ventas.flatMap(v=>v.items).find(x=>x.id===e.venta_item_id);const v=DB.ventas.find(x=>x.id===it.venta_id);const mo=DB.modelos.find(z=>z.id===it.catalogo_id);
+  return {id:e.id,etapa:e.nombre,producto:it.nombre,tipo:it.tipo,cantidad:it.cantidad,venta_id:v.id,interna:false,cliente:(DB.clientes.find(c=>c.id===v.cliente_id)||{}).nombre,sede:'Cumbres de Maracaibo',
+    fecha:e.terminada_en,semana:semanaDe(e.terminada_en),monto:e.monto,foto:mo?Object.values(mo.fotos)[0]:null,foto_trabajo:e.foto,especificaciones:it.especificaciones,categoria:'Puertas'};}
+const valeNom=(x)=>({id:x.id,monto:x.monto,nota:x.nota,fecha:x.creado_en,monto_bs:null,tasa:null,semana:semanaDe(x.creado_en)});
+const recibo=(q)=>Object.assign({},q,{pagado_por:PERFILES[q.pagado_por].nombre,trabajos:DB.etapas.filter(e=>e.pago_id===q.id).map(itemNom),vales:DB.vales.filter(x=>x.pago_id===q.id).map(valeNom)});
 
 function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
   const req=r.request();const u=decodeURIComponent(req.url());const m=req.method();
@@ -111,12 +118,34 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
       return j({venta_id:v.id,listo:!faltan,interna:false,monto:e.monto});
     }
     if(name==='mis_pagos'){
-      const tr=DB.etapas.filter(e=>e.trabajador_id===user&&e.estado==='hecha').map(e=>{const it=DB.ventas.flatMap(v=>v.items).find(x=>x.id===e.venta_item_id);return {id:e.id,etapa:e.nombre,producto:it.nombre,tipo:it.tipo,ref:'N° '+it.venta_id,fecha:e.terminada_en,monto:e.monto};});
-      const va=DB.vales.filter(x=>x.trabajador_id===user&&x.estado==='aprobado').map(x=>({id:x.id,monto:x.monto,nota:x.nota,fecha:x.creado_en}));
+      const tr=DB.etapas.filter(e=>e.trabajador_id===user&&e.estado==='hecha'&&!e.pago_id).map(e=>itemNom(e));
+      const va=DB.vales.filter(x=>x.trabajador_id===user&&x.estado==='aprobado'&&!x.pago_id).map(valeNom);
       const vp=DB.vales.find(x=>x.trabajador_id===user&&x.estado==='pendiente');
-      const lunes=(()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})();
-      return j({trabajos:tr,vales:va,vale_pendiente:vp?{id:vp.id,monto:vp.monto,fecha:vp.creado_en}:null,
-        semanas:tr.length?[{semana:lunes,trabajos:tr.map(x=>Object.assign({},x,{pagado:false})),vales:va.map(x=>Object.assign({},x,{pagado:false})),pagado_en:null}]:[]});
+      return j({semana_actual:semanaDe(iso()),trabajos:tr,vales:va,vale_pendiente:vp?valeNom(vp):null,pagos:DB.pagos.filter(q=>q.trabajador_id===user).map(recibo).reverse()});
+    }
+    if(name==='nomina_semana'){
+      if(P.rol!=='admin')return j({message:'Solo un administrador ve la nómina'},400);
+      return j({semana:semanaDe(iso()),puede_pagar:!!P.confirma_abonos,trabajadores:[PERFILES.u5].map(t=>{
+        const tr=DB.etapas.filter(e=>e.trabajador_id===t.id&&e.estado==='hecha'&&!e.pago_id), va=DB.vales.filter(x=>x.trabajador_id===t.id&&x.estado==='aprobado'&&!x.pago_id);
+        const tm=tr.reduce((a,e)=>a+e.monto,0), vm=va.reduce((a,x)=>a+x.monto,0); const u=DB.pagos.filter(q=>q.trabajador_id===t.id).slice(-1)[0];
+        return {id:t.id,nombre:t.nombre,especialidades:t.especialidades,trabajos:tr.length,trabajos_monto:tm,vales_monto:vm,neto:tm-vm,por_definir:0,proxima:0,ultimo_pago:u?{monto:u.monto,pagado_en:u.pagado_en}:null};})});
+    }
+    if(name==='nomina_trabajador'){
+      if(P.rol!=='admin')return j({message:'Solo un administrador ve la nómina'},400);
+      const t=PERFILES[a.tid];
+      return j({trabajador:{id:t.id,nombre:t.nombre,especialidades:t.especialidades},semana:semanaDe(iso()),puede_pagar:!!P.confirma_abonos,
+        trabajos:DB.etapas.filter(e=>e.trabajador_id===t.id&&e.estado==='hecha'&&!e.pago_id).map(itemNom),proxima:[],
+        vales:DB.vales.filter(x=>x.trabajador_id===t.id&&x.estado==='aprobado'&&!x.pago_id).map(valeNom),vale_pendiente:null,
+        pagos:DB.pagos.filter(q=>q.trabajador_id===t.id).map(recibo).reverse()});
+    }
+    if(name==='pagar_trabajador'){
+      if(!P.confirma_abonos)return j({message:'Solo Ray marca los pagos de nómina'},400);
+      const tr=DB.etapas.filter(e=>e.trabajador_id===a.tid&&e.estado==='hecha'&&!e.pago_id), va=DB.vales.filter(x=>x.trabajador_id===a.tid&&x.estado==='aprobado'&&!x.pago_id);
+      const tm=tr.reduce((q,e)=>q+e.monto,0), vm=va.reduce((q,x)=>q+x.monto,0);
+      if(tm-vm!==a.esperado)return j({message:'Los montos cambiaron mientras lo veías. Revisa de nuevo'},400);
+      const pid=DB.pagos.length+1;DB.pagos.push({id:pid,trabajador_id:a.tid,monto:tm-vm,trabajos_monto:tm,vales_monto:vm,pagado_en:iso(),semana:semanaDe(iso()),pagado_por:user});
+      tr.forEach(e=>e.pago_id=pid);va.forEach(x=>x.pago_id=pid);DB.notifs.push({para:a.tid,titulo:'Te pagaron $'+(tm-vm)});
+      return j({id:pid,monto:tm-vm});
     }
     if(name==='pedir_vale'){DB.vales.push({id:++DB.sec.vale,trabajador_id:user,monto:a.p_monto,nota:a.p_nota,estado:'pendiente',creado_en:iso()});return j({id:DB.sec.vale});}
     if(name==='resolver_vale'){const x=DB.vales.find(z=>z.id===a.vid);x.estado=a.aprobar?'aprobado':'rechazado';return j(null);}
@@ -280,6 +309,30 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  await jz.goto(H+'index.html?ver=pagos');await jz.waitForSelector('#sheetPagos.open');await jz.waitForTimeout(500);
  ok('   El vale aprobado sale en rojo y resta: te toca cobrar $30',(await texto(jz,'.pg-mov.vale .pg-mov-m'))==='−$10'&&(await texto(jz,'.pg-cuenta-total b'))==='$30');
  await jz.screenshot({path:'shots5/e16-jesus-vale.png',fullPage:true});
+
+ // ===== Nómina: Ray paga la semana de Jesús =====
+ await r.goto(H+'index.html');await r.waitForSelector('#cuenta-nomina .num');
+ ok('7b. Inicio de Ray: Nómina dice "$30 por pagar"',(await texto(r,'#cuenta-nomina'))==='$30 por pagar',await texto(r,'#cuenta-nomina'));
+ await r.click('a.ini-tile[href="nomina.html"]');await r.waitForSelector('.n-card');
+ ok('   En Nómina, Jesús: 3 trabajos, vale −$10, $30 por pagar',(await texto(r,'.n-card')).includes('3 trabajos · vales −$10')&&(await texto(r,'.n-card .n-monto b'))==='$30');
+ await r.screenshot({path:'shots5/e16b-nomina.png'});
+ await r.click('.n-card');await r.waitForSelector('#sheetTrab.open');
+ ok('   Cada trabajo dice de qué cliente y pedido es',(await texto(r,'#trabBody')).includes('Carla Prueba · N° '+v.id));
+ await r.waitForTimeout(500);
+ ok('   Los dos botones de abajo se ven completos',await r.evaluate(()=>{const b=document.getElementById('btnAnotarVale').getBoundingClientRect();return b.bottom<=window.innerHeight&&b.height>40;}));
+ await r.screenshot({path:'shots5/e16c-nomina-jesus.png'});
+ await r.click('#trabBody [data-item]');await r.waitForSelector('#sheetItem.open');await r.waitForTimeout(300);
+ ok('   Al tocarlo: cliente, pedido, pago, foto que subió y enlace a la venta',(await texto(r,'#itemBody')).includes('Carla Prueba')&&(await texto(r,'#itemBody')).includes('Pago por esta parte')&&!!(await r.$('#itemBody [data-ver-foto]'))&&(await r.getAttribute('#itemBody .d-link','href'))==='ventas.html?abrir='+v.id);
+ await r.screenshot({path:'shots5/e16d-nomina-trabajo.png'});
+ await r.click('#sheetItem [data-cerrar="sheetItem"]');await r.waitForTimeout(400);
+ ok('   Ray ve "Marcar pagado $30"',(await texto(r,'#btnPagar'))==='Marcar pagado $30');
+ await r.click('#btnPagar');await r.waitForTimeout(1500);
+ ok('   Al pagar: queda el recibo en su historial y le llega el aviso',DB.pagos.length===1&&DB.pagos[0].monto===30&&DB.notifs.some(n=>n.titulo==='Te pagaron $30')&&(await r.$$('#trabBody .rec')).length===1);
+ ok('   Y ya no le debe nada',(await texto(r,'.n-card .n-monto b'))==='$0' && (await texto(r,'.n-card .n-ult')).includes('$30'));
+ await r.screenshot({path:'shots5/e16e-nomina-pagado.png'});
+ await jz.goto(H+'index.html?ver=historial');await jz.waitForSelector('#sheetPagos.open');await jz.waitForTimeout(400);
+ ok('   Jesús ve el recibo: te pagaron $30, pagado por Ray',(await texto(jz,'.pg-sem[open] .pg-cuenta-total b'))==='$30'&&(await texto(jz,'.pg-sem[open]')).includes('Pagado por Ray'));
+ await jz.screenshot({path:'shots5/e16f-jesus-recibo.png',fullPage:true});
 
  // ===== 7) El cliente ve su seguimiento =====
  const cc=await b.newContext({...devices['iPhone 13']});await mock(cc,'x');

@@ -56,5 +56,27 @@ let perfilFalla=false; let intentos=0;
  falla2=false;
  await t.click('[data-reintentar-perfil]');await t.waitForSelector('.hoy',{timeout:8000});
  ok('Reintentar con señal carga su Inicio de trabajador',!!(await t.$('.hoy')));
+ // Mismo teléfono: entra Jesús, sale, entra Gualfredo sin recargar: el menú vuelve a tener Producción
+ const c3=await b.newContext({...devices['iPhone 13']});
+ let quien='jesus';
+ await c3.route('**/*.supabase.co/**',async r=>{const u=decodeURIComponent(r.request().url());const j=(x,st=200)=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(x)});
+  const id=quien==='jesus'?'u9':'u1';
+  if(u.includes('/auth/v1/token'))return j(ses(id));
+  if(u.includes('/auth/v1/user'))return j({id});
+  if(u.includes('/auth/v1/logout'))return j({});
+  if(u.includes('/perfiles')){ if(u.includes('id=eq'))return j(quien==='jesus'?{id:'u9',usuario:'jesus',nombre:'Jesús',rol:'trabajador'}:{id:'u1',usuario:'gualfredo',nombre:'Gualfredo',rol:'admin'});
+    return j([{usuario:'jesus',nombre:'Jesús',rol:'trabajador',orden:2},{usuario:'gualfredo',nombre:'Gualfredo',rol:'admin',orden:1}]); }
+  if(u.includes('/rpc/mis_trabajos'))return j([]);
+  if(u.includes('/rpc/mis_pagos'))return j({trabajos:[],vales:[],pagos:[]});
+  return j([]);});
+ const z=await c3.newPage();z.on('pageerror',e=>err.push('z:'+e.message));
+ await z.goto('http://127.0.0.1:8765/index.html');await z.waitForSelector('.quien-btn');
+ await z.click('.quien-btn >> text=Jesús');for(const d of '555555') await z.click(`#pinTeclado [data-t="${d}"]`);
+ await z.waitForSelector('.hoy');
+ await z.click('#btnCuenta');await z.waitForSelector('#sheetCuenta.open');await z.click('#btnSalir');await z.waitForTimeout(800);
+ quien='gualfredo';
+ await z.waitForSelector('.quien-btn');await z.click('.quien-btn >> text=Gualfredo');for(const d of '111111') await z.click(`#pinTeclado [data-t="${d}"]`);
+ await z.waitForSelector('#vInicio.entra');await z.waitForTimeout(1200);
+ ok('Después de Jesús, Gualfredo sí ve Producción en el menú de abajo (sin recargar)',!!(await z.$('a.nav-item[href="produccion.html"]')) && await z.isVisible('#menuModulos'));
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

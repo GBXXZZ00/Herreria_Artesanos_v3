@@ -32,8 +32,10 @@
   let detalleId = null;
   const activo = () => trabajos.find(t => t.iniciada_en) || null;
   const suma = (l) => Math.round((l || []).reduce((a, x) => a + (Number(x.monto) || 0), 0) * 100) / 100;
-  const ganado = () => suma(pagos && pagos.trabajos);
-  const valesTotal = () => suma(pagos && pagos.vales);
+  // Lo que se cobra este sábado (lo del domingo queda para la próxima semana)
+  const deEstePago = (l) => (l || []).filter(x => !(pagos && pagos.semana_pago && x.semana && x.semana > pagos.semana_pago));
+  const ganado = () => suma(deEstePago(pagos && pagos.trabajos));
+  const valesTotal = () => suma(deEstePago(pagos && pagos.vales));
   const porCobrar = () => Math.round((ganado() - valesTotal()) * 100) / 100;
   // El que le toca: el primero que no espera a nadie (vienen ordenados por fecha de entrega)
   const sugerido = () => trabajos.find(t => !t.espera) || null;
@@ -189,45 +191,50 @@
     const d = new Date(iso);
     return isNaN(d) ? '' : DIAS[d.getDay()] + ' ' + fechaCorta(iso);
   }
-  function lunesDe(d){
-    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
-    return x;
-  }
   const isoDia = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  // Semanas de lunes a sábado: el servidor dice a qué semana va cada cosa (el domingo
+  // cuenta para la siguiente) y cuál es la semana de hoy
   function nombreSemana(lunesIso){
-    const hoyL = lunesDe(new Date());
-    const pasada = new Date(hoyL); pasada.setDate(pasada.getDate() - 7);
-    if(lunesIso === isoDia(hoyL)) return 'Esta semana';
-    if(lunesIso === isoDia(pasada)) return 'Semana pasada';
+    const actual = (pagos && pagos.semana_actual) || '';
+    if(lunesIso === actual) return 'Esta semana';
+    if(actual){
+      const l = new Date(actual + 'T00:00'); l.setDate(l.getDate() - 7);
+      if(lunesIso === isoDia(l)) return 'Semana pasada';
+    }
     return 'Semana del ' + fechaCorta(lunesIso);
   }
   function rangoSemana(lunesIso){
     const l = new Date(lunesIso + 'T00:00');
-    const dom = new Date(l); dom.setDate(dom.getDate() + 6);
-    const mismoMes = l.getMonth() === dom.getMonth();
-    return (mismoMes ? l.getDate() : fechaCorta(lunesIso)) + ' al ' + fechaCorta(isoDia(dom));
+    const sab = new Date(l); sab.setDate(sab.getDate() + 5);
+    const mismoMes = l.getMonth() === sab.getMonth();
+    return (mismoMes ? l.getDate() : fechaCorta(lunesIso)) + ' al ' + fechaCorta(isoDia(sab));
   }
+  const refDe = (m) => m.interna ? 'Exhibición' : 'N° ' + m.venta_id;
   function filaTrabajo(m){
     const monto = m.monto == null ? '<span class="pg-mov-m gris">Por definir</span>' : `<span class="pg-mov-m">${esc(dinero(m.monto))}</span>`;
     return `<div class="pg-mov"><span style="min-width:0"><span class="pg-mov-t">${esc(m.etapa)} · ${esc(m.producto)}</span>
-      <span class="pg-mov-s">${esc([diaCorto(m.fecha), m.ref].filter(Boolean).join(' · '))}</span></span>${monto}</div>`;
+      <span class="pg-mov-s">${esc([diaCorto(m.fecha), refDe(m)].filter(Boolean).join(' · '))}</span></span>${monto}</div>`;
   }
   function filaVale(v, pendiente){
+    const bs = v.monto_bs ? 'dado en Bs ' + Number(v.monto_bs).toLocaleString('es-VE') : '';
     return `<div class="pg-mov vale"><span style="min-width:0"><span class="pg-mov-t">Vale${pendiente ? '<span class="pg-pill">Por aprobar</span>' : ''}</span>
-      <span class="pg-mov-s">${esc([diaCorto(v.fecha), v.nota].filter(Boolean).join(' · '))}</span></span>
+      <span class="pg-mov-s">${esc([diaCorto(v.fecha), v.nota, bs].filter(Boolean).join(' · '))}</span></span>
       <span class="pg-mov-m ${pendiente ? 'gris' : 'rojo'}">${pendiente ? esc(dinero(v.monto)) : '−' + esc(dinero(v.monto))}</span></div>`;
   }
 
   function pintarPorCobrar(){
     const p = pagos || {};
-    const tr = p.trabajos || [];
-    const va = p.vales || [];
+    // Lo de después del sábado (el domingo) va para el pago de la próxima semana
+    const sp = p.semana_pago || '';
+    const esProx = (x) => sp && x.semana && x.semana > sp;
+    const tr = (p.trabajos || []).filter(x => !esProx(x));
+    const va = (p.vales || []).filter(x => !esProx(x));
+    const trProx = (p.trabajos || []).filter(esProx), vaProx = (p.vales || []).filter(esProx);
     const vp = p.vale_pendiente;
     // Trabajos sin cobrar, por semana (lo más nuevo arriba)
     const grupos = [];
     tr.forEach(m => {
-      const k = isoDia(lunesDe(new Date(m.fecha)));
+      const k = m.semana || '';
       let g = grupos.find(x => x.k === k);
       if(!g){ g = { k, l:[] }; grupos.push(g); }
       g.l.push(m);
@@ -253,28 +260,31 @@
         ${porDefinir ? `<div class="pg-aviso">${porDefinir === 1 ? '1 trabajo todavía no tiene monto' : porDefinir + ' trabajos todavía no tienen monto'}. Ray lo completa.</div>` : ''}
       </div>`;
     }
+    if(trProx.length || vaProx.length) html += '<p class="pg-tit">Para la próxima semana</p>' + trProx.map(filaTrabajo).join('') + vaProx.map(v => filaVale(v, false)).join('');
     html += vp ? '' : '<button class="btn-secondary" type="button" id="btnAbrirVale" style="width:100%;margin-top:14px">Pedir un vale</button>';
     return html;
   }
 
+  // Historial: cada pago que le hizo Ray (recibo): qué trabajos, qué vales y cuánto
   function pintarHistorial(){
-    const sem = (pagos && pagos.semanas) || [];
-    if(!sem.length) return '<div class="tr-vacio">Todavía no hay semanas. Aquí verás cada semana: lo que hiciste, tus vales y si ya se te pagó.</div>';
-    return sem.map((s, i) => {
-      const tr = s.trabajos || [], va = s.vales || [];
-      const g = suma(tr), v = suma(va);
-      const pagado = tr.length + va.length > 0 && tr.every(x => x.pagado) && va.every(x => x.pagado);
-      const parte = !pagado && (tr.some(x => x.pagado) || va.some(x => x.pagado));
-      const est = pagado ? `<span class="pg-est pagado">Pagado${s.pagado_en ? ' ' + esc(fechaCorta(s.pagado_en)) : ''}</span>`
-        : parte ? '<span class="pg-est debe">Pagado en parte</span>' : '<span class="pg-est debe">Por cobrar</span>';
-      const sub = esc(tr.length === 1 ? '1 trabajo' : tr.length + ' trabajos') + (va.length ? ` · <span style="white-space:nowrap">vales −${esc(dinero(v))}</span>` : '');
+    const pg = (pagos && pagos.pagos) || [];
+    if(!pg.length) return '<div class="tr-vacio">Todavía no tienes pagos. Cuando Ray te pague, aquí verás el recibo de cada semana.</div>';
+    return pg.map((p, i) => {
+      const tr = p.trabajos || [], va = p.vales || [];
+      const sub = esc([p.semana ? rangoSemana(p.semana) : '', tr.length === 1 ? '1 trabajo' : tr.length + ' trabajos'].filter(Boolean).join(' · '))
+        + (Number(p.vales_monto) ? ` · <span style="white-space:nowrap">vales −${esc(dinero(p.vales_monto))}</span>` : '');
       return `<details class="pg-sem" ${i === 0 ? 'open' : ''}>
         <summary>
-          <span style="min-width:0"><span class="pg-sem-t">${esc(nombreSemana(s.semana))}</span><span class="pg-sem-s">${esc(rangoSemana(s.semana))} · ${sub}</span></span>
-          <span class="pg-sem-m"><b>${esc(dinero(Math.round((g - v) * 100) / 100))}</b>${est}</span>
+          <span style="min-width:0"><span class="pg-sem-t">${esc(diaCorto(p.pagado_en))}</span><span class="pg-sem-s">${sub}</span></span>
+          <span class="pg-sem-m"><b>${esc(dinero(p.monto))}</b><span class="pg-est pagado">Pagado</span></span>
           <svg class="ac-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         </summary>
-        <div class="pg-sem-body">${tr.map(filaTrabajo).join('')}${va.map(x => filaVale(x, false)).join('')}</div>
+        <div class="pg-sem-body">${tr.map(filaTrabajo).join('')}${va.map(x => filaVale(x, false)).join('')}
+          <div class="pg-cuenta" style="margin-bottom:6px"><div class="pg-cuenta-fila"><span>Trabajos</span><b>${esc(dinero(p.trabajos_monto))}</b></div>
+            ${Number(p.vales_monto) ? `<div class="pg-cuenta-fila"><span>Vales</span><b class="rojo">−${esc(dinero(p.vales_monto))}</b></div>` : ''}
+            <div class="pg-cuenta-total"><span>Te pagaron</span><b>${esc(dinero(p.monto))}</b></div>
+            <div class="pg-aviso" style="color:var(--ink-soft)">Pagado por ${esc(p.pagado_por || 'Ray')}</div></div>
+        </div>
       </details>`;
     }).join('');
   }
@@ -486,7 +496,7 @@
     const que = new URLSearchParams(location.search).get('ver');
     if(!que || !p) return;
     try{ history.replaceState(history.state, '', location.pathname); } catch(e){}
-    if(p.rol === 'trabajador' && (que === 'trabajos' || que === 'pagos')) ver(que);
+    if(p.rol === 'trabajador' && (que === 'trabajos' || que === 'pagos' || que === 'historial')) ver(que);
     if(p.rol === 'admin' && que === 'vales') abrirVales();
   }
 

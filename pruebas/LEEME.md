@@ -20,5 +20,6 @@ Simulan Supabase con datos falsos: no tocan la base real y los PIN son de mentir
 - test25: Producción — sin categoría no se asigna, "Asignar" a la derecha, fabricar para exhibición (tipo, modelo, especificaciones, categoría), cancelar orden, abrir desde aviso
 - test26: Inicio del trabajador (Hoy con foto y especificaciones, filas con flecha, detalle, empezar uno a la vez, terminar, por cobrar con vales en rojo, historial por semana, vale) y pendientes del admin por color
 - test27: menú y perfil — sin señal no se esconde Producción ni se adivina el rol; reintentar
-- test28: recorrido completo con varias personas: Gualfredo crea el modelo, Yulimar lo vende, Ray confirma el pago (pasa solo a producción) y asigna, Jesús hace cada etapa con foto, cobra y pide vale, el cliente ve su seguimiento y se entrega
+- test28: recorrido completo con varias personas (incluye Nómina: Ray paga y Jesús ve su recibo): Gualfredo crea el modelo, Yulimar lo vende, Ray confirma el pago (pasa solo a producción) y asigna, Jesús hace cada etapa con foto, cobra y pide vale, el cliente ve su seguimiento y se entrega
 - test29: Inicio de la vendedora: sus pendientes (pago no llegó, pedido listo, pago confirmado, cotización por vencer, pedido atrasado) solo de sus ventas
+- test30: Nómina: quién la ve y quién paga (solo Ray), vale en bolívares, trabajos sin monto, lo del domingo para la próxima semana, montos que cambiaron, ficha de cada trabajo
