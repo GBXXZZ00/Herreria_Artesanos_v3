@@ -19,8 +19,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
   if(u.includes('/auth/v1/user'))return j({id:user});
   if(u.includes('/rpc/')){const name=u.split('/rpc/')[1].split('?')[0];const a=JSON.parse(req.postData()||'{}');rpcs.push([name,a,user]);
     if(name==='seguimiento_publico'){ if(a.t===TOK) return j(Object.assign({},v1,{cliente:{nombre:cli.nombre,cedula:'V12•••678',telefono:'•••4567'},sede:{nombre:'Cumbres de Maracaibo'}})); return j({error:'no_existe'}); }
-    if(name==='confirmar_abono'){const ab=v2.abonos.find(x=>x.id===a.aid);ab.estado=a.llego?'confirmado':'rechazado';ab.nota_confirmacion=a.nota;ab.confirmado_por=user;return j({id:a.aid});}
-    if(name==='pedir_produccion'){v2.produccion_pedida_en=new Date().toISOString();v2.produccion_pedida_por=user;return j({id:2});}
+    if(name==='confirmar_abono'){const ab=v2.abonos.find(x=>x.id===a.aid);ab.estado=a.llego?'confirmado':'rechazado';ab.nota_confirmacion=a.nota;ab.confirmado_por=user;if(a.llego)v2.estado='en_produccion';return j({id:a.aid,estado:'confirmado',produccion:!!a.llego});}
     return j({});}
   if(u.includes('/perfiles')){ if(u.includes('id=eq'))return j({id:user,usuario:rol==='admin'?'raymundo':'yulimar',nombre:rol==='admin'?'Ray':'Yulimar',rol,sede_id:1,confirma_abonos:rol==='admin'}); if(u.includes('select=id,nombre'))return j([{id:'u2',nombre:'Ray'},{id:'u3',nombre:'Yulimar'}]); return j([{usuario:rol==='admin'?'raymundo':'yulimar',nombre:rol==='admin'?'Ray':'Yulimar',rol,orden:1}]);}
   if(u.includes('/ventas')){ const full=v=>Object.assign({},v,{cliente:cli,sede:{id:1,nombre:'Cumbres'}}); const m=u.match(/[?&]id=eq\.(\d+)/); if(m) return j(full([v1,v2].find(x=>x.id===+m[1]))); let l=[v1,v2]; if(u.includes('produccion_pedida_en=not.is.null')) l=l.filter(x=>x.produccion_pedida_en&&x.estado==='confirmada'); return j(l.map(full)); }
@@ -40,11 +39,9 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Vendedora también puede activar avisos',!(await y.$eval('#btnNotif',x=>x.classList.contains('hidden'))));
  await y.goto('http://127.0.0.1:8765/ventas.html?abrir=2');await y.waitForSelector('#sheetFicha.open');await y.waitForTimeout(1500);
  ok('Abrir por enlace (notificación) abre la ficha',(await y.textContent('.f-num')).includes('N° 2'));
- ok('Vendedora ve "Pedir a producción" con explicación',(await y.textContent('#fichaBody [data-accion="pedir-produccion"]')).includes('Le llega un aviso al administrador'));
- ok('Vendedora no ve "Pasar a En producción"',!(await y.$('#fichaBody [data-estado="en_produccion"]')));
- await y.click('#fichaBody [data-accion="pedir-produccion"]');await y.waitForTimeout(1500);
- ok('Pedir a producción llama al servidor',rpcs.some(x=>x[0]==='pedir_produccion'&&x[1].vid===2));
- ok('Queda "Pedido a producción ✓"',(await y.textContent('#fichaBody .btn-guia.hecho')).includes('Pedido a producción'));
+ ok('Ya no existe "Pedir a producción": explica que pasa solo al confirmar el pago',!(await y.$('[data-accion="pedir-produccion"]')) && (await y.textContent('#fichaBody .btn-guia.espera')).includes('Espera que Ray confirme el pago') && (await y.textContent('#fichaBody .btn-guia.espera')).includes('pasa solo a producción'));
+ ok('Nadie ve "Pasar a En producción"',!(await y.$('#fichaBody [data-estado="en_produccion"]')));
+ ok('La vendedora no puede cancelar una venta',!(await y.$('#fichaBody [data-accion="cancelar"]')) && (await y.textContent('#fichaBody')).includes('Editar, PDF y seguimiento'));
  ok('Enlace para ver el seguimiento en la ficha',(await y.getAttribute('#fichaBody a.btn-grid[target="_blank"]','href')).includes('seguimiento.html?t=aaaaaaaa-bbbb-4ccc-8ddd-000000000002'));
  await y.screenshot({path:'shots4/s1-pasos-vendedora.png'});
  // Admin: aviso en Inicio
@@ -54,19 +51,26 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  for(const d of '222222') await a.click(`#pinTeclado [data-t="${d}"]`);
  await a.waitForSelector('#vInicio.entra');await a.waitForTimeout(1200);
  const av=await a.textContent('#avisosAdmin');
- ok('Admin ve "1 pedido espera producción"',av.includes('1 pedido espera producción')&&av.includes('N° 2'),av);
+ ok('Ya no hay pendiente "espera producción"',!av.includes('espera producción'),av);
  ok('Admin ve cómo activar avisos en el iPhone',av.includes('Avisos: cómo activarlos'),av);
  ok('Ray ve "1 pago por confirmar"',av.includes('1 pago por confirmar'),av);
  await a.screenshot({path:'shots4/s2-inicio-admin.png'});
  // Ray confirma el abono
  await a.goto('http://127.0.0.1:8765/ventas.html?abrir=2');await a.waitForSelector('#sheetFicha.open');await a.waitForTimeout(1500);
  ok('Ficha muestra "Por confirmar"',(await a.textContent('#fichaBody')).includes('Por confirmar'));
+ ok('A Ray le dice que falta que confirme el pago',(await a.textContent('#fichaBody .btn-guia.espera')).includes('Falta que confirmes el pago'));
+ ok('El admin sí puede cancelar la venta',!!(await a.$('#fichaBody [data-accion="cancelar"]')));
  await a.click('#fichaBody [data-confirmar="1"]');await a.waitForTimeout(600);
  ok('Hoja de confirmar abono',(await a.textContent('#accionTitulo'))==='Confirmar pago');
  await a.fill('#aNota','Llegó a Zelle de Ray');await a.screenshot({path:'shots4/s4-confirmar.png'});
- await a.click('#btnAccion');await a.waitForTimeout(1500);
+ await a.click('#btnAccion');
+ const tst=await a.waitForSelector('#toast.show',{timeout:4000}).then(e=>e.textContent()).catch(()=>'');
+ ok('Al confirmar avisa que pasó a producción',/pasó a producción/i.test(tst),tst);
+ await a.waitForTimeout(1300);
  const ca1=rpcs.find(x=>x[0]==='confirmar_abono');ok('Confirma con su nota',ca1&&ca1[1].aid===1&&ca1[1].llego===true&&ca1[1].nota==='Llegó a Zelle de Ray',ca1&&ca1[1]);
  ok('Ficha muestra confirmado y la nota',(await a.textContent('#fichaBody')).includes('Confirmado')&&(await a.textContent('#fichaBody')).includes('Nota de Ray: Llegó a Zelle de Ray'));
+ ok('Ahora está En producción y no se puede devolver a Confirmada',!(await a.$('#fichaBody [data-retro]')) && !(await a.$('#fichaBody .btn-guia.espera')));
+ await a.screenshot({path:'shots4/s5-en-produccion.png'});
  // Página pública
  const cc=await b.newContext({...devices['iPhone 13'],acceptDownloads:true});await mock(cc,'x','vendedor');
  const c=await cc.newPage();c.on('pageerror',e=>err.push('pub:'+e.message));

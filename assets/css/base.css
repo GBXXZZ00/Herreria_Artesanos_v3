@@ -634,6 +634,9 @@ a.btn-primary{text-decoration:none;display:inline-flex;align-items:center;justif
 .btn-guia.sec .bg-s{color:var(--ink-soft)}
 .btn-guia.hecho{background:var(--accent-soft);color:var(--accent)}
 .btn-guia.hecho .bg-s{color:var(--ink-soft)}
+.btn-guia.espera{background:#FFF6E0;color:#7A5200;cursor:default}
+.btn-guia.espera:active{transform:none}
+.btn-guia.espera .bg-s{color:#8A6A2A}
 .pasos3.dos{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}
 .pasos3.dos .p3-s{font-size:12px}
 .acord{margin-top:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}

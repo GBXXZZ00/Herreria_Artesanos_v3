@@ -3,12 +3,16 @@
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo } = window.AH;
+  const { esc, toast, abrirHoja, cerrarHoja, dinero, montoOrNull, iconoTipo, resumenSpecs, specChipsHtml, heroAttrs, heroZoom, SW_COLOR } = window.AH;
   const $ = (id) => document.getElementById(id);
 
-  const ICON_LLAVE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/></svg>';
-  const ICON_DINERO = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/></svg>';
   const ICON_CANDADO = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  const icoP = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const ICON_LLAVE_P = icoP('<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>');
+  const ICON_DINERO_P = icoP('<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/>');
+  const ICON_VALE_P = icoP('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>');
+  const ICON_HIST_P = icoP('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>');
+  const CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
   const ICON_CAMARA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/></svg>';
 
   function fechaCorta(iso){
@@ -24,8 +28,15 @@
   let trabajos = [];
   let pagos = null;
   let perfil = null;
-  const porCobrar = () => pagos ? Math.round((Number(pagos.ganado || 0) - Number(pagos.vales || 0)) * 100) / 100 : 0;
+  let tabPagos = 'cobrar';
+  let detalleId = null;
   const activo = () => trabajos.find(t => t.iniciada_en) || null;
+  const suma = (l) => Math.round((l || []).reduce((a, x) => a + (Number(x.monto) || 0), 0) * 100) / 100;
+  const ganado = () => suma(pagos && pagos.trabajos);
+  const valesTotal = () => suma(pagos && pagos.vales);
+  const porCobrar = () => Math.round((ganado() - valesTotal()) * 100) / 100;
+  // El que le toca: el primero que no espera a nadie (vienen ordenados por fecha de entrega)
+  const sugerido = () => trabajos.find(t => !t.espera) || null;
 
   async function cargarTrabajador(){
     const [rt, rp] = await Promise.all([db.rpc('mis_trabajos'), db.rpc('mis_pagos')]);
@@ -34,99 +45,252 @@
     pagos = rp.data || {};
   }
 
-  function pintarInicioTrabajador(){
-    const cont = $('vistaTrabajo');
-    const a = activo();
-    const n = trabajos.length;
-    cont.innerHTML = `
-      ${a ? `<button class="t-activo" type="button" data-ver="trabajos">
-        <span class="t-activo-eyebrow">Estás trabajando en</span>
-        <span class="t-activo-tit">${esc(a.nombre)} · ${esc(a.producto)}</span>
-        <span class="t-activo-sub">${esc(refPedido(a))}${a.fecha_entrega && !a.interna ? ' · entrega ' + esc(fechaCorta(a.fecha_entrega)) : ''}</span>
-        <span class="t-activo-btn" data-terminar-t="${a.id}">Marcar terminado</span>
-      </button>` : ''}
-      <div class="t-tiles">
-        <button class="t-tile" type="button" data-ver="trabajos" style="--i:0">
-          <span class="ini-ico">${ICON_LLAVE}</span>
-          <span><span class="t-num">${n}</span><span class="t-lbl">${n === 1 ? 'Trabajo pendiente' : 'Trabajos pendientes'}</span></span>
-        </button>
-        <button class="t-tile" type="button" data-ver="pagos" style="--i:1">
-          <span class="ini-ico">${ICON_DINERO}</span>
-          <span><span class="t-num">${dinero(porCobrar())}</span><span class="t-lbl">Por cobrar</span></span>
-        </button>
-      </div>`;
-  }
-  function pintarCargando(){
-    $('vistaTrabajo').innerHTML = '<div class="t-tiles"><div class="sk-tile"></div><div class="sk-tile"></div></div>';
+  const fotoHtml = (t, size) => t.foto ? `<img src="${esc(t.foto)}" alt="${esc(t.producto)}" loading="lazy">` : iconoTipo(t.tipo, size);
+  // El color va primero: la foto puede ser de otro color si el modelo no tiene la de ese
+  const specsDe = (t) => {
+    const e = t.especificaciones || {};
+    const c = e.color || t.color;
+    return (c ? [{ t:'Color ' + String(c).toLowerCase(), sw:SW_COLOR[c] }] : []).concat(resumenSpecs(t.tipo, e));
+  };
+  function subTrabajo(t){
+    return t.interna ? 'Para exhibición' : refPedido(t) + (t.fecha_entrega ? ' · entrega ' + fechaCorta(t.fecha_entrega) : '');
   }
 
+  // Tarjeta grande de "Hoy": lo que está haciendo, o el que le toca empezar
+  function hoyHtml(){
+    const a = activo();
+    const t = a || sugerido();
+    if(!trabajos.length){
+      return `<h2 class="hoy-tit">¿Qué vas a hacer hoy?</h2>
+        <div class="hoy"><div class="hoy-vacio"><b>No tienes trabajos asignados</b><span>Te avisamos cuando Ray te asigne uno.</span></div></div>`;
+    }
+    if(!t){
+      return `<h2 class="hoy-tit">¿Qué vas a hacer hoy?</h2>
+        <div class="hoy"><div class="hoy-vacio"><b>Tus trabajos esperan a otro</b><span>Cuando terminen su parte, te toca a ti. Te avisamos.</span></div></div>`;
+    }
+    const chips = specsDe(t).slice(0, 4);
+    return `<h2 class="hoy-tit">${a ? 'Hoy estás haciendo' : '¿Qué vas a hacer hoy?'}</h2>
+      <div class="hoy ${a ? 'activo' : ''}">
+        <button class="hoy-foto" type="button" data-detalle="${t.id}" aria-label="Ver foto y detalles">
+          ${t.foto ? `<img src="${esc(t.foto)}" alt="${esc(t.producto)}">` : `<span class="sin">${iconoTipo(t.tipo, 56)}</span>`}
+          ${a ? '<span class="hoy-en">En curso</span>' : ''}
+          <span class="ver">Ver detalles</span>
+        </button>
+        <div class="hoy-txt">
+          <div class="hoy-etapa">${a ? 'Tu parte: ' : 'Te toca: '}${esc(t.nombre)}</div>
+          <div class="hoy-nom">${esc(t.producto)}</div>
+          <div class="hoy-sub">${esc([t.cantidad > 1 ? t.cantidad + ' unidades' : '', subTrabajo(t)].filter(Boolean).join(' · '))}</div>
+          ${chips.length ? `<div class="spec-chips">${specChipsHtml(chips)}</div>` : ''}
+        </div>
+        <div class="hoy-acc">${a
+          ? `<button class="btn-primary" type="button" data-terminar-t="${a.id}">Marcar terminado</button>`
+          : `<button class="btn-primary" type="button" data-empezar="${t.id}">Empezar este</button>`}</div>
+      </div>`;
+  }
+
+  // Filas largas con flecha (como en el Inicio del administrador)
+  function filasHtml(){
+    const n = trabajos.length;
+    const vp = pagos && pagos.vale_pendiente;
+    const filas = [];
+    let i = 0;
+    if(n) filas.push(`<button class="pend-fila naranja" type="button" data-ver="trabajos" style="--i:${i++}">
+      <span class="pend-ico">${ICON_LLAVE_P}</span><span class="pend-t">${n === 1 ? '1 trabajo por hacer' : n + ' trabajos por hacer'}</span>${CHEV}</button>`);
+    const pc = porCobrar();
+    filas.push(`<button class="pend-fila verde" type="button" data-ver="pagos" style="--i:${i++}">
+      <span class="pend-ico">${ICON_DINERO_P}</span><span class="pend-t">${pc < 0 ? 'Vales por descontar' : 'Te toca cobrar'} <span>· ${esc(dinero(Math.abs(pc)))}</span></span>${CHEV}</button>`);
+    if(vp) filas.push(`<div class="pend-fila amarillo" style="--i:${i++}">
+      <span class="pend-ico">${ICON_VALE_P}</span><span class="pend-t">Vale de ${esc(dinero(vp.monto))} <span>· esperando respuesta</span></span></div>`);
+    filas.push(`<button class="pend-fila teal" type="button" data-ver="historial" style="--i:${i++}">
+      <span class="pend-ico">${ICON_HIST_P}</span><span class="pend-t">Historial de pagos <span>· por semana</span></span>${CHEV}</button>`);
+    return `<div class="pend-lista">${filas.join('')}</div>`;
+  }
+
+  function pintarInicioTrabajador(){
+    $('vistaTrabajo').innerHTML = hoyHtml() + filasHtml();
+  }
+  function pintarCargando(){
+    $('vistaTrabajo').innerHTML = '<div class="sk-linea" style="width:220px;height:26px;margin:6px 2px 14px"></div><div class="sk-hoy"></div>';
+  }
+
+  // ---------- Lista de trabajos ----------
   function trabajoHtml(t){
     const a = activo();
     const esActivo = a && a.id === t.id;
-    const det = [t.color, t.medidas, t.cantidad > 1 ? t.cantidad + ' unidades' : ''].filter(Boolean).join(' · ');
-    const cuando = t.interna ? 'Para exhibición' : refPedido(t) + (t.fecha_entrega ? ' · entrega ' + fechaCorta(t.fecha_entrega) : '');
-    const gana = t.monto != null ? `<span class="tr-gana">Ganas ${dinero(t.monto)}</span>` : '<span class="tr-gana"></span>';
-    let pie;
-    if(esActivo){
-      pie = `${gana}<button class="tr-btn sec" type="button" data-pausar="${t.id}">Dejar para después</button><button class="tr-btn" type="button" data-terminar-t="${t.id}">Marcar terminado</button>`;
-    } else if(t.espera){
-      pie = `${gana}<span class="tr-bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</span>`;
-    } else if(a){
-      pie = `${gana}<span class="tr-bloq">${ICON_CANDADO}Primero termina el que empezaste</span>`;
-    } else {
-      pie = `${gana}<button class="tr-btn" type="button" data-empezar="${t.id}">Empezar este</button>`;
-    }
-    const bloq = !esActivo && (t.espera || a);
-    return `<div class="tr ${esActivo ? 'activo' : ''} ${bloq ? 'bloq' : ''}">
-      <div class="tr-cab">
-        <div class="tr-foto">${t.foto ? `<img src="${esc(t.foto)}" alt="" loading="lazy">` : iconoTipo(t.tipo, 22)}</div>
-        <div style="min-width:0">
-          <div class="tr-etapa">${esc(t.nombre)}${esActivo ? ' · en curso' : ''}</div>
-          <div class="tr-nom">${esc(t.producto)}</div>
-          <div class="tr-det">${esc([det, cuando].filter(Boolean).join(' · '))}</div>
-        </div>
-      </div>
-      <div class="tr-pie">${pie}</div>
-    </div>`;
+    const det = [t.cantidad > 1 ? t.cantidad + ' unidades' : '', subTrabajo(t)].filter(Boolean).join(' · ');
+    const estado = esActivo ? '<span class="tr-estado curso">En curso</span>'
+      : t.espera ? `<span class="tr-estado bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</span>`
+      : t.monto != null ? `<span class="tr-estado">Ganas ${esc(dinero(t.monto))}</span>` : '';
+    return `<button class="tr ${esActivo ? 'activo' : ''}" type="button" data-detalle="${t.id}">
+      <span class="tr-foto">${fotoHtml(t, 24)}</span>
+      <span style="min-width:0">
+        <span class="tr-etapa" style="display:block">${esc(t.nombre)}</span>
+        <span class="tr-nom" style="display:block">${esc(t.producto)}</span>
+        <span class="tr-det" style="display:block">${esc(det)}</span>
+        ${estado}
+      </span>${CHEV}
+    </button>`;
   }
   function pintarTrabajos(){
-    $('trabajosAyuda').classList.toggle('hidden', trabajos.length < 2);
+    $('trabajosAyuda').classList.toggle('hidden', !trabajos.length);
     $('listaTrabajos').innerHTML = trabajos.length
       ? trabajos.map(trabajoHtml).join('')
       : '<div class="tr-vacio">No tienes trabajos pendientes. Te avisamos cuando te asignen uno.</div>';
   }
 
-  function pintarPagos(){
-    const p = pagos || {};
-    const movs = p.movimientos || [];
-    const vp = p.vale_pendiente;
-    $('pagosBody').innerHTML = `
-      <div class="pg-resumen">
-        <div class="pg-lbl">Por cobrar</div>
-        <div class="pg-total">${dinero(porCobrar())}</div>
-        <div class="pg-linea"><span>Ganado <b>${dinero(p.ganado)}</b></span><span>Vales <b>${dinero(p.vales)}</b></span></div>
-        ${p.por_definir ? `<div class="pg-aviso">${p.por_definir === 1 ? '1 trabajo terminado todavía no tiene monto' : p.por_definir + ' trabajos terminados todavía no tienen monto'}. El administrador lo completa.</div>` : ''}
+  // ---------- Detalle: foto grande, modelo y especificaciones ----------
+  function pintarDetalle(){
+    const t = trabajos.find(x => x.id === detalleId);
+    if(!t){ cerrarHoja('sheetTrabajo'); return; }
+    const a = activo();
+    const esActivo = a && a.id === t.id;
+    const specs = specsDe(t);
+    const e = t.especificaciones || {};
+    const tipoColor = [t.tipo, e.color].filter(Boolean).join(' · ');
+    $('trabajoBody').innerHTML = `
+      <div ${heroAttrs(t.foto)}>${t.foto ? `<img src="${esc(t.foto)}" alt="${esc(t.producto)}">` : iconoTipo(t.tipo, 56)}${heroZoom(t.foto)}</div>
+      <div class="tj-parte">Tu parte: ${esc(t.nombre)}${esActivo ? ' · en curso' : ''}</div>
+      <div class="det-name" style="margin-top:10px">${esc(t.producto)}</div>
+      <div class="det-type">${esc(tipoColor)}</div>
+      <div class="tj-datos">
+        ${t.cantidad > 1 ? `<span><b>${t.cantidad}</b> unidades</span>` : ''}
+        <span>${t.interna ? '<b>Para exhibición</b>' : `<b>${esc(refPedido(t))}</b>${t.fecha_entrega ? ' · entrega ' + esc(fechaCorta(t.fecha_entrega)) : ''}`}</span>
+        ${t.monto != null ? `<span>Ganas <b>${esc(dinero(t.monto))}</b></span>` : ''}
       </div>
-      ${vp ? `<div class="vale-pend">Vale de ${dinero(vp.monto)} esperando respuesta</div>`
-           : '<button class="btn-secondary" type="button" id="btnAbrirVale" style="width:100%">Pedir un vale</button>'}
-      <p class="pg-tit">Movimientos</p>
-      ${movs.length ? movs.map(m => {
-        const vale = m.tipo === 'vale';
-        const estado = vale ? `<span class="pg-pill ${m.estado === 'pendiente' ? 'pendiente' : ''}">${m.estado === 'pendiente' ? 'Por aprobar' : m.estado === 'aprobado' ? 'Aprobado' : 'Rechazado'}</span>` : '';
-        const monto = m.monto == null ? '<span class="pg-mov-m menos">Por definir</span>'
-          : `<span class="pg-mov-m ${vale ? 'menos' : ''}">${vale ? '−' : '+'}${dinero(m.monto)}</span>`;
-        return `<div class="pg-mov">
-          <span style="min-width:0"><span class="pg-mov-t">${esc(m.titulo)}${estado}</span><span class="pg-mov-s">${esc([m.detalle, fechaCorta(m.fecha)].filter(Boolean).join(' · '))}</span></span>
-          ${monto}
-        </div>`;
-      }).join('') : '<div class="tr-vacio">Aquí verás cada trabajo que termines y cada vale.</div>'}`;
+      ${specs.length ? `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}`;
+    let pie;
+    if(esActivo){
+      pie = `<div class="det-foot"><button class="btn-secondary" type="button" data-pausar="${t.id}">Dejar para después</button><button class="btn-primary" type="button" data-terminar-t="${t.id}">Marcar terminado</button></div>`;
+    } else if(t.espera){
+      pie = `<div class="tj-bloq">${ICON_CANDADO}Espera que terminen ${esc(t.espera)}</div>`;
+    } else if(a){
+      pie = `<div class="tj-bloq">${ICON_CANDADO}Primero termina el que empezaste</div>`;
+    } else {
+      pie = `<button class="btn-primary" type="button" data-empezar="${t.id}" style="width:100%">Empezar este</button>`;
+    }
+    $('trabajoFoot').innerHTML = pie;
   }
+  function abrirDetalle(id){
+    if(!trabajos.some(x => x.id === id)) return;
+    detalleId = id;
+    pintarDetalle();
+    const body = $('trabajoBody');
+    if(body) body.scrollTop = 0;
+    abrirHoja('sheetTrabajo');
+  }
+
+  // ---------- Mis pagos ----------
+  const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+  function diaCorto(iso){
+    const d = new Date(iso);
+    return isNaN(d) ? '' : DIAS[d.getDay()] + ' ' + fechaCorta(iso);
+  }
+  function lunesDe(d){
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+    return x;
+  }
+  const isoDia = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  function nombreSemana(lunesIso){
+    const hoyL = lunesDe(new Date());
+    const pasada = new Date(hoyL); pasada.setDate(pasada.getDate() - 7);
+    if(lunesIso === isoDia(hoyL)) return 'Esta semana';
+    if(lunesIso === isoDia(pasada)) return 'Semana pasada';
+    return 'Semana del ' + fechaCorta(lunesIso);
+  }
+  function rangoSemana(lunesIso){
+    const l = new Date(lunesIso + 'T00:00');
+    const dom = new Date(l); dom.setDate(dom.getDate() + 6);
+    const mismoMes = l.getMonth() === dom.getMonth();
+    return (mismoMes ? l.getDate() : fechaCorta(lunesIso)) + ' al ' + fechaCorta(isoDia(dom));
+  }
+  function filaTrabajo(m){
+    const monto = m.monto == null ? '<span class="pg-mov-m gris">Por definir</span>' : `<span class="pg-mov-m">${esc(dinero(m.monto))}</span>`;
+    return `<div class="pg-mov"><span style="min-width:0"><span class="pg-mov-t">${esc(m.etapa)} · ${esc(m.producto)}</span>
+      <span class="pg-mov-s">${esc([diaCorto(m.fecha), m.ref].filter(Boolean).join(' · '))}</span></span>${monto}</div>`;
+  }
+  function filaVale(v, pendiente){
+    return `<div class="pg-mov vale"><span style="min-width:0"><span class="pg-mov-t">Vale${pendiente ? '<span class="pg-pill">Por aprobar</span>' : ''}</span>
+      <span class="pg-mov-s">${esc([diaCorto(v.fecha), v.nota].filter(Boolean).join(' · '))}</span></span>
+      <span class="pg-mov-m ${pendiente ? 'gris' : 'rojo'}">${pendiente ? esc(dinero(v.monto)) : '−' + esc(dinero(v.monto))}</span></div>`;
+  }
+
+  function pintarPorCobrar(){
+    const p = pagos || {};
+    const tr = p.trabajos || [];
+    const va = p.vales || [];
+    const vp = p.vale_pendiente;
+    // Trabajos sin cobrar, por semana (lo más nuevo arriba)
+    const grupos = [];
+    tr.forEach(m => {
+      const k = isoDia(lunesDe(new Date(m.fecha)));
+      let g = grupos.find(x => x.k === k);
+      if(!g){ g = { k, l:[] }; grupos.push(g); }
+      g.l.push(m);
+    });
+    const porDefinir = tr.filter(m => m.monto == null).length;
+    let html = '';
+    if(!tr.length && !va.length && !vp){
+      html += '<div class="tr-vacio">Aquí verás cada trabajo que termines y lo que te toca cobrar.</div>';
+    }
+    grupos.forEach(g => {
+      html += `<p class="pg-tit">${esc(nombreSemana(g.k))}</p>` + g.l.map(filaTrabajo).join('');
+    });
+    if(va.length || vp){
+      html += '<p class="pg-tit">Vales</p>' + (vp ? filaVale(vp, true) : '') + va.map(v => filaVale(v, false)).join('');
+    }
+    if(tr.length || va.length){
+      html += `<div class="pg-cuenta">
+        <div class="pg-cuenta-fila"><span>Trabajos</span><b>${esc(dinero(ganado()))}</b></div>
+        ${va.length ? `<div class="pg-cuenta-fila"><span>Vales</span><b class="rojo">−${esc(dinero(valesTotal()))}</b></div>` : ''}
+        ${porCobrar() < 0
+          ? `<div class="pg-cuenta-total"><span>Vales por descontar</span><b class="rojo">${esc(dinero(-porCobrar()))}</b></div>`
+          : `<div class="pg-cuenta-total"><span>Te toca cobrar</span><b>${esc(dinero(porCobrar()))}</b></div>`}
+        ${porDefinir ? `<div class="pg-aviso">${porDefinir === 1 ? '1 trabajo todavía no tiene monto' : porDefinir + ' trabajos todavía no tienen monto'}. Ray lo completa.</div>` : ''}
+      </div>`;
+    }
+    html += vp ? '' : '<button class="btn-secondary" type="button" id="btnAbrirVale" style="width:100%;margin-top:14px">Pedir un vale</button>';
+    return html;
+  }
+
+  function pintarHistorial(){
+    const sem = (pagos && pagos.semanas) || [];
+    if(!sem.length) return '<div class="tr-vacio">Todavía no hay semanas. Aquí verás cada semana: lo que hiciste, tus vales y si ya se te pagó.</div>';
+    return sem.map((s, i) => {
+      const tr = s.trabajos || [], va = s.vales || [];
+      const g = suma(tr), v = suma(va);
+      const pagado = tr.length + va.length > 0 && tr.every(x => x.pagado) && va.every(x => x.pagado);
+      const parte = !pagado && (tr.some(x => x.pagado) || va.some(x => x.pagado));
+      const est = pagado ? `<span class="pg-est pagado">Pagado${s.pagado_en ? ' ' + esc(fechaCorta(s.pagado_en)) : ''}</span>`
+        : parte ? '<span class="pg-est debe">Pagado en parte</span>' : '<span class="pg-est debe">Por cobrar</span>';
+      const sub = esc(tr.length === 1 ? '1 trabajo' : tr.length + ' trabajos') + (va.length ? ` · <span style="white-space:nowrap">vales −${esc(dinero(v))}</span>` : '');
+      return `<details class="pg-sem" ${i === 0 ? 'open' : ''}>
+        <summary>
+          <span style="min-width:0"><span class="pg-sem-t">${esc(nombreSemana(s.semana))}</span><span class="pg-sem-s">${esc(rangoSemana(s.semana))} · ${sub}</span></span>
+          <span class="pg-sem-m"><b>${esc(dinero(Math.round((g - v) * 100) / 100))}</b>${est}</span>
+          <svg class="ac-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="pg-sem-body">${tr.map(filaTrabajo).join('')}${va.map(x => filaVale(x, false)).join('')}</div>
+      </details>`;
+    }).join('');
+  }
+
+  function pintarPagos(){
+    $('pagosTabs').querySelectorAll('[data-pg-tab]').forEach(b => b.classList.toggle('active', b.dataset.pgTab === tabPagos));
+    $('pagosBody').innerHTML = tabPagos === 'historial' ? pintarHistorial() : pintarPorCobrar();
+  }
+  $('pagosTabs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pg-tab]'); if(!b || b.dataset.pgTab === tabPagos) return;
+    tabPagos = b.dataset.pgTab;
+    pintarPagos();
+  });
 
   async function refrescar(){
     try{
       await cargarTrabajador();
       pintarInicioTrabajador();
       if($('sheetTrabajos').classList.contains('open')) pintarTrabajos();
+      if($('sheetTrabajo').classList.contains('open')) pintarDetalle();
       if($('sheetPagos').classList.contains('open')) pintarPagos();
     } catch(err){
       toast('No se pudo actualizar: ' + ((err && err.message) || 'revisa tu internet'), 'error');
@@ -135,34 +299,43 @@
 
   function ver(que){
     if(que === 'trabajos'){ pintarTrabajos(); abrirHoja('sheetTrabajos'); }
-    if(que === 'pagos'){ pintarPagos(); abrirHoja('sheetPagos'); }
+    if(que === 'pagos' || que === 'historial'){ tabPagos = que === 'historial' ? 'historial' : 'cobrar'; pintarPagos(); abrirHoja('sheetPagos'); }
   }
 
-  $('vistaTrabajo').addEventListener('click', (e) => {
-    const bt = e.target.closest('[data-terminar-t]');
-    if(bt){ e.stopPropagation(); abrirTerminar(Number(bt.dataset.terminarT)); return; }
-    const b = e.target.closest('[data-ver]');
-    if(b) ver(b.dataset.ver);
-  });
-
-  $('listaTrabajos').addEventListener('click', async (e) => {
-    const be = e.target.closest('[data-empezar]');
-    const bp = e.target.closest('[data-pausar]');
-    const bt = e.target.closest('[data-terminar-t]');
-    if(bt){ abrirTerminar(Number(bt.dataset.terminarT)); return; }
-    const b = be || bp;
-    if(!b) return;
+  // Empezar / dejar para después (desde la tarjeta de Hoy o el detalle)
+  async function cambiarTrabajo(b, empezar){
+    if(b.disabled) return;
     b.disabled = true;
     try{
-      const { error } = await db.rpc(be ? 'empezar_etapa' : 'pausar_etapa', { eid: Number(b.dataset.empezar || b.dataset.pausar) });
+      const { error } = await db.rpc(empezar ? 'empezar_etapa' : 'pausar_etapa', { eid: Number(b.dataset.empezar || b.dataset.pausar) });
       if(error) throw error;
-      toast(be ? 'Listo, a trabajar. Cuando lo termines, márcalo aquí.' : 'Lo dejaste para después');
+      toast(empezar ? 'Listo, a trabajar. Cuando lo termines, márcalo aquí.' : 'Lo dejaste para después');
+      if(empezar){ cerrarHoja('sheetTrabajo', true); cerrarHoja('sheetTrabajos', true); }
       await refrescar();
     } catch(err){
       toast(err.message, 'error');
-      b.disabled = false;
+    } finally {
+      if(document.body.contains(b)) b.disabled = false;
     }
+  }
+  function clicTrabajo(e){
+    const bt = e.target.closest('[data-terminar-t]');
+    if(bt){ abrirTerminar(Number(bt.dataset.terminarT)); return true; }
+    const be = e.target.closest('[data-empezar]');
+    if(be){ cambiarTrabajo(be, true); return true; }
+    const bp = e.target.closest('[data-pausar]');
+    if(bp){ cambiarTrabajo(bp, false); return true; }
+    const bd = e.target.closest('[data-detalle]');
+    if(bd){ abrirDetalle(Number(bd.dataset.detalle)); return true; }
+    return false;
+  }
+  $('vistaTrabajo').addEventListener('click', (e) => {
+    if(clicTrabajo(e)) return;
+    const b = e.target.closest('[data-ver]');
+    if(b) ver(b.dataset.ver);
   });
+  $('listaTrabajos').addEventListener('click', clicTrabajo);
+  $('trabajoFoot').addEventListener('click', clicTrabajo);
 
   // Marcar terminado (foto opcional)
   let terminarId = null;
@@ -188,6 +361,7 @@
   $('btnTConfirmar').addEventListener('click', async () => {
     if(!terminarId) return;
     const btn = $('btnTConfirmar');
+    if(btn.disabled) return;
     btn.disabled = true;
     try{
       let fotoUrl = null;
@@ -199,7 +373,8 @@
       }
       const { data, error } = await db.rpc('marcar_etapa_terminada', { eid: terminarId, foto_url: fotoUrl });
       if(error) throw error;
-      cerrarHoja('sheetTerminarT');
+      cerrarHoja('sheetTerminarT', true);
+      cerrarHoja('sheetTrabajo', true);
       terminarId = null;
       toast(data && data.monto != null ? `¡Bien hecho! Sumaste ${dinero(data.monto)}` : '¡Bien hecho! Quedó terminado');
       await refrescar();

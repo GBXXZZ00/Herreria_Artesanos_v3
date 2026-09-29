@@ -80,7 +80,6 @@
   }
   function plazoEntrega(v){
     if(AV.porConfirmar(v.abonos).length) return '<span class="plazo pronto">Pago por confirmar</span>';
-    if(v.estado === 'confirmada' && v.produccion_pedida_en) return '<span class="plazo pronto">Pedida a producción</span>';
     if(!v.fecha_entrega || !['confirmada', 'en_produccion', 'lista'].includes(v.estado)) return '';
     const d = AV.diasHasta(v.fecha_entrega);
     if(d < 0) return `<span class="plazo tarde">Atrasada ${-d} ${-d === 1 ? 'día' : 'días'}</span>`;
@@ -190,7 +189,7 @@
   async function cargar(){
     try{
       const [r, ps] = await Promise.all([
-        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,produccion_pedida_en,mensaje_en,mensaje_estado,pdf_en,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(id,monto,tipo,estado,confirmado_en)').eq('interna', false).order('creado_en', { ascending:false }).limit(2000),
+        db.from('ventas').select('id,estado,total,creado_en,actualizado_en,confirmada_en,cancelada_en,vence_en,fecha_entrega,vendedor_id,mensaje_en,mensaje_estado,pdf_en,cliente:clientes(nombre,cedula,telefono),items:venta_items(nombre,cantidad,orden),abonos(id,monto,tipo,estado,confirmado_en)').eq('interna', false).order('creado_en', { ascending:false }).limit(2000),
         AV.perfiles()
       ]);
       if(r.error) throw r.error;
@@ -367,9 +366,12 @@
     const pv = pasosDe(v), k = pv.indexOf(v.estado);
     let masHtml = `<div class="grid-acciones">${grid.join('')}</div>`;
     if(!editable(v) && v.estado !== 'cancelada' && v.estado !== 'entregada') masHtml += `<div class="f-nota">No se puede editar: ya está ${esc(AV.ESTADOS[v.estado].t.toLowerCase())}.</div>`;
-    if(esAdmin && k > 0) masHtml += `<button type="button" class="f-link-chico" data-retro="${pv[k - 1]}">${ICON_UNDO}Devolver a "${esc(AV.ESTADOS[pv[k - 1]].t)}"</button>`;
-    if(v.estado !== 'cancelada' && v.estado !== 'entregada') masHtml += `<button type="button" class="btn-peligro" data-accion="cancelar">${ICON_CANCELAR}${cot ? 'Descartar cotización' : 'Cancelar venta'}</button>`;
-    html += acordeon('mas', 'Más opciones', 'Editar, PDF, seguimiento, cancelar', masHtml);
+    // Un pedido en producción no se devuelve a "Confirmada" (si hace falta, se cancela)
+    if(esAdmin && k > 0 && v.estado !== 'en_produccion') masHtml += `<button type="button" class="f-link-chico" data-retro="${pv[k - 1]}">${ICON_UNDO}Devolver a "${esc(AV.ESTADOS[pv[k - 1]].t)}"</button>`;
+    // Descartar una cotización lo hace quien vende; cancelar una venta, solo un administrador
+    const puedeCancelar = v.estado !== 'cancelada' && v.estado !== 'entregada' && (cot || esAdmin);
+    if(puedeCancelar) masHtml += `<button type="button" class="btn-peligro" data-accion="cancelar">${ICON_CANCELAR}${cot ? 'Descartar cotización' : 'Cancelar venta'}</button>`;
+    html += acordeon('mas', 'Más opciones', puedeCancelar ? 'Editar, PDF, seguimiento, cancelar' : 'Editar, PDF y seguimiento', masHtml);
 
     $('fichaBody').innerHTML = html;
     pintarPie();
@@ -397,7 +399,6 @@
   const soloInmediata = (v) => (v.items || []).length > 0 && v.items.every(it => it.pieza_id);
   const pasosDe = (v) => soloInmediata(v) ? PASOS.filter(p => p !== 'en_produccion') : PASOS;
   const SIGUIENTE = {
-    confirmada:    { t:'Pasar a En producción', s:'El pedido entra a fabricación' },
     en_produccion: { t:'Marcar como Lista', s:'Ya está fabricado y listo para entregar' },
     lista:         { t:'Marcar como Entregada', s:'El cliente ya lo recibió' }
   };
@@ -410,15 +411,14 @@
         <span class="est-dot">${i < k || (i === k && v.estado === 'entregada') ? ICON_OK : ''}</span><span class="est-l">${esc(AV.ESTADOS[p].t)}</span></div>`).join('')}</div>`;
     const sig = PV[k + 1];
     if(!sig) return html + '<div class="f-nota" style="text-align:center">Pedido entregado. ¡Listo!</div>';
-    if(sig === 'en_produccion' && !esAdmin){
-      html += v.produccion_pedida_en
-        ? `<div class="btn-guia hecho"><span class="bg-t">Pedido a producción ✓</span><span class="bg-s">${esc(cuando(v.produccion_pedida_en, v.produccion_pedida_por))}. El administrador lo pasará a producción.</span></div>`
-        : `<button type="button" class="btn-guia" data-accion="pedir-produccion"><span class="bg-t">Pedir a producción</span><span class="bg-s">Le llega un aviso al administrador para que lo pase</span></button>`;
+    // Pasa solo a producción cuando Ray confirma el pago: aquí no hay botón, solo se explica
+    if(sig === 'en_produccion'){
+      const espera = AV.porConfirmar(v.abonos).length > 0;
+      html += `<div class="btn-guia espera"><span class="bg-t">${espera ? (puedeConfirmar ? 'Falta que confirmes el pago' : 'Espera que Ray confirme el pago') : 'Falta un pago confirmado'}</span><span class="bg-s">${espera ? 'Al confirmarlo pasa solo a producción' : 'Registra un pago: cuando Ray lo confirme pasa a producción'}</span></div>`;
       return html;
     }
     const info = sig === 'lista' && v.estado === 'confirmada' ? { t:'Marcar como Lista', s:'Ya está en tienda, lista para entregar' } : SIGUIENTE[v.estado];
-    const extra = sig === 'en_produccion' && v.produccion_pedida_en ? ` · Te lo pidió ${esc(nombres[v.produccion_pedida_por] || '')}` : '';
-    return html + `<button type="button" class="btn-guia" data-estado="${sig}"><span class="bg-t">${esc(info.t)}</span><span class="bg-s">${esc(info.s)}${extra}</span></button>`;
+    return html + `<button type="button" class="btn-guia" data-estado="${sig}"><span class="bg-t">${esc(info.t)}</span><span class="bg-s">${esc(info.s)}</span></button>`;
   }
 
   // ① mensaje ② PDF
@@ -517,24 +517,6 @@
       try{ await navigator.clipboard.writeText(AV.urlSeguimiento(actual)); toast('Enlace copiado'); } catch(err){ toast('No se pudo copiar', 'error'); }
       return;
     }
-    if(a === 'producir'){
-      const v0 = actual;
-      if(!confirm(`¿Enviar el pedido N° ${v0.id} a producción?`)) return;
-      const { error } = await db.rpc('cambiar_estado_venta', { vid: v0.id, nuevo: 'en_produccion' });
-      if(error){ toast(error.message, 'error'); return; }
-      toast(`Pedido N° ${v0.id} en producción`);
-      await Promise.all([recargarFicha(), cargar()]);
-      return;
-    }
-    if(a === 'pedir-produccion'){
-      const v0 = actual;
-      if(!confirm(`¿Pedir al administrador que envíe el pedido N° ${v0.id} a producción?`)) return;
-      const { error } = await db.rpc('pedir_produccion', { vid: v0.id });
-      if(error){ toast(error.message, 'error'); return; }
-      toast('Listo, le llegó el aviso al administrador');
-      await Promise.all([recargarFicha(), cargar()]);
-      return;
-    }
     if(a === 'pdf'){
       if(!pdf || !pdf.blob) return;
       const v0 = actual;
@@ -557,7 +539,7 @@
     if(!v || v.estado === nuevo) return;
     const nombre = AV.ESTADOS[nuevo].t;
     let pregunta = devolver ? `¿Devolver el pedido N° ${v.id} a "${nombre}"? Úsalo solo si se marcó por error.`
-      : nuevo === 'en_produccion' ? `¿Pasar el pedido N° ${v.id} a producción?` : `¿Marcar el pedido N° ${v.id} como "${nombre}"?`;
+      : `¿Marcar el pedido N° ${v.id} como "${nombre}"?`;
     if(nuevo === 'entregada' && AV.resta(v) > 0) pregunta = `Todavía debe ${dinero(AV.resta(v))}. ¿Marcarlo como entregado igual?`;
     if(!confirm(pregunta)) return;
     const { error } = await db.rpc('cambiar_estado_venta', { vid: v.id, nuevo, desde: v.estado });
@@ -700,10 +682,10 @@
     acc.guardando = true;
     const btn = $('btnAccion'); btn.disabled = true;
     try{
-      const { error } = await db.rpc('confirmar_abono', { aid: a.id, llego, nota: acc.nota || null });
+      const { data, error } = await db.rpc('confirmar_abono', { aid: a.id, llego, nota: acc.nota || null });
       if(error) throw new Error(error.message);
       cerrarHoja('sheetAccion', true);
-      toast(llego ? 'Pago confirmado' : 'Marcado como que no llegó');
+      toast(!llego ? 'Marcado como que no llegó' : (data && data.produccion ? 'Pago confirmado. Pasó a producción: asígnalo en Producción' : 'Pago confirmado'));
       await Promise.all([recargarFicha(), cargar()]);
     } catch(err){ toast(err.message, 'error'); }
     finally { if(acc) acc.guardando = false; btn.disabled = false; }

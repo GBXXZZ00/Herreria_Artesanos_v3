@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=41">
+<link rel="stylesheet" href="assets/css/base.css?v=42">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -69,11 +69,11 @@
   /* Pendientes: una tarjeta de color por cosa, en una sola línea */
   .pend-cab{display:flex;align-items:center;gap:8px;margin:2px 4px 10px;font-size:13px;font-weight:800;color:var(--ink-soft)}
   .pend-n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#C2410C;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
-  .pend-lista{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
-  .pend-fila{display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border-radius:16px;border:1px solid;text-align:left;text-decoration:none;opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms);transition:transform 140ms var(--ease-out)}
+  .pend-lista{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .pend-fila{display:flex;align-items:center;gap:10px;width:100%;padding:7px 12px 7px 8px;border-radius:14px;border:1px solid;text-align:left;text-decoration:none;opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms);transition:transform 140ms var(--ease-out)}
   .pend-fila:active{transform:scale(0.98)}
-  .pend-ico{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .pend-t{flex:1;min-width:0;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pend-ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .pend-t{flex:1;min-width:0;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pend-t span{font-weight:600;opacity:.75}
   .pend-fila .chev{flex-shrink:0;opacity:.6}
   .pend-fila.rojo{background:#FFF5F4;border-color:#F4C7C3;color:#7A1A12;box-shadow:0 6px 18px rgba(180,35,24,0.12)}
@@ -82,6 +82,8 @@
   .pend-fila.naranja .pend-ico{background:#FFE7C2;color:#8A5A00}
   .pend-fila.verde{background:#F2FAF5;border-color:#B7E0C6;color:#14532D;box-shadow:0 6px 18px rgba(27,107,58,0.12)}
   .pend-fila.verde .pend-ico{background:#DDF2E6;color:#1B6B3A}
+  .pend-fila.azul{background:#F3F6FD;border-color:#C3D2F0;color:#1E3A7A;box-shadow:0 6px 18px rgba(37,78,160,0.10)}
+  .pend-fila.azul .pend-ico{background:#E1E9FA;color:#2F55B5}
   .pend-fila.teal{background:#F1F7F7;border-color:#BCD6D8;color:#123F44;box-shadow:0 6px 18px rgba(23,85,92,0.12)}
   .pend-fila.teal .pend-ico{background:var(--accent-soft);color:var(--accent)}
 
@@ -104,54 +106,94 @@
   .es-trabajador #btnNuevaVenta, .es-trabajador #modulos, .es-trabajador #menuModulos,
   .sin-perfil #btnNuevaVenta, .sin-perfil #modulos, .sin-perfil #menuModulos{display:none}
   .es-trabajador .page{padding-bottom:calc(var(--safe-b) + 32px)}
-  .t-activo{display:block;width:100%;text-align:left;padding:18px;margin-bottom:12px;border-radius:var(--radius);background:var(--accent);color:#fff;box-shadow:0 12px 28px rgba(23,85,92,0.28);transition:transform 150ms var(--ease-out)}
-  .t-activo:active{transform:scale(0.98)}
-  .t-activo-eyebrow{font-size:12.5px;font-weight:700;color:rgba(255,255,255,0.8)}
-  .t-activo-tit{display:block;font-size:20px;font-weight:800;letter-spacing:-0.2px;margin-top:4px}
-  .t-activo-sub{display:block;font-size:14px;color:rgba(255,255,255,0.85);margin-top:2px}
-  .t-activo-btn{display:inline-flex;align-items:center;height:40px;padding:0 16px;margin-top:14px;border-radius:12px;background:#fff;color:var(--accent);font-size:14.5px;font-weight:800}
-  .t-tiles{display:grid;grid-template-columns:1.15fr 1fr;gap:12px;margin-bottom:12px}
-  .t-tile{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:150px;padding:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-sm);text-align:left;opacity:0;transform:translateY(10px);animation:tileIn 380ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 50ms);transition:transform 150ms var(--ease-out)}
-  .t-tile:active{transform:scale(0.97)}
-  .t-tile .ini-ico{width:44px;height:44px;border-radius:13px}
-  .t-num{display:block;font-size:30px;font-weight:800;letter-spacing:-0.8px;line-height:1;margin-top:auto}
-  .t-lbl{display:block;font-size:14px;font-weight:700;color:var(--ink-soft);margin-top:4px}
-  .sk-tile{min-height:150px;border-radius:var(--radius);background:var(--surface-2);animation:pulse 1.2s ease-in-out infinite}
+  /* "Hoy": lo que hace ahora o lo que le toca */
+  .hoy-tit{font-size:25px;font-weight:800;letter-spacing:-0.5px;line-height:1.15;margin:4px 2px 12px}
+  .hoy{border-radius:22px;background:var(--surface);border:1px solid var(--line);box-shadow:0 12px 30px rgba(23,85,92,0.12);overflow:hidden;margin-bottom:16px;opacity:0;transform:translateY(8px);animation:tileIn 380ms var(--ease-out) forwards}
+  .hoy.activo{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 14px 32px rgba(23,85,92,0.18)}
+  .hoy-foto{display:block;width:100%;aspect-ratio:4/3;background:var(--surface-2);position:relative;overflow:hidden;color:var(--ink-faint);transition:opacity 140ms var(--ease-out)}
+  .hoy-foto:active{opacity:.85}
+  .hoy-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+  .hoy-foto .sin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .hoy-foto .ver{position:absolute;right:10px;bottom:10px;height:30px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,0.94);box-shadow:var(--shadow-sm);font-size:12.5px;font-weight:800;color:var(--ink);display:flex;align-items:center}
+  .hoy-en{position:absolute;left:10px;top:10px;height:28px;padding:0 11px;border-radius:999px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:6px}
+  .hoy-en::before{content:'';width:7px;height:7px;border-radius:50%;background:#7FE3D0}
+  .hoy-txt{padding:14px 16px 0}
+  .hoy-etapa{font-size:13px;font-weight:800;color:var(--accent)}
+  .hoy-nom{font-size:20px;font-weight:800;letter-spacing:-0.3px;line-height:1.2;margin-top:2px}
+  .hoy-sub{font-size:13.5px;color:var(--ink-soft);margin-top:3px}
+  .hoy .spec-chips{margin-top:10px;gap:6px}
+  .hoy .spec-chip{height:28px;padding:0 10px;font-size:12.5px}
+  .hoy-acc{padding:14px 16px 16px}
+  .hoy-acc .btn-primary{width:100%}
+  .hoy-vacio{padding:22px 18px;text-align:center}
+  .hoy-vacio b{display:block;font-size:17px;font-weight:800}
+  .hoy-vacio span{display:block;font-size:14px;color:var(--ink-soft);margin-top:4px}
+  .pend-fila.amarillo{background:#FFFBEA;border-color:#F0DB8C;color:#5C4700;box-shadow:0 6px 18px rgba(176,140,0,0.12)}
+  .pend-fila.amarillo .pend-ico{background:#FCEFB4;color:#8A6D00}
+  div.pend-fila{cursor:default}
+  div.pend-fila:active{transform:none}
+  /* "¿Lo terminaste?" puede abrirse encima del detalle del trabajo */
+  #sheetTerminarT{z-index:53}
+  #scrimTerminarT{z-index:52}
+  .sk-hoy{height:360px;border-radius:22px;background:var(--surface-2);animation:pulse 1.2s ease-in-out infinite;margin-bottom:16px}
 
-  .tr-lista{display:flex;flex-direction:column;gap:10px}
-  .tr{padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+  /* Lista de trabajos */
+  .tr-lista{display:flex;flex-direction:column;gap:8px}
+  .tr{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:1px solid var(--line);border-radius:16px;background:var(--surface);text-align:left;transition:transform 140ms var(--ease-out)}
+  .tr:active{transform:scale(0.98)}
   .tr.activo{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-  .tr.bloq{background:var(--surface-2);border-color:transparent}
-  .tr-cab{display:flex;gap:12px;align-items:center}
-  .tr-foto{width:52px;height:52px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .tr-foto{width:68px;height:68px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
   .tr-foto img{width:100%;height:100%;object-fit:cover}
   .tr-etapa{font-size:12px;font-weight:800;color:var(--accent)}
   .tr-nom{font-size:15.5px;font-weight:800;line-height:1.25}
   .tr-det{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
-  .tr-pie{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
-  .tr-gana{font-size:13px;font-weight:800;color:var(--ink-soft);margin-right:auto}
-  .tr-btn{height:40px;padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800;white-space:nowrap;transition:transform 130ms var(--ease-out)}
-  .tr-btn:active{transform:scale(0.97)}
-  .tr-btn.sec{background:none;color:var(--ink-soft);padding:0 6px}
-  .tr-bloq{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink-faint)}
+  .tr-estado{display:flex;align-items:flex-start;gap:5px;line-height:1.3;font-size:12px;font-weight:800;margin-top:4px;color:var(--ink-soft)}
+  .tr-estado svg{flex-shrink:0;margin-top:1px}
+  .tr-estado.curso{color:var(--accent)}
+  .tr-estado.bloq{color:var(--ink-faint)}
+  .tr .chev{flex-shrink:0;margin-left:auto;color:var(--ink-faint)}
   .tr-vacio{text-align:center;padding:36px 12px;color:var(--ink-soft);font-size:15px}
 
-  .pg-resumen{padding:18px;border-radius:var(--radius);background:var(--surface-2);margin-bottom:14px}
-  .pg-lbl{font-size:13px;font-weight:700;color:var(--ink-soft)}
-  .pg-total{font-size:34px;font-weight:800;letter-spacing:-0.8px;line-height:1.1;margin-top:2px}
-  .pg-linea{display:flex;gap:16px;margin-top:10px;font-size:13px;color:var(--ink-soft)}
-  .pg-linea b{color:var(--ink)}
-  .pg-aviso{font-size:12.5px;color:#8A5A00;margin-top:10px}
-  .pg-mov{display:flex;align-items:center;gap:12px;padding:12px 2px}
+  /* Detalle del trabajo */
+  .tj-parte{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:800;margin-top:12px}
+  .tj-datos{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:14px;color:var(--ink-soft)}
+  .tj-datos b{color:var(--ink)}
+  .tj-bloq{display:flex;align-items:center;gap:8px;justify-content:center;height:54px;border-radius:16px;background:var(--surface-2);color:var(--ink-soft);font-size:14.5px;font-weight:700;width:100%}
+
+  /* Mis pagos */
+  .chips.pg-tabs{margin:0 0 14px;padding:2px 0}
+  .pg-tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:16px 2px 4px}
+  .pg-tit:first-child{margin-top:2px}
+  .pg-mov{display:flex;align-items:center;gap:12px;padding:10px 2px}
   .pg-mov + .pg-mov{border-top:1px solid var(--line)}
   .pg-mov-t{display:block;font-size:14.5px;font-weight:700}
   .pg-mov-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
   .pg-mov-m{margin-left:auto;font-size:15px;font-weight:800;white-space:nowrap;text-align:right}
-  .pg-mov-m.menos{color:var(--ink-soft)}
-  .pg-pill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;background:var(--surface-2);color:var(--ink-soft)}
-  .pg-pill.pendiente{background:#FFF1D6;color:#8A5A00}
-  .pg-tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:18px 0 2px}
-  .vale-pend{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#FFF8EC;border:1px solid #F2C99A;font-size:14px;font-weight:700;color:#8A5A00}
+  .pg-mov-m.rojo,.pg-cuenta .rojo{color:#B42318}
+  .pg-mov-m.gris{color:var(--ink-faint);font-weight:700;font-size:13px}
+  .pg-mov.vale .pg-mov-t{color:#B42318}
+  .pg-pill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;background:#FCEFB4;color:#6B5500;vertical-align:1px}
+  .pg-cuenta{margin-top:16px;padding:14px 16px;border-radius:18px;background:var(--surface-2)}
+  .pg-cuenta-fila{display:flex;justify-content:space-between;font-size:14.5px;color:var(--ink-soft);padding:3px 0}
+  .pg-cuenta-fila b{color:var(--ink)}
+  .pg-cuenta-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line-strong);margin-top:8px;padding-top:10px}
+  .pg-cuenta-total span{font-size:15px;font-weight:800}
+  .pg-cuenta-total b{font-size:30px;font-weight:800;letter-spacing:-0.6px;color:var(--accent)}
+  .pg-aviso{font-size:12.5px;color:#8A5A00;margin-top:8px}
+  .pg-sem{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+  .pg-sem + .pg-sem{margin-top:8px}
+  .pg-sem summary{list-style:none;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+  .pg-sem summary::-webkit-details-marker{display:none}
+  .pg-sem-t{display:block;font-size:15px;font-weight:800}
+  .pg-sem-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .pg-sem-m{margin-left:auto;text-align:right;flex-shrink:0}
+  .pg-sem-m b{display:block;font-size:16px;font-weight:800}
+  .pg-est{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-top:3px}
+  .pg-est.pagado{background:#DDF2E6;color:#1B6B3A}
+  .pg-est.debe{background:#FCEFB4;color:#6B5500}
+  .pg-sem .ac-chev{color:var(--ink-faint);flex-shrink:0;transition:transform 200ms var(--ease-out)}
+  .pg-sem[open] .ac-chev{transform:rotate(180deg)}
+  .pg-sem-body{padding:0 14px 8px;border-top:1px solid var(--line)}
 
   .va{display:flex;align-items:center;gap:12px;padding:14px 0}
   .va + .va{border-top:1px solid var(--line)}
@@ -293,13 +335,24 @@
 <div class="sheet-scrim" id="scrimTrabajos" data-cerrar="sheetTrabajos"></div>
 <section class="sheet sheet-auto" id="sheetTrabajos" role="dialog" aria-modal="true" aria-labelledby="trabajosTitulo">
   <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title" id="trabajosTitulo">Trabajos pendientes</h2>
+  <div class="sheet-head"><h2 class="sheet-title" id="trabajosTitulo">Mis trabajos</h2>
     <button class="icon-btn" data-cerrar="sheetTrabajos" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="sheet-body">
-    <p class="field-hint" id="trabajosAyuda" style="margin:0 0 12px">Elige con cuál empiezas. Los demás esperan hasta que lo termines.</p>
+    <p class="field-hint" id="trabajosAyuda" style="margin:0 0 12px">Toca uno para ver su foto y sus detalles.</p>
     <div class="tr-lista" id="listaTrabajos"></div>
   </div>
+</section>
+
+<!-- Trabajador: un trabajo (foto, modelo y especificaciones) -->
+<div class="sheet-scrim scrim-top" id="scrimTrabajo" data-cerrar="sheetTrabajo"></div>
+<section class="sheet sheet-hero sheet-top" id="sheetTrabajo" role="dialog" aria-modal="true" aria-label="Trabajo">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetTrabajo" aria-label="Cerrar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sheet-body" id="trabajoBody"></div>
+  <div class="sheet-foot" id="trabajoFoot"></div>
 </section>
 
 <!-- Trabajador: marcar terminado -->
@@ -328,7 +381,13 @@
   <div class="sheet-head"><h2 class="sheet-title" id="pagosTitulo">Mis pagos</h2>
     <button class="icon-btn" data-cerrar="sheetPagos" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
-  <div class="sheet-body" id="pagosBody"></div>
+  <div class="sheet-body">
+    <div class="chips pg-tabs" id="pagosTabs">
+      <button class="chip active" type="button" data-pg-tab="cobrar">Por cobrar</button>
+      <button class="chip" type="button" data-pg-tab="historial">Historial</button>
+    </div>
+    <div id="pagosBody"></div>
+  </div>
 </section>
 
 <!-- Trabajador: pedir vale -->
@@ -368,13 +427,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=41"></script>
-<script src="assets/js/supabase-client.js?v=41"></script>
-<script src="assets/js/img-compress.js?v=41"></script>
-<script src="assets/js/comun.js?v=41"></script>
-<script src="assets/js/avisos.js?v=41"></script>
-<script src="assets/js/sesion.js?v=41"></script>
-<script src="assets/js/mi-trabajo.js?v=41"></script>
+<script src="assets/vendor/supabase.js?v=42"></script>
+<script src="assets/js/supabase-client.js?v=42"></script>
+<script src="assets/js/img-compress.js?v=42"></script>
+<script src="assets/js/comun.js?v=42"></script>
+<script src="assets/js/avisos.js?v=42"></script>
+<script src="assets/js/sesion.js?v=42"></script>
+<script src="assets/js/mi-trabajo.js?v=42"></script>
 <script>
 (function(){
   'use strict';
@@ -540,7 +599,7 @@
       if(rc.error || rp.error) throw (rc.error || rp.error);
       const n = rc.count || 0;
       const d = (rp.data || []).reduce((a, x) => a + (x.cantidad || 0), 0);
-      el.innerHTML = `${n} ${n === 1 ? 'modelo' : 'modelos'}` + (d ? ` · <span class="num">${d} de entrega inmediata</span>` : '');
+      el.innerHTML = `${n} ${n === 1 ? 'modelo' : 'modelos'}` + (d ? ` · <span class="num">${d} listos</span>` : '');
     } catch(e){
       el.textContent = 'Modelos y entrega inmediata';
     }
@@ -575,13 +634,14 @@
     llave: svg('<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>'),
     persona: svg('<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>'),
     vale: svg('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'),
+    catalogo: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/>'),
     etiqueta: svg('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>')
   };
   const CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
   const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
 
   // Un pendiente = una línea: color según qué es, título corto y detalle
-  // p = { color:'rojo'|'naranja'|'verde'|'teal', icono, titulo, detalle, href | vales:true }
+  // p = { color:'rojo'|'naranja'|'verde'|'azul'|'teal', icono, titulo, detalle, href | vales:true }
   function filaPendiente(p, i){
     const dentro = `<span class="pend-ico">${ICONOS[p.icono]}</span>
       <span class="pend-t">${esc(p.titulo)}${p.detalle ? ` <span>· ${esc(p.detalle)}</span>` : ''}</span>${CHEV}`;
@@ -606,15 +666,6 @@
         }
       } catch(e){}
     }
-    // Pedidos que la vendedora pidió enviar a producción
-    if(admin) try{
-      const { data } = await db.from('ventas').select('id,produccion_pedida_en,cliente:clientes(nombre)').eq('estado', 'confirmada').not('produccion_pedida_en', 'is', null).order('produccion_pedida_en', { ascending:true });
-      if(data && data.length){
-        pend.push({ color:'naranja', icono:'llave', titulo: data.length === 1 ? '1 pedido espera producción' : data.length + ' pedidos esperan producción',
-          detalle: data.map(v => 'N° ' + v.id).slice(0, 3).join(', ') + (data.length > 3 ? '…' : ''),
-          href: `ventas.html?abrir=${data.length === 1 ? data[0].id : ''}` });
-      }
-    } catch(e){}
     if(admin) pend.push(...await pendientesTaller());
 
     let html = pend.length ? `<section class="pend" aria-label="Pendientes">
@@ -670,11 +721,11 @@
     }
     const nCats = rCats && typeof rCats.count === 'number' ? rCats.count : null;
     if(nCats === 0){
-      pend.push({ color:'teal', icono:'etiqueta', titulo:'Crea las categorías de pago', detalle:'para calcular pagos', href:'categorias-pago.html' });
+      pend.push({ color:'azul', icono:'etiqueta', titulo:'Crea las categorías de pago', detalle:'para calcular pagos', href:'categorias-pago.html' });
     } else if(nCats){
-      if(sinCat) pend.push({ color:'teal', icono:'etiqueta', titulo: plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'produccion.html?filtro=sincat' });
+      if(sinCat) pend.push({ color:'azul', icono:'etiqueta', titulo: plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'produccion.html?filtro=sincat' });
       const nMod = rMod && typeof rMod.count === 'number' ? rMod.count : 0;
-      if(nMod) pend.push({ color:'teal', icono:'etiqueta', titulo: plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html' });
+      if(nMod) pend.push({ color:'teal', icono:'catalogo', titulo: plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html' });
     }
     return pend;
   }

@@ -115,7 +115,7 @@ const rpcs=[];
  ok('Estados uno al lado del otro',(await p.$$('#fichaBody .estados .est-i')).length===4&&(await p.$$('#fichaBody .est-i.actual')).length===1);
  const [dl2]=await Promise.all([p.waitForEvent('download',{timeout:15000}),p.click('[data-accion="descargar"]')]);await dl2.saveAs('ped1.pdf');
  ok('PDF de pedido descargado',fs.statSync('ped1.pdf').size>5000);
- ok('Siguiente paso: "Pasar a En producción" con explicación',(await p.textContent('#fichaBody .btn-guia[data-estado="en_produccion"]')).includes('entra a fabricación'));
+ ok('Sin botón para pasar a producción: explica que pasa solo al confirmar el pago',!(await p.$('#fichaBody [data-estado="en_produccion"]')) && (await p.textContent('#fichaBody .btn-guia.espera')).includes('pasa'));
  ok('No hay botón para saltar a Lista',!(await p.$('#fichaBody [data-estado="lista"]')));
  // Abono mayor que resta
  await p.click('[data-accion="abono"]');await w(500);
@@ -127,9 +127,11 @@ const rpcs=[];
  await p.setInputFiles('#aComprobante',{name:'c.png',mimeType:'image/png',buffer:PNG});await w(700);await p.click('#btnAccion');await w(1500);
  ok('Abono guardado y ficha actualizada',(await p.textContent('#fichaBody')).includes('$550')&&(await p.textContent('#fichaBody')).includes('Resta $300'),(await p.textContent('.barra-txt')));
  // Estado (③ Enviar a producción)
- dialogos=[];await p.click('#fichaBody .btn-guia[data-estado="en_produccion"]');await w(1200);
- ok('Cambiar estado pide confirmación y se guarda',dialogos.length===1&&rpcs.some(x=>x[0]==='cambiar_estado_venta'&&x[1].nuevo==='en_produccion'&&x[1].desde==='confirmada'));
- ok('Admin puede devolver un paso (en Más opciones)',!!(await p.$('#fichaBody [data-retro="confirmada"]')));
+ // Ray confirma el pago en el servidor: el pedido pasa solo a producción
+ ventas.find(x=>x.id===1).estado='en_produccion';
+ await p.goBack({waitUntil:'commit'});await w(500);await p.click('.vcard[data-id="1"]');await w(1500);
+ if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}
+ ok('En producción no se puede devolver a Confirmada',!(await p.$('#fichaBody [data-retro]')));
  ok('Siguiente: "Marcar como Lista"',(await p.textContent('#fichaBody .btn-guia[data-estado="lista"]')).includes('Marcar como Lista'));
  ok('En producción ya no deja editar',(await p.textContent('#fichaBody')).includes('No se puede editar'));
  // Cancelar con devolución
