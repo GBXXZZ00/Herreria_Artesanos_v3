@@ -99,7 +99,7 @@
       }
       const [rv, rc] = await Promise.all([
         db.from('ventas')
-          .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,pieza_id,cantidad,categoria_pago_id,especificaciones,catalogo:catalogo(fotos),etapas(id,rama,nombre,orden,especialidad,estado,unidades,para_el,trabajador_id,foto,terminada_en,monto,trabajador:perfiles(nombre)))')
+          .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,pieza_id,cantidad,categoria_pago_id,especificaciones,catalogo:catalogo(fotos),etapas(id,rama,nombre,orden,especialidad,estado,unidades,para_el,trabajador_id,foto,terminada_en,iniciada_en,monto,trabajador:perfiles(nombre)))')
           .eq('estado', 'en_produccion'),
         db.from('categorias_pago').select('id,nombre').eq('activo', true).order('nombre', { ascending:true })
       ]);
@@ -236,6 +236,8 @@
             ? `<span class="e-chip"><span class="ini">${esc(inicial(e.trabajador ? e.trabajador.nombre : '?'))}</span>${esc(e.trabajador ? e.trabajador.nombre : '')}</span>`
             : '<span class="e-por">Por asignar</span>';
           const partes = [];
+          // El trabajador lo marcó como "Estoy haciendo este"
+          if(e.trabajador_id && e.iniciada_en) partes.push('<span class="e-ahora"><span class="en-dot"></span>Lo está haciendo ahora</span>');
           if(e.trabajador_id && e.para_el){
             const tt = topeTexto(e.para_el);
             partes.push(`<span class="e-tope ${tt.tarde ? 'tarde' : ''}">${esc(tt.t)}</span>`);

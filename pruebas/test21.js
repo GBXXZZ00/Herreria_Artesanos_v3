@@ -31,7 +31,7 @@ let ventas=[
   ]},
   {id:21,fecha_entrega:dia(5),cliente:{nombre:'Marisela Chávez'},estado:'en_produccion',items:[
     {id:103,nombre:'Reja para ventana',tipo:'Ventana',foto:null,categoria_pago_id:1,etapas:[
-      {id:1005,rama:'principal',nombre:'Ensamblar',orden:1,especialidad:'ventanero',estado:'pendiente',trabajador_id:'t3',trabajador:{nombre:'Luis'},foto:null,terminada_en:null,para_el:SAB.pasado}
+      {id:1005,rama:'principal',nombre:'Ensamblar',orden:1,especialidad:'ventanero',estado:'pendiente',trabajador_id:'t3',trabajador:{nombre:'Luis'},foto:null,terminada_en:null,para_el:SAB.pasado,iniciada_en:new Date().toISOString()}
     ]}
   ]},
   {id:22,fecha_entrega:dia(10),cliente:{nombre:'Ana Belisario'},estado:'en_produccion',items:[
@@ -73,7 +73,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
   if(u.includes('/rpc/produccion_lectura')){
     if(rol!=='admin'&&rol!=='vendedor')return j({message:'No autorizado'},400);
     return j(ventas.filter(v=>v.estado==='en_produccion').map(v=>({id:v.id,fecha_entrega:v.fecha_entrega,interna:false,cliente:v.cliente,
-      items:v.items.map(it=>({id:it.id,nombre:it.nombre,tipo:it.tipo,foto:it.foto,cantidad:1,etapas:it.etapas.map(e=>({id:e.id,rama:e.rama,nombre:e.nombre,orden:e.orden,estado:e.estado,trabajador_id:e.trabajador_id,para_el:e.para_el||null,terminada_en:e.terminada_en,trabajador:e.trabajador}))}))})));
+      items:v.items.map(it=>({id:it.id,nombre:it.nombre,tipo:it.tipo,foto:it.foto,cantidad:1,etapas:it.etapas.map(e=>({id:e.id,rama:e.rama,nombre:e.nombre,orden:e.orden,estado:e.estado,trabajador_id:e.trabajador_id,para_el:e.para_el||null,terminada_en:e.terminada_en,iniciada_en:e.iniciada_en||null,trabajador:e.trabajador}))}))})));
   }
   if(u.includes('/perfiles')){
     if(u.includes('rol=eq.trabajador')) return j(trabajadores);
@@ -106,6 +106,9 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Ficha: sin botones de asignar ni terminar, sin categoría de pago',!(await y.$('#fichaBody [data-asignar]')) && !(await y.$('#fichaBody [data-terminar]')) && !(await y.$('#fichaBody [data-cat-item]')) && !fv.includes('Pago:'));
  ok('Ficha: dice quién terminó (sin montos) y qué falta asignar',fv.includes('Terminó') && fv.includes('Jesús') && !fv.includes('$') && fv.includes('Por asignar'));
  await y.screenshot({path:'shots5/s0b-vendedora-ficha.png'});
+ await y.click('#sheetFicha [data-cerrar="sheetFicha"]').catch(()=>{});
+ await y.waitForTimeout(400);await y.click('.vcard >> text=Marisela Chávez');await y.waitForSelector('#sheetFicha.open');
+ ok('La vendedora también ve "Lo está haciendo ahora"',(await y.textContent('#fichaBody .e-ahora'))==='Lo está haciendo ahora');
  await y.click('#sheetFicha [data-cerrar="sheetFicha"]').catch(()=>{});
 
  // Admin: entra a Producción
@@ -161,6 +164,8 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  // Pedido con un paso que pasó su sábado
  await a.click('.vcard >> text=Marisela Chávez');await a.waitForSelector('#sheetFicha.open');
  ok('El paso atrasado dice "Se pasó del sáb ..." en rojo',!!(await a.$('#fichaBody .e-tope.tarde')) && (await a.textContent('#fichaBody')).includes('Se pasó del sáb'));
+ ok('Si el trabajador lo está haciendo, dice "Lo está haciendo ahora" (solo en ese paso)',(await a.$$('#fichaBody .e-ahora')).length===1 && (await a.textContent('#fichaBody .e-ahora'))==='Lo está haciendo ahora');
+ await a.screenshot({path:'shots5/p-haciendo-ahora.png'});
  await a.click('#sheetFicha [data-cerrar="sheetFicha"]').catch(()=>{});await a.waitForTimeout(400);
 
  // Tercer pedido: Combo con puerta, 2 ventanas y 2 protecciones en paralelo

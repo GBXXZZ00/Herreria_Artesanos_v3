@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=47">
+<link rel="stylesheet" href="assets/css/base.css?v=48">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -139,12 +139,41 @@
   .hoy-tope.tarde{color:var(--danger)}
   .hoy-acc .btn-primary{white-space:nowrap}
   /* "Después": los demás trabajos, se deslizan a la derecha */
-  .despues-tit{font-size:14px;font-weight:800;color:var(--ink-soft);margin:4px 2px 8px}
-  .despues{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -18px 16px;padding:2px 18px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .despues-tit{font-size:14px;font-weight:800;color:var(--ink-soft);margin:0}
+  .despues-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 2px 8px}
+  .btn-orden{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13.5px;font-weight:800;white-space:nowrap;transition:transform 130ms var(--ease-out)}
+  .btn-orden:active{transform:scale(0.97)}
+  .en-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#1F9D55;box-shadow:0 0 0 3px rgba(31,157,85,0.18);flex-shrink:0}
+  .hoy-etapa.haciendo{display:flex;align-items:center;gap:7px}
+  /* ¿Con cuál empiezas? */
+  .hoy.elegir{padding:16px 0 16px}
+  .el-tit{font-size:22px;font-weight:800;letter-spacing:-0.3px;line-height:1.2;padding:0 16px}
+  .el-sub{font-size:14px;color:var(--ink-soft);padding:2px 16px 10px}
+  .el-op{display:flex;align-items:center;gap:12px;width:calc(100% - 16px);margin:0 8px;padding:9px 10px;border-radius:14px;text-align:left;border:2px solid transparent;transition:transform 130ms var(--ease-out)}
+  .el-op + .el-op{margin-top:2px}
+  .el-op:active{transform:scale(0.98)}
+  .el-op.sel{background:var(--accent-soft);border-color:var(--accent)}
+  .el-op.gris{opacity:.5}
+  .el-op.gris:active{transform:none}
+  .el-foto{width:54px;height:54px;border-radius:10px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .el-foto img{width:100%;height:100%;object-fit:cover}
+  .el-etapa{display:block;font-size:12px;font-weight:800;color:var(--accent);line-height:1.25}
+  .el-nom{display:block;font-size:15.5px;font-weight:800;line-height:1.25}
+  .el-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px;line-height:1.3}
+  .el-s.tarde{color:var(--danger);font-weight:700}
+  .el-sigue{display:inline-block;font-size:11px;font-weight:800;background:var(--accent);color:#fff;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+  .el-radio{margin-left:auto;width:22px;height:22px;border-radius:50%;border:2px solid var(--line-strong);flex-shrink:0}
+  .el-op.sel .el-radio{border:7px solid var(--accent)}
+  .el-ver{display:inline-block;height:28px;font-size:12.5px;font-weight:800;color:var(--accent);margin-top:1px;text-decoration:underline;text-underline-offset:2px}
+  .el-pie{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px 12px}
+  .el-link{height:36px;font-size:14px;font-weight:800;color:var(--accent);white-space:nowrap}
+  .hoy.elegir .el-btn{background:var(--accent);display:block;width:calc(100% - 32px);margin:0 16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .despues{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:18px;margin:0 -18px 16px;padding:2px 18px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .despues::after{content:'';flex:0 0 8px}
   .despues::-webkit-scrollbar{display:none}
-  .dp{flex:0 0 112px;scroll-snap-align:start;text-align:left;transition:transform 130ms var(--ease-out)}
+  .dp{flex:0 0 128px;scroll-snap-align:start;text-align:left;transition:transform 130ms var(--ease-out)}
   .dp:active{transform:scale(0.97)}
-  .dp-foto{display:flex;align-items:center;justify-content:center;width:112px;height:90px;border-radius:14px;background:var(--surface-2);overflow:hidden;color:var(--ink-faint)}
+  .dp-foto{display:flex;align-items:center;justify-content:center;width:128px;height:100px;border-radius:14px;background:var(--surface-2);overflow:hidden;color:var(--ink-faint)}
   .dp-foto img{width:100%;height:100%;object-fit:cover}
   .dp-etapa{display:block;font-size:12px;font-weight:800;color:var(--accent);margin-top:6px;line-height:1.25}
   .dp-nom{display:block;font-size:13.5px;font-weight:800;line-height:1.25}
@@ -238,6 +267,49 @@
   .foto-prev{width:56px;height:56px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
   .foto-prev img{width:100%;height:100%;object-fit:cover}
   .foto-btn{flex:1;height:44px;border:1px solid var(--line-strong);border-radius:12px;background:none;font-size:13.5px;font-weight:700;color:var(--ink-soft)}
+  /* Terminar: la foto es obligatoria */
+  .t-cap{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:190px;border:2px dashed var(--line-strong);border-radius:16px;background:var(--surface);color:var(--ink-soft);font-size:15px;font-weight:800;overflow:hidden;transition:transform 130ms var(--ease-out)}
+  .t-cap:active{transform:scale(0.98)}
+  .t-cap.lista{border-style:solid;border-color:transparent;background:var(--surface-2)}
+  .t-cap img{width:100%;height:100%;object-fit:cover}
+  .t-ayuda{font-size:13px;color:var(--ink-soft);text-align:center;margin:8px 0 0}
+  .t-ayuda.ok{color:#1B6B3A;font-weight:700}
+  /* Ordena el trabajo */
+  .ord-f{display:flex;align-items:center;gap:10px;padding:9px 0;transition:opacity 160ms var(--ease-out)}
+  .ord-f + .ord-f{border-top:1px solid var(--line)}
+  .ord-f.movido{animation:ordMov 260ms var(--ease-out)}
+  @keyframes ordMov{from{opacity:.4;transform:scale(0.98)}to{opacity:1;transform:none}}
+  .ord-n{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+  .ord-t{min-width:0}
+  .ord-t b{display:block;font-size:15px;font-weight:800;line-height:1.25}
+  .ord-t span{display:block;font-size:12.5px;color:var(--ink-soft);line-height:1.3}
+  .ord-t span.tarde{color:var(--danger);font-weight:700}
+  .ord-f.gris .ord-t b{color:var(--ink-faint)}
+  .ord-fl{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
+  .ord-fl button{width:44px;height:44px;border:1px solid var(--line-strong);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--ink);transition:transform 120ms var(--ease-out)}
+  .ord-fl button:active{transform:scale(0.94)}
+  .ord-fl button:disabled{opacity:.25}
+  /* Mis pagos: lo que cobra y cada trabajo con sus dos fotos */
+  .pg-cobra{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:16px;background:var(--surface-2);margin:2px 0 4px}
+  .pg-cobra span{font-size:14px;color:var(--ink-soft)}
+  .pg-cobra b{font-size:26px;font-weight:800;letter-spacing:-0.5px;white-space:nowrap}
+  .pg-cobra b.rojo{color:#B42318}
+  .pg-cobra.chico{margin-top:10px}
+  .pg-cobra.chico b{font-size:20px}
+  button.pg-mov{width:100%;text-align:left;transition:transform 130ms var(--ease-out)}
+  button.pg-mov:active{transform:scale(0.98)}
+  .pg-mov .chev{flex-shrink:0;color:var(--ink-faint);margin-left:-4px}
+  .duo{display:flex;flex-shrink:0}
+  .duo > span{width:44px;height:44px;border-radius:10px;overflow:hidden;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .duo > span + span{margin-left:-10px;border:2px solid var(--surface);box-sizing:content-box}
+  .duo img{width:100%;height:100%;object-fit:cover}
+  /* Detalle de lo que hizo: foto del catálogo y la suya */
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 0}
+  .cmp .hero{margin:0;aspect-ratio:auto;height:210px;border-radius:14px}
+  .cmp .hero.sin-foto{flex-direction:column;gap:6px;font-size:13px;font-weight:700}
+  .cmp-lb{position:absolute;left:8px;top:8px;z-index:2;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.94);color:var(--ink);font-size:12px;font-weight:800;pointer-events:none}
+  .cmp-nota{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+  .hecho-sub{font-size:13.5px;color:var(--ink-soft);margin:0}
 </style>
 </head>
 <body>
@@ -389,19 +461,41 @@
 <div class="sheet-scrim scrim-top" id="scrimTerminarT" data-cerrar="sheetTerminarT"></div>
 <section class="sheet sheet-auto sheet-top" id="sheetTerminarT" role="dialog" aria-modal="true" aria-labelledby="terminarTTitulo">
   <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title" id="terminarTTitulo">¿Lo terminaste?</h2>
+  <div class="sheet-head"><h2 class="sheet-title" id="terminarTTitulo">Terminar</h2>
     <button class="icon-btn" data-cerrar="sheetTerminarT" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="sheet-body">
     <p class="field-hint" id="terminarTSub" style="margin:0 0 14px"></p>
-    <span class="field-label">Foto (opcional)</span>
-    <div class="foto-opc">
-      <div class="foto-prev" id="tFotoPrev"></div>
-      <button type="button" class="foto-btn" id="btnTFoto">Tomar foto</button>
-      <input type="file" accept="image/*" capture="environment" id="tFotoInput" class="hidden">
-    </div>
+    <span class="field-label">Foto del trabajo terminado</span>
+    <button type="button" class="t-cap" id="btnTFoto"></button>
+    <input type="file" accept="image/*" capture="environment" id="tFotoInput" class="hidden">
+    <p class="t-ayuda" id="tFotoAyuda">La foto es obligatoria para terminar.</p>
   </div>
-  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnTConfirmar">Sí, lo terminé</button></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnTConfirmar" style="width:100%;white-space:nowrap" disabled>Terminar</button></div>
+</section>
+
+<!-- Trabajador: ordena el trabajo -->
+<div class="sheet-scrim" id="scrimOrden" data-cerrar="sheetOrden"></div>
+<section class="sheet sheet-auto" id="sheetOrden" role="dialog" aria-modal="true" aria-labelledby="ordenTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="ordenTitulo">Ordena el trabajo</h2>
+    <button class="icon-btn" data-cerrar="sheetOrden" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="field-hint" style="margin:0 0 6px">Sube arriba lo que harás primero.</p>
+    <div id="listaOrden"></div>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarOrden" style="width:100%;white-space:nowrap">Guardar orden</button></div>
+</section>
+
+<!-- Trabajador: lo que hizo (foto del catálogo y la suya) -->
+<div class="sheet-scrim scrim-top" id="scrimHecho" data-cerrar="sheetHecho"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetHecho" role="dialog" aria-modal="true" aria-labelledby="hechoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="hechoTitulo">Trabajo</h2>
+    <button class="icon-btn" data-cerrar="sheetHecho" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="hechoBody"></div>
 </section>
 
 <!-- Trabajador: pagos -->
@@ -447,13 +541,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=47"></script>
-<script src="assets/js/supabase-client.js?v=47"></script>
-<script src="assets/js/img-compress.js?v=47"></script>
-<script src="assets/js/comun.js?v=47"></script>
-<script src="assets/js/avisos.js?v=47"></script>
-<script src="assets/js/sesion.js?v=47"></script>
-<script src="assets/js/mi-trabajo.js?v=47"></script>
+<script src="assets/vendor/supabase.js?v=48"></script>
+<script src="assets/js/supabase-client.js?v=48"></script>
+<script src="assets/js/img-compress.js?v=48"></script>
+<script src="assets/js/comun.js?v=48"></script>
+<script src="assets/js/avisos.js?v=48"></script>
+<script src="assets/js/sesion.js?v=48"></script>
+<script src="assets/js/mi-trabajo.js?v=48"></script>
 <script>
 (function(){
   'use strict';
