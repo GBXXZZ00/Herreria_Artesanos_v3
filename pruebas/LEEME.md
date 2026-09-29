@@ -3,7 +3,7 @@
 Simulan Supabase con datos falsos: no tocan la base real y los PIN son de mentira.
 
 1. En la carpeta del repo: `python3 -m http.server 8765`
-2. En otra terminal, desde `pruebas/`: `mkdir -p shots4 && node test14.js` (y 15, 16, 17, 18, 19, 20)
+2. En otra terminal, desde `pruebas/`: `mkdir -p shots4 && node test14.js` (hasta test28)
 3. Cada una termina con `TODO OK` o dice qué falló.
 
 - test14: navegación (atrás, inicio, subpantallas)
@@ -20,3 +20,4 @@ Simulan Supabase con datos falsos: no tocan la base real y los PIN son de mentir
 - test25: Producción — sin categoría no se asigna, "Asignar" a la derecha, fabricar para exhibición (tipo, modelo, especificaciones, categoría), cancelar orden, abrir desde aviso
 - test26: Inicio del trabajador (Hoy con foto y especificaciones, filas con flecha, detalle, empezar uno a la vez, terminar, por cobrar con vales en rojo, historial por semana, vale) y pendientes del admin por color
 - test27: menú y perfil — sin señal no se esconde Producción ni se adivina el rol; reintentar
+- test28: recorrido completo con varias personas: Gualfredo crea el modelo, Yulimar lo vende, Ray confirma el pago (pasa solo a producción) y asigna, Jesús hace cada etapa con foto, cobra y pide vale, el cliente ve su seguimiento y se entrega

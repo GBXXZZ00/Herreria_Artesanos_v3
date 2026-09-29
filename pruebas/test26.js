@@ -188,6 +188,14 @@ async function entrar(b,user,rol,nombre){
  ok('Admin sigue viendo sus módulos',await a.isVisible('#modulos') && await a.isVisible('#btnNuevaVenta'));
  ok('La cajita Producción dice cuántos hay en taller',(await a.textContent('#cuenta-produccion'))==='1 sin asignar',await a.textContent('#cuenta-produccion'));
  await a.screenshot({path:'shots5/t6-admin.png',fullPage:true});
+ // Minimizar pendientes
+ await a.click('[data-pend-toggle]');await a.waitForTimeout(300);
+ ok('Al tocar "Pendientes" se esconden y queda el número con puntos de color',!(await a.isVisible('.pend-lista')) && (await a.textContent('.pend-n'))==='4' && (await a.$$('.pend.cerrado .pend-puntos i')).length===4 && (await a.textContent('.pend-accion'))==='Ver');
+ await a.screenshot({path:'shots5/t6b-admin-cerrado.png'});
+ await a.reload();await a.waitForSelector('.pend');await a.waitForTimeout(500);
+ ok('El teléfono recuerda que los dejaste cerrados',!(await a.isVisible('.pend-lista')));
+ await a.click('[data-pend-toggle]');await a.waitForTimeout(300);
+ ok('Otro toque los vuelve a mostrar',await a.isVisible('.pend-lista') && (await a.textContent('.pend-accion'))==='Ocultar');
  await a.click('[data-abrir-vales]');await a.waitForSelector('#sheetVales.open');
  ok('Hoja con el vale de Jesús',(await a.textContent('#valesBody')).includes('Jesús · $20'));
  await a.screenshot({path:'shots5/t7-vales.png'});

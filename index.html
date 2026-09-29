@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=42">
+<link rel="stylesheet" href="assets/css/base.css?v=43">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -67,9 +67,20 @@
   #sheetPin .sheet-body{padding-bottom:calc(24px + var(--safe-b))}
   #sheetPin .pin-cab{margin-top:4px}
   /* Pendientes: una tarjeta de color por cosa, en una sola línea */
-  .pend-cab{display:flex;align-items:center;gap:8px;margin:2px 4px 10px;font-size:13px;font-weight:800;color:var(--ink-soft)}
+  .pend-cab{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;margin:0 0 6px;padding:0 4px;font-size:13px;font-weight:800;color:var(--ink-soft);text-align:left;transition:transform 140ms var(--ease-out)}
+  .pend-cab:active{transform:scale(0.98)}
+  .pend-accion{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--ink-faint)}
+  .pend-chev{color:var(--ink-faint);flex-shrink:0;transition:transform 220ms var(--ease-out)}
+  .pend.cerrado .pend-chev{transform:rotate(-90deg)}
+  .pend-puntos{display:none;gap:4px;min-width:0;overflow:hidden}
+  .pend.cerrado .pend-puntos{display:flex}
+  .pend-puntos i{width:8px;height:8px;border-radius:50%}
+  .pend-puntos .rojo{background:#D9483B}.pend-puntos .naranja{background:#E0932B}.pend-puntos .verde{background:#2E9A5B}
+  .pend-puntos .azul{background:#3F68C9}.pend-puntos .teal{background:var(--accent)}.pend-puntos .amarillo{background:#D4B21F}
+  .pend.cerrado .pend-lista{display:none}
   .pend-n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#C2410C;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
   .pend-lista{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .pend.cerrado{margin-bottom:8px}
   .pend-fila{display:flex;align-items:center;gap:10px;width:100%;padding:7px 12px 7px 8px;border-radius:14px;border:1px solid;text-align:left;text-decoration:none;opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms);transition:transform 140ms var(--ease-out)}
   .pend-fila:active{transform:scale(0.98)}
   .pend-ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -427,13 +438,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=42"></script>
-<script src="assets/js/supabase-client.js?v=42"></script>
-<script src="assets/js/img-compress.js?v=42"></script>
-<script src="assets/js/comun.js?v=42"></script>
-<script src="assets/js/avisos.js?v=42"></script>
-<script src="assets/js/sesion.js?v=42"></script>
-<script src="assets/js/mi-trabajo.js?v=42"></script>
+<script src="assets/vendor/supabase.js?v=43"></script>
+<script src="assets/js/supabase-client.js?v=43"></script>
+<script src="assets/js/img-compress.js?v=43"></script>
+<script src="assets/js/comun.js?v=43"></script>
+<script src="assets/js/avisos.js?v=43"></script>
+<script src="assets/js/sesion.js?v=43"></script>
+<script src="assets/js/mi-trabajo.js?v=43"></script>
 <script>
 (function(){
   'use strict';
@@ -638,6 +649,24 @@
     etiqueta: svg('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>')
   };
   const CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+  const CHEV_ABAJO = '<svg class="pend-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+  const CLAVE_PEND = 'ah_pend_cerrados';
+  let pendCerradosMem = null;   // respaldo si el teléfono no deja guardar (modo privado)
+  function pendCerrados(){
+    if(pendCerradosMem !== null) return pendCerradosMem;
+    try{ return localStorage.getItem(CLAVE_PEND) === '1'; } catch(e){ return false; }
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pend-toggle]'); if(!b) return;
+    const sec = b.closest('.pend');
+    if(!sec) return;
+    const cerrar = !sec.classList.contains('cerrado');
+    pendCerradosMem = cerrar;
+    sec.classList.toggle('cerrado', cerrar);
+    b.setAttribute('aria-expanded', String(!cerrar));
+    b.querySelector('.pend-accion').textContent = cerrar ? 'Ver' : 'Ocultar';
+    try{ localStorage.setItem(CLAVE_PEND, cerrar ? '1' : '0'); } catch(err){}
+  });
   const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
 
   // Un pendiente = una línea: color según qué es, título corto y detalle
@@ -668,9 +697,14 @@
     }
     if(admin) pend.push(...await pendientesTaller());
 
-    let html = pend.length ? `<section class="pend" aria-label="Pendientes">
-      <div class="pend-cab">Pendientes <span class="pend-n">${pend.length}</span></div>
-      <div class="pend-lista">${pend.map(filaPendiente).join('')}</div></section>` : '';
+    // Se pueden minimizar (el teléfono recuerda cómo los dejaste); cerrados muestran un
+    // puntito del color de cada pendiente para que no se pierdan de vista
+    const cerrado = pendCerrados();
+    let html = pend.length ? `<section class="pend ${cerrado ? 'cerrado' : ''}" aria-label="Pendientes">
+      <button class="pend-cab" type="button" data-pend-toggle aria-controls="pendLista" aria-expanded="${!cerrado}">Pendientes <span class="pend-n">${pend.length}</span>
+        <span class="pend-puntos" aria-hidden="true">${pend.map(p => `<i class="${p.color}"></i>`).join('')}</span>
+        <span class="pend-accion">${cerrado ? 'Ver' : 'Ocultar'}</span>${CHEV_ABAJO}</button>
+      <div class="pend-lista" id="pendLista">${pend.map(filaPendiente).join('')}</div></section>` : '';
 
     // Notificaciones del teléfono (aparte: no es un pendiente de trabajo)
     try{ estadoNotif = window.Avisos ? await window.Avisos.estado() : 'no-soportado'; } catch(e){ estadoNotif = 'no-soportado'; }
