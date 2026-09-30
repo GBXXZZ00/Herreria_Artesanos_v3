@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=52">
+<link rel="stylesheet" href="assets/css/base.css?v=53">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -545,13 +545,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=52"></script>
-<script src="assets/js/supabase-client.js?v=52"></script>
-<script src="assets/js/img-compress.js?v=52"></script>
-<script src="assets/js/comun.js?v=52"></script>
-<script src="assets/js/avisos.js?v=52"></script>
-<script src="assets/js/sesion.js?v=52"></script>
-<script src="assets/js/mi-trabajo.js?v=52"></script>
+<script src="assets/vendor/supabase.js?v=53"></script>
+<script src="assets/js/supabase-client.js?v=53"></script>
+<script src="assets/js/img-compress.js?v=53"></script>
+<script src="assets/js/comun.js?v=53"></script>
+<script src="assets/js/avisos.js?v=53"></script>
+<script src="assets/js/sesion.js?v=53"></script>
+<script src="assets/js/mi-trabajo.js?v=53"></script>
 <script>
 (function(){
   'use strict';
@@ -686,11 +686,13 @@
   // ---------------------------------------------------------------------------
   // Inicio
   // ---------------------------------------------------------------------------
+  const ICON_DEPOSITO = '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>';
   const ICON_NOMINA = '<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>';
 
   function pintarModulos(p){
     const mods = S.MODULOS.filter(m => m.id !== 'inicio');
     if(p && p.rol === 'admin') mods.push({ id:'nomina', nombre:'Nómina', href:'nomina.html', listo:true, icon:ICON_NOMINA });
+    if(p && (p.rol === 'admin' || p.rol === 'vendedor')) mods.push({ id:'deposito', nombre:'Depósito', href:'deposito.html', listo:true, icon:ICON_DEPOSITO });
     // Primero los módulos que ya funcionan, a lo ancho; luego los que vienen
     const listos = mods.filter(m => m.listo), pronto = mods.filter(m => !m.listo);
     let i = 0;
@@ -757,6 +759,7 @@
     reloj: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
     alerta: svg('<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/>'),
     catalogo: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/>'),
+    caja: svg('<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>'),
     etiqueta: svg('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>')
   };
   const CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
@@ -805,6 +808,7 @@
         }
       } catch(e){}
     }
+    if(p && (admin || p.rol === 'vendedor')) pend.push(...await pendientesDeposito(p));
     if(admin) pend.push(...await pendientesTaller());
     if(p && p.rol === 'vendedor') pend.push(...await pendientesVendedor(p));
 
@@ -832,6 +836,23 @@
     cont.innerHTML = html;
   }
 
+  // Depósito: materiales por reponer (administrador y vendedora) y entregas por revisar (Ray)
+  async function pendientesDeposito(p){
+    const pend = [];
+    const [rm, re] = await Promise.all([
+      db.from('materiales').select('id,nombre,stock,minimo').eq('activo', true),
+      db.from('deposito_entregas').select('id', { count:'exact', head:true }).eq('estado', 'por_revisar')
+    ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
+    const mats = (rm && rm.data) || null;
+    const bajos = (mats || []).filter(m => m.stock < m.minimo);
+    const el = $('cuenta-deposito');
+    if(el) el.innerHTML = !mats ? 'Materiales y entregas' : !mats.length ? 'Agrega tus materiales' : bajos.length ? `<span class="num">${plural(bajos.length, '1 por reponer', 'por reponer')}</span>` : 'Todo al día';
+    const rev = re && typeof re.count === 'number' ? re.count : 0;
+    if(p.confirma_abonos && rev) pend.push({ color:'naranja', icono:'caja', titulo: plural(rev, '1 entrega por revisar', 'entregas por revisar'), detalle:'Depósito', href:'deposito.html?tab=entregas&filtro=revisar' });
+    if(bajos.length) pend.push({ color:'amarillo', icono:'caja', titulo: plural(bajos.length, '1 material por reponer', 'materiales por reponer'),
+      detalle: bajos.slice(0, 2).map(m => m.nombre).join(', ') + (bajos.length > 2 ? '…' : ''), href:'deposito.html' });
+    return pend;
+  }
   // Taller: vales por aprobar, trabajos sin asignar o atrasados, fotos que faltan y lo que falta para calcular pagos
   async function pendientesTaller(){
     const pend = [];

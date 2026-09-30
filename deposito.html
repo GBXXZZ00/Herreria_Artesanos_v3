@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Depósito · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=53">
+<style>
+  .page{padding-bottom:calc(var(--safe-b) + var(--nav-h) + 96px)}
+  .d-tabs{padding-top:12px}
+  .d-cont{padding:14px 18px 0}
+  .vacio-d{text-align:center;padding:48px 16px;color:var(--ink-soft);font-size:15px;line-height:1.45}
+  .vacio-d b{display:block;color:var(--ink);font-size:17px;margin-bottom:4px}
+
+  /* Resumen arriba: asimétrico */
+  .res{display:grid;grid-template-columns:1.35fr 1fr;gap:10px;margin-bottom:14px}
+  .res-c{border-radius:18px;padding:12px 14px;background:var(--surface-2);min-width:0}
+  .res-c span{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+  .res-c b{display:block;font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-top:2px}
+  .res-c.rojo{background:#FDF1EF}
+  .res-c.rojo b{color:#B42318}
+  .res-c.ok b{color:var(--accent)}
+
+  /* Materiales */
+  .mat-lista{display:flex;flex-direction:column}
+  .mat{display:flex;align-items:center;gap:12px;width:100%;padding:12px 2px;text-align:left;transition:background-color 140ms var(--ease-out),transform 140ms var(--ease-out);opacity:0;transform:translateY(6px);animation:matIn 320ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms)}
+  @keyframes matIn{to{opacity:1;transform:none}}
+  .ya .mat{opacity:1;transform:none;animation:none}
+  .mat:active{background:var(--surface-2);transform:scale(0.98)}
+  .mat + .mat{border-top:1px solid var(--line)}
+  .mat-ico{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;font-size:17px}
+  .mat.bajo .mat-ico{background:#FDF1EF;color:#B42318}
+  .mat.inactivo{opacity:.55}
+  .mat-t{display:block;font-size:16px;font-weight:800}
+  .mat-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .mat-n{margin-left:auto;text-align:right;flex-shrink:0}
+  .mat-n b{display:block;font-size:22px;font-weight:800;letter-spacing:-0.3px}
+  .mat-n span{display:block;font-size:11.5px;color:var(--ink-soft);font-weight:700}
+  .pill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .pill.rojo{background:#FDECEA;color:#B42318}
+  .pill.amar{background:#FCEFB4;color:#6B5500}
+  .pill.verde{background:#DDF2E6;color:#1B6B3A}
+  .pill.gris{background:var(--surface-2);color:var(--ink-soft)}
+  .btn-nuevo{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:14px;border-radius:14px;border:1.5px dashed var(--line-strong);color:var(--accent);font-size:15px;font-weight:800;transition:transform 140ms var(--ease-out)}
+  .btn-nuevo:active{transform:scale(0.98)}
+
+  /* Botón fijo para entregar */
+  .pie-entregar{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + var(--safe-b) + 14px);z-index:24;display:flex;justify-content:center;padding:0 18px;pointer-events:none}
+  .pie-entregar .btn-primary{pointer-events:auto;max-width:440px;box-shadow:0 12px 28px rgba(23,85,92,0.28)}
+
+  /* Entregas por semana */
+  .sem{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+  .sem + .sem{margin-top:10px}
+  .sem summary{list-style:none;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+  .sem summary::-webkit-details-marker{display:none}
+  .sem-t{font-size:15px;font-weight:800}
+  .sem-s{font-size:12.5px;color:var(--ink-soft);margin-left:auto;white-space:nowrap}
+  .sem .ac-chev{color:var(--ink-faint);flex-shrink:0;transition:transform 200ms var(--ease-out)}
+  .sem[open] .ac-chev{transform:rotate(180deg)}
+  .sem-body{padding:0 12px 6px;border-top:1px solid var(--line)}
+  .ent{display:flex;align-items:center;gap:10px;width:100%;padding:10px 2px;text-align:left;transition:background-color 140ms var(--ease-out),transform 140ms var(--ease-out)}
+  .ent:active{background:var(--surface-2);transform:scale(0.98)}
+  .ent + .ent{border-top:1px solid var(--line)}
+  .ent-t{display:block;font-size:14.5px;font-weight:700}
+  .ent-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .ent-d{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+  .rara-dot{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#B42318}
+  .rara-dot::before{content:"";width:7px;height:7px;border-radius:50%;background:#B42318}
+  .trab-res{border-radius:16px;background:var(--surface-2);padding:12px 14px;margin-bottom:12px}
+  .trab-res p{margin:0;font-size:13px;color:var(--ink-soft)}
+  .trab-res .fila{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:4px 0}
+  .trab-res .fila b{white-space:nowrap}
+
+  /* Entregar: paso 1 materiales grandes, paso 2 trabajador */
+  .paso-t{font-size:13px;font-weight:800;color:var(--ink-soft);margin:0 0 10px}
+  .gr-mat{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .gm{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:104px;padding:14px;border:1.5px solid var(--line);border-radius:18px;text-align:left;background:var(--surface);transition:transform 140ms var(--ease-out),border-color 160ms var(--ease-out)}
+  .gm:active{transform:scale(0.97)}
+  .gm-t{font-size:16px;font-weight:800;line-height:1.2}
+  .gm-n{margin-top:auto;font-size:13px;color:var(--ink-soft);font-weight:700}
+  .gm.bajo{border-color:#F4C7C3}
+  .gm.bajo .gm-n{color:#B42318}
+  .gm[disabled]{opacity:.45}
+  .elegido{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--accent-soft);margin-bottom:14px}
+  .elegido b{display:block;font-size:16px;color:var(--accent)}
+  .elegido span{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .elegido button{margin-left:auto;font-size:14px;font-weight:800;color:var(--accent);flex-shrink:0;transition:transform 120ms var(--ease-out)}
+  .elegido button:active{transform:scale(0.96)}
+  .tr{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:16px;text-align:left;background:var(--surface);transition:transform 140ms var(--ease-out),border-color 160ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .tr + .tr{margin-top:8px}
+  .tr:active{transform:scale(0.98)}
+  .tr.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .tr-av{width:40px;height:40px;border-radius:50%;background:var(--surface-2);color:var(--ink-soft);font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .tr.sel .tr-av{background:var(--accent);color:#fff}
+  .tr-t{display:block;font-size:15.5px;font-weight:800}
+  .tr-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .tr-s b{color:var(--ink)}
+
+  /* Ficha de material y de entrega */
+  .bento{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;margin:4px 0 6px}
+  .bento .res-c b{font-size:22px}
+  .d-datos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+  .d-dato{background:var(--surface-2);border-radius:14px;padding:10px 12px;min-width:0}
+  .d-dato span{display:block;font-size:12px;color:var(--ink-soft);font-weight:700}
+  .d-dato b{display:block;font-size:15px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .d-dato .pill{display:inline-block;font-size:12px}
+  .tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:18px 2px 4px}
+  .caja-rara{margin-top:12px;padding:12px 14px;border-radius:14px;background:#FDF1EF;color:#B42318;font-size:14px;font-weight:700;line-height:1.4}
+  .caja-nota{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:14px;line-height:1.4}
+  .caja-nota span{display:block;font-size:12px;font-weight:800;color:var(--ink-soft);margin-bottom:2px}
+  .mov{display:flex;align-items:center;gap:10px;width:100%;padding:9px 2px;text-align:left;transition:background-color 140ms var(--ease-out),transform 140ms var(--ease-out)}
+  button.mov:active{background:var(--surface-2);transform:scale(0.98)}
+  .mov + .mov{border-top:1px solid var(--line)}
+  .mov-foto{width:46px;height:46px;border-radius:10px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .mov-foto img{width:100%;height:100%;object-fit:contain}
+  .mov-foto.suya img{object-fit:cover}
+  .mov-t{display:block;font-size:14.5px;font-weight:700}
+  .mov-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .mov-s b{color:var(--ink);font-weight:700}
+  .mov-m{margin-left:auto;font-size:15px;font-weight:800;white-space:nowrap;flex-shrink:0}
+  .mov-m.mas{color:var(--accent)}
+  .mov-m.menos{color:var(--ink-soft)}
+  .mov .chev{color:var(--ink-faint);flex-shrink:0}
+  .solo-ray{text-align:center;font-size:13px;color:var(--ink-soft);margin:0}
+  .pie-dos{display:flex;gap:10px}
+  .pie-dos > *{flex:1}
+  .pie-dos .btn-secondary{height:54px}
+  .sk-fila{height:58px;border-radius:14px;background:var(--surface-2);animation:pulse 1.2s ease-in-out infinite;margin-bottom:8px}
+
+  /* Detalle de un trabajo (como en Nómina) */
+  .foto-otra{position:absolute;z-index:2;left:12px;top:12px;max-width:calc(100% - 24px);padding:6px 11px;border-radius:999px;background:rgba(28,26,23,0.78);color:#fff;font-size:12.5px;font-weight:800;line-height:1.25}
+  .d-parte{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:800;margin-top:12px}
+  .d-suya{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--ink-soft)}
+  .d-suya button{width:56px;height:56px;border-radius:12px;overflow:hidden;background:var(--surface-2);flex-shrink:0}
+  .d-suya img{width:100%;height:100%;object-fit:cover}
+  .d-link{display:flex;align-items:center;justify-content:center;height:50px;margin-top:16px;border:1.5px solid var(--line-strong);border-radius:14px;font-weight:700;color:var(--accent);text-decoration:none;transition:transform 130ms var(--ease-out)}
+  .d-link:active{transform:scale(0.98)}
+</style>
+</head>
+<body data-requiere-sesion="si">
+
+<header class="topbar" id="topbar">
+  <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+  <div class="topbar-text">
+    <div class="topbar-title">Depósito</div>
+    <div class="topbar-sub" id="subtitulo">Cargando</div>
+  </div>
+  <button class="icon-btn" id="btnActualizar" aria-label="Actualizar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button>
+</header>
+
+<main class="page">
+  <div class="chips d-tabs" id="tabs" role="group" aria-label="Qué ver">
+    <button class="chip active" type="button" data-tab="materiales" aria-pressed="true">Materiales</button>
+    <button class="chip" type="button" data-tab="entregas" aria-pressed="false">Entregas</button>
+  </div>
+  <div class="chips hidden" id="filtros" role="group" aria-label="Filtrar entregas" style="margin-top:8px"></div>
+  <section class="d-cont" id="cont" aria-live="polite">
+    <div class="sk-fila"></div><div class="sk-fila"></div><div class="sk-fila"></div>
+  </section>
+</main>
+
+<div class="pie-entregar hidden" id="pieEntregar"><button class="btn-primary" type="button" id="btnEntregar">Entregar material</button></div>
+
+<div class="bottom-nav-wrap" id="menuModulos" data-activo="deposito"></div>
+
+<!-- Entregar: primero el material, después a quién -->
+<div class="sheet-scrim" id="scrimEntregar" data-cerrar="sheetEntregar"></div>
+<section class="sheet" id="sheetEntregar" role="dialog" aria-modal="true" aria-labelledby="entregarTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="entregarTitulo">¿Qué vas a entregar?</h2>
+    <button class="icon-btn" data-cerrar="sheetEntregar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="entregarBody"></div>
+  <div class="sheet-foot hidden" id="entregarFoot"><button class="btn-primary" type="button" id="btnConfirmarEntrega">Entregar</button></div>
+</section>
+
+<!-- Ficha de un material -->
+<div class="sheet-scrim" id="scrimMat" data-cerrar="sheetMat"></div>
+<section class="sheet" id="sheetMat" role="dialog" aria-modal="true" aria-labelledby="matTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="matTitulo">Material</h2>
+    <button class="icon-btn" data-cerrar="sheetMat" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="matBody"></div>
+  <div class="sheet-foot" id="matFoot"></div>
+</section>
+
+<!-- Nuevo material o editar -->
+<div class="sheet-scrim scrim-top" id="scrimMatForm" data-cerrar="sheetMatForm"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetMatForm" role="dialog" aria-modal="true" aria-labelledby="matFormTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="matFormTitulo">Nuevo material</h2>
+    <button class="icon-btn" data-cerrar="sheetMatForm" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="matFormBody"></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarMat">Guardar</button></div>
+</section>
+
+<!-- Registrar compra (administrador) -->
+<div class="sheet-scrim scrim-top" id="scrimCompra" data-cerrar="sheetCompra"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCompra" role="dialog" aria-modal="true" aria-labelledby="compraTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="compraTitulo">Registrar compra</h2>
+    <button class="icon-btn" data-cerrar="sheetCompra" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field" id="campoCompraCant">
+      <label class="field-label" for="compraCant">Cuántas unidades compraste</label>
+      <input class="input" id="compraCant" type="text" inputmode="numeric" autocomplete="off">
+      <p class="field-error">Escribe un número entero mayor a 0</p>
+    </div>
+    <div class="field" id="campoCompraCosto">
+      <label class="field-label" for="compraCosto">Cuánto pagaste en total (opcional)</label>
+      <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="compraCosto" type="text" inputmode="decimal" autocomplete="off"></div>
+      <p class="field-error">Revisa el monto</p>
+    </div>
+    <div class="field">
+      <label class="field-label" for="compraNota">Nota (opcional)</label>
+      <input class="input" id="compraNota" type="text" maxlength="120" autocomplete="off" placeholder="Dónde se compró">
+    </div>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarCompra">Guardar compra</button></div>
+</section>
+
+<!-- Una entrega: los trabajos que hizo y la revisión de Ray -->
+<div class="sheet-scrim" id="scrimEntrega" data-cerrar="sheetEntrega"></div>
+<section class="sheet" id="sheetEntrega" role="dialog" aria-modal="true" aria-labelledby="entregaTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="entregaTitulo">Entrega</h2>
+    <button class="icon-btn" data-cerrar="sheetEntrega" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="entregaBody"></div>
+  <div class="sheet-foot" id="entregaFoot"></div>
+</section>
+
+<!-- Un trabajo: de qué cliente y pedido es -->
+<div class="sheet-scrim scrim-top" id="scrimItem" data-cerrar="sheetItem"></div>
+<section class="sheet sheet-hero sheet-top" id="sheetItem" role="dialog" aria-modal="true" aria-label="Trabajo">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetItem" aria-label="Cerrar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sheet-body" id="itemBody"></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/vendor/supabase.js?v=53"></script>
+<script src="assets/js/supabase-client.js?v=53"></script>
+<script src="assets/js/comun.js?v=53"></script>
+<script src="assets/js/sesion.js?v=53"></script>
+<script src="assets/js/deposito.js?v=53"></script>
+</body>
+</html>
