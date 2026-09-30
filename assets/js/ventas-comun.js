@@ -8,7 +8,7 @@
   const ESTADOS = {
     cotizacion:    { t:'Cotización',    c:'e-gris' },
     confirmada:    { t:'Confirmada',    c:'e-azul' },
-    en_produccion: { t:'En producción', c:'e-ambar' },
+    en_produccion: { t:'En fabricación', c:'e-ambar' },
     lista:         { t:'Lista',         c:'e-verde' },
     entregada:     { t:'Entregada',     c:'e-tinta' },
     cancelada:     { t:'Cancelada',     c:'e-rojo' }

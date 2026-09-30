@@ -136,14 +136,20 @@ const rpcs=[];
  await p.goBack({waitUntil:'commit'});await w(500);await p.click('.vcard[data-id="1"]');await w(1500);
  if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}
  ok('En producción no se puede devolver a Confirmada',!(await p.$('#fichaBody [data-retro]')));
- ok('En producción no hay botón "Marcar como Lista": sale el avance del taller',!(await p.$('#fichaBody [data-estado="lista"]')) && (await p.textContent('#fichaBody .avance-fino')).includes('3 de 5 pasos') && (await p.textContent('#fichaBody .avance-fino')).includes('Ahora en masilla y pintura'));
+ ok('En producción no hay botón "Marcar como Lista": sale el avance del taller',!(await p.$('#fichaBody [data-estado="lista"]')) && (await p.textContent('#fichaBody .avance-fino')).includes('3 de 5 pasos') );
  ok('Productos va antes que Pagos',await p.$$eval('#fichaBody details.acord',x=>x.map(d=>d.dataset.sec).join()).then(t=>t.indexOf('productos')<t.indexOf('pagos')));
  if(!(await p.$eval('#fichaBody details[data-sec="productos"]',x=>x.open))){await p.click('#fichaBody details[data-sec="productos"] summary');await w(300);}
- const fabs=await p.$$eval('#fichaBody .f-item-fab',x=>x.map(y=>y.textContent));
- ok('Cada producto dice dónde va y quién lo tiene',fabs[0]==='Masilla · Luis Paz, lo está haciendo2 de 4'&&fabs[1]==='Hierro · sin asignar0 de 2'&&!!(await p.$('#fichaBody .f-item-fab .fab-punto.sin'))&&!!(await p.$('#fichaBody .f-item-fab .fab-punto.haciendo')),fabs);
+ const fabs=await p.$$eval('#fichaBody .fab-chip',x=>x.map(y=>[y.textContent,y.className]));
+ ok('Cada producto: solo una etiqueta con el paso en que va',JSON.stringify(fabs)===JSON.stringify([['Masilla','fab-chip haciendo'],['Sin asignar','fab-chip sin']])&&!(await p.textContent('#fichaBody')).includes('Luis Paz'),fabs);
+ await p.setViewportSize({width:360,height:780});await w(200);
+ const cabe=await p.$eval('#fichaBody .fab-chip',c=>{c.textContent='Instalar en las protecciones';const f=c.closest('.f-item-p').getBoundingClientRect();const r=c.getBoundingClientRect();return r.right<=f.right+0.5&&c.closest('.f-item-p').scrollWidth<=c.closest('.f-item-p').clientWidth+1;});
+ ok('A 360 px un paso largo no se sale de la fila',cabe);
+ await p.$eval('#fichaBody .fab-chip',c=>{c.textContent='Masilla';});await p.setViewportSize({width:390,height:844});await w(200);
+ ok('Arriba solo la línea fina, sin la frase larga',!(await p.$('#fichaBody .avance-fino .bg-s')));
+ ok('La venta dice En fabricación',(await p.textContent('#fichaBody .f-cab')).includes('En fabricación'));
  await p.$eval('#fichaBody',x=>{x.closest('.sheet').scrollTop=0;const b=x.closest('.sheet-body');if(b)b.scrollTop=0;});await w(300);await p.screenshot({path:'shots4/l5c-arriba.png'});
  await p.$eval('#fichaBody details[data-sec="productos"]',x=>x.scrollIntoView({block:'start'}));await w(300);await p.screenshot({path:'shots4/l5b-productos.png'});
- ok('Al final de Productos: Ver en producción',(await p.getAttribute('#fichaBody a.f-ver-prod','href'))==='produccion.html?abrir=1');
+ ok('Al final de Productos: Ver fabricación',(await p.getAttribute('#fichaBody a.f-ver-prod','href'))==='produccion.html?abrir=1'&&(await p.textContent('#fichaBody a.f-ver-prod'))==='Ver fabricación');
  await p.screenshot({path:'shots4/l5-avance.png'});
  await p.click('#fichaBody a.f-ver-prod');await p.waitForURL('**/produccion.html*');await w(1200);
  ok('Llega a Producción',p.url().includes('produccion.html'),p.url());

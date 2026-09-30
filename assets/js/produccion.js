@@ -150,7 +150,7 @@
         // se quita ?abrir de la dirección: al recargar no se vuelve a abrir
         if(params.has('abrir')){ try{ params.delete('abrir'); history.replaceState(history.state, '', location.pathname + (params.toString() ? '?' + params : '')); } catch(e){} }
         if(v) pintarFicha(v);
-        else toast('Ese pedido ya no está en producción', 'error');
+        else toast('Ese pedido ya no está en fabricación', 'error');
       }
   }
 
@@ -182,7 +182,7 @@
     if(!vistos.length){
       cont.innerHTML = pedidos.length
         ? '<div class="vacio"><h3>Nada por aquí</h3><p>Ningún pedido coincide con este filtro.</p></div>'
-        : `<div class="vacio"><h3>El taller está libre</h3><p>Cuando un pedido pase a producción aparece aquí.${lectura ? '' : ' Con el botón + puedes fabricar algo para exhibición.'}</p></div>`;
+        : `<div class="vacio"><h3>El taller está libre</h3><p>Cuando un pedido pase a fabricación aparece aquí.${lectura ? '' : ' Con el botón + puedes fabricar algo para exhibición.'}</p></div>`;
       return;
     }
     cont.innerHTML = vistos.map((v, i) => {
@@ -656,7 +656,7 @@
       if(!o.modelo.categoria_pago_id) o.modelo.categoria_pago_id = o.cat;
       cerrarHoja('sheetOrden');
       orden = null;
-      toast('Listo, ya está en producción. Asigna quién la fabrica.');
+      toast('Listo, ya está en fabricación. Asigna quién la fabrica.');
       abrirAlCargar = data && data.id;
       await cargar();
     } catch(err){

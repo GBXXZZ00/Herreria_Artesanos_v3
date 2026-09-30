@@ -321,10 +321,9 @@
         <div class="f-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 24)}</div>
         <div style="flex:1;min-width:0"><div class="f-item-t">${esc(it.nombre)}</div>
           <div class="f-item-d">${esc(AV.detalleItem(it))}</div>
-          <div class="f-item-p"><span>${it.cantidad} × ${dinero(it.precio_unitario)}</span><b>${dinero(it.precio_unitario * it.cantidad)}</b></div>
-          ${v.estado === 'en_produccion' ? `<div class="f-item-fab" data-fab-item="${it.id}"></div>` : ''}</div>
+          <div class="f-item-p"><span class="f-item-cant">${it.cantidad} × ${dinero(it.precio_unitario)}${v.estado === 'en_produccion' ? `<span class="fab-chip" data-fab-item="${it.id}" hidden></span>` : ''}</span><b>${dinero(it.precio_unitario * it.cantidad)}</b></div></div>
       </div>`).join('')
-      + (v.estado === 'en_produccion' ? `<a class="f-ver-prod" href="produccion.html?abrir=${v.id}">Ver en producción<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''));
+      + (v.estado === 'en_produccion' ? `<a class="f-ver-prod" href="produccion.html?abrir=${v.id}">Ver fabricación<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''));
     if(cot){
       html += acordeon('precio', 'Precio', dinero(v.total), `<div class="totales">${totales}</div>`, true);
     } else {
@@ -416,25 +415,24 @@
       const el = document.querySelector(`[data-avance="${vid}"]`);
       if(!el) return;
       const t = Number(data.total) || 0, h = Number(data.hechas) || 0;
-      const act = (data.actuales || []).map(x => String(x).toLowerCase());
       el.querySelector('.bg-t').textContent = t ? `En fabricación · ${h} de ${t} pasos` : 'En fabricación';
-      if(act.length) el.querySelector('.bg-s').textContent = 'Ahora en ' + act.join(' y ') + '. Pasa solo a Lista al terminar.';
       requestAnimationFrame(() => { const b = el.querySelector('.av-barra i'); if(b) b.style.transform = `scaleX(${t ? h / t : 0})`; });
-      // Cada producto: dónde está y quién lo tiene
+      // Cada producto: solo el paso en que va, con su color (quién lo tiene se ve en Producción)
       const its = data.items || {};
       document.querySelectorAll('#fichaBody [data-fab-item]').forEach(x => {
         const a = its[x.dataset.fabItem];
         if(!a || !Number(a.total)){ x.remove(); return; }
-        const tot = Number(a.total), he = Number(a.hechas) || 0;
-        let punto = 'espera', txt = 'Esperando el paso anterior';
-        if(he >= tot){ punto = 'listo'; txt = 'Terminado'; }
-        else if((a.ahora || []).length){
-          const ah = a.ahora;
+        const ah = a.ahora || [];
+        let clase = 'espera', txt = 'Esperando';
+        if((Number(a.hechas) || 0) >= Number(a.total)){ clase = 'listo'; txt = 'Terminado'; }
+        else if(ah.length){
           const uno = ah.find(z => z.haciendo) || ah.find(z => z.quien) || ah[0];
-          punto = uno.haciendo ? 'haciendo' : uno.quien ? 'porhacer' : 'sin';
-          txt = ah.map(z => `${z.paso || 'Paso'} · ${z.quien ? z.quien + (z.haciendo ? ', lo está haciendo' : '') : 'sin asignar'}`).join(' y ');
+          clase = uno.haciendo ? 'haciendo' : uno.quien ? 'porhacer' : 'sin';
+          txt = clase === 'sin' ? 'Sin asignar' : (uno.paso || 'En taller');
         }
-        x.innerHTML = `<span class="fab-punto ${punto}"></span><span class="fab-t">${esc(txt)}</span><span class="fab-n">${he} de ${tot}</span>`;
+        x.className = 'fab-chip ' + clase;
+        x.textContent = txt;
+        x.hidden = false;
       });
     } catch(e){ limpiar(); }
   }
@@ -450,13 +448,13 @@
     // Pasa solo a producción cuando Ray confirma el pago: aquí no hay botón, solo se explica
     if(sig === 'en_produccion'){
       const espera = AV.porConfirmar(v.abonos).length > 0;
-      html += `<div class="btn-guia espera"><span class="bg-t">${espera ? (puedeConfirmar ? 'Falta que confirmes el pago' : 'Espera que Ray confirme el pago') : 'Falta un pago confirmado'}</span><span class="bg-s">${espera ? 'Al confirmarlo pasa solo a producción' : 'Registra un pago: cuando Ray lo confirme pasa a producción'}</span></div>`;
+      html += `<div class="btn-guia espera"><span class="bg-t">${espera ? (puedeConfirmar ? 'Falta que confirmes el pago' : 'Espera que Ray confirme el pago') : 'Falta un pago confirmado'}</span><span class="bg-s">${espera ? 'Al confirmarlo pasa solo a fabricación' : 'Registra un pago: cuando Ray lo confirme pasa a fabricación'}</span></div>`;
       return html;
     }
     // En producción no hay botón: queda Lista sola cuando el taller termina el último paso
     if(v.estado === 'en_produccion'){
       // Una línea fina: el detalle por producto está en Productos
-      html += `<div class="avance-fino" data-avance="${v.id}"><span class="bg-t">En fabricación</span><span class="av-barra"><i style="transform:scaleX(0)"></i></span><span class="bg-s">Pasa solo a Lista cuando el taller termine el último paso</span></div>`;
+      html += `<div class="avance-fino" data-avance="${v.id}"><span class="bg-t">En fabricación</span><span class="av-barra"><i style="transform:scaleX(0)"></i></span></div>`;
       return html;
     }
     const info = sig === 'lista' && v.estado === 'confirmada' ? { t:'Marcar como Lista', s:'Ya está en tienda, lista para entregar' } : SIGUIENTE[v.estado];
@@ -522,7 +520,7 @@
 
   // Acciones de la ficha
   document.getElementById('sheetFicha').addEventListener('click', async (e) => {
-    // Editar y Ver en producción: se cierra la ficha antes de salir; al volver se abre de nuevo
+    // Editar y Ver fabricación: se cierra la ficha antes de salir; al volver se abre de nuevo
     const ed = e.target.closest('a[href^="venta.html?editar="], a[href^="produccion.html?abrir="]');
     if(ed){
       e.preventDefault();
@@ -792,7 +790,7 @@
       const { data, error } = await db.rpc('confirmar_abono', { aid: a.id, llego, nota: acc.nota || null });
       if(error) throw new Error(error.message);
       cerrarHoja('sheetAccion', true);
-      toast(!llego ? 'Marcado como que no llegó' : (data && data.produccion ? 'Pago confirmado. Pasó a producción: asígnalo en Producción' : 'Pago confirmado'));
+      toast(!llego ? 'Marcado como que no llegó' : (data && data.produccion ? 'Pago confirmado. Pasó a fabricación: asígnalo en Producción' : 'Pago confirmado'));
       await Promise.all([recargarFicha(), cargar()]);
     } catch(err){ toast(err.message, 'error'); }
     finally { if(acc) acc.guardando = false; btn.disabled = false; }

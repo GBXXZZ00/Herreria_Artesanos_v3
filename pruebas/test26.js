@@ -315,7 +315,7 @@ async function entrar(b,user,rol,nombre){
  ok('Admin ve "1 trabajo sin asignar"',av.includes('1 trabajo sin asignar'));
  ok('Admin ve "1 trabajo pasó su sábado" en amarillo y lleva a Atrasados',(await a.textContent('.pend-fila.amarillo')).includes('1 trabajo pasó su sábado') && !!(await a.$('a.pend-fila.amarillo[href="produccion.html?filtro=atrasados"]')));
  ok('Admin ve el modelo vendido en un color sin foto, y lleva a editarlo',av.includes('1 modelo sin foto en un color') && av.includes('Combo Lineal en negro') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=12"]')));
- ok('Admin ve "En producción: 1 producto sin categoría"',av.includes('En producción: 1 producto sin categoría'));
+ ok('Admin ve "En fabricación: 1 producto sin categoría"',av.includes('En fabricación: 1 producto sin categoría'));
  ok('Admin ve "1 combo sin medidas de las ventanas" y lleva a editarlo',av.includes('1 combo sin medidas de las ventanas') && av.includes('Combo Viejo') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=21"]')));
  ok('Admin ve "En catálogo: 3 modelos sin categoría"',av.includes('En catálogo: 3 modelos sin categoría'));
  ok('Los avisos llevan al lugar correcto',!!(await a.$('a.pend-fila[href="produccion.html?filtro=asignar"]')) && !!(await a.$('a.pend-fila[href="produccion.html?filtro=sincat"]')) && !!(await a.$('a.pend-fila[href="categorias-pago.html?asignar=1"]')));

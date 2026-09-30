@@ -39,7 +39,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Vendedora también puede activar avisos',!(await y.$eval('#btnNotif',x=>x.classList.contains('hidden'))));
  await y.goto('http://127.0.0.1:8765/ventas.html?abrir=2');await y.waitForSelector('#sheetFicha.open');await y.waitForTimeout(1500);
  ok('Abrir por enlace (notificación) abre la ficha',(await y.textContent('.f-num')).includes('N° 2'));
- ok('Ya no existe "Pedir a producción": explica que pasa solo al confirmar el pago',!(await y.$('[data-accion="pedir-produccion"]')) && (await y.textContent('#fichaBody .btn-guia.espera')).includes('Espera que Ray confirme el pago') && (await y.textContent('#fichaBody .btn-guia.espera')).includes('pasa solo a producción'));
+ ok('Ya no existe "Pedir a producción": explica que pasa solo al confirmar el pago',!(await y.$('[data-accion="pedir-produccion"]')) && (await y.textContent('#fichaBody .btn-guia.espera')).includes('Espera que Ray confirme el pago') && (await y.textContent('#fichaBody .btn-guia.espera')).includes('pasa solo a fabricación'));
  ok('Nadie ve "Pasar a En producción"',!(await y.$('#fichaBody [data-estado="en_produccion"]')));
  ok('La vendedora no puede cancelar una venta',!(await y.$('#fichaBody [data-accion="cancelar"]')) && (await y.textContent('#fichaBody')).includes('Editar, PDF y seguimiento'));
  ok('Enlace para ver el seguimiento en la ficha',(await y.getAttribute('#fichaBody a.btn-grid[target="_blank"]','href')).includes('seguimiento.html?t=aaaaaaaa-bbbb-4ccc-8ddd-000000000002'));
@@ -65,7 +65,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.fill('#aNota','Llegó a Zelle de Ray');await a.screenshot({path:'shots4/s4-confirmar.png'});
  await a.click('#btnAccion');
  const tst=await a.waitForSelector('#toast.show',{timeout:4000}).then(e=>e.textContent()).catch(()=>'');
- ok('Al confirmar avisa que pasó a producción',/pasó a producción/i.test(tst),tst);
+ ok('Al confirmar avisa que pasó a fabricación',/pasó a fabricación/i.test(tst),tst);
  await a.waitForTimeout(1300);
  const ca1=rpcs.find(x=>x[0]==='confirmar_abono');ok('Confirma con su nota',ca1&&ca1[1].aid===1&&ca1[1].llego===true&&ca1[1].nota==='Llegó a Zelle de Ray',ca1&&ca1[1]);
  ok('Ficha muestra confirmado y la nota',(await a.textContent('#fichaBody')).includes('Confirmado')&&(await a.textContent('#fichaBody')).includes('Nota de Ray: Llegó a Zelle de Ray'));

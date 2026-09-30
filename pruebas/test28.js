@@ -87,7 +87,7 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
     }
     if(name==='cambiar_estado_venta'){
       const v=DB.ventas.find(x=>x.id===a.vid);
-      if(a.nuevo==='en_produccion')return j({message:'El pedido pasa solo a producción cuando Ray confirma el pago'},400);
+      if(a.nuevo==='en_produccion')return j({message:'El pedido pasa solo a fabricación cuando Ray confirma el pago'},400);
       v.estado=a.nuevo;v[a.nuevo+'_en']=iso();return j({id:v.id,estado:v.estado});
     }
     if(name==='cancelar_venta')return j({message:'Solo un administrador puede cancelar una venta'},400);
@@ -256,9 +256,9 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  await r.screenshot({path:'shots5/e8-confirmar.png'});
  await r.click('#btnAccion');
  const t1=await r.waitForSelector('#toast.show',{timeout:5000}).then(e=>e.textContent()).catch(()=>'');
- ok('   Al confirmar dice que pasó a producción',/pasó a producción/i.test(t1),t1);
+ ok('   Al confirmar dice que pasó a fabricación',/pasó a fabricación/i.test(t1),t1);
  await r.waitForTimeout(1300);
- ok('   La venta ahora está En producción, con 4 pasos creados (Hierro, Masilla, Pintura, Detalles)',v.estado==='en_produccion'&&DB.etapas.length===4);
+ ok('   La venta ahora está En fabricación, con 4 pasos creados (Hierro, Masilla, Pintura, Detalles)',v.estado==='en_produccion'&&DB.etapas.length===4);
  ok('   En la ficha ya no se puede devolver a Confirmada',!(await r.$('#fichaBody [data-retro]')));
  await r.screenshot({path:'shots5/e9-en-produccion.png'});
 

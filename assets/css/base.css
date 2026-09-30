@@ -13,6 +13,8 @@
   --accent-soft:rgba(23,85,92,0.09);
   --danger:#B42318;
   --amber:#B7791F;
+  --amber-soft:#FBF3E4;
+  --amber-ink:#7A4F00;
   --radius:18px;
   --radius-md:14px;
   --radius-sm:12px;
@@ -653,17 +655,16 @@ a.btn-primary{text-decoration:none;display:inline-flex;align-items:center;justif
 /* Venta en producción: línea fina de avance y, en Productos, dónde va cada uno */
 .avance-fino{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding:2px 2px 0}
 .avance-fino .bg-t{font-size:14.5px;font-weight:800;color:var(--accent)}
-.avance-fino .bg-s{font-size:12.5px;color:var(--ink-soft);line-height:1.35}
 .avance-fino .av-barra{margin-top:0}
-.f-item-fab{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:12.5px;color:var(--ink);line-height:1.35}
-.f-item-fab .fab-t{flex:1;min-width:0;font-weight:600}
-.f-item-fab .fab-n{font-size:12px;color:var(--ink-soft);white-space:nowrap}
-.fab-punto{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-sizing:border-box;border:2px solid var(--ink-soft)}
-.fab-punto.listo{background:var(--accent);border-color:var(--accent)}
-.fab-punto.haciendo{background:var(--amber);border-color:var(--amber)}
-.fab-punto.porhacer{border-color:var(--ink-soft)}
-.fab-punto.sin{background:rgba(180,35,24,0.18);border-color:var(--danger)}
-.fab-punto.espera{border:2px dotted var(--ink-soft)}
+.f-item-p:has(.f-item-cant){gap:8px}
+.f-item-cant{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.fab-chip{display:inline-block;max-width:100%;height:22px;line-height:22px;padding:0 9px;border-radius:11px;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--surface-2);color:var(--ink);box-sizing:border-box}
+.fab-chip[hidden]{display:none}
+.fab-chip.listo{background:var(--accent-soft);color:var(--accent)}
+.fab-chip.haciendo{background:var(--amber-soft);color:var(--amber-ink)}
+.fab-chip.sin{background:rgba(180,35,24,0.10);color:var(--danger)}
+.fab-chip.porhacer{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line-strong)}
+.fab-chip.espera{color:var(--ink-soft)}
 .f-ver-prod{display:flex;align-items:center;justify-content:center;gap:4px;height:44px;margin-top:12px;border:1.5px solid var(--accent);border-radius:12px;color:var(--accent);font-size:14.5px;font-weight:800;text-decoration:none;white-space:nowrap;transition:transform 130ms var(--ease-out)}
 .f-ver-prod:active{transform:scale(0.97)}
 .btn-guia.hecho .bg-s{color:var(--ink-soft)}
