@@ -1183,6 +1183,12 @@
   // Arranque
   pintarChips();
   // catalogo.html?editar=ID abre ese modelo para editarlo (desde el pendiente "falta foto en un color")
+  // Catálogo público: verlo y copiar su enlace para mandarlo
+  $('btnCopiarPublico').addEventListener('click', async () => {
+    const url = new URL('catalogo-publico.html', location.href).href;
+    try{ await navigator.clipboard.writeText(url); toast('Enlace copiado. Pégalo donde lo quieras mandar'); }
+    catch(e){ toast('No se pudo copiar. El enlace es: ' + url, 'error'); }
+  });
   const editarAlCargar = Number(new URLSearchParams(location.search).get('editar')) || null;
   cargarDatos().then(() => {
     if(!editarAlCargar || !buscarModelo(editarAlCargar)) return;

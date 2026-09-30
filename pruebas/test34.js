@@ -82,6 +82,9 @@ async function pagina(b,uid,st){
  const ue=s2.rpcs.find(x=>x[0]==='usuario_especialidades');
  ok('Guarda las especialidades del trabajador',ue&&ue[1].uid==='t1'&&ue[1].esp.join()==='herrero,masilla_pintura',ue&&ue[1]);
  await n.screenshot({path:'shots5/a3-usuarios-esp.png'});
+ await n.goto(H+'catalogo.html');await wn(1200);
+ ok('Catálogo: botones Ver catálogo público y Copiar enlace',(await n.getAttribute('#btnVerPublico','href'))==='catalogo-publico.html'&&await n.isVisible('#btnCopiarPublico'));
+ await n.screenshot({path:'shots5/a4-catalogo-publico.png'});
  ok('Errores JS (admin)',!s2.err.length,s2.err);
  console.log(res.join('\n'));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

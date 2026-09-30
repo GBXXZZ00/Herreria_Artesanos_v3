@@ -299,17 +299,24 @@
       }
     } catch(e){}
     const file = new File([blob], nombrePDF(v), { type:'application/pdf' });
-    const datos = { files:[file], text: mensajeCorto(v) };
+    // Android: WhatsApp bota el texto que va junto al archivo; el mensaje se manda después (paso 2)
+    const android = esAndroid();
+    const datos = android ? { files:[file] } : { files:[file], text: mensajeCorto(v) };
     const puede = (d) => { try{ return navigator.canShare && navigator.canShare(d); } catch(e){ return false; } };
     if(navigator.share && (puede(datos) || puede({ files:[file] }))){
       try{
         await navigator.share(puede(datos) ? datos : { files:[file] });
+        if(android) return 'paso2';
         return copiado ? 'compartido-copiado' : 'compartido';
       } catch(e){ if(e && e.name === 'AbortError') return 'cancelado'; }
     }
     descargarPDF(blob, v);
     return 'descargado';
   }
+  const esAndroid = () => /Android/i.test(navigator.userAgent);
+  // Paso 2 en Android: abre el chat del cliente con el mensaje (y el enlace de seguimiento) ya escrito
+  const linkMensajePDF = (v) => `https://wa.me/${String(v.cliente.telefono || '')}?text=${encodeURIComponent(mensajeCorto(v))}`;
+  function abrirMensajePDF(v){ const u = linkMensajePDF(v); const w = window.open(u, '_blank'); if(!w) location.href = u; }
   function descargarPDF(blob, v){
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -355,5 +362,5 @@
   const soloInmediata = (items) => !!(items && items.length && items.every(it => it.pieza_id || it.origen === 'pieza'));
 
   window.AV = { porConfirmar, COMPROBANTE, modoPagoHtml, comprobanteHtml, soloInmediata, ESTADOS, METODOS, pagado, resta, esCotizacion, diasHasta, diasDesde, fechaCorta, fechaLarga, fechaNum, hace, habiles, iso,
-    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, telBonito, linkWhatsApp, urlSeguimiento, mensajeSeguimiento, linkSeguimientoWA, crearPDF, compartirPDF, descargarPDF, nombrePDF, SELECT_VENTA, esc };
+    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, telBonito, linkWhatsApp, urlSeguimiento, mensajeSeguimiento, linkSeguimientoWA, crearPDF, compartirPDF, descargarPDF, esAndroid, linkMensajePDF, abrirMensajePDF, nombrePDF, SELECT_VENTA, esc };
 })();

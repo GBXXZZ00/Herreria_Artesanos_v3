@@ -28,7 +28,7 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
 const rpcs=[];let fallarConvertir=false;
 (async()=>{ const b=await chromium.launch(); try{
  const ctx=await b.newContext({...devices['iPhone 13']});const err=[];
- await ctx.route('**/*.supabase.co/**',async r=>{const req=r.request();const u=decodeURIComponent(req.url());const j=(x,st=200)=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'content-range','content-range':'0-1/2'},body:JSON.stringify(x)});
+ const ruta=async r=>{const req=r.request();const u=decodeURIComponent(req.url());const j=(x,st=200)=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'content-range','content-range':'0-1/2'},body:JSON.stringify(x)});
   if(u.includes('/auth/v1/token'))return j(sesion);
   if(u.includes('/auth/v1/user'))return j(user);
   if(u.includes('/rpc/')){const name=u.split('/rpc/')[1].split('?')[0];const a=JSON.parse(req.postData()||'{}');rpcs.push([name,a]);
@@ -42,7 +42,8 @@ const rpcs=[];let fallarConvertir=false;
   if(u.includes('/ventas')){ const m=u.match(/[?&]id=eq\.(\d+)/); if(m) return j(full(ventas.find(x=>x.id===+m[1]))); let l=ventas; const e=u.match(/estado=eq\.(\w+)/); if(e) l=l.filter(x=>x.estado===e[1]); return j(l.map(full)); }
   if(u.includes('/catalogo'))return j([]);
   if(u.includes('/sedes'))return j([{id:1,nombre:'Cumbres de Maracaibo',orden:1,activa:true}]);
-  return j([]);});
+  return j([]);};
+ await ctx.route('**/*.supabase.co/**',ruta);
  const p=await ctx.newPage();p.on('pageerror',e=>err.push(e.message));p.on('dialog',d=>d.accept());
  const w=ms=>p.waitForTimeout(ms||400);
  await p.goto(H+'index.html');await p.waitForSelector('.quien-btn');await p.click('.quien-btn');
@@ -90,5 +91,27 @@ const rpcs=[];let fallarConvertir=false;
  ok('Si ya tiene todo, igual se revisa: todo viene elegido',(await p.textContent('#accionTitulo'))==='Detalles para fabricar'&&await p.$eval('#accionBody [data-g="sentido"].selected',x=>x.dataset.v)==='Derecha');
  await p.click('#btnAccion');await w(500);
  ok('Y pasa al pago con un toque',(await p.textContent('#accionTitulo'))==='Convertir en venta'&&!(await p.$('#accionBody .field.invalid')));
+ // Android: el PDF va solo (WhatsApp bota el texto) y el mensaje en un segundo paso
+ const ctxA=await b.newContext({...devices['Pixel 7']});
+ await ctxA.route('**/*.supabase.co/**',ruta);
+ await ctxA.addInitScript(()=>{window.__share=null;window.__abre=null;
+  navigator.canShare=(d)=>!!(d&&d.files);
+  navigator.share=async(d)=>{window.__share={files:d.files.length,text:d.text||null};};
+  Object.defineProperty(navigator,'clipboard',{value:{writeText:async()=>{}},configurable:true});
+  window.open=(u)=>{window.__abre=u;return {};};});
+ const a=await ctxA.newPage();a.on('pageerror',e=>err.push(e.message));
+ await a.goto(H+'index.html');await a.waitForSelector('.quien-btn');await a.click('.quien-btn');
+ for(const d of '333333') await a.click(`#pinTeclado [data-t="${d}"]`);
+ await a.waitForSelector('#vInicio.entra');await a.waitForTimeout(500);
+ await a.goto(H+'cotizaciones.html?abrir=6');await a.waitForSelector('#sheetFicha.open');
+ await a.waitForSelector('#fichaBody [data-accion="pdf"]:not([disabled])',{timeout:20000});
+ await a.click('#fichaBody [data-accion="pdf"]');await a.waitForTimeout(900);
+ const sh=await a.evaluate(()=>window.__share);
+ ok('Android: comparte solo el PDF (sin texto)',sh&&sh.files===1&&sh.text===null,sh);
+ ok('Android: el botón pasa a "2. Enviar el mensaje"',(await a.textContent('#fichaBody .avisar-wrap')).includes('2. Enviar el mensaje'));
+ await a.screenshot({path:'shots5/p1-android-paso2.png'});
+ await a.click('#fichaBody [data-accion="pdf2"]');await a.waitForTimeout(500);
+ const ab=await a.evaluate(()=>window.__abre);
+ ok('Paso 2: abre WhatsApp del cliente con el mensaje',ab&&ab.startsWith('https://wa.me/584141234567?text=')&&decodeURIComponent(ab).includes('cotización N° 6'),ab);
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas||err.length?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

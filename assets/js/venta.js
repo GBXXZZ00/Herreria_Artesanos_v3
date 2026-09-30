@@ -861,7 +861,15 @@
     });
     $('btnPdf').addEventListener('click', async () => {
       if(!blob) return;
+      const bp = $('btnPdf');
+      if(bp.dataset.paso2){ window.AV.abrirMensajePDF(venta); delete bp.dataset.paso2; bp.innerHTML = `${ICON_WA}Enviar PDF al cliente`; return; }
       const r = await window.AV.compartirPDF(blob, venta);
+      if(r === 'paso2'){
+        db.rpc('marcar_paso', { vid: venta.id, paso: 'pdf' });
+        bp.dataset.paso2 = '1'; bp.innerHTML = `${ICON_WA}2. Enviar el mensaje`;
+        toast('PDF enviado. Ahora toca "2. Enviar el mensaje" para mandarle el texto');
+        return;
+      }
       if(r !== 'cancelado') db.rpc('marcar_paso', { vid: venta.id, paso: 'pdf' });
       if(r === 'descargado') toast('PDF descargado');
       else if(r !== 'cancelado') toast(`Teléfono copiado (${window.AV.telBonito(venta)}). Pégalo en el buscador de WhatsApp si no ves el chat`);

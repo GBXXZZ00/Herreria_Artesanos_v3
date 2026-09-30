@@ -461,6 +461,7 @@
   // Un solo paso pendiente a la vez, nunca dos compitiendo: cotización siempre es PDF;
   // en venta, primero la nota de pedido en PDF (con su enlace de seguimiento) y, una vez
   // enviada, los avisos que siguen (pago confirmado, listo) van por Mensaje.
+  let paso2Id = null;
   function avisarHtml(v){
     const cot = AV.esCotizacion(v);
     const ultimaConf = ultimaConfirmacionMs(v);
@@ -468,6 +469,8 @@
     const pdfListo = !!(pdf && pdf.blob && pdf.clave && pdf.clave.startsWith(v.id + '|'));
     const pdfHecho = !!(v.pdf_en && new Date(v.pdf_en) >= new Date(v.actualizado_en));
     const btn = (accion, t, s) => `<button type="button" class="btn-guia sec" data-accion="${accion}" ${accion === 'pdf' && !pdfListo ? 'disabled' : ''}><span class="bg-t">${esc(t)}</span><span class="bg-s">${esc(s)}</span></button>`;
+    // Android: después del PDF, el mensaje va aparte (WhatsApp bota el texto junto al archivo)
+    if(paso2Id === v.id) return btn('pdf2', '2. Enviar el mensaje', cot ? 'Le manda el texto de la cotización' : 'Le manda el texto con su enlace de seguimiento');
     const hecho = (t, s) => `<div class="btn-guia hecho"><span class="bg-t">${esc(t)}</span><span class="bg-s">${esc(s)}</span></div>`;
     if(cot) return pdfHecho ? hecho('Cliente avisado ✓', 'Cotización enviada ' + cuando(v.pdf_en, v.pdf_por))
       : btn('pdf', 'Enviar cotización', pdfListo ? 'Le manda el PDF por WhatsApp' : 'Preparando…');
@@ -538,10 +541,18 @@
       try{ await navigator.clipboard.writeText(AV.urlSeguimiento(actual)); toast('Enlace copiado'); } catch(err){ toast('No se pudo copiar', 'error'); }
       return;
     }
+    if(a === 'pdf2'){ AV.abrirMensajePDF(actual); paso2Id = null; pintarPie(); return; }
     if(a === 'pdf'){
       if(!pdf || !pdf.blob) return;
       const v0 = actual;
       const r = await AV.compartirPDF(pdf.blob, v0);
+      if(r === 'paso2'){
+        paso2Id = v0.id;
+        pintarPie();
+        marcarPaso(v0, 'pdf');
+        toast('PDF enviado. Ahora toca "2. Enviar el mensaje" para mandarle el texto');
+        return;
+      }
       if(r !== 'cancelado') marcarPaso(v0, 'pdf');
       if(r === 'descargado') toast('PDF descargado');
       else if(r !== 'cancelado') toast(`Teléfono copiado (${window.AV.telBonito(v0)}). Pégalo en el buscador de WhatsApp si no ves el chat`);
