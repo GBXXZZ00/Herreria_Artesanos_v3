@@ -86,8 +86,9 @@
     const partes = [];
     if(reponer) partes.push(plural(reponer, '1 por reponer', 'por reponer'));
     if(rev) partes.push(plural(rev, '1 entrega por revisar', 'entregas por revisar'));
-    $('subtitulo').textContent = partes.join(' · ') || 'Todo al día';
-    document.querySelectorAll('#tabs [data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+    $('subtitulo').textContent = partes.join(' · ') || (datos.materiales.length ? 'Todo al día' : 'Agrega tus materiales');
+    document.querySelectorAll('#tabs [data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    $('tabs').classList.toggle('en-2', tab === 'entregas');
     $('pieEntregar').classList.toggle('hidden', !datos.materiales.some(m => m.activo));
     if(tab === 'materiales') pintarMateriales(); else pintarEntregas();
   }
@@ -98,7 +99,7 @@
 
   // ---------- Materiales ----------
   function pintarMateriales(){
-    $('filtros').classList.add('hidden');
+    $('filtrosWrap').classList.add('hidden');
     const l = datos.materiales;
     if(!l.length){
       $('cont').innerHTML = `<div class="vacio-d"><b>Todavía no hay materiales</b>Agrega los que quieres controlar: discos, sierras, pintura. Se cuentan por unidad.</div>
@@ -135,11 +136,11 @@
     const conEntregas = new Map();
     datos.entregas.forEach(e => { if(!conEntregas.has(e.trabajador_id)) conEntregas.set(e.trabajador_id, e.trabajador); });
     const rev = porRevisar().length;
-    const chips = [{ v:'todos', t:'Todos' }, { v:'revisar', t: rev ? `Por revisar · ${rev}` : 'Por revisar' },
+    const chips = [{ v:'todos', t:'Todas' }, { v:'revisar', t: rev ? `Por revisar · ${rev}` : 'Por revisar', c:'rev' },
       ...[...conEntregas].map(([id, n]) => ({ v:id, t:n || 'Trabajador' }))];
     if(!chips.some(c => c.v === filtro)) filtro = 'todos';
-    $('filtros').innerHTML = chips.map(c => `<button class="chip ${c.v === filtro ? 'active' : ''}" type="button" data-filtro="${esc(c.v)}" aria-pressed="${c.v === filtro}">${esc(c.t)}</button>`).join('');
-    $('filtros').classList.remove('hidden');
+    $('filtros').innerHTML = chips.map(c => `<button class="fx ${c.c || ''} ${c.v === filtro ? 'on' : ''}" type="button" data-filtro="${esc(c.v)}" aria-pressed="${c.v === filtro}">${esc(c.t)}</button>`).join('');
+    $('filtrosWrap').classList.remove('hidden');
   }
   $('filtros').addEventListener('click', (e) => {
     const b = e.target.closest('[data-filtro]'); if(!b || b.dataset.filtro === filtro) return;

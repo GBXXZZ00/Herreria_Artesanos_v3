@@ -93,7 +93,7 @@ async function pagina(b,uid){
  await p.click('[data-tab="entregas"]');await w(400);
  const sems=await p.$$eval('.sem',x=>x.map(s=>[s.open,s.querySelector('.sem-t').textContent]));
  ok('Entregas por semana: esta abierta, las viejas cerradas',sems.length===2&&sems[0][0]===true&&sems[0][1]==='Esta semana'&&sems[1][0]===false,sems);
- ok('Chips: Todos, Por revisar con número y por trabajador',(await p.$$eval('#filtros .chip',x=>x.map(c=>c.textContent))).join('|')==='Todos|Por revisar · 2|Luis|Pedro',await p.$$eval('#filtros .chip',x=>x.map(c=>c.textContent)));
+ ok('Mostrar: Todas, Por revisar con número y por trabajador',(await p.$$eval('#filtros .fx',x=>x.map(c=>c.textContent))).join('|')==='Todas|Por revisar · 2|Luis|Pedro',await p.$$eval('#filtros .fx',x=>x.map(c=>c.textContent)));
  ok('Marca la rara y el estado',(await p.textContent('[data-entrega="2"]')).includes('Rara')&&(await p.textContent('[data-entrega="2"]')).includes('Por revisar'));
  await p.screenshot({path:'shots5/d5-entregas.png'});
  await p.click('#filtros [data-filtro="t1"]');await w(300);
