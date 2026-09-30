@@ -147,7 +147,10 @@
       if(abrirAlCargar){
         const v = pedidos.find(x => x.id === abrirAlCargar);
         abrirAlCargar = null;
+        // se quita ?abrir de la dirección: al recargar no se vuelve a abrir
+        if(params.has('abrir')){ try{ params.delete('abrir'); history.replaceState(history.state, '', location.pathname + (params.toString() ? '?' + params : '')); } catch(e){} }
         if(v) pintarFicha(v);
+        else toast('Ese pedido ya no está en producción', 'error');
       }
   }
 

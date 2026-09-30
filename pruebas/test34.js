@@ -55,6 +55,8 @@ async function pagina(b,uid,st){
  ok('Se quita el aviso y salen las medidas fijas',!(await p.$('#prodBody .aviso-falta'))&&(await p.$$eval('#prodBody .med-fija',x=>x.map(y=>y.textContent))).join('|')==='2 × 1 m|1.2 × 1 m',await p.$$eval('#prodBody .med-fija',x=>x.map(y=>y.textContent)));
  await p.click('#btnProdListo');await w(500);
  ok('Y ya se agrega a la cotización',(await p.$$('#items .item')).length===1);
+ await p.goto(H+'index.html');await p.waitForSelector('#vInicio.entra');await w(600);await p.click('#btnCuenta');await w(500);
+ ok('Perfil de la vendedora: también tiene Catálogo público',await p.isVisible('#grupoCatPublico'));
  ok('Errores JS (venta)',!s1.err.length,s1.err);
  await p.context().close();
 
@@ -83,7 +85,10 @@ async function pagina(b,uid,st){
  ok('Guarda las especialidades del trabajador',ue&&ue[1].uid==='t1'&&ue[1].esp.join()==='herrero,masilla_pintura',ue&&ue[1]);
  await n.screenshot({path:'shots5/a3-usuarios-esp.png'});
  await n.goto(H+'catalogo.html');await wn(1200);
- ok('Catálogo: botones Ver catálogo público y Copiar enlace',(await n.getAttribute('#btnVerPublico','href'))==='catalogo-publico.html'&&await n.isVisible('#btnCopiarPublico'));
+ ok('Catálogo: ya no tiene los botones del catálogo público arriba',!(await n.$('#btnVerPublico'))&&!(await n.$('#btnCopiarPublico')));
+ await n.goto(H+'index.html');await n.waitForSelector('#vInicio.entra');await wn(600);
+ await n.click('#btnCuenta');await wn(500);
+ ok('Perfil: Catálogo público con Ver y Copiar enlace',await n.isVisible('#grupoCatPublico')&&(await n.getAttribute('#btnVerPublico','href'))==='catalogo-publico.html'&&await n.isVisible('#btnCopiarPublico'));
  await n.screenshot({path:'shots5/a4-catalogo-publico.png'});
  ok('Errores JS (admin)',!s2.err.length,s2.err);
  console.log(res.join('\n'));console.log(fallas?fallas+' FALLAS':'TODO OK');

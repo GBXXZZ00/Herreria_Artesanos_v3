@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=61">
+<link rel="stylesheet" href="assets/css/base.css?v=62">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -399,6 +399,18 @@
         <svg class="flecha" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
       </a>
     </div>
+    <div class="cuenta-grupo hidden" id="grupoCatPublico">
+      <p class="cuenta-eyebrow">Catálogo público</p>
+      <a class="cuenta-op cuenta-modulo" id="btnVerPublico" href="catalogo-publico.html" target="_blank" rel="noopener">
+        <span class="op-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+        Ver como lo ve el cliente
+        <svg class="flecha" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <button class="cuenta-op cuenta-modulo" type="button" id="btnCopiarPublico">
+        <span class="op-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+        Copiar enlace para mandar
+      </button>
+    </div>
     <div class="cuenta-grid">
       <button class="cuenta-box" id="btnCambiarPin">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
@@ -545,13 +557,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=61"></script>
-<script src="assets/js/supabase-client.js?v=61"></script>
-<script src="assets/js/img-compress.js?v=61"></script>
-<script src="assets/js/comun.js?v=61"></script>
-<script src="assets/js/avisos.js?v=61"></script>
-<script src="assets/js/sesion.js?v=61"></script>
-<script src="assets/js/mi-trabajo.js?v=61"></script>
+<script src="assets/vendor/supabase.js?v=62"></script>
+<script src="assets/js/supabase-client.js?v=62"></script>
+<script src="assets/js/img-compress.js?v=62"></script>
+<script src="assets/js/comun.js?v=62"></script>
+<script src="assets/js/avisos.js?v=62"></script>
+<script src="assets/js/sesion.js?v=62"></script>
+<script src="assets/js/mi-trabajo.js?v=62"></script>
 <script>
 (function(){
   'use strict';
@@ -1025,6 +1037,7 @@
     $('cuentaNombre').textContent = nombre;
     $('cuentaRol').textContent = nombreRol(p && p.rol);
     $('grupoModulosAdmin').classList.toggle('hidden', !(p && p.rol === 'admin'));
+    $('grupoCatPublico').classList.toggle('hidden', !(p && (p.rol === 'admin' || p.rol === 'vendedor')));
     // Las fotos que aún no tienen su copia chiquita se preparan solas, en segundo plano
     if(p && p.rol === 'admin') setTimeout(() => window.AH.prepararMinis(), 2500);
     // Sin señal en el primer ingreso: no se adivina qué eres, se pide reintentar
@@ -1058,6 +1071,12 @@
   }
 
   $('btnCuenta').addEventListener('click', () => abrirHoja('sheetCuenta'));
+  // Catálogo público: copiar su enlace para mandarlo al cliente
+  $('btnCopiarPublico').addEventListener('click', async () => {
+    const url = new URL('catalogo-publico.html', location.href).href;
+    try{ await navigator.clipboard.writeText(url); window.AH.toast('Enlace copiado. Pégalo donde lo quieras mandar'); }
+    catch(e){ window.AH.toast('No se pudo copiar. El enlace es: ' + url, 'error'); }
+  });
   $('btnSalir').addEventListener('click', async () => {
     cerrarHoja('sheetCuenta', true);
     await S.salir();

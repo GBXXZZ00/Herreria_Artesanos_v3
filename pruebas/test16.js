@@ -137,7 +137,16 @@ const rpcs=[];
  if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}
  ok('En producción no se puede devolver a Confirmada',!(await p.$('#fichaBody [data-retro]')));
  ok('En producción no hay botón "Marcar como Lista": sale el avance del taller',!(await p.$('#fichaBody [data-estado="lista"]')) && (await p.textContent('#fichaBody .avance-taller')).includes('3 de 5 pasos') && (await p.textContent('#fichaBody .avance-taller')).includes('Ahora en masilla y pintura'));
+ ok('El avance lleva a ese pedido en Producción',(await p.getAttribute('#fichaBody a.avance-taller','href'))==='produccion.html?abrir=1'&&(await p.textContent('#fichaBody .avance-taller .av-ver'))==='Ver en producción');
  await p.screenshot({path:'shots4/l5-avance.png'});
+ await p.click('#fichaBody a.avance-taller');await p.waitForURL('**/produccion.html*');await w(1200);
+ ok('Llega a Producción',p.url().includes('produccion.html'),p.url());
+ ok('Abre la ficha de ese pedido en Producción',await p.isVisible('#sheetFicha.open'));
+ await p.goBack({waitUntil:'commit'});await w(600);
+ ok('Atrás primero cierra la ficha de Producción',p.url().includes('produccion.html')&&!(await p.$('#sheetFicha.open')));
+ await p.goBack({waitUntil:'commit'});await p.waitForURL('**/ventas.html*');await w(1800);
+ ok('Atrás otra vez vuelve a la venta con su ficha abierta',await p.isVisible('#sheetFicha.open')&&(await p.textContent('#fichaBody')).includes('María González'),p.url());
+ if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}
  ok('En producción ya no deja editar',(await p.textContent('#fichaBody')).includes('No se puede editar'));
  // Cancelar con devolución
  if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}

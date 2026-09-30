@@ -435,7 +435,8 @@
     }
     // En producción no hay botón: queda Lista sola cuando el taller termina el último paso
     if(v.estado === 'en_produccion'){
-      html += `<div class="btn-guia hecho avance-taller" data-avance="${v.id}"><span class="bg-t">En fabricación</span><span class="bg-s">Pasa solo a Lista cuando el taller termine el último paso</span><span class="av-barra"><i style="transform:scaleX(0)"></i></span></div>`;
+      // Toca para verlo en Producción: quién tiene cada paso y cómo va
+      html += `<a class="btn-guia hecho avance-taller" data-avance="${v.id}" href="produccion.html?abrir=${v.id}"><span class="bg-t">En fabricación</span><span class="bg-s">Pasa solo a Lista cuando el taller termine el último paso</span><span class="av-barra"><i style="transform:scaleX(0)"></i></span><span class="av-ver">Ver en producción<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>`;
       return html;
     }
     const info = sig === 'lista' && v.estado === 'confirmada' ? { t:'Marcar como Lista', s:'Ya está en tienda, lista para entregar' } : SIGUIENTE[v.estado];
@@ -501,8 +502,8 @@
 
   // Acciones de la ficha
   document.getElementById('sheetFicha').addEventListener('click', async (e) => {
-    // Editar: se cierra la ficha antes de salir; al volver se abre de nuevo
-    const ed = e.target.closest('a[href^="venta.html?editar="]');
+    // Editar y Ver en producción: se cierra la ficha antes de salir; al volver se abre de nuevo
+    const ed = e.target.closest('a[href^="venta.html?editar="], a[href^="produccion.html?abrir="]');
     if(ed){
       e.preventDefault();
       const destino = ed.getAttribute('href');
