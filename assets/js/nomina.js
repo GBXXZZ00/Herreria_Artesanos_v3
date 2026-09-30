@@ -91,7 +91,7 @@
   }
   function filaItem(it){
     items[it.id] = it;
-    const monto = it.oficio === 'instalar' ? `<span class="mov-m gris">No se paga${CHEV}</span>` : it.monto == null ? '<span class="mov-m gris">Por definir</span>' : `<span class="mov-m">${esc(dinero(it.monto))}${CHEV}</span>`;
+    const monto = it.oficio === 'instalar' ? `<span class="mov-m gris">No se paga${CHEV}</span>` : it.monto == null ? `<span class="mov-m gris rojo">Por definir${CHEV}</span>` : `<span class="mov-m">${esc(dinero(it.monto))}${CHEV}</span>`;
     return `<button class="mov" type="button" data-item="${it.id}">
       <span class="mov-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="" loading="lazy">` : iconoTipo(it.tipo, 20)}</span>
       <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</span>
@@ -132,7 +132,7 @@
         <div class="cf"><span>Trabajos</span><b>${esc(dinero(tot))}</b></div>
         ${va.length ? `<div class="cf"><span>Vales</span><b class="rojo">−${esc(dinero(tv))}</b></div>` : ''}
         <div class="ct"><span>A pagar</span><b class="${neto < 0 ? 'rojo' : ''}">${esc(dinero(neto))}</b></div>
-        ${sinMonto ? `<p class="aviso-m">${sinMonto === 1 ? '1 trabajo no tiene monto' : sinMonto + ' trabajos no tienen monto'}. Dale categoría de pago a ese producto en Producción.</p>` : ''}
+        ${sinMonto ? `<p class="aviso-m">${sinMonto === 1 ? '1 trabajo no tiene monto' : sinMonto + ' trabajos no tienen monto'}. Tócalos para resolverlo.</p>` : ''}
         ${neto < 0 ? '<p class="aviso-m">Los vales son más que lo trabajado: quedan para la próxima semana.</p>' : ''}
       </div>`;
     }
@@ -196,8 +196,35 @@
     } finally { resolviendo = false; }
   });
 
+  // Atajo: un trabajo sin monto lleva a donde se arregla (categoría del producto o tarifa de la categoría)
+  let categorias = null;   // se cargan la primera vez que hacen falta
+  function atajoMontoHtml(it){
+    if(it.monto != null || it.oficio === 'instalar' || it.pago_id) return '';   // lo ya pagado no se toca
+    const link = (href, t) => `<a class="btn-primary atajo-btn" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${href}">${t}</a>`;
+    if(it.categoria_id) return `<div class="aviso-falta" style="margin:14px 0 0">A la categoría ${esc(it.categoria || '')} le falta la tarifa de este paso.
+      ${link('categorias-pago.html?editar=' + esc(it.categoria_id), 'Poner la tarifa')}</div>`;
+    let cuerpo;
+    if(categorias === 'error') cuerpo = '<button class="btn-secondary atajo-btn" type="button" data-reintentar-cat style="width:100%">No se pudieron cargar. Reintentar</button>';
+    else if(categorias === null) cuerpo = '<span class="atajo-t" style="margin-top:8px;font-weight:600">Cargando categorías…</span>';
+    else if(!categorias.length) cuerpo = link('categorias-pago.html?nueva=1', 'Crear una categoría');
+    else cuerpo = `<div class="atajo-caja"><span class="atajo-t">Elige su categoría. Se calcula el monto enseguida.</span>
+      <div class="opts" style="--cols:2;margin-top:8px">${categorias.map(c => `<button type="button" class="opt" data-cat-item="${esc(it.venta_item_id)}" data-trabajo="${esc(it.id)}" data-cid="${c.id}">${esc(c.nombre)}</button>`).join('')}</div></div>`;
+    return `<div class="aviso-falta" style="margin:14px 0 0">Este producto no tiene categoría de pago: por eso no tiene monto.${cuerpo}</div>`;
+  }
+  async function cargarCategorias(it){
+    try{
+      const { data, error } = await db.from('categorias_pago').select('id,nombre').order('id');
+      if(error) throw error;
+      categorias = data || [];
+    } catch(e){ categorias = 'error'; toast(mensaje(e), 'error'); }
+    if($('sheetItem').classList.contains('open') && itemAbierto === it) abrirItem(it, true);
+  }
+  let itemAbierto = null, asignando = false;
+
   // ---------- Ficha de un trabajo ----------
-  function abrirItem(it){
+  function abrirItem(it, repintar){
+    itemAbierto = it;
+    if(it.monto == null && it.oficio !== 'instalar' && !it.pago_id && !it.categoria_id && (categorias === null || categorias === 'error') && !repintar){ categorias = null; cargarCategorias(it); }
     const e = it.especificaciones || {};
     const specs = resumenSpecs(it.tipo, e);
     $('itemBody').innerHTML = `
@@ -205,6 +232,7 @@
       <div class="d-parte">${esc(it.etapa)} · terminó ${esc(fechaHora(it.fecha))}</div>
       <div class="det-name" style="margin-top:10px">${esc(it.producto)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div>
       <div class="det-type">${esc([it.tipo, e.color].filter(Boolean).join(' · '))}</div>
+      ${atajoMontoHtml(it)}
       <div class="d-datos">
         <div class="d-dato"><span>${it.interna ? 'Para' : 'Cliente'}</span><b>${esc(it.interna ? 'Exhibición' : (it.cliente || ''))}</b></div>
         <div class="d-dato"><span>${it.interna ? 'Sede' : 'Pedido'}</span><b>${esc(it.interna ? (it.sede || '') : 'N° ' + it.venta_id)}</b></div>
@@ -214,10 +242,27 @@
       ${specs.length ? `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}
       ${it.foto_trabajo ? `<div class="d-suya"><button type="button" data-ver-foto="${esc(it.foto_trabajo)}" aria-label="Ver foto"><img src="${esc(it.foto_trabajo)}" alt=""></button>Foto que subió al terminar. Tócala para verla grande.</div>` : ''}
       ${it.interna ? '' : `<a class="d-link" href="ventas.html?abrir=${esc(it.venta_id)}">Ver la venta N° ${esc(it.venta_id)}</a>`}`;
-    const body = $('itemBody'); if(body) body.scrollTop = 0;
-    abrirHoja('sheetItem');
+    const body = $('itemBody'); if(body && !repintar) body.scrollTop = 0;
+    if(!repintar) abrirHoja('sheetItem');
   }
-  $('itemBody').addEventListener('click', (e) => {
+  $('itemBody').addEventListener('click', async (e) => {
+    if(e.target.closest('[data-reintentar-cat]') && itemAbierto){ categorias = null; abrirItem(itemAbierto, true); cargarCategorias(itemAbierto); return; }
+    const c = e.target.closest('[data-cat-item]');
+    if(c && !asignando && ficha){
+      asignando = true;
+      c.closest('.opts').querySelectorAll('button').forEach(x => x.disabled = true);
+      try{
+        const { error } = await db.rpc('asignar_categoria_item', { iid: Number(c.dataset.catItem), cid: Number(c.dataset.cid) });
+        if(error) throw error;
+        cerrarHoja('sheetItem', true);
+        const idTrab = Number(c.dataset.trabajo);
+        await Promise.all([abrirTrabajador(ficha.trabajador.id, tab), cargar()]);
+        const nuevo = ficha && [...(ficha.trabajos || []), ...(ficha.proxima || [])].find(x => x.id === idTrab);
+        toast(nuevo && nuevo.monto == null ? 'Categoría puesta. A esa categoría le falta la tarifa de este paso: tócalo otra vez para ponerla.' : 'Categoría puesta. Ya tiene su monto.');
+      } catch(err){ toast(mensaje(err), 'error'); c.closest('.opts').querySelectorAll('button').forEach(x => x.disabled = false); }
+      finally { asignando = false; }
+      return;
+    }
     const b = e.target.closest('[data-ver-foto]');
     if(b) verFoto(b.dataset.verFoto);
   });

@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=55">
+<link rel="stylesheet" href="assets/css/base.css?v=56">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -545,13 +545,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=55"></script>
-<script src="assets/js/supabase-client.js?v=55"></script>
-<script src="assets/js/img-compress.js?v=55"></script>
-<script src="assets/js/comun.js?v=55"></script>
-<script src="assets/js/avisos.js?v=55"></script>
-<script src="assets/js/sesion.js?v=55"></script>
-<script src="assets/js/mi-trabajo.js?v=55"></script>
+<script src="assets/vendor/supabase.js?v=56"></script>
+<script src="assets/js/supabase-client.js?v=56"></script>
+<script src="assets/js/img-compress.js?v=56"></script>
+<script src="assets/js/comun.js?v=56"></script>
+<script src="assets/js/avisos.js?v=56"></script>
+<script src="assets/js/sesion.js?v=56"></script>
+<script src="assets/js/mi-trabajo.js?v=56"></script>
 <script>
 (function(){
   'use strict';
@@ -927,11 +927,11 @@
     }
     const nCats = rCats && typeof rCats.count === 'number' ? rCats.count : null;
     if(nCats === 0){
-      pend.push({ color:'azul', icono:'etiqueta', titulo:'Crea las categorías de pago', detalle:'para calcular pagos', href:'categorias-pago.html' });
+      pend.push({ color:'azul', icono:'etiqueta', titulo:'Crea las categorías de pago', detalle:'para calcular pagos', href:'categorias-pago.html?nueva=1' });
     } else if(nCats){
       if(sinCat) pend.push({ color:'azul', icono:'etiqueta', titulo: 'En producción: ' + plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'produccion.html?filtro=sincat' });
       const nMod = rMod && typeof rMod.count === 'number' ? rMod.count : 0;
-      if(nMod) pend.push({ color:'teal', icono:'catalogo', titulo: 'En catálogo: ' + plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html' });
+      if(nMod) pend.push({ color:'teal', icono:'catalogo', titulo: 'En catálogo: ' + plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html?asignar=1' });
     }
     return pend;
   }

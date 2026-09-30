@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Depósito · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=55">
+<link rel="stylesheet" href="assets/css/base.css?v=56">
 <style>
   .page{padding-bottom:calc(var(--safe-b) + var(--nav-h) + 96px)}
   /* Materiales | Entregas: dos botones largos */
@@ -105,7 +105,8 @@
   .gm-n{margin-top:auto;font-size:13px;color:var(--ink-soft);font-weight:700}
   .gm.bajo{border-color:#F4C7C3}
   .gm.bajo .gm-n{color:#B42318}
-  .gm[disabled]{opacity:.45}
+  .gm.agotado .gm-t,.gm.agotado .gm-n{opacity:.55}
+  .gm-at{display:inline-flex;margin-top:4px;font-size:13px;font-weight:800;color:var(--accent)}
   .elegido{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--accent-soft);margin-bottom:14px}
   .elegido b{display:block;font-size:16px;color:var(--accent)}
   .elegido span{display:block;font-size:12.5px;color:var(--ink-soft)}
@@ -271,10 +272,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=55"></script>
-<script src="assets/js/supabase-client.js?v=55"></script>
-<script src="assets/js/comun.js?v=55"></script>
-<script src="assets/js/sesion.js?v=55"></script>
-<script src="assets/js/deposito.js?v=55"></script>
+<script src="assets/vendor/supabase.js?v=56"></script>
+<script src="assets/js/supabase-client.js?v=56"></script>
+<script src="assets/js/comun.js?v=56"></script>
+<script src="assets/js/sesion.js?v=56"></script>
+<script src="assets/js/deposito.js?v=56"></script>
 </body>
 </html>

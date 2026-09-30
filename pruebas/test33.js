@@ -76,8 +76,10 @@ async function pagina(b,uid){
  await p.click('#sheetMat [data-cerrar="sheetMat"]');await w(500);
  // Entregar: paso 1 materiales
  await p.click('#btnEntregar');await w(500);
- ok('Entregar: primero el material, agotado deshabilitado',await p.$eval('[data-elegir-mat="2"]',x=>x.disabled)&&(await p.textContent('#entregarTitulo'))==='¿Qué vas a entregar?'&&(await p.textContent('[data-elegir-mat="1"]')).includes('por reponer'));
+ ok('Entregar: primero el material; el agotado no se entrega y ofrece avisar',!(await p.$('[data-elegir-mat="2"]'))&&(await p.textContent('[data-agotado="2"]')).includes('Avisar para comprar')&&(await p.textContent('#entregarTitulo'))==='¿Qué vas a entregar?'&&(await p.textContent('[data-elegir-mat="1"]')).includes('por reponer'));
  await p.screenshot({path:'shots5/d3-entregar-1.png'});
+ await p.click('[data-agotado="2"]');await w(600);
+ ok('La vendedora avisa que hay que comprar la sierra',st.rpcs.some(x=>x[0]==='deposito_pedir_reponer'&&x[1].mid===2)&&(await p.textContent('#toast')).includes('hay que comprar Sierra'));
  await p.click('[data-elegir-mat="1"]');await w(300);
  ok('Paso 2: a quién, con lo que hizo desde la última vez',(await p.textContent('#entregarTitulo'))==='¿A quién se lo das?'&&(await p.textContent('[data-elegir-trab="t1"]')).includes('desde entonces 1 trabajo')&&(await p.textContent('[data-elegir-trab="t2"]')).includes('Nunca'));
  ok('Va 1 unidad',(await p.textContent('.elegido')).includes('Va 1 unidad · quedan 2'));

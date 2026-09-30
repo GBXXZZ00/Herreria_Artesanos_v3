@@ -299,6 +299,17 @@
     const p = await S.requerir();
     if(!p) return;
     if(p.rol !== 'admin'){ location.replace('index.html'); return; }
-    cargar();
+    await cargar();
+    // Atajos desde avisos: ?nueva=1 · ?editar=ID (tarifa que falta) · ?asignar=1 (modelos sin categoría)
+    const q = new URLSearchParams(location.search);
+    try{ if(q.toString()) history.replaceState(null, '', location.pathname); } catch(e){}
+    if(q.get('nueva')){ pintarFicha(null); return; }
+    const ed = categorias.find(c => String(c.id) === q.get('editar'));
+    if(ed){ pintarFicha(ed); return; }
+    if(q.get('asignar')){
+      if(categorias.length === 1){ pintarFicha(categorias[0]); $('btnAsignarModelos').click(); }
+      else if(categorias.length) toast('Toca la categoría y luego "Asignar a modelos"');
+      else pintarFicha(null);
+    }
   })();
 })();

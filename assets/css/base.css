@@ -168,6 +168,10 @@ input,select,textarea{font:inherit;font-size:16px;color:var(--ink);max-width:100
 .prot-fija{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:999px;background:var(--surface-2);font-size:14px;font-weight:800;color:var(--ink-soft)}
 .prot-fija.si{background:var(--accent-soft);color:var(--accent)}
 .aviso-falta{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:#FDECEA;color:var(--danger);font-size:14px;font-weight:700;line-height:1.4}
+.atajo-caja{margin-top:10px;padding:12px;border-radius:12px;background:var(--surface);color:var(--ink);font-weight:600}
+.atajo-t{display:block;font-size:13.5px;line-height:1.35}
+.atajo-btn{margin-top:10px;height:46px}
+.atajo-caja .field-error{margin-top:6px}
 .field-error{font-size:12.5px;color:var(--danger);margin-top:6px;display:none}
 .field.invalid .field-error{display:block}
 .field.invalid .input{border-color:var(--danger)}

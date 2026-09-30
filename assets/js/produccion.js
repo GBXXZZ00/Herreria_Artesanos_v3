@@ -334,7 +334,7 @@
           ${sub ? `<p class="at-sub">${esc(sub)}</p>` : ''}
           ${ops.length || fuera ? `<div class="at-ops">${fuera}${ops.map(t => `<button type="button" class="at-op ${tidActual === t.id ? 'on' : ''}" data-eid="${e.id}" data-eids="${ids}" data-tid="${esc(t.id)}"><span class="ini">${esc(inicial(t.nombre))}</span>${esc(t.nombre)}</button>`).join('')}
             <button type="button" class="at-op nadie ${tidActual === '' ? 'on' : ''}" data-eid="${e.id}" data-eids="${ids}" data-tid="">Sin asignar</button></div>`
-            : `<p class="at-vacio">Nadie tiene la especialidad ${esc(NOMBRE_ESPECIALIDAD[e.especialidad] || e.especialidad)}. Créalo en Usuarios.</p>`}
+            : `<p class="at-vacio">Nadie tiene la especialidad ${esc(NOMBRE_ESPECIALIDAD[e.especialidad] || e.especialidad)}. <a class="at-link" href="usuarios.html?especialidad=${esc(e.especialidad)}">Dársela a un trabajador</a></p>`}
         </div>`;
       });
     });
@@ -429,7 +429,7 @@
     $('catItemSub').textContent = it.nombre + ': con esto se calcula lo que gana cada trabajador.';
     $('listaCatItem').innerHTML = categorias.length
       ? categorias.map(c => `<button class="fila-cat ${c.id === it.categoria_pago_id ? 'sel' : ''}" type="button" data-cid="${c.id}">${esc(c.nombre)}</button>`).join('')
-      : '<p class="field-error" style="display:block">Aún no hay categorías. Créalas en Mi cuenta › Categorías de pago.</p>';
+      : '<p class="field-error" style="display:block">Aún no hay categorías de pago.</p><a class="btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px;height:46px" href="categorias-pago.html?nueva=1">Crear una categoría</a>';
     abrirHoja('sheetCatItem');
   }
   $('listaCatItem').addEventListener('click', async (e) => {
@@ -522,9 +522,9 @@
         html += categorias.length
           ? `<div class="field" id="campoOCat">${SP.optsCuerpo({ g:'__ocat', label:'Categoría de pago', cols:1, opts: categorias.map(c => ({ v:String(c.id), t:c.nombre })) }, o.cat == null ? null : String(o.cat))}
               <p class="field-hint aviso">Este modelo no tiene. La que elijas queda guardada en el modelo.</p>${fieldErr('eOCat', 'Elige la categoría de pago')}</div>`
-          : `<div class="field"><p class="field-error" style="display:block">Este modelo no tiene categoría de pago y todavía no hay ninguna. Créalas en Mi cuenta › Categorías de pago.</p></div>`;
+          : `<div class="field"><p class="field-error" style="display:block">Este modelo no tiene categoría de pago y todavía no hay ninguna.</p><a class="btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px;height:46px" href="categorias-pago.html?nueva=1">Crear una categoría</a></div>`;
       }
-      html += SP.specsHtml(o.prod, o.modelo, { marcar: !!o.marcar });   // en exhibición se ve todo; el aluminio de la ventana se elige
+      html += SP.specsHtml(o.prod, o.modelo, { marcar: !!o.marcar, atajo: true });   // en exhibición se ve todo; el aluminio de la ventana se elige
       html += `<div class="field" id="campoOSede">${SP.optsCuerpo({ g:'__osede', label:'Sede donde quedará', cols:2, opts: sedes.map(x => ({ v:String(x.id), t:x.nombre })) }, o.sede == null ? null : String(o.sede))}
         ${fieldErr('eSede', 'Elige dónde quedará la pieza')}</div>`;
       html += `<div class="field"><span class="field-label">Cantidad</span>
@@ -577,6 +577,8 @@
       abrirHoja('sheetModelos');
       return;
     }
+    const at = e.target.closest('[data-atajo-medidas]');
+    if(at && o.modelo){ SP.guardarAtajoMedidas(o.modelo, at).then(ok => { if(ok) pintarOrden(); }); return; }
     if(o.prod && SP.tocar(o.prod, e.target)){ pintarOrden(); return; }
     const c = e.target.closest('[data-cant]');
     if(c && o.prod){

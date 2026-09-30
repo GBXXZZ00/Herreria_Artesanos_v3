@@ -227,9 +227,10 @@
       $('entregarFoot').classList.add('hidden');
       const l = datos.materiales.filter(m => m.activo);
       body.innerHTML = `<p class="paso-t">Toca el material. Se entrega de uno en uno.</p><div class="gr-mat">${l.map(m => `
-        <button class="gm ${bajo(m) ? 'bajo' : ''}" type="button" data-elegir-mat="${m.id}" ${m.stock < 1 ? 'disabled' : ''}>
+        <button class="gm ${bajo(m) ? 'bajo' : ''} ${m.stock < 1 ? 'agotado' : ''}" type="button" ${m.stock < 1 ? `data-agotado="${m.id}"` : `data-elegir-mat="${m.id}"`}>
           <span class="gm-t">${esc(m.nombre)}</span>
           <span class="gm-n">${m.stock < 1 ? 'Agotado' : 'Quedan ' + esc(m.stock) + (bajo(m) ? ' · por reponer' : '')}</span>
+          ${m.stock < 1 ? `<span class="gm-at">${datos.es_admin ? 'Registrar compra' : 'Avisar para comprar'}</span>` : ''}
         </button>`).join('')}</div>`;
       body.scrollTop = 0;
       return;
@@ -247,13 +248,15 @@
         const sub = u ? `Le diste uno el ${esc(fechaCorta(u.fecha))} · desde entonces <b>${esc(trabajosTxt(u.trabajos))}</b>` : 'Nunca le has dado este material';
         return `<button class="tr ${ent.tid === t.id ? 'sel' : ''}" type="button" data-elegir-trab="${esc(t.id)}" aria-pressed="${ent.tid === t.id}">
           <span class="tr-av">${esc(inicial(t.nombre))}</span><span style="min-width:0"><span class="tr-t">${esc(t.nombre)}</span><span class="tr-s">${sub}</span></span></button>`;
-      }).join('') : '<div class="vacio-d"><b>No hay trabajadores</b>Créalos en Usuarios.</div>'}
+      }).join('') : `<div class="vacio-d"><b>No hay trabajadores</b>${datos.es_admin ? '<a class="gm-at" href="usuarios.html">Crear uno en Usuarios</a>' : 'Pídele a un administrador que los cree.'}</div>`}
       <p class="field-error" id="errTrab">Elige a quién se lo das</p></div>
       <div class="field" style="margin-top:16px"><label class="field-label" for="entNota">Nota (opcional)</label>
         <input class="input" id="entNota" type="text" maxlength="120" autocomplete="off" value="${esc(ent.nota)}" placeholder="Se le partió el disco"></div>`;
   }
   $('entregarBody').addEventListener('click', (e) => {
     const bm = e.target.closest('[data-elegir-mat]');
+    const ag = e.target.closest('[data-agotado]');
+    if(ag){ atajoReponer(+ag.dataset.agotado, true); return; }
     if(bm && !bm.disabled){ if(ent.mid !== +bm.dataset.elegirMat) ent.clave = uuid(); ent.mid = +bm.dataset.elegirMat; ent.paso = 2; pintarEntregar(); $('entregarBody').scrollTop = 0; return; }
     if(e.target.closest('[data-cambiar-mat]')){ ent.paso = 1; pintarEntregar(); return; }
     const bt = e.target.closest('[data-elegir-trab]');
@@ -335,7 +338,9 @@
     $('matBody').innerHTML = html;
     $('matFoot').innerHTML = datos.es_admin && m.activo
       ? '<div class="pie-dos"><button class="btn-secondary" type="button" data-editar-mat>Editar</button><button class="btn-primary" type="button" data-comprar>Registrar compra</button></div>'
-      : '<button class="btn-secondary" type="button" data-editar-mat style="width:100%;height:54px">Editar</button>';
+      : m.activo && bajo(m) && !datos.es_admin
+        ? '<div class="pie-dos"><button class="btn-secondary" type="button" data-editar-mat>Editar</button><button class="btn-primary" type="button" data-reponer>Avisar para comprar</button></div>'
+        : '<button class="btn-secondary" type="button" data-editar-mat style="width:100%;height:54px">Editar</button>';
   }
   $('matBody').addEventListener('click', (e) => {
     const en = e.target.closest('[data-entrega]');
@@ -346,7 +351,25 @@
   $('matFoot').addEventListener('click', (e) => {
     if(e.target.closest('[data-editar-mat]')) abrirMatForm(materialDe(matAbierto));
     if(e.target.closest('[data-comprar]')) abrirCompra();
+    if(e.target.closest('[data-reponer]')) atajoReponer(matAbierto, false);
   });
+  // Atajo para un material agotado o por reponer: el admin registra la compra; la vendedora avisa
+  let avisando = false;
+  async function atajoReponer(mid, desdeEntregar){
+    const m = materialDe(mid); if(!m) return;
+    if(datos.es_admin){
+      if(desdeEntregar) cerrarHoja('sheetEntregar', true);
+      matAbierto = mid; abrirCompra(); return;
+    }
+    if(avisando || !confirm(`¿Avisarle a los administradores que hay que comprar ${m.nombre}?`)) return;
+    avisando = true;
+    try{
+      const { data, error } = await db.rpc('deposito_pedir_reponer', { mid });
+      if(error) throw error;
+      toast(data && data.repetido ? `Ya les avisaron hace poco de ${m.nombre}` : `Listo, les avisamos que hay que comprar ${m.nombre}`);
+    } catch(err){ toast(mensaje(err), 'error'); }
+    finally { avisando = false; }
+  }
 
   // ---------- Nuevo material / editar ----------
   let mf = null;
@@ -604,6 +627,12 @@
     if(abrir && datos){
       try{ history.replaceState(null, '', location.pathname); } catch(e){}
       abrirEntrega(abrir);
+    }
+    // deposito.html?material=ID (aviso "hay que comprar"): abre ese material
+    const mat = Number(q.get('material'));
+    if(mat && datos && materialDe(mat)){
+      try{ history.replaceState(null, '', location.pathname); } catch(e){}
+      abrirMaterial(mat);
     }
   })();
 })();

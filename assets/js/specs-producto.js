@@ -36,6 +36,38 @@
       if(!s.proteccion) s.marco_decorativo = false;
     }
   }
+  // Atajo: poner ahí mismo las medidas de las ventanas del combo (se guardan en el Catálogo)
+  function atajoMedidasHtml(){
+    return `<div class="aviso-falta atajo" role="alert">A este combo le faltan las medidas de las 2 ventanas.
+      <div class="atajo-caja"><span class="atajo-t">Ponlas aquí. Se guardan en el Catálogo para todas sus ventas.</span>
+        <label class="field-label" for="atajoAlto" style="margin-top:10px">Medidas de cada ventana (en metros)</label>
+        <div class="input-row">
+          <div class="input-affix has-r"><input class="input" id="atajoAlto" data-atajo type="text" inputmode="decimal" autocomplete="off" aria-label="Alto de cada ventana en metros"><span class="affix affix-r">alto</span></div>
+          <div class="input-affix has-r"><input class="input" id="atajoAncho" data-atajo type="text" inputmode="decimal" autocomplete="off" aria-label="Ancho de cada ventana en metros"><span class="affix affix-r">ancho</span></div>
+        </div>
+        <p class="field-error" id="atajoError">Escribe el alto y el ancho de cada ventana, en metros</p>
+        <button class="btn-primary atajo-btn" type="button" data-atajo-medidas>Guardar medidas y seguir</button></div></div>`;
+  }
+  // Guarda las medidas del atajo. Devuelve true si quedaron guardadas (el modelo se actualiza aquí mismo).
+  async function guardarAtajoMedidas(modelo, boton){
+    const alto = numOrNull(document.getElementById('atajoAlto').value), ancho = numOrNull(document.getElementById('atajoAncho').value);
+    const err = document.getElementById('atajoError');
+    if(!(alto >= 0.2 && alto <= 5 && ancho >= 0.2 && ancho <= 5)){ err.style.display = 'block'; return false; }
+    err.style.display = '';
+    boton.disabled = true;
+    try{
+      const { data, error } = await window.db.rpc('catalogo_medidas_ventanas', { mid: modelo.id, alto, ancho });
+      if(error) throw error;
+      modelo.especificaciones_base = Object.assign({}, modelo.especificaciones_base || {}, { ventanas_alto: data.ventanas_alto, ventanas_ancho: data.ventanas_ancho });
+      window.AH.toast('Medidas guardadas en el Catálogo');
+      return true;
+    } catch(e){
+      const m = String((e && e.message) || '');
+      window.AH.toast(/fetch|network|Failed/i.test(m) ? 'Sin conexión. Intenta de nuevo' : m || 'No se pudieron guardar', 'error');
+      boton.disabled = false;
+      return false;
+    }
+  }
   // Si falta algo en el catálogo para poder venderlo, dice qué
   function faltaEnModelo(prod, modelo){
     if(!fijasDelModelo(prod) || prod.tipo !== 'Combo' || prod.guardado) return '';
@@ -129,7 +161,7 @@
     const combo = prod.tipo === 'Combo';
     const fijas = combo && fijasDelModelo(prod);
     const falta = faltaEnModelo(prod, modelo);
-    let html = falta ? `<div class="aviso-falta" role="alert">${esc(falta)}</div>` : '';
+    let html = !falta ? '' : ver.atajo && modelo ? atajoMedidasHtml() : `<div class="aviso-falta" role="alert">${esc(falta)}</div>`;
     html += combo ? `<div class="zona">${ICON_PUERTA}Puerta</div>` : '';
     html += fijas ? medidaFijaHtml(prod, esq.medidas.label || 'Medidas', 'alto', 'ancho', 'Las medidas del combo son fijas. Si son otras, ya no es combo.')
       : medidasHtml(prod, esq.medidas.label || 'Medidas', 'alto', 'ancho');
@@ -197,5 +229,5 @@
     return false;
   }
 
-  window.SpecsProducto = { TARIFA_VENTANA, PRECIO_MANILLON, ECOBEL_COMBO, calcular, pideMontoProteccion, optsHtml, optsCuerpo, specsHtml, tocar, escribir, faltaEnModelo, faltanEn };
+  window.SpecsProducto = { TARIFA_VENTANA, PRECIO_MANILLON, ECOBEL_COMBO, calcular, pideMontoProteccion, optsHtml, optsCuerpo, specsHtml, tocar, escribir, faltaEnModelo, faltanEn, guardarAtajoMedidas };
 })();

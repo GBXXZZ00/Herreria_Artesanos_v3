@@ -45,8 +45,8 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.waitForSelector('#vInicio.entra');await a.waitForSelector('.pend-fila');
 
  // El pendiente de Inicio lleva a Categorías de pago
- ok('Inicio: "3 modelos sin categoría" lleva a Categorías de pago',!!(await a.$('a.pend-fila[href="categorias-pago.html"]')));
- await a.click('a.pend-fila[href="categorias-pago.html"]');await a.waitForSelector('.c-card');
+ ok('Inicio: "3 modelos sin categoría" lleva a Categorías de pago',!!(await a.$('a.pend-fila[href="categorias-pago.html?asignar=1"]')));
+ await a.click('a.pend-fila[href="categorias-pago.html?asignar=1"]');await a.waitForSelector('.c-card');
  ok('Arriba avisa cuántos modelos no tienen categoría',(await a.textContent('#avisoSin')).includes('3 modelos sin categoría'));
  ok('Cada categoría dice en cuántos modelos se usa',(await a.textContent('#lista')).includes('Usada en 1 modelo del catálogo'));
  await a.screenshot({path:'shots5/k0-lista.png'});

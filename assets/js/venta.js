@@ -231,7 +231,7 @@
   // Especificaciones y precio: el mismo motor que usa Producción (specs-producto.js)
   const calcular = (it) => SP.calcular(it, modeloDe(it));
   const pideMontoProteccion = (it) => SP.pideMontoProteccion(it, modeloDe(it));
-  const specsHtml = () => SP.specsHtml(prod, modeloDe(prod), { modo, marcar: !!prod.marcar });
+  const specsHtml = () => SP.specsHtml(prod, modeloDe(prod), { modo, marcar: !!prod.marcar, atajo: true });
 
   function cantidadHtml(max){
     if(prod.fijo) return `<div class="field"><span class="field-label">Cantidad</span><div class="f-fijo">${prod.cantidad} (ya vendida)</div></div>`;
@@ -326,7 +326,9 @@
   }
   antesDeCerrar.sheetProducto = () => !prodSucio || confirm('¿Salir sin agregar este producto?');
 
-  $('prodBody').addEventListener('click', (e) => {
+  $('prodBody').addEventListener('click', async (e) => {
+    const at = e.target.closest('[data-atajo-medidas]');
+    if(at){ if(await SP.guardarAtajoMedidas(modeloDe(prod), at)) pintarProducto(); return; }
     const o = e.target.closest('.opt[data-g]');
     if(o){
       prodSucio = true;
@@ -362,6 +364,7 @@
   $('prodBody').addEventListener('input', (e) => {
     prodSucio = true;
     const el = e.target;
+    if(el.dataset.atajo !== undefined){ const er = $('atajoError'); if(er) er.style.display = ''; return; }
     if(el.dataset.mkey || el.dataset.texto || el.id === 'pProt'){ if(SP.escribir(prod, el)) refrescarPrecio(); return; }
     if(el.id === 'pPrecio'){ prod.precio = el.value; prod.precioManual = true; $('campoPrecio').classList.remove('invalid'); return; }
     if(el.id === 'pNombre'){ prod.nombre = el.value; if($('campoMedNombre')) $('campoMedNombre').classList.remove('invalid'); return; }

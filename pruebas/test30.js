@@ -65,7 +65,7 @@ const txt=async(p,s)=>((await p.textContent(s))||'').replace(/\s+/g,' ');
  await r.screenshot({path:'shots5/n1-lista.png'});
  await r.click('.n-card >> nth=0');await r.waitForSelector('#sheetTrab.open');await r.waitForTimeout(400);
  const fl=await txt(r,'#trabBody');
- ok('Trabajo sin monto: dice "Por definir" y avisa qué hacer',fl.includes('Por definir') && fl.includes('Dale categoría de pago'));
+ ok('Trabajo sin monto: dice "Por definir" y avisa qué hacer',fl.includes('Por definir') && fl.includes('Tócalos para resolverlo'));
  ok('Con un trabajo sin monto no deja pagar',await r.$eval('#btnPagar',x=>x.disabled) && (await txt(r,'#btnPagar'))==='Falta el monto de un trabajo' && (await txt(r,'.n-card >> nth=0')).includes('1 sin monto'));
  ok('Lo terminado el domingo sale aparte, para la próxima semana',fl.includes('Para la próxima semana') && fl.includes('Portón Real') && fl.includes('refresco'));
  await r.screenshot({path:'shots5/n2-luis.png'});

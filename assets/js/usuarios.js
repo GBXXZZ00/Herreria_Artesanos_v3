@@ -139,6 +139,10 @@
         <span class="u-avatar">${esc(inicial(u.nombre))}</span>
         <div><div class="u-nombre">${esc(u.nombre)}</div><div class="u-sub">${esc(subtitulo(u))} · usuario: ${esc(u.usuario)}</div></div>
       </div>
+      ${u.rol === 'trabajador' ? `<div class="field" id="campoEsp" style="margin:14px 0 6px"><span class="field-label">Especialidades</span>
+        <div class="opts" style="--cols:2">${Object.entries(NOMBRE_ESPECIALIDAD).map(([v, t]) => `<button type="button" class="opt ${(u.especialidades || []).includes(v) ? 'selected' : ''}" data-esp="${v}" aria-pressed="${(u.especialidades || []).includes(v)}">${esc(t)}</button>`).join('')}</div>
+        <p class="field-error">Elige al menos una</p>
+        <button class="btn-primary" type="button" data-accion="especialidades" style="margin-top:10px;height:48px">Guardar especialidades</button></div>` : ''}
       <button class="f-link" data-accion="pin">Restablecer PIN</button>
       ${soyYo ? '' : `<button class="f-link" data-accion="${u.activo ? 'desactivar' : 'activar'}">${u.activo ? 'Desactivar cuenta' : 'Activar cuenta'}</button>`}
       ${soyYo ? '' : `<button class="btn-peligro" data-accion="eliminar">Eliminar usuario</button>`}
@@ -151,8 +155,21 @@
     if(u) pintarFicha(u);
   });
   $('fichaBody').addEventListener('click', async (e) => {
+    const ob = e.target.closest('[data-esp]');
+    if(ob){ const on = !ob.classList.contains('selected'); ob.classList.toggle('selected', on); ob.setAttribute('aria-pressed', on); $('campoEsp').classList.remove('invalid'); return; }
     const b = e.target.closest('[data-accion]'); if(!b || !fichaActual) return;
     const accion = b.dataset.accion;
+    if(accion === 'especialidades'){
+      const esp = [...$('fichaBody').querySelectorAll('[data-esp].selected')].map(x => x.dataset.esp);
+      if(!esp.length){ $('campoEsp').classList.add('invalid'); return; }
+      b.disabled = true;
+      try{
+        const { error } = await db.rpc('usuario_especialidades', { uid: fichaActual.id, esp });
+        if(error) throw error;
+        cerrarHoja('sheetFicha'); toast('Especialidades guardadas'); cargar();
+      } catch(err){ const m = String((err && err.message) || ''); toast(/fetch|network|Failed/i.test(m) ? 'Sin conexión. Intenta de nuevo' : m || 'No se pudo guardar', 'error'); b.disabled = false; }
+      return;
+    }
     if(accion === 'pin'){ abrirHoja('sheetPin2'); return; }
     if(accion === 'eliminar'){
       if(!confirm(`¿Eliminar la cuenta de ${fichaActual.nombre}? No se puede deshacer.`)) return;
@@ -192,6 +209,12 @@
       const s = await S.sesionActual();
       return s ? { id: s.user.id } : null;
     })();
-    cargar();
+    await cargar();
+    // Atajo desde Producción: ?especialidad=herrero
+    const esp = new URLSearchParams(location.search).get('especialidad');
+    if(esp && NOMBRE_ESPECIALIDAD[esp]){
+      try{ history.replaceState(null, '', location.pathname); } catch(e){}
+      toast(`Toca al trabajador y márcale ${NOMBRE_ESPECIALIDAD[esp]}. Si no existe, toca "Nuevo".`);
+    }
   })();
 })();
