@@ -28,4 +28,5 @@ Simulan Supabase con datos falsos: no tocan la base real y los PIN son de mentir
 - test32: Catálogo: una ventana de entrega inmediata no se guarda sin su aluminio
 - test33: Depósito: materiales (por reponer, agotado), entregar en 2 pasos (material, luego a quién, con lo que hizo desde la última vez), entregas por semana y por trabajador, revisión de Ray (aprobar o cuestionar con nota) con los trabajos como en Nómina, la vendedora no ve costos ni compras, compra del administrador, pendientes en Inicio
 - test34: atajos: combo sin medidas se arregla desde la venta, Nómina pone la categoría ahí mismo o lleva a la tarifa, categorías ?editar/?nueva, Usuarios edita especialidades
+- test35: ventas: Solo protección (sin ventana) con su precio, monto del marco decorativo, a medida, y editar no pierde los montos
 - test33 (30 sep): entregas por lo que hizo con el anterior y sus pendientes, movimientos por semana, compra grande, solo el admin agrega materiales

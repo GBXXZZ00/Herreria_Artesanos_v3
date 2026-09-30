@@ -20,6 +20,37 @@
     return false;
   }
 
+  // Ventana con protección: se puede vender solo la protección (sin ventana), con su precio aparte
+  const SOLO_PROT = 'Solo protección';
+  const esSoloProt = (prod) => prod.tipo === 'Ventana' && (prod.estado || {}).aluminio === SOLO_PROT;
+  // Su precio se pide siempre (también a medida, donde es lo único que da el precio); la pieza ya trae el suyo
+  const pideMontoSoloProt = (prod) => esSoloProt(prod) && prod.origen !== 'pieza';
+  // Marco decorativo marcado y el modelo no lo trae: se cobra aparte (a medida el precio escrito ya lo incluye)
+  function pideMontoMarco(prod, modelo){
+    if(prod.origen === 'medida' || prod.origen === 'pieza') return false;
+    const s = prod.estado || {}, b = base(modelo);
+    if(prod.tipo === 'Ventana' && !s.proteccion) return false;
+    // lo ya guardado antes de este cambio conserva su precio: no se le exige el monto
+    if(prod.guardado && !prod.marcoConMonto) return false;
+    return !!s.marco_decorativo && !b.marco_decorativo;
+  }
+  // Casillas de monto que faltan por llenar (ids de los campos)
+  function montosFaltan(prod, modelo){
+    const l = [];
+    if(pideMontoProteccion(prod, modelo) && !(montoOrNull(prod.extraProteccion) > 0)) l.push('campoProt');
+    if(pideMontoSoloProt(prod) && !(montoOrNull(prod.extraSoloProt) > 0)) l.push('campoSoloProt');
+    if(pideMontoMarco(prod, modelo) && !(montoOrNull(prod.extraMarco) > 0)) l.push('campoMarco');
+    return l;
+  }
+  // Montos que se guardan en las especificaciones del producto
+  function montosEsp(prod, modelo){
+    const o = {};
+    if(pideMontoProteccion(prod, modelo)) o.monto_proteccion = montoOrNull(prod.extraProteccion);
+    if(pideMontoSoloProt(prod)) o.monto_proteccion_sola = montoOrNull(prod.extraSoloProt);
+    if(pideMontoMarco(prod, modelo)) o.monto_marco = montoOrNull(prod.extraMarco);
+    return o;
+  }
+
   // Lo que no se cambia al vender, porque lo define el modelo del catálogo:
   //  - Combo: las medidas de la puerta y de las 2 ventanas (si son otras, ya no es combo)
   //  - Ventana: si lleva protección (una ventana con protección no se vende sin ella, ni al revés)
@@ -34,6 +65,20 @@
     if(prod.tipo === 'Ventana'){
       s.proteccion = !!b.proteccion;
       if(!s.proteccion) s.marco_decorativo = false;
+    }
+  }
+  // Sin protección no hay "Solo protección"; y la protección sola no lleva ahumado ni hojas
+  function ajustarSoloProt(prod){
+    const s = prod.estado || {};
+    if(prod.tipo !== 'Ventana') return;
+    if(s.aluminio === SOLO_PROT && !s.proteccion) s.aluminio = null;
+    // guarda lo que tenía para devolvérselo si vuelve a Panorámica o Ecobel
+    if(s.aluminio === SOLO_PROT){
+      if(!prod.antesSoloProt) prod.antesSoloProt = { ahumado: s.ahumado, mas_hojas: s.mas_hojas };
+      s.ahumado = 'Sin'; s.mas_hojas = false;
+    } else if(prod.antesSoloProt){
+      s.ahumado = prod.antesSoloProt.ahumado; s.mas_hojas = prod.antesSoloProt.mas_hojas;
+      delete prod.antesSoloProt;
     }
   }
   // Atajo: poner ahí mismo las medidas de las ventanas del combo (se guardan en el Catálogo)
@@ -82,7 +127,11 @@
     const s = prod.estado || {};
     const partes = [];
     let total = 0;
-    if(prod.tipo === 'Ventana'){
+    ajustarSoloProt(prod);
+    if(esSoloProt(prod)){
+      const x = montoOrNull(prod.extraSoloProt) || 0;
+      total = x; partes.push(`protección sola ${x ? dinero(x) : '(escribe el precio)'}`);
+    } else if(prod.tipo === 'Ventana'){
       const alto = numOrNull(s.alto) || 0, ancho = numOrNull(s.ancho) || 0;
       const area = r2(alto * ancho);
       // Sin aluminio elegido no hay precio: se elige siempre (Panorámica o Ecobel)
@@ -100,6 +149,10 @@
     if(pideMontoProteccion(prod, modelo)){
       const x = montoOrNull(prod.extraProteccion) || 0;
       total += x; partes.push(`protección ${x ? dinero(x) : '(escribe el monto)'}`);
+    }
+    if(pideMontoMarco(prod, modelo)){
+      const x = montoOrNull(prod.extraMarco) || 0;
+      total += x; partes.push(`marco ${x ? dinero(x) : '(escribe el monto)'}`);
     }
     return { total: r2(total), texto: partes.join(' + ') };
   }
@@ -136,6 +189,8 @@
     ver = ver || {};
     if(ver.modo === 'cotizacion' && esFab(g.g)) return '';
     if(g.tipo === 'medidas') return fijas ? medidaFijaHtml(prod, g.label, g.keys[0], g.keys[1]) : medidasHtml(prod, g.label, g.keys[0], g.keys[1]);
+    if(prod.tipo === 'Ventana' && g.g === 'aluminio' && (prod.estado || {}).proteccion) g = Object.assign({}, g, { opts:[...g.opts, { v:SOLO_PROT }], cols:3 });
+    if(prod.tipo === 'Ventana' && g.g === 'ahumado' && esSoloProt(prod)) return '';
     if(g.tipo === 'texto') return `<div class="field"><label class="field-label">${esc(g.label)}</label><input class="input" type="text" data-texto="${g.g}" value="${esc(prod.estado[g.g] || '')}" placeholder="${esc(g.placeholder || '')}" autocomplete="off"></div>`;
     return optsHtml(g, prod.estado[g.g], (ver.faltan || []).includes(g.g));
   }
@@ -156,6 +211,7 @@
     ver = Object.assign({}, ver || {});
     ver.faltan = ver.marcar ? faltanEn(prod, ver.modo || 'venta') : [];
     aplicarFijas(prod, modelo);
+    ajustarSoloProt(prod);
     const esq = esquema(prod.tipo, 'pedido');
     const s = prod.estado;
     const combo = prod.tipo === 'Combo';
@@ -181,6 +237,7 @@
       const chips = esq.extras.map(x => {
         if(protFija && x.k === 'proteccion') return '';
         if(protFija && x.k === 'marco_decorativo' && !s.proteccion) return '';
+        if(x.k === 'mas_hojas' && esSoloProt(prod)) return '';
         return `<button type="button" class="tchip ${s[x.k] ? 'on' : ''}" data-k="${x.k}" aria-pressed="${!!s[x.k]}">${TICK}${esc(x.label)}</button>`;
       }).join('');
       if(protFija) html += `<div class="field"><span class="field-label">Protección</span><div class="prot-fija ${s.proteccion ? 'si' : ''}">${s.proteccion ? 'Con protección' : 'Sin protección'}</div><div class="field-hint">Viene del modelo. Para otra opción, elige otro modelo.</div></div>`;
@@ -191,6 +248,17 @@
       html += `<div class="field" id="campoProt"><label class="field-label" for="pProt">Monto de la protección</label>
         <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="pProt" data-precio-extra type="text" inputmode="decimal" autocomplete="off" value="${esc(prod.extraProteccion || '')}"></div>
         <div class="field-error">Escribe cuánto cuesta la protección</div></div>`;
+    }
+    if(pideMontoSoloProt(prod)){
+      html += `<div class="field" id="campoSoloProt"><label class="field-label" for="pSoloProt">Precio de la protección sola</label>
+        <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="pSoloProt" type="text" inputmode="decimal" autocomplete="off" value="${esc(prod.extraSoloProt || '')}"></div>
+        <div class="field-hint">Solo la protección, sin ventana. No se instala.</div>
+        <div class="field-error">Escribe cuánto cuesta la protección sola</div></div>`;
+    }
+    if(pideMontoMarco(prod, modelo)){
+      html += `<div class="field" id="campoMarco"><label class="field-label" for="pMarco">Monto del marco decorativo</label>
+        <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="pMarco" type="text" inputmode="decimal" autocomplete="off" value="${esc(prod.extraMarco || '')}"></div>
+        <div class="field-error">Escribe cuánto cuesta el marco decorativo</div></div>`;
     }
     const zona = esq.grupos.filter(g => g.zona && grupoActivo(g, s));
     if(zona.length){
@@ -226,8 +294,10 @@
     }
     if(el.dataset.texto){ prod.estado[el.dataset.texto] = el.value; return false; }
     if(el.id === 'pProt'){ prod.extraProteccion = el.value; const c = document.getElementById('campoProt'); if(c) c.classList.remove('invalid'); return true; }
+    if(el.id === 'pSoloProt'){ prod.extraSoloProt = el.value; const c = document.getElementById('campoSoloProt'); if(c) c.classList.remove('invalid'); return true; }
+    if(el.id === 'pMarco'){ prod.extraMarco = el.value; const c = document.getElementById('campoMarco'); if(c) c.classList.remove('invalid'); return true; }
     return false;
   }
 
-  window.SpecsProducto = { TARIFA_VENTANA, PRECIO_MANILLON, ECOBEL_COMBO, calcular, pideMontoProteccion, optsHtml, optsCuerpo, specsHtml, tocar, escribir, faltaEnModelo, faltanEn, guardarAtajoMedidas };
+  window.SpecsProducto = { TARIFA_VENTANA, PRECIO_MANILLON, ECOBEL_COMBO, calcular, pideMontoProteccion, pideMontoMarco, esSoloProt, montosFaltan, montosEsp, optsHtml, optsCuerpo, specsHtml, tocar, escribir, faltaEnModelo, faltanEn, guardarAtajoMedidas };
 })();

@@ -230,7 +230,6 @@
 
   // Especificaciones y precio: el mismo motor que usa Producción (specs-producto.js)
   const calcular = (it) => SP.calcular(it, modeloDe(it));
-  const pideMontoProteccion = (it) => SP.pideMontoProteccion(it, modeloDe(it));
   const specsHtml = () => SP.specsHtml(prod, modeloDe(prod), { modo, marcar: !!prod.marcar, atajo: true });
 
   function cantidadHtml(max){
@@ -365,7 +364,7 @@
     prodSucio = true;
     const el = e.target;
     if(el.dataset.atajo !== undefined){ const er = $('atajoError'); if(er) er.style.display = ''; return; }
-    if(el.dataset.mkey || el.dataset.texto || el.id === 'pProt'){ if(SP.escribir(prod, el)) refrescarPrecio(); return; }
+    if(el.dataset.mkey || el.dataset.texto || el.id === 'pProt' || el.id === 'pSoloProt' || el.id === 'pMarco'){ if(SP.escribir(prod, el)) refrescarPrecio(); return; }
     if(el.id === 'pPrecio'){ prod.precio = el.value; prod.precioManual = true; $('campoPrecio').classList.remove('invalid'); return; }
     if(el.id === 'pNombre'){ prod.nombre = el.value; if($('campoMedNombre')) $('campoMedNombre').classList.remove('invalid'); return; }
     if(el.id === 'pDesc'){ prod.descripcion = el.value; }
@@ -385,7 +384,7 @@
     let ok = true;
     if(prod.origen === 'medida' && !prod.tipo){ $('campoMedTipo').classList.add('invalid'); $('campoMedTipo').scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     if($('campoMedNombre') && !String(prod.nombre || '').trim()){ $('campoMedNombre').classList.add('invalid'); ok = false; }
-    if($('campoProt') && !(montoOrNull(prod.extraProteccion) > 0)){ $('campoProt').classList.add('invalid'); ok = false; }
+    SP.montosFaltan(prod, modeloDe(prod)).forEach(id => { if($(id)){ $(id).classList.add('invalid'); ok = false; } });
     const precio = montoOrNull($('pPrecio').value);
     if(!(precio > 0)){ $('campoPrecio').classList.add('invalid'); ok = false; }
     const falta = SP.faltaEnModelo(prod, modeloDe(prod));
@@ -573,9 +572,9 @@
         tipo: it.tipo,
         nombre: it.nombre,
         especificaciones: it.origen === 'medida'
-          ? Object.assign({}, conSpecs(it) ? it.especificaciones : {}, conSpecs(it) && it.color ? { color: it.color } : {}, { descripcion: it.descripcion || '' })
+          ? Object.assign({}, conSpecs(it) ? it.especificaciones : {}, conSpecs(it) && it.color ? { color: it.color } : {}, conSpecs(it) ? SP.montosEsp(it, null) : {}, { descripcion: it.descripcion || '' })
           : Object.assign({}, it.especificaciones, it.color ? { color: it.color } : {},
-              it.origen === 'catalogo' && pideMontoProteccion(it) ? { monto_proteccion: montoOrNull(it.extraProteccion) } : {}),
+              it.origen === 'catalogo' ? SP.montosEsp(it, modeloDe(it)) : {}),
         foto: it.foto || null,
         precio_unitario: montoOrNull(it.precio) || 0,
         cantidad: it.cantidad || 1
@@ -928,12 +927,12 @@
       if(it.a_medida){
         const conTipo = TIPOS.includes(it.tipo);
         return Object.assign(base, { origen:'medida', descripcion: e.descripcion || '', precioManual:true,
-          color: conTipo ? (e.color || null) : null, especificaciones: conTipo ? e : {}, estado: conTipo ? estadoDesdeEspecificaciones(it.tipo, e, 'pedido', true) : {} });
+          color: conTipo ? (e.color || null) : null, especificaciones: conTipo ? e : {}, estado: conTipo ? estadoDesdeEspecificaciones(it.tipo, e, 'pedido', true) : {}, extraSoloProt: e.monto_proteccion_sola || '' });
       }
       if(it.pieza_id) return Object.assign(base, { origen:'pieza', pieza_id: it.pieza_id, catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e, precioManual:true, fijo: !cot });
       // guardado: ya estaba en la venta, conserva sus medidas y su protección (las reglas nuevas son para lo que se agrega)
       return Object.assign(base, { origen:'catalogo', catalogo_id: it.catalogo_id, color: e.color || null, especificaciones: e, guardado:true,
-        estado: estadoDesdeEspecificaciones(it.tipo, e, 'pedido', true), extraProteccion: e.monto_proteccion || '', precioManual:true });
+        estado: estadoDesdeEspecificaciones(it.tipo, e, 'pedido', true), extraProteccion: e.monto_proteccion || '', extraSoloProt: e.monto_proteccion_sola || '', extraMarco: e.monto_marco || '', marcoConMonto: e.monto_marco != null, precioManual:true });
     });
     auto.nombre = auto.tel = auto.ced = false;
     if(!cot) $('avisoBorrador').innerHTML = `<div class="borrador"><span>Es una venta confirmada: lo que cambies se refleja en el pedido y el PDF.</span></div>`;

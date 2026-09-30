@@ -626,7 +626,7 @@
     else {
       if(!o.modelo.categoria_pago_id && o.cat == null) falla('campoOCat');
       if(o.sede == null) falla('campoOSede');
-      if($('campoProt') && !(montoOrNull(o.prod.extraProteccion) > 0)) falla('campoProt');
+      SP.montosFaltan(o.prod, o.modelo).forEach(falla);
       if(!(montoOrNull($('fPrecio').value) > 0)) falla('campoPrecio');
       const falta = SP.faltaEnModelo(o.prod, o.modelo);
       if(falta){ toast(falta, 'error'); return; }
@@ -640,7 +640,7 @@
     const precio = montoOrNull($('fPrecio').value);
     const esp = Object.assign({}, especificacionesDesdeEstado(o.prod.tipo, o.prod.estado, 'pedido'),
       o.prod.color ? { color: o.prod.color } : {},
-      SP.pideMontoProteccion(o.prod, o.modelo) ? { monto_proteccion: montoOrNull(o.prod.extraProteccion) } : {});
+      SP.montosEsp(o.prod, o.modelo));
     const btn = $('btnCrearOrden');
     enviandoOrden = true;
     btn.disabled = true;

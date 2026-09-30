@@ -91,18 +91,21 @@
     if(e.alto && e.ancho) add(combo ? 'Puerta' : 'Medidas', medidas(e));
     if(combo && e.ventanas_alto && e.ventanas_ancho) add('2 ventanas y 2 protecciones', medidas({ alto:e.ventanas_alto, ancho:e.ventanas_ancho }) + ' c/u', true);
     if(combo && ventanasOtroColor(e)) add('Color de las ventanas', e.ventanas_color);
-    if(e.aluminio) add('Aluminio', e.aluminio);
+    const soloProt = e.aluminio === 'Solo protección';
+    if(soloProt) add('Qué se hace', 'Solo la protección (sin ventana)', true);
+    else if(e.aluminio) add('Aluminio', e.aluminio);
     if(combo && e.variante) add('Protección en la puerta', e.variante === 'Con protección en puerta' ? 'Sí' : 'No');
     if(e.vidrio_o_farquilla === 'Farquilla') add('Vidrio o farquilla', 'Farquilla');
     else if(e.vidrio_o_farquilla === 'Vidrio') add('Vidrio', e.color_vidrio || 'Sí');
-    if(e.papel_ahumado === true) add('Papel ahumado', e.color_ahumado || 'Sí');
+    if(soloProt){}
+    else if(e.papel_ahumado === true) add('Papel ahumado', e.color_ahumado || 'Sí');
     else if(e.papel_ahumado === false) add('Papel ahumado', 'Sin');
     if(e.manillon === true) add('Manillón', e.manillon_tipo || 'Sí');
     else if(e.manillon === false) add('Manillón', 'Sin');
     if(e.cerradura) add('Cerradura', e.cerradura === 'Personalizada' ? (e.cerradura_detalle || 'Personalizada') : e.cerradura);
-    if(e.proteccion) add('Protección', 'Sí');
+    if(e.proteccion && !soloProt) add('Protección', 'Sí');
     if(e.proteccion_sentido) add('La protección abre a la', e.proteccion_sentido);
-    if(e.marco_decorativo) add(t.tipo === 'Ventana' ? 'Marco en protección' : 'Marco decorativo', 'Sí');
+    if(e.marco_decorativo) add(t.tipo === 'Ventana' && !soloProt ? 'Marco en protección' : 'Marco decorativo', 'Sí');
     if(e.mas_hojas) add('Hojas', 'Más de 2');
     if(e.sentido) add('Abre a la', e.sentido);
     if(e.posicion) add(t.tipo === 'Portón' ? 'Instalación' : 'Apertura', e.posicion);
