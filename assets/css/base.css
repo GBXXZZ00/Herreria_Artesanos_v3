@@ -38,6 +38,10 @@ body{
   overscroll-behavior-x:none;
 }
 img{max-width:100%;display:block}
+/* Fotos de lista: aparecen con un fundido corto cuando llegan (el fondo gris del cuadro espera) */
+img.ah-img{opacity:0;transition:opacity 200ms var(--ease-out)}
+img.ah-img.cargada{opacity:1}
+@media (prefers-reduced-motion:reduce){img.ah-img{transition:none}}
 button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;padding:0}
 /* 16px evita que iPhone haga zoom al tocar un campo */
 input,select,textarea{font:inherit;font-size:16px;color:var(--ink);max-width:100%}

@@ -103,7 +103,7 @@
   function pintarItems(){
     $('items').innerHTML = items.length ? items.map((it, i) => `
       <div class="item ${faltaItem(it) ? 'falta' : ''}" style="--i:${i}">
-        <div class="item-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="">` : iconoTipo(it.tipo, 26)}</div>
+        <div class="item-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 26)}</div>
         <div class="item-txt">
           <div class="item-nombre">${esc(it.nombre)}</div>
           <div class="item-det">${esc(detalleItem(it))}</div>
@@ -165,7 +165,7 @@
     $('listaModelos').innerHTML = lista.length ? lista.map(m => {
       const f = fotoModelo(m);
       return `<button class="elegir" type="button" data-modelo="${m.id}">
-        <span class="item-foto">${f ? `<img src="${esc(f)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 24)}</span>
+        <span class="item-foto">${f ? window.AH.imgMini(f, "", m.tipo) : iconoTipo(m.tipo, 24)}</span>
         <span style="min-width:0"><span class="elegir-t">${esc(m.nombre)}</span><span class="elegir-s">${esc(m.tipo)}</span></span>
         <span class="elegir-p">${m.tipo === 'Ventana' ? 'Por m²' : dinero(m.precio_base)}</span>
       </button>`;
@@ -196,7 +196,7 @@
       const m = modelos.find(x => x.id === p.catalogo_id);
       const f = fotoPieza(p, m);
       return `<button class="elegir" type="button" data-pieza="${p.id}">
-        <span class="item-foto">${f ? `<img src="${esc(f)}" alt="" loading="lazy">` : iconoTipo(m ? m.tipo : '', 24)}</span>
+        <span class="item-foto">${f ? window.AH.imgMini(f, "", m && m.tipo) : iconoTipo(m ? m.tipo : '', 24)}</span>
         <span style="min-width:0"><span class="elegir-t">${esc(m ? m.nombre : 'Pieza')}</span><span class="elegir-s">${esc([p.color, nombreSede(p.sede_id), p.cantidad > 1 ? p.cantidad + ' en tienda' : ''].filter(Boolean).join(' · '))}</span></span>
         <span class="elegir-p">${dinero(p.precio)}</span>
       </button>`;
@@ -284,7 +284,7 @@
       const foto = prod.origen === 'pieza' ? prod.foto : fotoModelo(m, prod.color);
       $('prodTitulo').textContent = prodIndex == null ? (prod.origen === 'pieza' ? 'Pieza de entrega inmediata' : 'Producto del catálogo') : 'Editar producto';
       html = `<div class="prod-cab">
-          <div class="item-foto">${foto ? `<img src="${esc(foto)}" alt="">` : iconoTipo(prod.tipo, 28)}</div>
+          <div class="item-foto">${foto ? window.AH.imgMini(foto, "", prod.tipo) : iconoTipo(prod.tipo, 28)}</div>
           <div><div class="prod-nombre">${esc(prod.nombre)}</div><div class="prod-tipo">${esc(prod.tipo)}${prod.origen === 'pieza' ? ' · Entrega inmediata' : ''}</div></div>
         </div>`;
       if(prod.origen === 'pieza'){
@@ -551,9 +551,8 @@
     for(const it of items){
       if(it.origen !== 'medida' || !it.fotoBlob) continue;
       const path = `ventas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-      const { error } = await db.storage.from('catalogo-fotos').upload(path, it.fotoBlob, { contentType:'image/jpeg' });
-      if(error) throw new Error('No se pudo subir la foto: ' + error.message);
-      it.foto = db.storage.from('catalogo-fotos').getPublicUrl(path).data.publicUrl;
+      try{ it.foto = await window.AH.subirFoto('catalogo-fotos', path, it.fotoBlob); }
+      catch(error){ throw new Error('No se pudo subir la foto: ' + error.message); }
       delete it.fotoBlob;
     }
   }

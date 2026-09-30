@@ -614,7 +614,87 @@
     if(img && !img.classList.contains('off')) verFoto(img.getAttribute('src'));
   });
 
+  // ---------------------------------------------------------------------------
+  // Fotos chiquitas para las listas (la grande solo al abrirla)
+  // ---------------------------------------------------------------------------
+  // Cada foto de catalogo-fotos y etapas-fotos tiene su copia chiquita en <bucket>/mini/<misma ruta>.
+  const RE_FOTO = /\/storage\/v1\/object\/public\/(catalogo-fotos|etapas-fotos)\/(?!mini\/)/;
+  function miniDe(url){
+    if(!url || typeof url !== 'string' || !RE_FOTO.test(url)) return url;
+    return url.replace(RE_FOTO, (m, b) => `/storage/v1/object/public/${b}/mini/`);
+  }
+  // <img> de lista: pide la chiquita; si no existe todavía, usa la grande; si falla, reintenta y si no, el ícono
+  // Las que ya llegaron una vez se muestran sin fundido al repintar (sin parpadeo)
+  const yaCargadas = new Set();
+  function imgMini(url, alt, tipo){
+    const mini = miniDe(url);
+    return `<img class="ah-img${yaCargadas.has(mini) ? ' cargada' : ''}" src="${esc(mini)}"${mini !== url ? ` data-grande="${esc(url)}"` : ''}${tipo ? ` data-tipo="${esc(tipo)}"` : ''} alt="${esc(alt || '')}" loading="lazy" decoding="async">`;
+  }
+  document.addEventListener('load', (e) => {
+    const im = e.target;
+    if(im && im.tagName === 'IMG' && im.classList.contains('ah-img')){ im.classList.add('cargada'); yaCargadas.add(im.getAttribute('src')); }
+  }, true);
+  document.addEventListener('error', (e) => {
+    const im = e.target;
+    if(!im || im.tagName !== 'IMG' || !im.classList.contains('ah-img')) return;
+    const grande = im.getAttribute('data-grande');
+    if(grande){ im.removeAttribute('data-grande'); im.src = grande; return; }
+    if(!im.dataset.reintento){
+      im.dataset.reintento = '1';
+      const src = im.getAttribute('src');
+      setTimeout(() => { if(im.isConnected) im.src = src + (src.includes('?') ? '&' : '?') + 'r=' + Date.now(); }, 1500);
+      return;
+    }
+    const cont = im.parentNode;
+    const tipo = im.getAttribute('data-tipo');
+    im.remove();
+    if(cont && tipo && !cont.querySelector(':scope > svg')) cont.insertAdjacentHTML('afterbegin', iconoTipo(tipo, 22));
+  }, true);
+
+  // Sube una foto y su copia chiquita. Los nombres son únicos: el teléfono las guarda un año.
+  const MINI_LADO = 480, MINI_CALIDAD = 0.7, CACHE_ANO = '31536000';
+  async function subirFoto(bucket, path, blob){
+    const { error } = await window.db.storage.from(bucket).upload(path, blob, { contentType:'image/jpeg', cacheControl: CACHE_ANO });
+    if(error) throw error;
+    try{
+      if(typeof window.comprimirFoto === 'function'){
+        const mini = await window.comprimirFoto(blob, MINI_LADO, MINI_CALIDAD);
+        await window.db.storage.from(bucket).upload('mini/' + path, mini, { contentType:'image/jpeg', cacheControl: CACHE_ANO });
+      }
+    } catch(e){ /* sin la chiquita la lista usa la grande */ }
+    return window.db.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  }
+
+  // Las fotos que ya existían: un admin les prepara la copia chiquita (una vez, en segundo plano)
+  let preparando = false;
+  async function prepararMinis(){
+    if(preparando || typeof window.comprimirFoto !== 'function') return;
+    try{ if(sessionStorage.getItem('ah_minis_ok')) return; } catch(e){}
+    preparando = true;
+    try{
+      const { data, error } = await window.db.rpc('fotos_sin_mini');
+      if(error || !Array.isArray(data)) return;
+      if(!data.length){ try{ sessionStorage.setItem('ah_minis_ok', '1'); } catch(e){} return; }
+      toast(`Preparando ${data.length} fotos para que carguen rápido`);
+      let hechas = 0;
+      for(const f of data){
+        try{
+          const url = window.db.storage.from(f.bucket).getPublicUrl(f.nombre).data.publicUrl;
+          const r = await fetch(url);
+          if(!r.ok) continue;
+          const mini = await window.comprimirFoto(await r.blob(), MINI_LADO, MINI_CALIDAD);
+          const { error: e2 } = await window.db.storage.from(f.bucket).upload('mini/' + f.nombre, mini, { contentType:'image/jpeg', cacheControl: CACHE_ANO });
+          if(!e2 || /exist|duplicate/i.test(e2.message || '')) hechas++;
+        } catch(e){ /* sigue con la próxima */ }
+      }
+      // una vez por sesión: si alguna vieja está dañada no se insiste (se reintenta en la próxima)
+      try{ sessionStorage.setItem('ah_minis_ok', '1'); } catch(e){}
+      if(hechas) toast('Fotos listas: ahora cargan más rápido', 'success');
+    } finally { preparando = false; }
+  }
+
   window.AH = {
+    miniDe, imgMini, subirFoto, prepararMinis,
     heroAttrs, heroZoom, actualizarFondoHero, verFoto,
     TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,

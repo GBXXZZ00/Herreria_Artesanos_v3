@@ -117,7 +117,7 @@
       <div class="card-wrap" style="--i:${Math.min(i, 12)}">
         <div class="card" role="button" tabindex="0" data-id="${esc(m.id)}">
           <div class="card-photo">
-            ${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 34)}
+            ${foto ? window.AH.imgMini(foto, "", m.tipo) : iconoTipo(m.tipo, 34)}
             ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
             ${dots.length > 1 ? `<span class="card-dots">${dots.map(d => `<span class="swatch ${d.sw}"></span>`).join('')}</span>` : ''}
             ${conBorrar ? `<button class="card-del" data-borrar="${esc(m.id)}" aria-label="Eliminar ${esc(m.nombre)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>` : ''}
@@ -310,7 +310,7 @@
       const extra = resumenSpecs(m.tipo, e, true).slice(0, 2).map(s => s.t).join(' · ');
       return `
         <button class="linea" data-pieza="${p.id}">
-          <span class="linea-foto">${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 24)}</span>
+          <span class="linea-foto">${foto ? window.AH.imgMini(foto, "", m.tipo) : iconoTipo(m.tipo, 24)}</span>
           <span class="linea-txt">
             <span class="linea-t1">${p.color ? `<span class="swatch ${SW_COLOR[p.color] || ''}"></span>` : ''}${esc(t1)}${p.cantidad > 1 ? ` <span class="linea-cant">×${p.cantidad}</span>` : ''}</span>
             <span class="linea-t2" style="display:block">${esc(nombreSede(p.sede_id))}${extra ? ' · ' + esc(extra) : ''}</span>
@@ -957,9 +957,8 @@
       let foto = fotosExistentes.Pieza || null;
       if(fotosNuevas.Pieza){
         const path = `piezas/${slug(m.nombre)}-${Date.now()}.jpg`;
-        const { error: upErr } = await db.storage.from('catalogo-fotos').upload(path, fotosNuevas.Pieza.blob, { contentType:'image/jpeg' });
-        if(upErr) throw new Error('No se pudo subir la foto: ' + upErr.message);
-        foto = db.storage.from('catalogo-fotos').getPublicUrl(path).data.publicUrl;
+        try{ foto = await window.AH.subirFoto('catalogo-fotos', path, fotosNuevas.Pieza.blob); }
+        catch(upErr){ throw new Error('No se pudo subir la foto: ' + upErr.message); }
       }
       const fila = {
         catalogo_id: m.id,
@@ -1106,9 +1105,8 @@
       for(const k of Object.keys(t.nuevas)){
         if(t.subidas[k]) continue;
         const path = `modelos/${s}-${k.toLowerCase()}-${Date.now()}.jpg`;
-        const { error: upErr } = await db.storage.from('catalogo-fotos').upload(path, t.nuevas[k].blob, { contentType:'image/jpeg' });
-        if(upErr) throw new Error('No se pudo subir la foto: ' + upErr.message);
-        t.subidas[k] = db.storage.from('catalogo-fotos').getPublicUrl(path).data.publicUrl;
+        try{ t.subidas[k] = await window.AH.subirFoto('catalogo-fotos', path, t.nuevas[k].blob); }
+        catch(upErr){ throw new Error('No se pudo subir la foto: ' + upErr.message); }
       }
       const payload = { ...t.payload, fotos:{ ...t.existentes, ...t.subidas } };
       const q = t.editId != null

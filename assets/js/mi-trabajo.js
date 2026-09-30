@@ -53,7 +53,7 @@
     pagos = rp.data || {};
   }
 
-  const fotoHtml = (t, size) => t.foto ? `<img src="${esc(t.foto)}" alt="${esc(t.producto)}" loading="lazy">` : iconoTipo(t.tipo, size);
+  const fotoHtml = (t, size) => t.foto ? window.AH.imgMini(t.foto, t.producto, t.tipo) : iconoTipo(t.tipo, size);
   // La foto puede ser de otro color si el modelo no tiene la de ese: se dice arriba de la foto
   // En las ventanas o protecciones de un Combo lo que importa es el color de las ventanas
   const fotoInfo = (t) => {
@@ -379,7 +379,7 @@
     return (mismoMes ? l.getDate() : fechaCorta(lunesIso)) + ' al ' + fechaCorta(isoDia(sab));
   }
   const refDe = (m) => m.interna ? 'Exhibición' : 'N° ' + m.venta_id;
-  const miniFoto = (url, tipo) => `<span>${url ? `<img src="${esc(url)}" alt="" loading="lazy">` : iconoTipo(tipo, 18)}</span>`;
+  const miniFoto = (url, tipo) => `<span>${url ? window.AH.imgMini(url, "", tipo) : iconoTipo(tipo, 18)}</span>`;
   // Cada trabajo hecho: la foto del catálogo y la suya, juntas. Al tocarlo se ve el detalle.
   function filaTrabajo(m){
     const monto = noSePaga(m) ? '<span class="pg-mov-m gris">No se paga</span>' : m.monto == null ? '<span class="pg-mov-m gris">Por definir</span>' : `<span class="pg-mov-m">${esc(dinero(m.monto))}</span>`;
@@ -719,9 +719,7 @@
     try{
       if(!fotoSubida || fotoSubida.blob !== fotoBlob){
         const path = new Date().toISOString().slice(0, 7) + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
-        const { error: errSub } = await db.storage.from('etapas-fotos').upload(path, fotoBlob, { contentType:'image/jpeg' });
-        if(errSub) throw errSub;
-        fotoSubida = { blob: fotoBlob, url: db.storage.from('etapas-fotos').getPublicUrl(path).data.publicUrl };
+        fotoSubida = { blob: fotoBlob, url: await window.AH.subirFoto('etapas-fotos', path, fotoBlob) };
       }
       const { data, error } = await db.rpc('marcar_etapa_terminada', { eid: terminarId, foto_url: fotoSubida.url });
       if(error) throw error;

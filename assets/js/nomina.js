@@ -93,7 +93,7 @@
     items[it.id] = it;
     const monto = it.oficio === 'instalar' ? `<span class="mov-m gris">No se paga${CHEV}</span>` : it.monto == null ? `<span class="mov-m gris rojo">Por definir${CHEV}</span>` : `<span class="mov-m">${esc(dinero(it.monto))}${CHEV}</span>`;
     return `<button class="mov" type="button" data-item="${it.id}">
-      <span class="mov-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="" loading="lazy">` : iconoTipo(it.tipo, 20)}</span>
+      <span class="mov-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 20)}</span>
       <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</span>
       <span class="mov-s">${refItem(it)} · ${esc(fechaHora(it.fecha))}</span></span>${monto}</button>`;
   }
@@ -240,7 +240,7 @@
         <div class="d-dato"><span>Categoría</span><b>${esc(it.categoria || 'Sin categoría')}</b></div>
       </div>
       ${specs.length ? `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}
-      ${it.foto_trabajo ? `<div class="d-suya"><button type="button" data-ver-foto="${esc(it.foto_trabajo)}" aria-label="Ver foto"><img src="${esc(it.foto_trabajo)}" alt=""></button>Foto que subió al terminar. Tócala para verla grande.</div>` : ''}
+      ${it.foto_trabajo ? `<div class="d-suya"><button type="button" data-ver-foto="${esc(it.foto_trabajo)}" aria-label="Ver foto">${window.AH.imgMini(it.foto_trabajo)}</button>Foto que subió al terminar. Tócala para verla grande.</div>` : ''}
       ${it.interna ? '' : `<a class="d-link" href="ventas.html?abrir=${esc(it.venta_id)}">Ver la venta N° ${esc(it.venta_id)}</a>`}`;
     const body = $('itemBody'); if(body && !repintar) body.scrollTop = 0;
     if(!repintar) abrirHoja('sheetItem');

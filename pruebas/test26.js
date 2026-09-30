@@ -195,7 +195,7 @@ async function entrar(b,user,rol,nombre){
  await t.click('#btnTConfirmar');await t.waitForTimeout(900);
  ok('Si falla: lo dice, la hoja sigue abierta y conserva la foto',(await t.textContent('#toast')).includes('Sin conexión') && await t.isVisible('#sheetTerminarT') && !!(await t.$('#btnTFoto img')) && !(await t.isDisabled('#btnTConfirmar')));
  await t.click('#btnTConfirmar');await t.waitForTimeout(900);
- ok('Al reintentar no sube la foto otra vez',llamadas.filter(x=>x[0]==='subir').length===1);
+ ok('Al reintentar no sube la foto otra vez (la grande y su chiquita, una vez)',llamadas.filter(x=>x[0]==='subir'&&!x[1].includes('/mini/')).length===1&&llamadas.filter(x=>x[0]==='subir'&&x[1].includes('/etapas-fotos/mini/')).length===1,llamadas.filter(x=>x[0]==='subir').map(x=>x[1].split('/object/')[1]));
  const lt=llamadas.filter(x=>x[0]==='terminar'&&x[1].eid===501).pop();
  ok('Subió la foto y la mandó al terminar',llamadas.some(x=>x[0]==='subir') && lt && lt[1].foto_url.includes('/etapas-fotos/'),lt&&lt[1]);
  ok('Le dice cuánto sumó',(await t.textContent('#toast')).includes('Sumaste $25'));

@@ -342,7 +342,7 @@
     }
     html += acordeon('productos', 'Productos', `${v.items.length} ${v.items.length === 1 ? 'producto' : 'productos'}`,
       v.items.map(it => `<div class="f-item">
-        <div class="f-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="" loading="lazy">` : iconoTipo(it.tipo, 24)}</div>
+        <div class="f-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 24)}</div>
         <div style="flex:1;min-width:0"><div class="f-item-t">${esc(it.nombre)}</div>
           <div class="f-item-d">${esc(AV.detalleItem(it))}</div>
           <div class="f-item-p"><span>${it.cantidad} × ${dinero(it.precio_unitario)}</span><b>${dinero(it.precio_unitario * it.cantidad)}</b></div></div>
@@ -640,7 +640,7 @@
       const it = d.it;
       const grupos = gruposDet(it, d.s);
       return `<div class="det-item">
-        <div class="det-cab"><span class="det-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="">` : iconoTipo(it.tipo, 22)}</span>
+        <div class="det-cab"><span class="det-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 22)}</span>
           <span style="min-width:0"><span class="det-nom">${esc(it.nombre)}</span><span class="det-tipo">${esc(it.tipo)}${it.cantidad > 1 ? ' · ' + it.cantidad + ' unidades' : ''}</span></span></div>
         ${grupos.map(g => detGrupoHtml(d, i, g)).join('')}
       </div>`;

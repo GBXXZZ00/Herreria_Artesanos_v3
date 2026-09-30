@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Herrería Artesanos · Catálogo</title>
-<link rel="stylesheet" href="assets/css/base.css?v=60">
+<link rel="stylesheet" href="assets/css/base.css?v=61">
 <style>
   /* Letra más grande: lo usan clientes de todas las edades */
   body{font-size:16px}
@@ -161,9 +161,9 @@
   <div class="sheet-foot" id="detalleFoot"></div>
 </section>
 
-<script src="assets/vendor/supabase.js?v=60"></script>
-<script src="assets/js/supabase-client.js?v=60"></script>
-<script src="assets/js/comun.js?v=60"></script>
+<script src="assets/vendor/supabase.js?v=61"></script>
+<script src="assets/js/supabase-client.js?v=61"></script>
+<script src="assets/js/comun.js?v=61"></script>
 <script>
 (function(){
   'use strict';
@@ -207,7 +207,7 @@
   function collageHtml(fotos, tipo){
     const f = [...new Set(fotos.filter(Boolean))].slice(0, 6);
     if(!f.length) return iconoTipo(tipo || 'Puerta Multilock', 40);
-    return `<span class="collage n${f.length}">${f.map(u => `<img src="${esc(u)}" alt="" loading="lazy">`).join('')}</span>`;
+    return `<span class="collage n${f.length}">${f.map(u => window.AH.imgMini(u)).join('')}</span>`;
   }
   const ICON_LISTO = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>';
   const ICON_PIN2 = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
@@ -287,7 +287,7 @@
     return `
       <button class="card" data-id="${m.id}">
         <div class="card-photo">
-          ${foto ? `<img src="${esc(foto)}" alt="${esc(m.nombre)}" loading="lazy">` : iconoTipo(m.tipo, 36)}
+          ${foto ? window.AH.imgMini(foto, m.nombre, m.tipo) : iconoTipo(m.tipo, 36)}
           ${m.badge ? `<span class="card-badge">${esc(m.badge)}</span>` : ''}
           ${n ? `<span class="tag-disp">Entrega inmediata${n > 1 ? ' · ' + n : ''}</span>` : `<span class="tag-agotado">Por encargo</span>`}
         </div>
@@ -348,7 +348,7 @@
       const t1 = [p.color, medidas(p.especificaciones)].filter(Boolean).join(' · ') || m.tipo;
       return `
         <button class="linea" data-pieza="${p.id}">
-          <span class="linea-foto">${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 26)}</span>
+          <span class="linea-foto">${foto ? window.AH.imgMini(foto, "", m.tipo) : iconoTipo(m.tipo, 26)}</span>
           <span class="linea-txt">
             <span class="linea-t1">${p.color ? `<span class="swatch ${SW_COLOR[p.color] || ''}"></span>` : ''}${esc(t1)}</span>
             ${nombreSede(p.sede_id) ? `<span class="linea-t2" style="display:block">Está en ${esc(nombreSede(p.sede_id))}</span>` : ''}

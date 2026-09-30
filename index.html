@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=60">
+<link rel="stylesheet" href="assets/css/base.css?v=61">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -545,13 +545,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=60"></script>
-<script src="assets/js/supabase-client.js?v=60"></script>
-<script src="assets/js/img-compress.js?v=60"></script>
-<script src="assets/js/comun.js?v=60"></script>
-<script src="assets/js/avisos.js?v=60"></script>
-<script src="assets/js/sesion.js?v=60"></script>
-<script src="assets/js/mi-trabajo.js?v=60"></script>
+<script src="assets/vendor/supabase.js?v=61"></script>
+<script src="assets/js/supabase-client.js?v=61"></script>
+<script src="assets/js/img-compress.js?v=61"></script>
+<script src="assets/js/comun.js?v=61"></script>
+<script src="assets/js/avisos.js?v=61"></script>
+<script src="assets/js/sesion.js?v=61"></script>
+<script src="assets/js/mi-trabajo.js?v=61"></script>
 <script>
 (function(){
   'use strict';
@@ -1025,6 +1025,8 @@
     $('cuentaNombre').textContent = nombre;
     $('cuentaRol').textContent = nombreRol(p && p.rol);
     $('grupoModulosAdmin').classList.toggle('hidden', !(p && p.rol === 'admin'));
+    // Las fotos que aún no tienen su copia chiquita se preparan solas, en segundo plano
+    if(p && p.rol === 'admin') setTimeout(() => window.AH.prepararMinis(), 2500);
     // Sin señal en el primer ingreso: no se adivina qué eres, se pide reintentar
     document.body.classList.toggle('sin-perfil', !(p && p.rol));
     if(!(p && p.rol)){

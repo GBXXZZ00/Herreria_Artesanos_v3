@@ -559,10 +559,10 @@
   }
   function filaTrabajo(it, i, lista){
     return `<button class="mov" type="button" data-trabajo="${i}" data-lista="${lista || 'esta'}">
-      <span class="mov-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="" loading="lazy">` : iconoTipo(it.tipo, 20)}</span>
+      <span class="mov-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 20)}</span>
       <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${it.cantidad > 1 ? ' ×' + esc(it.cantidad) : ''}</span>
       <span class="mov-s">${it.interna ? '<b>Exhibición</b>' + (it.sede ? ' · ' + esc(it.sede) : '') : `<b>${esc(it.cliente || 'Cliente')}</b> · N° ${esc(it.venta_id)}`} · ${esc(fechaCorta(it.fecha))}</span></span>
-      ${it.foto_trabajo ? `<span class="mov-foto suya" style="width:38px;height:38px;margin-left:auto"><img src="${esc(it.foto_trabajo)}" alt="Foto del trabajo" loading="lazy"></span>` : ''}${CHEV}</button>`;
+      ${it.foto_trabajo ? `<span class="mov-foto suya" style="width:38px;height:38px;margin-left:auto">${window.AH.imgMini(it.foto_trabajo, "Foto del trabajo")}</span>` : ''}${CHEV}</button>`;
   }
   function pintarEntrega(){
     const e = entregaDe(rev.id);
@@ -659,7 +659,7 @@
         <div class="d-dato"><span>Categoría</span><b>${esc(it.categoria || 'Sin categoría')}</b></div>
       </div>
       ${specs.length ? `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}
-      ${it.foto_trabajo ? `<div class="d-suya"><button type="button" data-ver-foto="${esc(it.foto_trabajo)}" aria-label="Ver foto"><img src="${esc(it.foto_trabajo)}" alt=""></button>Foto que subió al terminar. Tócala para verla grande.</div>` : ''}
+      ${it.foto_trabajo ? `<div class="d-suya"><button type="button" data-ver-foto="${esc(it.foto_trabajo)}" aria-label="Ver foto">${window.AH.imgMini(it.foto_trabajo)}</button>Foto que subió al terminar. Tócala para verla grande.</div>` : ''}
       ${it.interna ? '' : `<a class="d-link" href="ventas.html?abrir=${esc(it.venta_id)}">Ver la venta N° ${esc(it.venta_id)}</a>`}`;
     $('itemBody').scrollTop = 0;
     abrirHoja('sheetItem');

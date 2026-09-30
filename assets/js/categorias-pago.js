@@ -218,7 +218,7 @@
       else tag = '<span class="m-tag">Sin categoría</span>';
       const f = fotoModelo(m);
       return `<button class="m-fila ${sel ? 'sel' : ''}" type="button" data-mid="${m.id}" ${misma ? 'disabled' : ''} aria-pressed="${sel || misma}">
-        <span class="m-foto">${f ? `<img src="${esc(f)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 22)}</span>
+        <span class="m-foto">${f ? window.AH.imgMini(f, "", m.tipo) : iconoTipo(m.tipo, 22)}</span>
         <span class="m-txt"><span class="m-nom">${esc(m.nombre)}</span>${tag}</span>
         <span class="m-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
       </button>`;

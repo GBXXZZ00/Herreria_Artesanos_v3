@@ -278,7 +278,7 @@
     const color = (it.especificaciones || {}).color;
     return `<div class="p-item">
       <div class="p-item-cab">
-        <div class="p-item-foto">${fi.url ? `<img src="${esc(fi.url)}" alt="">` : iconoTipo(it.tipo, 22)}</div>
+        <div class="p-item-foto">${fi.url ? window.AH.imgMini(fi.url, "", it.tipo) : iconoTipo(it.tipo, 22)}</div>
         <div><div class="p-item-nom">${esc(it.nombre)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div><div class="p-item-cant">${esc(sub)}${color ? ' · ' + esc(color) : ''}</div>${catHtml(it)}</div>
       </div>
       ${fi.otroColor ? `<p class="p-foto-otra">${esc(etiquetaOtroColor(fi, it.tipo))}.${lectura ? '' : ` Sube la foto en ${esc(String(fi.color).toLowerCase())} en Catálogo.`}</p>` : ''}
@@ -512,7 +512,7 @@
       const foto = m ? fotoModelo(m, o.prod && o.prod.color) : null;
       html += `<div class="field" id="campoModelo"><span class="field-label">Modelo</span>
         <button class="f-link-box" type="button" id="btnModelo">
-          <span class="mini-foto">${foto ? `<img src="${esc(foto)}" alt="">` : (m ? iconoTipo(m.tipo, 20) : '')}</span>
+          <span class="mini-foto">${foto ? window.AH.imgMini(foto, "", m && m.tipo) : (m ? iconoTipo(m.tipo, 20) : '')}</span>
           <span style="min-width:0"><span class="mod-nom ${m ? '' : 'ph'}">${m ? esc(m.nombre) : 'Elige un modelo del catálogo'}</span>${m ? `<span class="mod-sub">${esc(m.tipo)}</span>` : ''}</span>
           <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
         </button>${fieldErr('eModelo', 'Elige el modelo')}</div>`;
@@ -601,7 +601,7 @@
     $('listaModelos').innerHTML = lista.length ? lista.map(m => {
       const f = fotoModelo(m);
       return `<button class="fila-mod" type="button" data-mid="${m.id}">
-        <span class="mini-foto">${f ? `<img src="${esc(f)}" alt="" loading="lazy">` : iconoTipo(m.tipo, 20)}</span>
+        <span class="mini-foto">${f ? window.AH.imgMini(f, "", m.tipo) : iconoTipo(m.tipo, 20)}</span>
         <span style="min-width:0"><span class="mod-nom">${esc(m.nombre)}</span><span class="mod-sub">${m.tipo === 'Ventana' ? 'Por m²' : dinero(m.precio_base)}${m.categoria_pago_id ? '' : ' · sin categoría de pago'}</span></span>
       </button>`;
     }).join('') : '<div class="vacio" style="padding:28px 10px"><p>Ningún modelo coincide.</p></div>';
