@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Depósito · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=58">
+<link rel="stylesheet" href="assets/css/base.css?v=59">
 <style>
   .page{padding-bottom:calc(var(--safe-b) + var(--nav-h) + 96px)}
   /* Materiales | Entregas: dos botones largos */
@@ -68,6 +68,8 @@
   .pill.gris{background:var(--surface-2);color:var(--ink-soft)}
   .btn-nuevo{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:14px;border-radius:14px;border:1.5px dashed var(--line-strong);color:var(--accent);font-size:15px;font-weight:800;transition:transform 140ms var(--ease-out)}
   .btn-nuevo:active{transform:scale(0.98)}
+  .btn-nuevo{white-space:nowrap}
+  @media (max-width:360px){ .btn-nuevo{font-size:13.5px} }
 
   /* Botón fijo para entregar */
   .pie-entregar{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + var(--safe-b) + 14px);z-index:24;display:flex;justify-content:center;padding:0 18px;pointer-events:none}
@@ -130,6 +132,12 @@
   .d-dato span{display:block;font-size:12px;color:var(--ink-soft);font-weight:700}
   .d-dato b{display:block;font-size:15px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .d-dato .pill{display:inline-block;font-size:12px}
+  .cg-fila{display:grid;grid-template-columns:1fr 96px;gap:10px;align-items:center;padding:8px 0}
+  .cg-fila + .cg-fila{border-top:1px solid var(--line)}
+  .cg-nom{font-size:15px;font-weight:800}
+  .cg-nom span{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .cg-in{height:44px;text-align:center}
+  .cg-in.mal{border-color:var(--danger)}
   .tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:18px 2px 4px}
   .caja-rara{margin-top:12px;padding:12px 14px;border-radius:14px;background:#FDF1EF;color:#B42318;font-size:14px;font-weight:700;line-height:1.4}
   .caja-nota{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:14px;line-height:1.4}
@@ -249,6 +257,27 @@
   <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarCompra">Guardar compra</button></div>
 </section>
 
+<!-- Compra grande (administrador): varios materiales de una factura -->
+<div class="sheet-scrim" id="scrimCompraGrande" data-cerrar="sheetCompraGrande"></div>
+<section class="sheet" id="sheetCompraGrande" role="dialog" aria-modal="true" aria-labelledby="cgTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="cgTitulo">Compra grande</h2>
+    <button class="icon-btn" data-cerrar="sheetCompraGrande" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field" id="campoCg"><span class="field-label">Cuántas unidades compraste de cada uno</span>
+      <p class="field-hint" style="margin:0 0 6px">Deja en blanco lo que no compraste.</p>
+      <div id="cgLista"></div>
+      <p class="field-error">Escribe al menos una cantidad (números enteros)</p></div>
+    <div class="field" id="campoCgCosto"><label class="field-label" for="cgCosto">Costo total de la factura (opcional)</label>
+      <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="cgCosto" type="text" inputmode="decimal" autocomplete="off"></div>
+      <p class="field-error">Revisa el monto</p></div>
+    <div class="field"><label class="field-label" for="cgNota">Nota (opcional)</label>
+      <input class="input" id="cgNota" type="text" maxlength="120" autocomplete="off" placeholder="Ferretería Zulia, factura 1234"></div>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarCg">Guardar compra</button></div>
+</section>
+
 <!-- Una entrega: los trabajos que hizo y la revisión de Ray -->
 <div class="sheet-scrim" id="scrimEntrega" data-cerrar="sheetEntrega"></div>
 <section class="sheet" id="sheetEntrega" role="dialog" aria-modal="true" aria-labelledby="entregaTitulo">
@@ -272,10 +301,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=58"></script>
-<script src="assets/js/supabase-client.js?v=58"></script>
-<script src="assets/js/comun.js?v=58"></script>
-<script src="assets/js/sesion.js?v=58"></script>
-<script src="assets/js/deposito.js?v=58"></script>
+<script src="assets/vendor/supabase.js?v=59"></script>
+<script src="assets/js/supabase-client.js?v=59"></script>
+<script src="assets/js/comun.js?v=59"></script>
+<script src="assets/js/sesion.js?v=59"></script>
+<script src="assets/js/deposito.js?v=59"></script>
 </body>
 </html>

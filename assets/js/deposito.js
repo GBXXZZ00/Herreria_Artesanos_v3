@@ -44,6 +44,12 @@
     t.setDate(t.getDate() - ((t.getDay() + 6) % 7));
     return iso(t);
   }
+  // Semana (domingo a sábado, con el nombre de su lunes) de una fecha
+  function semanaDe(ts){
+    const t = new Date(ts); t.setHours(0, 0, 0, 0); t.setDate(t.getDate() + 1);
+    t.setDate(t.getDate() - ((t.getDay() + 6) % 7));
+    return iso(t);
+  }
   function rangoSemana(lunesIso){
     const l = diaDe(lunesIso), s = new Date(l); s.setDate(s.getDate() + 5);
     return (l.getMonth() === s.getMonth() ? l.getDate() : corta(l)) + ' al ' + corta(s);
@@ -60,8 +66,26 @@
   const materialDe = (id) => (datos.materiales || []).find(m => m.id === id) || null;
   const entregaDe = (id) => (datos.entregas || []).find(e => e.id === id) || null;
   // La entrega anterior del mismo material al mismo trabajador (con ella se ve cuánto rindió)
-  const anteriorDe = (e) => (datos.entregas || []).filter(x => x.material_id === e.material_id && x.trabajador_id === e.trabajador_id
-    && (new Date(x.fecha) < new Date(e.fecha) || (x.fecha === e.fecha && x.id < e.id))).sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id - a.id)[0] || null;
+  const anteriorDe = (e) => {
+    const l = (datos.entregas || []).filter(x => x.material_id === e.material_id && x.trabajador_id === e.trabajador_id
+      && (new Date(x.fecha) < new Date(e.fecha) || (x.fecha === e.fecha && x.id < e.id))).sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id - a.id);
+    if(l[0]) return l[0];
+    // La anterior es de hace más de 12 semanas: el servidor la manda aparte
+    return e.ant ? { id: e.ant.ant_id, fecha: e.ant.fecha, trabajos: e.ant.trabajos } : null;
+  };
+  // Promedio de trabajos por unidad (entregas ya cerradas de ese material a ese trabajador, antes de esta)
+  function promedioDe(e){
+    const l = (datos.entregas || []).filter(x => x.material_id === e.material_id && x.trabajador_id === e.trabajador_id && !x.abierta && new Date(x.fecha) < new Date(e.fecha));
+    return l.length >= 2 ? Math.round(l.reduce((a, x) => a + x.trabajos, 0) / l.length * 10) / 10 : null;
+  }
+  // Trabajos pendientes (asignados y sin terminar) del trabajador que gastan ese material
+  const ESP_DE = { hierro:'herrero', masilla:'masilla_pintura', pintura:'masilla_pintura', detalles:'acabados', armar:'ventanero', instalar:'ventanero' };
+  function pendientesDe(tid, m){
+    const t = (datos.trabajadores || []).find(x => x.id === tid);
+    return ((t && t.pendientes) || []).filter(p => !m || !m.oficio || p.oficio === m.oficio || (!p.oficio && p.especialidad === ESP_DE[m.oficio]))
+      .reduce((a, p) => a + (p.n || 0), 0);
+  }
+  const num = (n) => String(n).replace('.', ',');
   const porRevisar = () => (datos.entregas || []).filter(e => e.estado === 'por_revisar');
 
   // ---------- Cargar ----------
@@ -130,7 +154,8 @@
         <span class="mat-n"><b>${esc(m.stock)}</b><span>${m.stock === 1 ? 'unidad' : 'unidades'}</span></span>
       </button>`;
     }).join('');
-    html += '</div>' + (datos.es_admin ? '<button class="btn-nuevo" type="button" data-nuevo-mat>+ Agregar material</button>' : '');
+    html += '</div>' + (datos.es_admin ? `<div class="pie-dos" style="margin-top:14px"><button class="btn-nuevo" type="button" data-nuevo-mat style="margin:0">+ Agregar material</button>
+      ${activos.length ? '<button class="btn-nuevo" type="button" data-compra-grande style="margin:0">Compra grande</button>' : ''}</div>` : '');
     $('cont').innerHTML = html;
     // La entrada en cascada solo la primera vez (no en cada repintada)
     if(!$('cont').classList.contains('ya')) setTimeout(() => $('cont').classList.add('ya'), 700);
@@ -154,8 +179,8 @@
   function filaEntrega(e){
     const m = materialDe(e.material_id);
     const est = ESTADO[e.estado] || ESTADO.por_revisar;
-    const ant = e.abierta ? anteriorDe(e) : null;
-    const uso = e.abierta ? `lleva ${trabajosTxt(e.trabajos)}${ant ? ' · con la anterior ' + trabajosTxt(ant.trabajos) : ''}` : `hizo ${trabajosTxt(e.trabajos)}`;
+    const ant = anteriorDe(e);
+    const uso = ant ? `con el anterior hizo ${trabajosTxt(ant.trabajos)}` : 'primera vez';
     return `<button class="ent" type="button" data-entrega="${e.id}">
       <span class="mat-ico" style="width:40px;height:40px;font-size:15px">${esc(inicial(m ? m.nombre : '?'))}</span>
       <span style="min-width:0"><span class="ent-t">${esc(m ? m.nombre : 'Material')} a ${esc(e.trabajador || '')}</span>
@@ -172,7 +197,7 @@
       const cerradas = l.filter(e => !e.abierta);
       const prom = cerradas.length ? Math.round(cerradas.reduce((a, e) => a + e.trabajos, 0) / cerradas.length * 10) / 10 : null;
       return `<div class="fila"><span>${esc(m ? m.nombre : 'Material')} · ${esc(plural(l.length, '1 recibido', 'recibidos'))}</span>
-        <b>${prom === null ? 'Aún con el primero' : esc(String(prom).replace('.', ',')) + ' trabajos c/u'}</b></div>`;
+        <b>${prom === null ? 'Aún con el primero' : esc(num(prom)) + ' trabajos c/u'}</b></div>`;
     }).join('');
   }
   function pintarEntregas(){
@@ -208,6 +233,7 @@
 
   $('cont').addEventListener('click', (e) => {
     if(e.target.closest('[data-nuevo-mat]')){ abrirMatForm(null); return; }
+    if(e.target.closest('[data-compra-grande]')){ abrirCompraGrande(); return; }
     const m = e.target.closest('[data-mat]');
     if(m){ abrirMaterial(+m.dataset.mat); return; }
     const en = e.target.closest('[data-entrega]');
@@ -247,7 +273,9 @@
         <button type="button" data-cambiar-mat>Cambiar</button></div>
       <div id="campoTrab">${trabajadores.length ? trabajadores.map(t => {
         const u = ultima(t.id);
-        const sub = u ? `Le diste uno el ${esc(fechaCorta(u.fecha))} · desde entonces <b>${esc(trabajosTxt(u.trabajos))}</b>` : 'Nunca le has dado este material';
+        const pend = pendientesDe(t.id, m);
+        const sub = (u ? `Con el que tiene (desde el ${esc(fechaCorta(u.fecha))}) hizo <b>${esc(trabajosTxt(u.trabajos))}</b>` : 'No ha recibido este material en 12 semanas')
+          + (pend ? ` · tiene ${esc(plural(pend, '1 pendiente', 'pendientes'))}` : '');
         return `<button class="tr ${ent.tid === t.id ? 'sel' : ''}" type="button" data-elegir-trab="${esc(t.id)}" aria-pressed="${ent.tid === t.id}">
           <span class="tr-av">${esc(inicial(t.nombre))}</span><span style="min-width:0"><span class="tr-t">${esc(t.nombre)}</span><span class="tr-s">${sub}</span></span></button>`;
       }).join('') : `<div class="vacio-d"><b>No hay trabajadores</b>${datos.es_admin ? '<a class="gm-at" href="usuarios.html">Crear uno en Usuarios</a>' : 'Pídele a un administrador que los cree.'}</div>`}
@@ -325,18 +353,28 @@
         const act = l.find(e => e.abierta);
         return `<button class="mov" type="button" data-ver-trab="${esc(tid)}"><span class="tr-av">${esc(inicial(l[0].trabajador))}</span>
           <span style="min-width:0"><span class="mov-t">${esc(l[0].trabajador || '')}</span>
-          <span class="mov-s">${esc(plural(l.length, '1 recibido', 'recibidos'))}${act ? ' · con el actual lleva ' + esc(trabajosTxt(act.trabajos)) : ''}</span></span>
-          <span class="mov-m">${prom === null ? '<span class="mov-s">Aún con el primero</span>' : esc(String(prom).replace('.', ',')) + ' c/u'}</span>${CHEV}</button>`;
+          <span class="mov-s">${esc(plural(l.length, '1 recibido', 'recibidos'))}${act ? ' · tiene uno desde el ' + esc(fechaCorta(act.fecha)) : ''}</span></span>
+          <span class="mov-m">${prom === null ? '<span class="mov-s">Aún con el primero</span>' : esc(num(prom)) + ' c/u'}</span>${CHEV}</button>`;
       }).join('');
     }
     // Movimientos: compras (solo el administrador) y entregas
     const movs = [
-      ...(datos.compras || []).filter(c => c.material_id === m.id).map(c => ({ f:c.fecha, html:`<div class="mov"><span style="min-width:0"><span class="mov-t">Compra${c.nota ? ' · ' + esc(c.nota) : ''}</span>
-        <span class="mov-s">${esc(fechaCorta(c.fecha))}${c.por ? ' · ' + esc(c.por) : ''}${c.costo != null ? ' · ' + esc(dinero(c.costo)) : ''}</span></span><span class="mov-m mas">+${esc(c.cantidad)}</span></div>` })),
-      ...ents.map(e => ({ f:e.fecha, html:`<button class="mov" type="button" data-entrega="${e.id}"><span style="min-width:0"><span class="mov-t">A ${esc(e.trabajador || '')}</span>
+      ...(datos.compras || []).filter(c => c.material_id === m.id).map(c => ({ f:c.fecha, compra:c.cantidad, html:`<div class="mov"><span style="min-width:0"><span class="mov-t">${c.factura_id ? 'Compra grande' : 'Compra'}${c.nota ? ' · ' + esc(c.nota) : ''}</span>
+        <span class="mov-s">${esc(fechaCorta(c.fecha))}${c.por ? ' · ' + esc(c.por) : ''}${c.costo != null ? ' · ' + esc(dinero(c.costo)) : c.factura_total != null ? ' · factura total ' + esc(dinero(c.factura_total)) + ' (varios materiales)' : ''}</span></span><span class="mov-m mas">+${esc(c.cantidad)}</span></div>` })),
+      ...ents.map(e => ({ f:e.fecha, entrega:1, html:`<button class="mov" type="button" data-entrega="${e.id}"><span style="min-width:0"><span class="mov-t">A ${esc(e.trabajador || '')}</span>
         <span class="mov-s">${esc(fechaCorta(e.fecha))}${e.entregado_por ? ' · entregó ' + esc(e.entregado_por) : ''} · <span class="pill ${(ESTADO[e.estado] || ESTADO.por_revisar).c}">${(ESTADO[e.estado] || ESTADO.por_revisar).t}</span></span></span><span class="mov-m menos">−1</span>${CHEV}</button>` }))
-    ].sort((a, b) => new Date(b.f) - new Date(a.f)).slice(0, 40);
-    html += '<p class="tit">Movimientos</p>' + (movs.length ? movs.map(x => x.html).join('') : '<p class="mov-s" style="padding:8px 2px">Todavía no hay compras ni entregas.</p>');
+    ].sort((a, b) => new Date(b.f) - new Date(a.f));
+    // Por semana: esta abierta, las anteriores cerradas, cada una con lo que entró y salió
+    const semanas = new Map();
+    movs.forEach(x => { const k = semanaDe(x.f); const g = semanas.get(k) || []; g.push(x); semanas.set(k, g); });
+    const actual = semanaActual();
+    html += '<p class="tit">Movimientos por semana</p>' + (movs.length ? [...semanas].map(([k, g], i) => {
+      const sal = g.filter(x => x.entrega).length, ent = g.reduce((a, x) => a + (x.compra || 0), 0);
+      return `<details class="sem" ${k === actual || (i === 0 && !semanas.has(actual)) ? 'open' : ''}><summary>
+        <span class="sem-t">${k === actual ? 'Esta semana' : esc(rangoSemana(k))}</span>
+        <span class="sem-s">${[sal ? 'entregó ' + sal : '', ent ? 'compró ' + ent : ''].filter(Boolean).join(' · ')}</span>${CHEV_ABAJO}</summary>
+        <div class="sem-body">${g.map(x => x.html).join('')}</div></details>`;
+    }).join('') : '<p class="mov-s" style="padding:8px 2px">Todavía no hay compras ni entregas.</p>');
     $('matBody').innerHTML = html;
     $('matFoot').innerHTML = datos.es_admin && m.activo
       ? '<div class="pie-dos"><button class="btn-secondary" type="button" data-editar-mat>Editar</button><button class="btn-primary" type="button" data-comprar>Registrar compra</button></div>'
@@ -446,7 +484,7 @@
     const costo = costoTxt ? montoOrNull(costoTxt) : null;
     let ok = true;
     if(!Number.isInteger(cant) || cant < 1 || cant > 10000){ $('campoCompraCant').classList.add('invalid'); ok = false; }
-    if(costoTxt && !(costo >= 0)){ $('campoCompraCosto').classList.add('invalid'); ok = false; }
+    if(costoTxt && (costo === null || costo < 0)){ $('campoCompraCosto').classList.add('invalid'); ok = false; }
     if(!ok) return;
     comprando = true;
     const btn = $('btnGuardarCompra'); btn.disabled = true;
@@ -461,18 +499,52 @@
     finally { comprando = false; btn.disabled = false; }
   });
 
+  // ---------- Compra grande: varios materiales de una factura (administrador) ----------
+  let comprandoGrande = false;
+  function abrirCompraGrande(){
+    const l = datos.materiales.filter(m => m.activo);
+    $('cgLista').innerHTML = l.map(m => `<div class="cg-fila"><label class="cg-nom" for="cg${m.id}">${esc(m.nombre)}<span>Hay ${esc(m.stock)}${bajo(m) ? ' · por reponer' : ''}</span></label>
+      <input class="input cg-in" id="cg${m.id}" data-cg="${m.id}" type="text" inputmode="numeric" autocomplete="off" aria-label="Cuántas unidades de ${esc(m.nombre)}"></div>`).join('');
+    ['cgCosto', 'cgNota'].forEach(id => { $(id).value = ''; });
+    ['campoCg', 'campoCgCosto'].forEach(id => $(id).classList.remove('invalid'));
+    abrirHoja('sheetCompraGrande');
+  }
+  $('cgLista').addEventListener('input', () => $('campoCg').classList.remove('invalid'));
+  $('cgCosto').addEventListener('input', () => $('campoCgCosto').classList.remove('invalid'));
+  $('btnGuardarCg').addEventListener('click', async () => {
+    if(comprandoGrande) return;
+    const items = []; let mal = false;
+    document.querySelectorAll('#cgLista [data-cg]').forEach(i => {
+      const t = i.value.trim(); if(!t) return;
+      const n = Number(t);
+      if(!Number.isInteger(n) || n < 1 || n > 10000){ mal = true; i.classList.add('mal'); } else { i.classList.remove('mal'); items.push({ mid: +i.dataset.cg, cantidad: n }); }
+    });
+    const costoTxt = $('cgCosto').value.trim(), costo = costoTxt ? montoOrNull(costoTxt) : null;
+    if(mal || !items.length){ $('campoCg').classList.add('invalid'); return; }
+    if(costoTxt && (costo === null || costo < 0)){ $('campoCgCosto').classList.add('invalid'); return; }
+    comprandoGrande = true;
+    const btn = $('btnGuardarCg'); btn.disabled = true;
+    try{
+      const { error } = await db.rpc('deposito_comprar_varios', { items, costo_total: costo, nota: $('cgNota').value.trim() || null });
+      if(error) throw error;
+      cerrarHoja('sheetCompraGrande', true);
+      toast(`Compra guardada: ${plural(items.length, '1 material', 'materiales')}`);
+      await cargar();
+    } catch(err){ toast(mensaje(err), 'error'); }
+    finally { comprandoGrande = false; btn.disabled = false; }
+  });
+
   // ---------- Una entrega: trabajos y revisión de Ray ----------
   let rev = null;   // { id, trabajos, cuestionando, nota, enviando }
-  const trabajosCache = {};
   async function abrirEntrega(id){
     const e = entregaDe(id);
     if(!e){ toast('No se encontró esa entrega (puede ser de hace más de 12 semanas)', 'error'); return; }
     const ant = anteriorDe(e);
-    rev = { id, trabajos:null, error:false, cuestionando:false, nota:'', enviando:false, antId: ant ? ant.id : null, antTrabajos: null };
+    rev = { id, cuestionando:false, nota:'', enviando:false, antId: ant ? ant.id : null, ant, antTrabajos: null };
     pintarEntrega();
     $('entregaBody').scrollTop = 0;
     abrirHoja('sheetEntrega');
-    await Promise.all([cargarTrabajos(id), ant ? cargarAnterior(id, ant.id) : null]);
+    if(ant) await cargarAnterior(id, ant.id);
   }
   // Los trabajos con la entrega anterior: con eso Ray ve si la unidad rindió antes de pedir otra
   async function cargarAnterior(id, antId){
@@ -482,16 +554,6 @@
       if(rev && rev.id === id){ rev.antTrabajos = data || []; pintarEntrega(); }
     } catch(err){
       if(rev && rev.id === id){ rev.antTrabajos = false; pintarEntrega(); }
-    }
-  }
-  async function cargarTrabajos(id){
-    try{
-      const { data, error } = await db.rpc('deposito_trabajos', { eid: id });
-      if(error) throw error;
-      trabajosCache[id] = data || [];
-      if(rev && rev.id === id){ rev.trabajos = trabajosCache[id]; rev.error = false; pintarEntrega(); }
-    } catch(err){
-      if(rev && rev.id === id){ rev.error = true; pintarEntrega(); }
       toast(mensaje(err), 'error');
     }
   }
@@ -508,28 +570,26 @@
     const m = materialDe(e.material_id);
     const est = ESTADO[e.estado] || ESTADO.por_revisar;
     $('entregaTitulo').textContent = `${m ? m.nombre : 'Material'} a ${e.trabajador || ''}`;
+    const ant0 = rev.ant || null;
     let html = `<div class="d-datos">
         <div class="d-dato"><span>Fecha</span><b>${esc(fechaCorta(e.fecha))}</b></div>
         <div class="d-dato"><span>Entregó</span><b>${esc(e.entregado_por || '')}</b></div>
         <div class="d-dato"><span>Estado</span><b><span class="pill ${est.c}">${est.t}</span></b></div>
-        <div class="d-dato"><span>${e.abierta ? 'Lleva' : 'Hizo con ella'}</span><b>${esc(trabajosTxt(e.trabajos))}</b></div></div>`;
+        <div class="d-dato"><span>Con el anterior</span><b>${ant0 ? esc(trabajosTxt(ant0.trabajos)) : 'Primera vez'}</b></div></div>`;
+    const prom = promedioDe(e), pend = pendientesDe(e.trabajador_id, m);
+    if(prom !== null || pend) html += `<p class="mov-s" style="margin:8px 2px 0">${prom !== null ? `Lo normal para él: <b>${esc(num(prom))} trabajos por unidad</b>` : ''}${prom !== null && pend ? ' · ' : ''}${pend ? `Tiene <b>${esc(plural(pend, '1 trabajo pendiente', 'trabajos pendientes'))}</b>${m && m.oficio ? ' de ' + esc(nombreOficio(m.oficio)) : ''}` : ''}</p>`;
     if(e.rara) html += `<div class="caja-rara">Se ve rara: ${esc(e.rara_motivo || '')}</div>`;
     if(e.nota) html += `<div class="caja-nota"><span>Nota de la entrega</span>${esc(e.nota)}</div>`;
     if(e.estado !== 'por_revisar') html += `<div class="caja-nota"><span>${e.estado === 'aprobada' ? 'Aprobada' : 'Cuestionada'} por ${esc(e.revisado_por || 'Ray')} · ${esc(fechaCorta(e.revisado_en))}</span>${e.revision_nota ? esc(e.revision_nota) : 'Sin nota'}</div>`;
-    html += `<p class="tit">${e.abierta ? 'Trabajos que ha terminado desde que la recibió' : 'Trabajos que terminó con ella (hasta la siguiente)'}${m && m.oficio ? ' · ' + esc(nombreOficio(m.oficio)) : ''}</p>`;
-    if(rev.trabajos === null) html += rev.error ? '<p class="mov-s" style="padding:8px 2px">No se pudieron cargar. Cierra y vuelve a abrir.</p>' : '<div class="sk-fila"></div><div class="sk-fila"></div>';
-    else if(!rev.trabajos.length) html += '<p class="mov-s" style="padding:8px 2px">No ha terminado trabajos con esta unidad.</p>';
-    else html += rev.trabajos.map((it, i) => filaTrabajo(it, i, 'esta')).join('');
-    // La anterior: cuánto rindió la unidad que tenía antes de pedir esta
-    const ant = rev.antId ? entregaDe(rev.antId) : null;
-    if(ant){
-      html += `<p class="tit">Con la anterior (${esc(fechaCorta(ant.fecha))}) hizo ${esc(trabajosTxt(ant.trabajos))}</p>`;
-      if(rev.antTrabajos === null) html += '<div class="sk-fila"></div>';
-      else if(rev.antTrabajos === false) html += '<p class="mov-s" style="padding:8px 2px">No se pudieron cargar.</p>';
-      else if(!rev.antTrabajos.length) html += '<p class="mov-s" style="padding:8px 2px">No terminó trabajos con la anterior.</p>';
+    // Lo que importa: cuánto rindió la unidad que tenía antes de pedir esta
+    if(ant0){
+      html += `<p class="tit">Lo que hizo con ${m ? 'el ' + esc(m.nombre.toLowerCase()) : 'la unidad'} anterior (${esc(fechaCorta(ant0.fecha))} al ${esc(fechaCorta(e.fecha))})${m && m.oficio ? ' · ' + esc(nombreOficio(m.oficio)) : ''}</p>`;
+      if(rev.antTrabajos === null) html += '<div class="sk-fila"></div><div class="sk-fila"></div>';
+      else if(rev.antTrabajos === false) html += '<p class="mov-s" style="padding:8px 2px">No se pudieron cargar. Cierra y vuelve a abrir.</p>';
+      else if(!rev.antTrabajos.length) html += '<p class="mov-s" style="padding:8px 2px">No terminó trabajos con el anterior.</p>';
       else html += rev.antTrabajos.map((it, i) => filaTrabajo(it, i, 'anterior')).join('');
-    } else if(rev.trabajos !== null){
-      html += '<p class="mov-s" style="padding:10px 2px 0">Es la primera que recibe de este material.</p>';
+    } else {
+      html += '<p class="mov-s" style="padding:12px 2px 0">Primera vez que recibe este material: no hay con qué comparar.</p>';
     }
     if(rev.cuestionando){
       html += `<div class="field" id="campoCuestion" style="margin-top:16px"><label class="field-label" for="revNota">¿Qué pasó?</label>
@@ -558,7 +618,7 @@
   $('entregaBody').addEventListener('click', (e) => {
     const b = e.target.closest('[data-trabajo]');
     if(!b || !rev) return;
-    const l = b.dataset.lista === 'anterior' ? rev.antTrabajos : rev.trabajos;
+    const l = rev.antTrabajos;
     const it = l && l[+b.dataset.trabajo]; if(it) abrirItem(it);
   });
   $('entregaFoot').addEventListener('click', async (e) => {
@@ -612,7 +672,7 @@
   $('btnActualizar').addEventListener('click', async () => {
     await cargar();
     if($('sheetMat').classList.contains('open')) pintarMaterial();
-    if(rev && $('sheetEntrega').classList.contains('open')){ pintarEntrega(); cargarTrabajos(rev.id); }
+    if(rev && $('sheetEntrega').classList.contains('open')){ pintarEntrega(); if(rev.antId) cargarAnterior(rev.id, rev.antId); }
   });
 
   (async function(){

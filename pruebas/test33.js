@@ -18,7 +18,7 @@ function base(){return {
     {id:2,material_id:1,trabajador_id:'t1',trabajador:'Pedro',entregado_por:'Yulimar',fecha:hace(0),semana:lunes(Date.now()),nota:'Se le partió',estado:'por_revisar',rara:true,rara_motivo:'Con la anterior hizo 2 trabajos; lo normal para él es 8',revisado_por:null,revisado_en:null,revision_nota:null,trabajos:1,abierta:true},
     {id:1,material_id:1,trabajador_id:'t1',trabajador:'Pedro',entregado_por:'Yulimar',fecha:hace(14),semana:lunes(Date.now()-14*864e5),nota:null,estado:'aprobada',rara:false,rara_motivo:null,revisado_por:'Ray',revisado_en:hace(13),revision_nota:null,trabajos:8,abierta:false}],
   compras:[{id:1,material_id:1,cantidad:10,costo:50,nota:'Ferretería',fecha:hace(20),por:'Ray'}],
-  trabajadores:[{id:'t1',nombre:'Pedro',especialidades:['herrero']},{id:'t2',nombre:'Luis',especialidades:['masilla_pintura']}]};}
+  trabajadores:[{id:'t1',nombre:'Pedro',especialidades:['herrero'],pendientes:[{oficio:'hierro',especialidad:'herrero',n:3},{oficio:'pintura',especialidad:'masilla_pintura',n:2}]},{id:'t2',nombre:'Luis',especialidades:['masilla_pintura']}]};}
 const trabajos=[{id:501,etapa:'Hierro',producto:'Lineal',tipo:'Puerta Multilock',cantidad:1,venta_id:12,interna:false,cliente:'María González',sede:'Cumbres',fecha:hace(0),foto:GIF,foto_de:'Negro',foto_trabajo:GIF,especificaciones:{color:'Negro',alto:2,ancho:1},categoria:'Puertas',monto:40,oficio:'hierro'},
  {id:502,etapa:'Hierro',producto:'Imperial',tipo:'Puerta Multilock',cantidad:1,venta_id:0,interna:true,cliente:null,sede:'Cumbres',fecha:hace(1),foto:GIF,foto_de:'Blanco',foto_trabajo:null,especificaciones:{},categoria:null,monto:40,oficio:'hierro'}];
 
@@ -39,6 +39,7 @@ async function pagina(b,uid){
       if(name==='deposito_entregar'){const m=d.materiales.find(x=>x.id===a.mid);m.stock--;const t=d.trabajadores.find(x=>x.id===a.tid);d.entregas.unshift({id:3,material_id:a.mid,trabajador_id:a.tid,trabajador:t.nombre,entregado_por:PERF[uid].nombre,fecha:new Date().toISOString(),semana:lunes(Date.now()),nota:a.nota,estado:'por_revisar',rara:false,trabajos:0,abierta:true});return j({id:3,stock:m.stock,rara:false});}
       if(name==='deposito_revisar'){const e=d.entregas.find(x=>x.id===a.eid);e.estado=a.aprobar?'aprobada':'cuestionada';e.revisado_por='Ray';e.revisado_en=new Date().toISOString();e.revision_nota=a.nota;return j({id:a.eid});}
       if(name==='deposito_material_guardar'){if(a.p.id){Object.assign(d.materiales.find(x=>x.id===a.p.id),a.p);}else d.materiales.push(Object.assign({id:9,stock:0,activo:true},a.p));return j({id:a.p.id||9});}
+      if(name==='deposito_comprar_varios'){a.items.forEach(x=>{d.materiales.find(m=>m.id===x.mid).stock+=x.cantidad;});return j({factura:1,materiales:a.items.length});}
       if(name==='deposito_comprar'){const m=d.materiales.find(x=>x.id===a.mid);m.stock+=a.cantidad;d.compras.unshift({id:2,material_id:a.mid,cantidad:a.cantidad,costo:a.costo,nota:a.nota,fecha:new Date().toISOString(),por:'Ray'});return j({id:a.mid,stock:m.stock});}
       if(name==='nomina_semana')return j({trabajadores:[]});
       return j([]);}
@@ -70,7 +71,8 @@ async function pagina(b,uid){
  await p.click('.mat[data-mat="1"]');await w(500);
  const mb=await p.textContent('#matBody');
  ok('Ficha: en depósito, mínimo y faltan',mb.includes('En depósito2')&&mb.includes('Faltan1'),mb.slice(0,80));
- ok('Rinde por trabajador: Pedro 8 c/u y con el actual lleva 1',mb.includes('Pedro')&&mb.includes('8 c/u')&&mb.includes('con el actual lleva 1 trabajo'));
+ ok('Rinde por trabajador: Pedro 8 c/u',mb.includes('Pedro')&&mb.includes('8 c/u')&&mb.includes('tiene uno desde el'));
+ ok('Movimientos por semana: esta abierta, las demás cerradas',(await p.$$eval('#matBody details.sem',x=>x.map(d=>d.open))).join()==='true,false',await p.$$eval('#matBody details.sem',x=>x.map(d=>d.querySelector('summary').textContent.replace(/\s+/g,' ').trim())));
  ok('La vendedora no ve costos ni compras, ni "Registrar compra"',!mb.includes('Compra')&&!mb.includes('$')&&!(await p.$('[data-comprar]'))&&!(await p.$('[data-editar-mat]'))&&!!(await p.$('[data-reponer]')));
  await p.screenshot({path:'shots5/d2-ficha-material.png'});
  await p.click('#sheetMat [data-cerrar="sheetMat"]');await w(500);
@@ -81,7 +83,7 @@ async function pagina(b,uid){
  await p.click('[data-agotado="2"]');await w(600);
  ok('La vendedora avisa que hay que comprar la sierra',st.rpcs.some(x=>x[0]==='deposito_pedir_reponer'&&x[1].mid===2)&&(await p.textContent('#toast')).includes('hay que comprar Sierra'));
  await p.click('[data-elegir-mat="1"]');await w(300);
- ok('Paso 2: a quién, con lo que hizo desde la última vez',(await p.textContent('#entregarTitulo'))==='¿A quién se lo das?'&&(await p.textContent('[data-elegir-trab="t1"]')).includes('desde entonces 1 trabajo')&&(await p.textContent('[data-elegir-trab="t2"]')).includes('Nunca'));
+ ok('Paso 2: a quién, con lo que hizo desde la última vez',(await p.textContent('#entregarTitulo'))==='¿A quién se lo das?'&&(await p.textContent('[data-elegir-trab="t1"]')).includes('hizo 1 trabajo · tiene 3 pendientes')&&(await p.textContent('[data-elegir-trab="t2"]')).includes('No ha recibido este material'));
  ok('Va 1 unidad',(await p.textContent('.elegido')).includes('Va 1 unidad · quedan 2'));
  await p.click('#btnConfirmarEntrega');await w(300);
  ok('Sin trabajador no entrega',await p.$eval('#campoTrab',x=>x.classList.contains('invalid'))&&!st.rpcs.some(x=>x[0]==='deposito_entregar'));
@@ -93,7 +95,7 @@ async function pagina(b,uid){
  ok('Se cierra, avisa y baja el stock',!(await p.isVisible('#sheetEntregar'))&&(await p.textContent('#toast')).includes('Queda por revisar')&&(await p.textContent('.mat[data-mat="1"] .mat-n b'))==='1');
  // Entregas
  await p.click('[data-tab="entregas"]');await w(400);
- const sems=await p.$$eval('.sem',x=>x.map(s=>[s.open,s.querySelector('.sem-t').textContent]));
+ const sems=await p.$$eval('#cont .sem',x=>x.map(s=>[s.open,s.querySelector('.sem-t').textContent]));
  ok('Entregas por semana: esta abierta, las viejas cerradas',sems.length===2&&sems[0][0]===true&&sems[0][1]==='Esta semana'&&sems[1][0]===false,sems);
  ok('Mostrar: Todas, Por revisar con número y por trabajador',(await p.$$eval('#filtros .fx',x=>x.map(c=>c.textContent))).join('|')==='Todas|Por revisar · 2|Luis|Pedro',await p.$$eval('#filtros .fx',x=>x.map(c=>c.textContent)));
  ok('Marca la rara y el estado',(await p.textContent('[data-entrega="2"]')).includes('Rara')&&(await p.textContent('[data-entrega="2"]')).includes('Por revisar'));
@@ -102,12 +104,13 @@ async function pagina(b,uid){
  ok('Por trabajador: lo que recibió y cuánto le rinde',(await p.textContent('.trab-res')).includes('Disco de corte · 2 recibidos')&&(await p.textContent('.trab-res')).includes('8 trabajos c/u'));
  await p.click('#filtros [data-filtro="revisar"]');await w(300);
  ok('Por revisar: solo las pendientes',(await p.$$('.ent')).length===2);
- ok('En la lista: lleva N · con la anterior N',(await p.textContent('[data-entrega="2"]')).includes('lleva 1 trabajo · con la anterior 8 trabajos'),await p.textContent('[data-entrega="2"]'));
+ ok('En la lista: lo que hizo con el anterior',(await p.textContent('[data-entrega="2"]')).includes('con el anterior hizo 8 trabajos'),await p.textContent('[data-entrega="2"]'));
  // Revisión: la vendedora ve los trabajos pero no puede aprobar
  await p.click('[data-entrega="2"]');await w(900);
  ok('Entrega: datos, rara y nota',(await p.textContent('#entregaBody')).includes('Se ve rara')&&(await p.textContent('#entregaBody')).includes('Se le partió')&&(await p.textContent('#entregaTitulo'))==='Disco de corte a Pedro');
- ok('Trabajos como en Nómina: foto, paso, producto, cliente y N°',(await p.$$('#entregaBody [data-lista="esta"]')).length===2&&(await p.textContent('[data-lista="esta"][data-trabajo="0"]')).includes('Hierro · Lineal')&&(await p.textContent('[data-lista="esta"][data-trabajo="0"]')).includes('María González · N° 12')&&(await p.$$('[data-lista="esta"][data-trabajo="0"] img')).length===2);
- ok('También sale lo que hizo con la anterior, para comparar',(await p.textContent('#entregaBody')).includes('Con la anterior')&&(await p.textContent('#entregaBody')).includes('hizo 8 trabajos')&&(await p.$$('#entregaBody [data-lista="anterior"]')).length===2);
+ok('Entrega: arriba lo que hizo con el anterior, su promedio no (solo 1 cerrada) y sus pendientes',(await p.textContent('#entregaBody .d-datos')).replace(/\s+/g,'').includes('Conelanterior8trabajos')&&(await p.textContent('#entregaBody')).includes('Tiene 3 trabajos pendientes de Hierro'));
+ ok('Lista del anterior como en Nómina: foto, paso, producto, cliente y N°',(await p.$$('#entregaBody [data-lista="anterior"]')).length===2&&(await p.textContent('[data-lista="anterior"][data-trabajo="0"]')).includes('Hierro · Lineal')&&(await p.textContent('[data-lista="anterior"][data-trabajo="0"]')).includes('María González · N° 12')&&(await p.textContent('#entregaBody')).includes('Lo que hizo con el disco de corte anterior'));
+ ok('Ya no muestra lo que lleva con la nueva',!(await p.$('#entregaBody [data-lista="esta"]')));
  ok('Solo Ray aprueba',(await p.textContent('#entregaFoot')).includes('Solo Ray')&&!(await p.$('[data-rev]')));
  await p.screenshot({path:'shots5/d6-revision-vendedora.png'});
  await p.click('[data-trabajo="0"]');await w(500);
@@ -146,6 +149,18 @@ async function pagina(b,uid){
  await r.click('#btnGuardarCompra');await wr(900);
  const cp=R.st.rpcs.find(x=>x[0]==='deposito_comprar');
  ok('Guarda la compra y sube el stock',cp&&cp[1].mid===1&&cp[1].cantidad===6&&cp[1].costo===30&&(await r.textContent('#matBody')).includes('En depósito8'),cp&&cp[1]);
+ // Compra grande
+ await r.click('#sheetMat [data-cerrar="sheetMat"]');await wr(500);
+ await r.click('[data-compra-grande]');await wr(500);
+ await r.click('#btnGuardarCg');await wr(300);
+ ok('Compra grande: pide al menos una cantidad',await r.$eval('#campoCg',x=>x.classList.contains('invalid')));
+ await r.fill('#cg1','10');await r.fill('#cg3','4');await r.fill('#cgCosto','95,50');await r.fill('#cgNota','Factura 12');
+ await r.screenshot({path:'shots5/d10-compra-grande.png'});
+ await r.click('#btnGuardarCg');await wr(900);
+ const cg=R.st.rpcs.find(x=>x[0]==='deposito_comprar_varios');
+ ok('Compra grande: guarda varios materiales con el costo total',cg&&JSON.stringify(cg[1].items)==='[{"mid":1,"cantidad":10},{"mid":3,"cantidad":4}]'&&cg[1].costo_total===95.5&&cg[1].nota==='Factura 12',cg&&cg[1]);
+ await r.click('.mat[data-mat="1"]');await wr(500);
+
  // Nuevo material (solo admin)
  await r.click('#sheetMat [data-cerrar="sheetMat"]');await wr(500);
  await r.click('[data-nuevo-mat]');await wr(400);
