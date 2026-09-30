@@ -35,7 +35,7 @@ async function pagina(b,uid){
     if(u.includes('/rpc/')){const name=u.split('/rpc/')[1].split('?')[0];const a=JSON.parse(req.postData()||'{}');st.rpcs.push([name,a]);
       const d=st.datos;
       if(name==='deposito_resumen'){const x=JSON.parse(JSON.stringify(d));if(!admin){x.compras=[];x.materiales.forEach(m=>m.costo_unidad=null);}x.es_admin=admin;x.es_ray=ray;return j(x);}
-      if(name==='deposito_trabajos')return j(a.eid===2?trabajos.map(t=>{const c=Object.assign({},t);if(!admin)delete c.monto;return c;}):[]);
+      if(name==='deposito_trabajos')return j(a.eid===2||a.eid===1?trabajos.map(t=>{const c=Object.assign({},t);if(!admin)delete c.monto;return c;}):[]);
       if(name==='deposito_entregar'){const m=d.materiales.find(x=>x.id===a.mid);m.stock--;const t=d.trabajadores.find(x=>x.id===a.tid);d.entregas.unshift({id:3,material_id:a.mid,trabajador_id:a.tid,trabajador:t.nombre,entregado_por:PERF[uid].nombre,fecha:new Date().toISOString(),semana:lunes(Date.now()),nota:a.nota,estado:'por_revisar',rara:false,trabajos:0,abierta:true});return j({id:3,stock:m.stock,rara:false});}
       if(name==='deposito_revisar'){const e=d.entregas.find(x=>x.id===a.eid);e.estado=a.aprobar?'aprobada':'cuestionada';e.revisado_por='Ray';e.revisado_en=new Date().toISOString();e.revision_nota=a.nota;return j({id:a.eid});}
       if(name==='deposito_material_guardar'){if(a.p.id){Object.assign(d.materiales.find(x=>x.id===a.p.id),a.p);}else d.materiales.push(Object.assign({id:9,stock:0,activo:true},a.p));return j({id:a.p.id||9});}
@@ -100,10 +100,12 @@ async function pagina(b,uid){
  ok('Por trabajador: lo que recibió y cuánto le rinde',(await p.textContent('.trab-res')).includes('Disco de corte · 2 recibidos')&&(await p.textContent('.trab-res')).includes('8 trabajos c/u'));
  await p.click('#filtros [data-filtro="revisar"]');await w(300);
  ok('Por revisar: solo las pendientes',(await p.$$('.ent')).length===2);
+ ok('En la lista: lleva N · con la anterior N',(await p.textContent('[data-entrega="2"]')).includes('lleva 1 trabajo · con la anterior 8 trabajos'),await p.textContent('[data-entrega="2"]'));
  // Revisión: la vendedora ve los trabajos pero no puede aprobar
  await p.click('[data-entrega="2"]');await w(900);
  ok('Entrega: datos, rara y nota',(await p.textContent('#entregaBody')).includes('Se ve rara')&&(await p.textContent('#entregaBody')).includes('Se le partió')&&(await p.textContent('#entregaTitulo'))==='Disco de corte a Pedro');
- ok('Trabajos como en Nómina: foto, paso, producto, cliente y N°',(await p.$$('#entregaBody [data-trabajo]')).length===2&&(await p.textContent('[data-trabajo="0"]')).includes('Hierro · Lineal')&&(await p.textContent('[data-trabajo="0"]')).includes('María González · N° 12')&&(await p.$$('[data-trabajo="0"] img')).length===2);
+ ok('Trabajos como en Nómina: foto, paso, producto, cliente y N°',(await p.$$('#entregaBody [data-lista="esta"]')).length===2&&(await p.textContent('[data-lista="esta"][data-trabajo="0"]')).includes('Hierro · Lineal')&&(await p.textContent('[data-lista="esta"][data-trabajo="0"]')).includes('María González · N° 12')&&(await p.$$('[data-lista="esta"][data-trabajo="0"] img')).length===2);
+ ok('También sale lo que hizo con la anterior, para comparar',(await p.textContent('#entregaBody')).includes('Con la anterior')&&(await p.textContent('#entregaBody')).includes('hizo 8 trabajos')&&(await p.$$('#entregaBody [data-lista="anterior"]')).length===2);
  ok('Solo Ray aprueba',(await p.textContent('#entregaFoot')).includes('Solo Ray')&&!(await p.$('[data-rev]')));
  await p.screenshot({path:'shots5/d6-revision-vendedora.png'});
  await p.click('[data-trabajo="0"]');await w(500);

@@ -59,6 +59,9 @@
   const bajo = (m) => m.activo && m.stock < m.minimo;
   const materialDe = (id) => (datos.materiales || []).find(m => m.id === id) || null;
   const entregaDe = (id) => (datos.entregas || []).find(e => e.id === id) || null;
+  // La entrega anterior del mismo material al mismo trabajador (con ella se ve cuánto rindió)
+  const anteriorDe = (e) => (datos.entregas || []).filter(x => x.material_id === e.material_id && x.trabajador_id === e.trabajador_id
+    && (new Date(x.fecha) < new Date(e.fecha) || (x.fecha === e.fecha && x.id < e.id))).sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id - a.id)[0] || null;
   const porRevisar = () => (datos.entregas || []).filter(e => e.estado === 'por_revisar');
 
   // ---------- Cargar ----------
@@ -149,7 +152,8 @@
   function filaEntrega(e){
     const m = materialDe(e.material_id);
     const est = ESTADO[e.estado] || ESTADO.por_revisar;
-    const uso = e.abierta ? `lleva ${trabajosTxt(e.trabajos)}` : `hizo ${trabajosTxt(e.trabajos)}`;
+    const ant = e.abierta ? anteriorDe(e) : null;
+    const uso = e.abierta ? `lleva ${trabajosTxt(e.trabajos)}${ant ? ' · con la anterior ' + trabajosTxt(ant.trabajos) : ''}` : `hizo ${trabajosTxt(e.trabajos)}`;
     return `<button class="ent" type="button" data-entrega="${e.id}">
       <span class="mat-ico" style="width:40px;height:40px;font-size:15px">${esc(inicial(m ? m.nombre : '?'))}</span>
       <span style="min-width:0"><span class="ent-t">${esc(m ? m.nombre : 'Material')} a ${esc(e.trabajador || '')}</span>
@@ -438,11 +442,22 @@
   async function abrirEntrega(id){
     const e = entregaDe(id);
     if(!e){ toast('No se encontró esa entrega (puede ser de hace más de 12 semanas)', 'error'); return; }
-    rev = { id, trabajos:null, error:false, cuestionando:false, nota:'', enviando:false };
+    const ant = anteriorDe(e);
+    rev = { id, trabajos:null, error:false, cuestionando:false, nota:'', enviando:false, antId: ant ? ant.id : null, antTrabajos: null };
     pintarEntrega();
     $('entregaBody').scrollTop = 0;
     abrirHoja('sheetEntrega');
-    await cargarTrabajos(id);
+    await Promise.all([cargarTrabajos(id), ant ? cargarAnterior(id, ant.id) : null]);
+  }
+  // Los trabajos con la entrega anterior: con eso Ray ve si la unidad rindió antes de pedir otra
+  async function cargarAnterior(id, antId){
+    try{
+      const { data, error } = await db.rpc('deposito_trabajos', { eid: antId });
+      if(error) throw error;
+      if(rev && rev.id === id){ rev.antTrabajos = data || []; pintarEntrega(); }
+    } catch(err){
+      if(rev && rev.id === id){ rev.antTrabajos = false; pintarEntrega(); }
+    }
   }
   async function cargarTrabajos(id){
     try{
@@ -455,8 +470,8 @@
       toast(mensaje(err), 'error');
     }
   }
-  function filaTrabajo(it, i){
-    return `<button class="mov" type="button" data-trabajo="${i}">
+  function filaTrabajo(it, i, lista){
+    return `<button class="mov" type="button" data-trabajo="${i}" data-lista="${lista || 'esta'}">
       <span class="mov-foto">${it.foto ? `<img src="${esc(it.foto)}" alt="" loading="lazy">` : iconoTipo(it.tipo, 20)}</span>
       <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${it.cantidad > 1 ? ' ×' + esc(it.cantidad) : ''}</span>
       <span class="mov-s">${it.interna ? '<b>Exhibición</b>' + (it.sede ? ' · ' + esc(it.sede) : '') : `<b>${esc(it.cliente || 'Cliente')}</b> · N° ${esc(it.venta_id)}`} · ${esc(fechaCorta(it.fecha))}</span></span>
@@ -479,7 +494,18 @@
     html += `<p class="tit">${e.abierta ? 'Trabajos que ha terminado desde que la recibió' : 'Trabajos que terminó con ella (hasta la siguiente)'}${m && m.oficio ? ' · ' + esc(nombreOficio(m.oficio)) : ''}</p>`;
     if(rev.trabajos === null) html += rev.error ? '<p class="mov-s" style="padding:8px 2px">No se pudieron cargar. Cierra y vuelve a abrir.</p>' : '<div class="sk-fila"></div><div class="sk-fila"></div>';
     else if(!rev.trabajos.length) html += '<p class="mov-s" style="padding:8px 2px">No ha terminado trabajos con esta unidad.</p>';
-    else html += rev.trabajos.map(filaTrabajo).join('');
+    else html += rev.trabajos.map((it, i) => filaTrabajo(it, i, 'esta')).join('');
+    // La anterior: cuánto rindió la unidad que tenía antes de pedir esta
+    const ant = rev.antId ? entregaDe(rev.antId) : null;
+    if(ant){
+      html += `<p class="tit">Con la anterior (${esc(fechaCorta(ant.fecha))}) hizo ${esc(trabajosTxt(ant.trabajos))}</p>`;
+      if(rev.antTrabajos === null) html += '<div class="sk-fila"></div>';
+      else if(rev.antTrabajos === false) html += '<p class="mov-s" style="padding:8px 2px">No se pudieron cargar.</p>';
+      else if(!rev.antTrabajos.length) html += '<p class="mov-s" style="padding:8px 2px">No terminó trabajos con la anterior.</p>';
+      else html += rev.antTrabajos.map((it, i) => filaTrabajo(it, i, 'anterior')).join('');
+    } else if(rev.trabajos !== null){
+      html += '<p class="mov-s" style="padding:10px 2px 0">Es la primera que recibe de este material.</p>';
+    }
     if(rev.cuestionando){
       html += `<div class="field" id="campoCuestion" style="margin-top:16px"><label class="field-label" for="revNota">¿Qué pasó?</label>
         <textarea class="input" id="revNota" rows="3" maxlength="300" placeholder="Pidió muy seguido, no cuadra con lo que hizo">${esc(rev.nota)}</textarea>
@@ -506,7 +532,9 @@
   });
   $('entregaBody').addEventListener('click', (e) => {
     const b = e.target.closest('[data-trabajo]');
-    if(b && rev && rev.trabajos){ const it = rev.trabajos[+b.dataset.trabajo]; if(it) abrirItem(it); }
+    if(!b || !rev) return;
+    const l = b.dataset.lista === 'anterior' ? rev.antTrabajos : rev.trabajos;
+    const it = l && l[+b.dataset.trabajo]; if(it) abrirItem(it);
   });
   $('entregaFoot').addEventListener('click', async (e) => {
     const b = e.target.closest('[data-rev]'); if(!b || !rev || rev.enviando) return;
