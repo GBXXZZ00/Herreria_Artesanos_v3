@@ -700,7 +700,7 @@
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
     FAB_INSTALACION, esFab, NOMBRE_FAB, faltanDetalles,
     fotoModelo, fotoPieza, fotoItem, etiquetaOtroColor, sabados, sabadoCorto, topeTexto, esc, numOrNull, montoOrNull, fmt, dinero, specChipsHtml, toast,
-    abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo,
+    abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo, activarDeslizar,
     profundidad: prof, vistaInterna
   };
 })();

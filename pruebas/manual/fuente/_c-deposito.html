@@ -1,0 +1,100 @@
+<div class="top">
+  <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></div>
+  <div><div class="t1">Depósito</div><div class="t2">Ayuda · materiales, entregas y compras</div></div>
+</div>
+
+<div class="rol" role="group" aria-label="¿Quién eres?">
+  <button type="button" data-rol="v" aria-pressed="true">Soy vendedora</button>
+  <button type="button" data-rol="a" aria-pressed="false">Soy administrador</button>
+</div>
+
+<div class="hero">
+  <b>Aquí se controla el material del taller: cuánto hay, a quién se le entregó y qué hizo con él.</b>
+  Cada entrega es de una unidad. Ray revisa todas.
+</div>
+
+<h2>Los materiales</h2>
+<p class="sub">Cada uno con lo que hay, su mínimo y el oficio que lo usa.</p>
+<div class="cel"><img src="shots-deposito/d1-materiales.png" alt="Materiales"></div>
+<div class="caja">
+  <div class="orig"><span class="nn" style="background:var(--amb)">!</span><span><b>Por reponer:</b> hay menos que el mínimo.</span></div>
+  <div class="orig"><span class="nn">0</span><span><b>Agotado:</b> no queda.</span></div>
+</div>
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Toca un material para ver su ficha</b><p>Cuánto hay, el mínimo, cuánto rinde por trabajador y sus movimientos por semana.</p></div></div>
+  <div class="cel"><img src="shots-deposito/d2-ficha-material.png" alt="Ficha del material"></div>
+</div>
+
+<h2>Entregar material</h2>
+<p class="sub">Cuando un trabajador pide algo. Una unidad por entrega.</p>
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Toca "Entregar material" y elige cuál</b><p class="solo-vend">Si está agotado, toca "Avisar para comprar".</p><p class="solo-admin">Si está agotado, toca "Registrar compra".</p></div></div>
+  <div class="cel"><img src="shots-deposito/d3-entregar-1.png" alt="Elegir material"></div>
+</div>
+<div class="paso">
+  <div class="paso-h"><div class="n">2</div><div class="tx"><b class="tt">Elige a quién y toca "Entregar"</b><p>Debajo de cada nombre ves lo que hizo con la unidad anterior. Puedes agregar una nota.</p></div></div>
+  <div class="cel"><img src="shots-deposito/d4-entregar-2.png" alt="A quién"></div>
+</div>
+<div class="nota" style="margin-left:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg><span><b>La app marca "Rara" una entrega</b> si con la unidad anterior no hizo trabajos, hizo menos de la mitad de lo normal o pidió muchas en la semana.</span></div>
+
+<h2>Las entregas</h2>
+<p class="sub">Pestaña "Entregas": por semana, filtras por revisar o por trabajador.</p>
+<div class="cel"><img src="shots-deposito/d5-entregas.png" alt="Entregas"></div>
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Toca una entrega para ver el detalle</b><p>Qué hizo con el anterior y los trabajos que hizo con él.</p></div></div>
+  <div class="cel"><img src="shots-deposito/d6-revision-vendedora.png" alt="Detalle de la entrega"></div>
+</div>
+
+<div class="solo-admin">
+  <div class="tag-admin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Solo Ray</div>
+  <h2>Revisar una entrega</h2>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">1</div><div class="tx"><b class="tt">"Aprobar" o "Cuestionar"</b><p>Para cuestionar escribe por qué. A quien la entregó le llega "Ray cuestionó una entrega" con tu nota.</p></div></div>
+    <div class="cel"><img src="shots-deposito/d8-cuestionar.png" alt="Cuestionar"></div>
+  </div>
+  <div class="tag-admin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Solo administrador</div>
+  <h2>Compras y materiales nuevos</h2>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">1</div><div class="tx"><b class="tt">Compra de un material</b><p>En su ficha: cuántas unidades y cuánto costó en total.</p></div></div>
+    <div class="cel"><img src="shots-deposito/d9-compra.png" alt="Compra"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">2</div><div class="tx"><b class="tt">Compra grande (una factura con varios)</b><p>Cuántas de cada uno y el costo total de la factura.</p></div></div>
+    <div class="cel"><img src="shots-deposito/d10-compra-grande.png" alt="Compra grande"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">3</div><div class="tx"><b class="tt">Material nuevo</b><p>Nombre, mínimo y con qué oficio se gasta. Así la app sabe qué trabajos contar.</p></div></div>
+    <div class="cel"><img src="shots-deposito/d7-nuevo-material.png" alt="Nuevo material"></div>
+  </div>
+</div>
+<div class="nota solo-vend" style="margin-left:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg><span><b>Tú entregas y avisas para comprar.</b> No ves costos ni compras, y no creas ni cambias materiales.</span></div>
+
+<h2>Normas</h2>
+<div class="norma si">
+  <div class="norma-h"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Siempre</div>
+  <ul>
+    <li>Anota <b>cada entrega en el momento</b>, a quien se la llevó.</li>
+    <li>Avisa para comprar <b>antes</b> de que se acabe.</li>
+    <li class="solo-admin">Registra <b>cada compra</b> con su costo.</li>
+    <li class="solo-admin">Ray: revisa las entregas <b>cada día</b>, sobre todo las "Raras".</li>
+  </ul>
+</div>
+<div class="norma no">
+  <div class="norma-h"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span>Nunca</div>
+  <ul>
+    <li>Entregar material sin anotarlo.</li>
+    <li>Anotar varias unidades como una sola entrega.</li>
+    <li>Anotar la entrega a nombre de otro trabajador.</li>
+  </ul>
+</div>
+
+<h2>Avisos</h2>
+<div class="aviso"><div class="dot" style="background:var(--ambs);color:var(--ambi)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/></svg></div>
+  <div><b>Hay que comprar (material)</b><p>Bajó del mínimo con una entrega, o la vendedora avisó. Les llega a los administradores.</p><div class="hacer">Qué hacer: <strong>cómpralo y registra la compra.</strong></div></div></div>
+<div class="solo-admin">
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/></svg></div>
+    <div><b>Entrega por revisar / Revisa esta entrega</b><p>Solo a Ray. "Revisa esta entrega" cuando es rara, con el motivo.</p><div class="hacer">Qué hacer: <strong>ábrela y apruébala o cuestiónala.</strong></div></div></div>
+</div>
+<div class="aviso solo-vend"><div class="dot" style="background:var(--reds);color:var(--red)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg></div>
+  <div><b>Ray cuestionó una entrega</b><p>Te llega si tú la entregaste, con su nota.</p><div class="hacer">Qué hacer: <strong>habla con Ray y con el trabajador.</strong></div></div></div>
+<p class="sub" style="margin-top:14px">En Inicio: <b>"X materiales por reponer"</b> <span class="solo-admin">y, a Ray, <b>"X entregas por revisar"</b></span>.</p>

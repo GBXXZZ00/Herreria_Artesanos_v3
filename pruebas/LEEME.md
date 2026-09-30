@@ -31,3 +31,5 @@ Simulan Supabase con datos falsos: no tocan la base real y los PIN son de mentir
 - test35: ventas: Solo protección (sin ventana) con su precio, monto del marco decorativo, a medida, y editar no pierde los montos
 - test36: fotos chiquitas: listas con la chiquita, sin chiquita usa la grande, rota deja el ícono, subir guarda las 2 con caché de un año, el admin prepara las que faltan
 - test33 (30 sep): entregas por lo que hizo con el anterior y sus pendientes, movimientos por semana, compra grande, solo el admin agrega materiales
+- test37: Ayuda en la app: botón "Ayuda" con su palabra al lado de Actualizar, Cerrar o Mi cuenta (y flotante en fichas con X), solo lo de esa pantalla y según quién entró (admin, vendedora, quien confirma pagos, trabajador), formulario del catálogo con solo su tipo, atrás cierra solo la ayuda, sin internet con Reintentar, desde un formulario no se sale al manual, página "Manuales de uso" (ayuda.html) con los manuales de cada rol y estilos que no chocan con la app
+- Manuales y ayuda: si cambia una pantalla, rehacer su captura (pruebas/manual/cap-*.js) y correr `python3 pruebas/manual/construir.py` desde la raíz del repo

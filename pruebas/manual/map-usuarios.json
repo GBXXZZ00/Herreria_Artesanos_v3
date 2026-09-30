@@ -1,0 +1,6 @@
+{"s0-mi-cuenta-cajitas":[[["#btnUsuarios","1"],["#btnCategoriasPago","2"]]],
+ "s1-nuevo-trabajador":[[["#nRol","1"],["#nEspecialidad","2"]]],
+ "s0b-lista":[[["#btnNuevo","1"]]],"s1b-ficha":[[["#fichaBody [data-accion=\"pin\"]","1"],["#fichaBody [data-accion=\"desactivar\"]","2"]]],"s2-ficha-propia":[],
+ "s3-lista-final":[[[".u-card","1"]]],
+ "__insertar":[["await a.click('#btnUsuarios');await a.waitForSelector('.u-card');","await F(a,'s0b-lista');"],
+   ["await a.click('.u-card >> text=Pedro Pérez');await a.waitForSelector('#sheetFicha.open');","await F(a,'s1b-ficha');"]]}

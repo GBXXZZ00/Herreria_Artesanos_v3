@@ -1,0 +1,11 @@
+{"d1-materiales":[[["#btnEntregar","1"],[".mat[data-mat=\"1\"]","2"]]],
+ "d2-ficha-material":[],
+ "d3-entregar-1":[[["[data-elegir-mat=\"1\"]","1"]]],
+ "d4-entregar-2":[[["[data-elegir-trab=\"t2\"]","2"],["#entNota","3"]]],
+ "d5-entregas":[[["#filtros","1"]]],
+ "d6-revision-vendedora":[[["#entregaBody .d-datos",""]]],
+ "d8-cuestionar":[[["#revNota","1"],["[data-rev=\"enviar\"]","2"]]],
+ "d9-compra":[[["#compraCant","1"],["#compraCosto","2"],["#btnGuardarCompra","3"]]],
+ "d3b-agotado":[],"d10-compra-grande":[[["#cgCosto","1"],["#btnGuardarCg","2"]]],
+ "d7-nuevo-material":[[["#mfNombre","1"],["#mfMin","2"],["#matFormBody [data-oficio=\"masilla\"]","3"]]],
+ "__insertar":[["await p.click('#btnConfirmarEntrega');await w(300);","await F(p,'d3b-agotado');"]]}

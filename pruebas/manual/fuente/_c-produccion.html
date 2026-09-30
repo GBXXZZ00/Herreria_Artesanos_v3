@@ -1,0 +1,121 @@
+<div class="top">
+  <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg></div>
+  <div><div class="t1">Producción</div><div class="t2">Ayuda · quién fabrica qué y para cuándo</div></div>
+</div>
+
+<div class="rol" role="group" aria-label="¿Quién eres?">
+  <button type="button" data-rol="v" aria-pressed="true">Soy vendedora</button>
+  <button type="button" data-rol="a" aria-pressed="false">Soy administrador</button>
+</div>
+
+<div class="hero">
+  <b>Aquí están los pedidos que el taller está fabricando, paso por paso.</b>
+  Un pedido llega solo cuando Ray confirma el pago. Cuando se termina el último paso, pasa solo a Lista.
+</div>
+<div class="nota solo-vend" style="margin-left:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg><span><b>Tú solo miras.</b> Sirve para contestarle al cliente en qué va su pedido. No asignas ni ves cuánto se paga.</span></div>
+
+<h2>Los pasos de cada producto</h2>
+<p class="sub">Cada oficio hace su parte, en orden.</p>
+<div class="tipo">
+  <div class="fila"><span>Puerta y portón</span><span>Hierro › Masilla › Pintura › Detalles. Si lleva protección, va en los mismos pasos.</span></div>
+  <div class="fila"><span>Ventana sin protección</span><span>Armar.</span></div>
+  <div class="fila"><span>Ventana con protección</span><span>La protección: Hierro › Masilla › Pintura. La ventana: Armar › Instalar en la protección (espera que la protección esté pintada).</span></div>
+  <div class="fila"><span>Combo</span><span>Puerta y protecciones: Hierro › Masilla › Pintura › Detalles. Las 2 ventanas: Armar › Instalar en las protecciones.</span></div>
+  <div class="fila"><span>Solo protección</span><span>Hierro › Masilla › Pintura.</span></div>
+  <div class="fila"><span>Puerta de madera</span><span>Hierro › Masilla y pintura › Detalles.</span></div>
+</div>
+
+<h2>La lista</h2>
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Filtra arriba</b><p class="solo-vend">"Todos" o "Atrasados".</p><p class="solo-admin">"Todos", "Por asignar", "Sin categoría" y "Atrasados".</p></div></div>
+  <div class="paso-h" style="margin-top:14px"><div class="n">2</div><div class="tx"><b class="tt">Cada pedido dice en qué va</b><p class="solo-vend">Cuántos pasos lleva, si va atrasado y en qué paso va.</p><p class="solo-admin">Cuántos pasos lleva y si falta asignar, le falta categoría o va atrasado.</p></div></div>
+  <div class="cap solo-vend"><img src="shots-prod/v1-lista.png" alt="Lista de producción"></div>
+  <div class="cel solo-admin"><img src="shots-prod/a1-lista.png" alt="Lista de producción"></div>
+</div>
+
+<h2>La ficha</h2>
+<p class="sub">Toca un pedido. Cada producto muestra sus pasos.</p>
+<div class="caja">
+  <div class="orig"><span class="nn" style="background:var(--ac)">✓</span><span><b>Terminado:</b> quién y cuándo.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--amb)">●</span><span><b>Lo está haciendo ahora:</b> el trabajador lo empezó.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--soft)">○</span><span><b>Asignado:</b> quién lo tiene y para qué sábado.</span></div>
+  <div class="orig"><span class="nn">!</span><span><b>Se pasó del sábado:</b> no lo terminó a tiempo.</span></div>
+</div>
+<div class="cap"><img src="shots-prod/a8-atrasado.png" alt="Pasos del producto"></div>
+
+<div class="solo-admin">
+  <div class="tag-admin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Solo administrador</div>
+  <h2>Asignar el trabajo</h2>
+  <p class="sub">Cuando un pedido llega al taller te llega el aviso "Pedido en fabricación: asigna quién lo fabrica".</p>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">1</div><div class="tx"><b class="tt">Si dice "Primero dale una categoría de pago", tócalo</b><p>Sin categoría no se puede asignar ni calcular el pago.</p></div></div>
+    <div class="cap"><img src="shots-prod/a2-sincat.png" alt="Falta categoría"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">2</div><div class="tx"><b class="tt">Toca "Asignar trabajadores"</b><p>Uno por producto. Te dice qué incluye cada bloque.</p></div></div>
+    <div class="cap"><img src="shots-prod/a4-boton.png" alt="Asignar trabajadores"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">3</div><div class="tx"><b class="tt">Elige quién hace cada parte</b><p>Salen solo los trabajadores de ese oficio. Masilla y pintura se asignan juntas a la misma persona; armar e instalar también.</p></div></div>
+    <div class="cap"><img src="shots-prod/a5-asignar.png" alt="Elegir trabajador"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">4</div><div class="tx"><b class="tt">¿Para cuándo?</b><p>Este sábado o el próximo. Es el sábado en que se le paga si lo termina.</p></div></div>
+    <div class="cap"><img src="shots-prod/a6-cuando.png" alt="Para cuándo"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">5</div><div class="tx"><b class="tt">Guarda</b><p>Al que ya puede empezar le llega "Nuevo trabajo". A los que esperan a un compañero les llega "Ya te toca" cuando el anterior termina. Si le quitas uno que ya podía empezar, le llega "Ya no tienes este trabajo".</p></div></div>
+    <div class="cap"><img src="shots-prod/a7-guardar.png" alt="Guardar"></div>
+  </div>
+  <div class="nota" style="margin-left:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg><span><b>El que marca terminado es el trabajador</b>, con su foto, desde su celular. Tú no lo marcas.</span></div>
+
+  <h2>Fabricar para exhibición</h2>
+  <p class="sub">Para tener piezas hechas en la tienda, sin cliente.</p>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">1</div><div class="tx"><b class="tt">Toca el botón + en Producción</b><p>Eliges qué es, el modelo, sus detalles y el precio en exhibición. Toca "Mandar a fabricar" y asigna como un pedido.</p></div></div>
+    <div class="cel"><img src="shots-prod/a9-exhibicion.png" alt="Fabricar para exhibición"></div>
+  </div>
+</div>
+
+<h2>Normas</h2>
+<div class="norma si">
+  <div class="norma-h"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Siempre</div>
+  <ul>
+    <li class="solo-vend">Antes de contestarle al cliente, <b>mira aquí</b> en qué paso va.</li>
+    <li class="solo-vend">Si un pedido va atrasado, <b>avísale al cliente</b> antes de que pregunte.</li>
+    <li class="solo-admin">Asigna el pedido <b>el mismo día</b> que llega al taller.</li>
+    <li class="solo-admin">Revisa los <b>atrasados</b> cada día y habla con quien lo tiene.</li>
+    <li class="solo-admin">Si cambias de trabajador o de sábado, hazlo <b>aquí</b>: la app le avisa.</li>
+  </ul>
+</div>
+<div class="norma no">
+  <div class="norma-h"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span>Nunca</div>
+  <ul>
+    <li>Prometerle al cliente una fecha sin ver cómo va el pedido.</li>
+    <li class="solo-admin">Dar trabajo "de palabra" sin asignarlo en la app: no se le paga.</li>
+    <li class="solo-admin">Dejar un producto sin categoría de pago.</li>
+  </ul>
+</div>
+
+<div class="solo-admin">
+  <h2>Avisos</h2>
+  <p class="sub">Les llegan a los administradores.</p>
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg></div>
+    <div><b>Pedido en fabricación</b><p>N° y cliente. "Asigna quién lo fabrica."</p><div class="hacer">Qué hacer: <strong>ábrelo y asigna.</strong></div></div></div>
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <div><b>Terminó Hierro (o el paso que sea)</b><p>Quién, qué y en qué pedido. Te dice lo que sigue: "Asigna Masilla", "Revisa el avance" o "El pedido quedó listo".</p><div class="hacer">Qué hacer: <strong>si dice "Asigna", asígnalo.</strong></div></div></div>
+  <p class="sub" style="margin-top:14px">En Inicio, "Pendientes":</p>
+  <div class="cap" style="margin-left:auto"><img src="shots-prod/a0-pend.png" alt="Pendientes del taller"></div>
+  <div class="caja">
+    <div class="orig"><span class="nn" style="background:var(--amb)">1</span><span><b>Trabajos sin asignar:</b> toca y asígnalos.</span></div>
+    <div class="orig"><span class="nn" style="background:var(--amb)">2</span><span><b>Trabajos pasaron su sábado:</b> habla con quien lo tiene y cámbiale la fecha.</span></div>
+    <div class="orig"><span class="nn" style="background:var(--az)">$</span><span><b>En fabricación: productos sin categoría:</b> dales su categoría.</span></div>
+  </div>
+</div>
+<div class="solo-vend">
+  <h2>Avisos</h2>
+  <p class="sub">A ti no te llegan avisos del taller. Cuando el pedido termina te llega "Pedido listo" (manual de Ventas).</p>
+</div>
+
+<h2>Qué pasa después</h2>
+<div class="flujo"><span>Pago confirmado</span><i>›</i><span class="on">Producción</span><i>›</i><span>Lista</span><i>›</i><span>Entregada</span></div>

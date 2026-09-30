@@ -1,0 +1,71 @@
+<!-- Generado por pruebas/manual/construir.py: no editar a mano -->
+<section data-b="intro" data-t=""><div class="ay-hero">
+<b>Aquí están los pedidos que el taller está fabricando, paso por paso.</b>
+  Un pedido llega solo cuando Ray confirma el pago. Cuando se termina el último paso, pasa solo a Lista.
+</div><div class="ay-nota solo-vend" style="margin-left:0"><svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-width="2" viewbox="0 0 24 24" width="20"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.5h.01"></path></svg><span><b>Tú solo miras.</b> Sirve para contestarle al cliente en qué va su pedido. No asignas ni ves cuánto se paga.</span></div></section>
+<section data-b="los-pasos-de-cada-producto" data-t="Los pasos de cada producto"><h2>Los pasos de cada producto</h2><p class="ay-sub">Cada oficio hace su parte, en orden.</p><div class="ay-tipo">
+<div class="ay-fila"><span>Puerta y portón</span><span>Hierro › Masilla › Pintura › Detalles. Si lleva protección, va en los mismos pasos.</span></div>
+<div class="ay-fila"><span>Ventana sin protección</span><span>Armar.</span></div>
+<div class="ay-fila"><span>Ventana con protección</span><span>La protección: Hierro › Masilla › Pintura. La ventana: Armar › Instalar en la protección (espera que la protección esté pintada).</span></div>
+<div class="ay-fila"><span>Combo</span><span>Puerta y protecciones: Hierro › Masilla › Pintura › Detalles. Las 2 ventanas: Armar › Instalar en las protecciones.</span></div>
+<div class="ay-fila"><span>Solo protección</span><span>Hierro › Masilla › Pintura.</span></div>
+<div class="ay-fila"><span>Puerta de madera</span><span>Hierro › Masilla y pintura › Detalles.</span></div>
+</div></section>
+<section data-b="la-lista" data-t="La lista"><h2>La lista</h2><div class="ay-paso">
+<div class="ay-paso-h"><div class="ay-n">1</div><div class="ay-tx"><b class="ay-tt">Filtra arriba</b><p class="solo-vend">"Todos" o "Atrasados".</p><p class="solo-admin">"Todos", "Por asignar", "Sin categoría" y "Atrasados".</p></div></div>
+<div class="ay-paso-h" style="margin-top:14px"><div class="ay-n">2</div><div class="ay-tx"><b class="ay-tt">Cada pedido dice en qué va</b><p class="solo-vend">Cuántos pasos lleva, si va atrasado y en qué paso va.</p><p class="solo-admin">Cuántos pasos lleva y si falta asignar, le falta categoría o va atrasado.</p></div></div>
+<div class="ay-cap solo-vend"><img alt="Lista de producción" decoding="async" loading="lazy" src="img/prod-v1-lista.jpg"/></div>
+<div class="ay-cel solo-admin"><img alt="Lista de producción" decoding="async" loading="lazy" src="img/prod-a1-lista.jpg"/></div>
+</div></section>
+<section data-b="la-ficha" data-t="La ficha"><h2>La ficha</h2><p class="ay-sub">Toca un pedido. Cada producto muestra sus pasos.</p><div class="ay-caja">
+<div class="ay-orig"><span class="ay-nn" style="background:var(--ac)">✓</span><span><b>Terminado:</b> quién y cuándo.</span></div>
+<div class="ay-orig"><span class="ay-nn" style="background:var(--amb)">●</span><span><b>Lo está haciendo ahora:</b> el trabajador lo empezó.</span></div>
+<div class="ay-orig"><span class="ay-nn" style="background:var(--soft)">○</span><span><b>Asignado:</b> quién lo tiene y para qué sábado.</span></div>
+<div class="ay-orig"><span class="ay-nn">!</span><span><b>Se pasó del sábado:</b> no lo terminó a tiempo.</span></div>
+</div><div class="ay-cap"><img alt="Pasos del producto" decoding="async" loading="lazy" src="img/prod-a8-atrasado.jpg"/></div></section>
+<section data-b="asignar-el-trabajo-admin" data-t="Asignar el trabajo" class="solo-admin"><div class="ay-tag-admin"><svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" viewbox="0 0 24 24" width="14"><rect height="10" rx="2" width="14" x="5" y="11"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Solo administrador</div><h2>Asignar el trabajo</h2><p class="ay-sub">Cuando un pedido llega al taller te llega el aviso "Pedido en fabricación: asigna quién lo fabrica".</p><div class="ay-paso">
+<div class="ay-paso-h"><div class="ay-n ay-az">1</div><div class="ay-tx"><b class="ay-tt">Si dice "Primero dale una categoría de pago", tócalo</b><p>Sin categoría no se puede asignar ni calcular el pago.</p></div></div>
+<div class="ay-cap"><img alt="Falta categoría" decoding="async" loading="lazy" src="img/prod-a2-sincat.jpg"/></div>
+</div><div class="ay-paso">
+<div class="ay-paso-h"><div class="ay-n ay-az">2</div><div class="ay-tx"><b class="ay-tt">Toca "Asignar trabajadores"</b><p>Uno por producto. Te dice qué incluye cada bloque.</p></div></div>
+<div class="ay-cap"><img alt="Asignar trabajadores" decoding="async" loading="lazy" src="img/prod-a4-boton.jpg"/></div>
+</div><div class="ay-paso">
+<div class="ay-paso-h"><div class="ay-n ay-az">3</div><div class="ay-tx"><b class="ay-tt">Elige quién hace cada parte</b><p>Salen solo los trabajadores de ese oficio. Masilla y pintura se asignan juntas a la misma persona; armar e instalar también.</p></div></div>
+<div class="ay-cap"><img alt="Elegir trabajador" decoding="async" loading="lazy" src="img/prod-a5-asignar.jpg"/></div>
+</div><div class="ay-paso">
+<div class="ay-paso-h"><div class="ay-n ay-az">4</div><div class="ay-tx"><b class="ay-tt">¿Para cuándo?</b><p>Este sábado o el próximo. Es el sábado en que se le paga si lo termina.</p></div></div>
+<div class="ay-cap"><img alt="Para cuándo" decoding="async" loading="lazy" src="img/prod-a6-cuando.jpg"/></div>
+</div><div class="ay-paso">
+<div class="ay-paso-h"><div class="ay-n ay-az">5</div><div class="ay-tx"><b class="ay-tt">Guarda</b><p>Al que ya puede empezar le llega "Nuevo trabajo". A los que esperan a un compañero les llega "Ya te toca" cuando el anterior termina. Si le quitas uno que ya podía empezar, le llega "Ya no tienes este trabajo".</p></div></div>
+<div class="ay-cap"><img alt="Guardar" decoding="async" loading="lazy" src="img/prod-a7-guardar.jpg"/></div>
+</div><div class="ay-nota" style="margin-left:0"><svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-width="2" viewbox="0 0 24 24" width="20"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.5h.01"></path></svg><span><b>El que marca terminado es el trabajador</b>, con su foto, desde su celular. Tú no lo marcas.</span></div></section>
+<section data-b="fabricar-para-exhibicion-admin" data-t="Fabricar para exhibición" class="solo-admin"><h2>Fabricar para exhibición</h2><p class="ay-sub">Para tener piezas hechas en la tienda, sin cliente.</p><div class="ay-paso">
+<div class="ay-paso-h"><div class="ay-n ay-az">1</div><div class="ay-tx"><b class="ay-tt">Toca el botón + en Producción</b><p>Eliges qué es, el modelo, sus detalles y el precio en exhibición. Toca "Mandar a fabricar" y asigna como un pedido.</p></div></div>
+<div class="ay-cel"><img alt="Fabricar para exhibición" decoding="async" loading="lazy" src="img/prod-a9-exhibicion.jpg"/></div>
+</div></section>
+<section data-b="normas" data-t="Normas"><h2>Normas</h2><div class="ay-norma ay-si">
+<div class="ay-norma-h"><span><svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24" width="16"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Siempre</div>
+<ul>
+<li class="solo-vend">Antes de contestarle al cliente, <b>mira aquí</b> en qué paso va.</li>
+<li class="solo-vend">Si un pedido va atrasado, <b>avísale al cliente</b> antes de que pregunte.</li>
+<li class="solo-admin">Asigna el pedido <b>el mismo día</b> que llega al taller.</li>
+<li class="solo-admin">Revisa los <b>atrasados</b> cada día y habla con quien lo tiene.</li>
+<li class="solo-admin">Si cambias de trabajador o de sábado, hazlo <b>aquí</b>: la app le avisa.</li>
+</ul>
+</div><div class="ay-norma ay-no">
+<div class="ay-norma-h"><span><svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-width="3" viewbox="0 0 24 24" width="16"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>Nunca</div>
+<ul>
+<li>Prometerle al cliente una fecha sin ver cómo va el pedido.</li>
+<li class="solo-admin">Dar trabajo "de palabra" sin asignarlo en la app: no se le paga.</li>
+<li class="solo-admin">Dejar un producto sin categoría de pago.</li>
+</ul>
+</div></section>
+<section data-b="avisos-admin" data-t="Avisos" class="solo-admin"><h2>Avisos</h2><p class="ay-sub">Les llegan a los administradores.</p><div class="ay-aviso"><div class="ay-dot"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"></path></svg></div>
+<div><b>Pedido en fabricación</b><p>N° y cliente. "Asigna quién lo fabrica."</p><div class="ay-hacer">Qué hacer: <strong>ábrelo y asigna.</strong></div></div></div><div class="ay-aviso"><div class="ay-dot"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24" width="18"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
+<div><b>Terminó Hierro (o el paso que sea)</b><p>Quién, qué y en qué pedido. Te dice lo que sigue: "Asigna Masilla", "Revisa el avance" o "El pedido quedó listo".</p><div class="ay-hacer">Qué hacer: <strong>si dice "Asigna", asígnalo.</strong></div></div></div><p class="ay-sub" style="margin-top:14px">En Inicio, "Pendientes":</p><div class="ay-cap" style="margin-left:auto"><img alt="Pendientes del taller" decoding="async" loading="lazy" src="img/prod-a0-pend.jpg"/></div><div class="ay-caja">
+<div class="ay-orig"><span class="ay-nn" style="background:var(--amb)">1</span><span><b>Trabajos sin asignar:</b> toca y asígnalos.</span></div>
+<div class="ay-orig"><span class="ay-nn" style="background:var(--amb)">2</span><span><b>Trabajos pasaron su sábado:</b> habla con quien lo tiene y cámbiale la fecha.</span></div>
+<div class="ay-orig"><span class="ay-nn" style="background:var(--az)">$</span><span><b>En fabricación: productos sin categoría:</b> dales su categoría.</span></div>
+</div></section>
+<section data-b="avisos-vend" data-t="Avisos" class="solo-vend"><h2>Avisos</h2><p class="ay-sub">A ti no te llegan avisos del taller. Cuando el pedido termina te llega "Pedido listo" (manual de Ventas).</p></section>
+<section data-b="que-pasa-despues" data-t="Qué pasa después"><h2>Qué pasa después</h2><div class="ay-flujo"><span>Pago confirmado</span><i>›</i><span class="ay-on">Producción</span><i>›</i><span>Lista</span><i>›</i><span>Entregada</span></div></section>

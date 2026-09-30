@@ -1,0 +1,179 @@
+<div class="top">
+  <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg></div>
+  <div><div class="t1">Ventas y pagos</div><div class="t2">Ayuda · seguir un pedido de principio a fin</div></div>
+</div>
+
+<div class="rol" role="group" aria-label="¿Quién eres?">
+  <button type="button" data-rol="v" aria-pressed="true">Soy vendedora</button>
+  <button type="button" data-rol="a" aria-pressed="false">Soy administrador</button>
+</div>
+
+<div class="hero">
+  <b>Aquí están todos los pedidos pagados, desde que se confirman hasta que el cliente se los lleva.</b>
+  Desde aquí se cobran los pagos, se le avisa al cliente y se marca la entrega.
+</div>
+
+<h2>Cómo avanza un pedido</h2>
+<p class="sub">No se saltan pasos. Dos de ellos pasan solos.</p>
+<div class="caja">
+  <div class="orig"><span class="nn" style="background:var(--ac)">1</span><span><b>Confirmada:</b> se registró con su pago. Espera que Ray confirme que el dinero llegó.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">2</span><span><b>En fabricación:</b> pasa <b>sola</b> cuando Ray confirma el pago. El taller trabaja.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">3</span><span><b>Lista:</b> pasa <b>sola</b> cuando el taller termina el último paso. Hay que avisarle al cliente.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">4</span><span><b>Entregada:</b> la marcas tú cuando el cliente se la lleva.</span></div>
+</div>
+<div class="nota" style="margin-left:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg><span><b>Si todo es de entrega inmediata</b>, no pasa por el taller: queda Lista al guardarla. Tú solo marcas Entregada.</span></div>
+
+<h2>La lista</h2>
+<p class="sub">Toca "Ventas" en Inicio. Arriba filtras.</p>
+<div class="cap"><img src="shots-ventas/s1-chips.png" alt="Filtros de ventas"></div>
+<div class="caja">
+  <div class="orig"><span class="nn" style="background:var(--ac)">A</span><span><b>Activas:</b> sin entregar, la entrega más cercana primero.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">P</span><span><b>Por avisar:</b> hay algo nuevo que decirle al cliente.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">$</span><span><b>Pagos por confirmar:</b> esperan que Ray revise el dinero.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">C</span><span><b>Por cobrar:</b> todavía deben algo.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">E</span><span><b>Entregadas</b> y <b>Canceladas</b>.</span></div>
+</div>
+
+<h2>La ficha de un pedido</h2>
+<p class="sub">Toca un pedido para abrirlo. Arriba ves en qué paso va.</p>
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Los 4 pasos</b><p>El punto marca dónde está.</p></div></div>
+  <div class="paso-h" style="margin-top:14px"><div class="n">2</div><div class="tx"><b class="tt">Lo que falta</b><p>Debajo te dice qué se espera. Recién registrada: "Espera que Ray confirme el pago".</p></div></div>
+  <div class="cap"><img src="shots-ventas/s2-estados.png" alt="Pasos del pedido"></div>
+</div>
+<div class="paso">
+  <div class="paso-h"><div class="n">3</div><div class="tx"><b class="tt">En fabricación: cuánto lleva</b><p>La barra dice cuántos pasos terminó el taller.</p></div></div>
+  <div class="cap"><img src="shots-ventas/s4-avance.png" alt="Avance"></div>
+  <div class="paso-h" style="margin-top:14px"><div class="n">4</div><div class="tx"><b class="tt">En qué paso va cada producto</b><p>La etiqueta de cada producto: en ámbar lo están haciendo; con borde, asignado pero sin empezar; en gris espera; en rojo nadie lo tiene; en verde, terminado. "Ver fabricación" abre el detalle.</p></div></div>
+  <div class="cap"><img src="shots-ventas/s5-productos.png" alt="Productos en fabricación"></div>
+</div>
+
+<h2>Pagos</h2>
+<p class="sub">Cada pago queda "Por confirmar" hasta que Ray revisa que el dinero llegó.</p>
+<div class="cap"><img src="shots-ventas/s3-pagos.png" alt="Pagos"></div>
+<div class="caja">
+  <div class="orig"><span class="nn" style="background:var(--amb)">!</span><span><b>Por confirmar:</b> Ray todavía no lo revisa.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">✓</span><span><b>Confirmado:</b> el dinero llegó. Puede traer una nota de Ray.</span></div>
+  <div class="orig"><span class="nn">×</span><span><b>No llegó:</b> no cuenta en lo pagado. Hay que hablar con el cliente.</span></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Cuando el cliente paga lo que resta: "Registrar pago"</b><p>Está en Pagos, solo si todavía debe.</p></div></div>
+  <div class="cap"><img src="shots-ventas/s6-registrar.png" alt="Registrar pago"></div>
+</div>
+<div class="paso">
+  <div class="paso-h"><div class="n">2</div><div class="tx"><b class="tt">Cuánto, cómo y el comprobante</b><p>"Paga lo que resta" o "Pago parcial". El comprobante es obligatorio, también en efectivo. Toca "Guardar pago".</p></div></div>
+  <div class="cap"><img src="shots-ventas/s7-hoja-pago.png" alt="Hoja de pago"></div>
+</div>
+
+<div class="solo-admin">
+  <div class="tag-admin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Solo Ray</div>
+  <h2>Confirmar un pago</h2>
+  <p class="sub">Solo Ray confirma pagos. Gualfredo ve los pagos pero no los confirma.</p>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">1</div><div class="tx"><b class="tt">Toca el aviso o el pendiente</b><p>"Nueva venta" o "Nuevo pago" en el celular, o "X pagos por confirmar" en Inicio.</p></div></div>
+    <div class="cap"><img src="shots-ventas/r1-pendiente.png" alt="Pagos por confirmar en Inicio"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">2</div><div class="tx"><b class="tt">Toca el pago "Por confirmar"</b></div></div>
+    <div class="cap"><img src="shots-ventas/r2-toca.png" alt="Pago por confirmar"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">3</div><div class="tx"><b class="tt">Mira el comprobante y revisa tu cuenta</b><p>Escribe una nota si hace falta: a dónde llegó, a quién se transfirió.</p></div></div>
+    <div class="paso-h" style="margin-top:14px"><div class="n az">4</div><div class="tx"><b class="tt">"Sí llegó, confirmar" o "No llegó"</b><p>Si llegó y es el primer pago, el pedido pasa solo a fabricación y le llega el aviso al administrador para asignar. Si no llegó, a quien lo registró le llega "Pago no llegó" con tu nota.</p></div></div>
+    <div class="cel"><img src="shots-ventas/r3-confirmar.png" alt="Confirmar pago"></div>
+  </div>
+</div>
+
+<h2>Avisarle al cliente</h2>
+<p class="sub">En la ficha hay un solo botón con lo que toca mandarle ahora.</p>
+<div class="caja">
+  <div class="orig"><span class="nn" style="background:var(--ac)">1</span><span><b>Enviar nota de pedido:</b> el PDF con su enlace de seguimiento. Va primero.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">2</span><span><b>Avisar por WhatsApp:</b> cuando hay algo nuevo (pago confirmado, pedido listo).</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">✓</span><span><b>Cliente avisado:</b> ya está al día. No hay nada que mandar.</span></div>
+</div>
+<div class="cap"><img src="shots-ventas/s9-avisar.png" alt="Avisar por WhatsApp"></div>
+<p class="sub" style="margin:14px 0 0">Con el enlace, el cliente ve en su celular en qué paso va su pedido, sus pagos y puede bajar su nota:</p>
+<div class="cel"><img src="shots-ventas/pub1.png" alt="Lo que ve el cliente"></div>
+
+<h2>Entregar</h2>
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Cuando el cliente se lo lleva: "Marcar como Entregada"</b><p>Sale cuando el pedido está Listo. Cobra lo que resta antes.</p></div></div>
+  <div class="cap"><img src="shots-ventas/s8-entregar.png" alt="Marcar como Entregada"></div>
+  <div class="ojo" style="margin-left:46px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg><span><b>Si todavía debe, la app te pregunta.</b> Un pedido no se entrega debiendo: registra el pago primero.</span></div>
+</div>
+
+<h2>Más opciones</h2>
+<p class="sub">Al final de la ficha.</p>
+<div class="caja">
+  <div class="orig"><span class="nn" style="background:var(--ac)">✎</span><span><b>Editar:</b> solo mientras está Confirmada, antes de ir al taller.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">↗</span><span><b>Seguimiento</b> y <b>Copiar enlace:</b> lo que ve el cliente.</span></div>
+  <div class="orig"><span class="nn" style="background:var(--ac)">▤</span><span><b>PDF:</b> la nota de pedido.</span></div>
+</div>
+<div class="cap solo-vend"><img src="shots-ventas/s10-mas-vend.png" alt="Más opciones"></div>
+<div class="nota solo-vend" style="margin-left:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg><span><b>No puedes cancelar una venta.</b> Si el cliente se arrepiente, avísale a un administrador.</span></div>
+
+<div class="solo-admin">
+  <div class="tag-admin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Solo administrador</div>
+  <h2>Cancelar una venta</h2>
+  <p class="sub">Solo un administrador cancela. No se puede deshacer.</p>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">1</div><div class="tx"><b class="tt">Más opciones › "Cancelar venta"</b></div></div>
+    <div class="cap"><img src="shots-ventas/r4-cancelar.png" alt="Cancelar venta"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">2</div><div class="tx"><b class="tt">Cómo se le devolvió y el motivo</b><p>Si pagó, la app registra la devolución de todo lo pagado. Las piezas de entrega inmediata vuelven a la tienda. A los trabajadores que tenían pasos les llega "Pedido cancelado".</p></div></div>
+    <div class="cel"><img src="shots-ventas/r5-hoja-cancelar.png" alt="Hoja de cancelar"></div>
+  </div>
+</div>
+
+<h2>Normas</h2>
+<div class="norma si">
+  <div class="norma-h"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Siempre</div>
+  <ul>
+    <li>Registra <b>cada pago</b> apenas llegue, con su comprobante.</li>
+    <li>Cuando el botón diga <b>"Avisar por WhatsApp"</b>, mándalo ese mismo día.</li>
+    <li>Cobra <b>todo lo que resta</b> antes de entregar.</li>
+    <li>Marca <b>Entregada</b> el mismo día que se la lleva.</li>
+    <li class="solo-admin">Ray: confirma los pagos <b>el mismo día</b>. Sin eso, el pedido no llega al taller.</li>
+  </ul>
+</div>
+<div class="norma no">
+  <div class="norma-h"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span>Nunca</div>
+  <ul>
+    <li>Entregar un pedido que todavía debe.</li>
+    <li>Cambiarle la fecha de entrega al cliente sin editarla en la venta.</li>
+    <li>Registrar un pago que todavía no llegó.</li>
+    <li class="solo-admin">Confirmar un pago sin ver que el dinero está en la cuenta.</li>
+  </ul>
+</div>
+
+<h2>Avisos</h2>
+<p class="sub">Los que llegan al celular y los que salen en Inicio, en "Pendientes".</p>
+<div class="solo-vend">
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <div><b>Pago confirmado</b><p>Te llega si tú registraste el pago. Si era el primero, el pedido pasó a fabricación.</p><div class="hacer">Qué hacer: <strong>ábrelo y toca el botón de "Avisar al cliente"</strong> (si no le mandaste la nota de pedido, sale primero "Enviar nota de pedido").</div></div></div>
+  <div class="aviso"><div class="dot" style="background:var(--reds);color:var(--red)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+    <div><b>Pago no llegó</b><p>Trae la nota de Ray.</p><div class="hacer">Qué hacer: <strong>habla con el cliente y registra el pago correcto.</strong></div></div></div>
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7z"/></svg></div>
+    <div><b>Pedido listo</b><p>El taller terminó. Solo te llega si tú hiciste la venta.</p><div class="hacer">Qué hacer: <strong>avísale que ya puede recogerlo y cobra lo que resta.</strong></div></div></div>
+  <p class="sub" style="margin-top:14px">En Inicio, "Pendientes":</p>
+  <div class="caja">
+    <div class="orig"><span class="nn">$</span><span><b>Pago no llegó:</b> habla con el cliente.</span></div>
+    <div class="orig"><span class="nn" style="background:var(--ac)">✓</span><span><b>Pedido listo: avísale.</b></span></div>
+    <div class="orig"><span class="nn" style="background:var(--az)">›</span><span><b>Pago confirmado: avísale.</b> Mándale el seguimiento.</span></div>
+    <div class="orig"><span class="nn" style="background:var(--amb)">!</span><span><b>Pedido atrasado:</b> pasó su fecha de entrega. Pregunta en el taller y avísale al cliente.</span></div>
+  </div>
+</div>
+<div class="solo-admin">
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M16.5 7.5C16 6 14.4 5 12 5c-2.8 0-4.5 1.3-4.5 3.2 0 4.3 9 2.3 9 6.6C16.5 16.8 14.6 18 12 18c-2.6 0-4.3-1.1-4.8-2.8"/></svg></div>
+    <div><b>Nueva venta</b><p>Primer pago de un pedido. Les llega a los administradores.</p><div class="hacer">Qué hacer: <strong>Ray confirma el pago.</strong></div></div></div>
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M16.5 7.5C16 6 14.4 5 12 5c-2.8 0-4.5 1.3-4.5 3.2 0 4.3 9 2.3 9 6.6C16.5 16.8 14.6 18 12 18c-2.6 0-4.3-1.1-4.8-2.8"/></svg></div>
+    <div><b>Nuevo pago</b><p>Otro pago de un pedido. Solo le llega a Ray.</p><div class="hacer">Qué hacer: <strong>confirma que llegó.</strong></div></div></div>
+  <div class="aviso"><div class="dot" style="background:var(--reds);color:var(--red)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+    <div><b>Venta cancelada</b><p>Quién la canceló y cuánto hay que devolver.</p><div class="hacer">Qué hacer: <strong>haz la devolución al cliente.</strong></div></div></div>
+  <p class="sub" style="margin-top:14px">En Inicio, a Ray le sale <b>"X pagos por confirmar"</b> con el total.</p>
+</div>
+
+<h2>Qué pasa después</h2>
+<div class="flujo"><span>Pago</span><i>›</i><span>Ray confirma</span><i>›</i><span class="on">Fabricación</span><i>›</i><span>Lista</span><i>›</i><span>Entregada</span></div>

@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ayuda · Catálogo</title>
+<style>
+:root{--bg:#FFFFFF;--s2:#F7F6F4;--ink:#1C1A17;--soft:#6E6A64;--faint:#A8A39B;--line:#E9E7E3;--line2:#D9D6D0;--ac:#17555C;--acs:rgba(23,85,92,0.09);--red:#B42318;--reds:#FDF1F0;--ambs:#FBF3E4;--ambi:#7A4F00;--az:#2F5D8A;--azs:rgba(47,93,138,.09);--ease-out:cubic-bezier(0.23,1,0.32,1)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;font-size:15.5px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.pag{max-width:430px;margin:0 auto;padding:0 18px 40px}
+.top{display:flex;align-items:center;gap:12px;padding:22px 0 14px}
+.ic{width:46px;height:46px;border-radius:14px;background:var(--acs);color:var(--ac);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.t1{font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.t2{font-size:13px;color:var(--soft);margin-top:3px}
+/* Selector de rol */
+.rol{display:grid;grid-template-columns:1fr 1fr;background:var(--s2);border-radius:14px;padding:4px;margin-bottom:14px;position:sticky;top:8px;z-index:5;box-shadow:0 6px 18px rgba(28,26,23,.06)}
+.rol button{font:inherit;border:0;background:none;border-radius:11px;padding:10px 0;font-weight:700;font-size:15px;color:var(--soft);cursor:pointer;white-space:nowrap;transition:transform 140ms var(--ease-out)}
+.rol button:active{transform:scale(0.97)}
+.rol button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(28,26,23,.12)}
+body.v .solo-admin{display:none!important}
+body.a .solo-vend{display:none!important}
+.hero{background:var(--ac);color:#fff;border-radius:20px;padding:18px}
+.hero b{font-size:19px;display:block;margin-bottom:6px;letter-spacing:-.2px}
+h2{font-size:21px;font-weight:800;letter-spacing:-.3px;margin:34px 0 4px}
+.sub{color:var(--soft);font-size:14px;margin:0 0 14px}
+.tag-admin{display:inline-flex;align-items:center;gap:6px;background:var(--azs);color:var(--az);font-size:12.5px;font-weight:800;border-radius:999px;padding:4px 10px;margin-top:30px}
+.tag-admin+h2{margin-top:8px}
+.lista-check{background:var(--s2);border-radius:18px;padding:6px 16px}
+.lista-check>div{display:flex;gap:12px;align-items:center;padding:11px 0;font-size:15px}
+.lista-check>div+div{border-top:1px solid var(--line)}
+.lista-check svg{flex-shrink:0;color:var(--ac)}
+.paso{margin-top:24px}
+.paso-h{display:flex;gap:12px;align-items:flex-start}
+.n{width:34px;height:34px;border-radius:50%;background:var(--ac);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.n.az{background:var(--az)}
+.paso-h .tx b.tt{font-size:17px;display:block;line-height:1.25}
+.paso-h .tx p{margin:3px 0 0;color:var(--soft);font-size:14.5px}
+.cap{width:250px;margin:12px auto 0;border-radius:26px;border:7px solid #1C1A17;overflow:hidden;background:#fff}
+.cap img{width:100%;display:block}
+.cel{width:250px;margin:12px auto 0;border-radius:26px;border:7px solid #1C1A17;overflow:hidden}
+.cel img{width:100%;display:block}
+.nota{display:flex;gap:10px;background:var(--azs);color:var(--az);border-radius:14px;padding:12px 14px;font-size:14.5px;margin:12px 0 0 46px}
+.nota b{color:var(--ink)}
+.tipo{border:1px solid var(--line2);border-radius:18px;padding:16px;margin-top:12px}
+.tipo-h{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.tipo-h .ic{width:40px;height:40px;border-radius:12px}
+.tipo-h b{font-size:17px;display:block}
+.tipo-h small{color:var(--soft);font-size:13px}
+.fila{display:grid;grid-template-columns:88px 1fr;gap:10px;padding:8px 0;font-size:14.5px}
+.fila+.fila{border-top:1px solid var(--line)}
+.fila>span:first-child{color:var(--soft);font-size:13px;font-weight:700;padding-top:1px}
+.ojo{background:var(--ambs);color:var(--ambi);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px;display:flex;gap:9px}
+.ojo svg{flex-shrink:0;margin-top:1px}
+.ojo b{color:var(--ink)}
+.precio{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.precio div{background:var(--s2);border-radius:12px;padding:8px 10px;font-size:12.5px;color:var(--soft)}
+.precio b{display:block;color:var(--ink);font-size:17px}
+.tipo .cap{margin-top:12px}
+.norma{border-radius:18px;padding:14px 16px;margin-top:12px}
+.norma.si{background:var(--acs)}
+.norma.no{background:var(--reds)}
+.norma-h{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;margin-bottom:6px}
+.norma.si .norma-h{color:var(--ac)}.norma.no .norma-h{color:var(--red)}
+.norma-h span{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff}
+.norma.si .norma-h span{background:var(--ac)}.norma.no .norma-h span{background:var(--red)}
+.norma ul{margin:0;padding:0;list-style:none}
+.norma li{padding:7px 0 7px 26px;position:relative;font-size:15px}
+.norma li+li{border-top:1px solid rgba(28,26,23,.07)}
+.norma li:before{content:"";position:absolute;left:4px;top:14px;width:9px;height:9px;border-radius:50%}
+.norma.si li:before{background:var(--ac)}.norma.no li:before{background:var(--red)}
+.aviso{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line2);border-radius:16px;padding:12px 14px;margin-top:10px}
+.aviso .dot{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--acs);color:var(--ac)}
+.aviso b{display:block;font-size:15px}
+.aviso p{margin:2px 0 0;font-size:14px;color:var(--soft)}
+.aviso .hacer{margin-top:6px;font-size:14px}
+.aviso .hacer strong{color:var(--ac)}
+.flujo{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px}
+.flujo span{background:var(--s2);border-radius:12px;padding:9px 12px;font-weight:700;font-size:14px}
+.flujo span.on{background:var(--ac);color:#fff}
+.flujo i{color:var(--faint);font-style:normal;font-weight:800}
+.pie{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint);text-align:center}
+</style></head><body class="v"><div class="pag">
+
+<div class="top">
+  <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></div>
+  <div><div class="t1">Catálogo</div><div class="t2">Ayuda · cómo registrar y usar los modelos</div></div>
+</div>
+
+<div class="rol" role="group" aria-label="¿Quién eres?">
+  <button type="button" data-rol="v" aria-pressed="true">Soy vendedora</button>
+  <button type="button" data-rol="a" aria-pressed="false">Soy administrador</button>
+</div>
+
+<div class="hero">
+  <b>Aquí están todos los modelos que vendemos.</b>
+  Lo que no está en el catálogo solo se puede vender como "A medida". Por eso cada modelo que vendemos debe estar aquí. Lo que escribas aquí es lo que ven el cliente, la vendedora y el taller.
+</div>
+
+<h2>Antes de empezar, ten a mano</h2>
+<p class="sub">Si te falta algo, consíguelo primero.</p>
+<div class="lista-check">
+  <div><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg><span><b>Fotos</b> del modelo en blanco y en negro</span></div>
+  <div><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h10M4 17h13"/></svg><span><b>Nombre</b> claro, que no se repita</span></div>
+  <div><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17L17 3l4 4L7 21H3v-4z"/></svg><span><b>Medidas</b> típicas en metros</span></div>
+  <div><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M16.5 7.5C16 6 14.4 5 12 5c-2.8 0-4.5 1.3-4.5 3.2 0 4.3 9 2.3 9 6.6C16.5 16.8 14.6 18 12 18c-2.6 0-4.3-1.1-4.8-2.8"/></svg><span><b>Precio</b> de venta del modelo</span></div>
+  <div class="solo-admin"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12l-8 8-9-9V3h8l9 9z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg><span><b>Categoría de pago</b>: con qué se le paga al taller</span></div>
+</div>
+
+<h2>Registrar un modelo</h2>
+<p class="sub">Toma unos 2 minutos.</p>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Toca el botón +</b><p>Abajo a la derecha, en Catálogo.</p></div></div>
+  <div class="cel"><img src="shots/v1-mas.png" alt="Botón + en el catálogo"></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">2</div><div class="tx"><b class="tt">Elige qué tipo es</b><p>Es lo más importante: el tipo decide qué te pregunta la app y cómo se fabrica.</p></div></div>
+  <div class="cap"><img src="shots/v2-tipo.png" alt="Elegir el tipo"></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">3</div><div class="tx"><b class="tt">Sube las fotos y escribe el nombre</b><p>Toca el cuadro de cada color para tomar o elegir su foto.</p></div></div>
+  <div class="cap"><img src="shots/v3-fotos-nombre.png" alt="Fotos y nombre"></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">4</div><div class="tx"><b class="tt">Marca cómo es el modelo</b><p>Medidas, vidrio, manillón y extras. Marca solo lo que el modelo trae incluido en su precio.</p></div></div>
+  <div class="cap"><img src="shots/v4-specs.png" alt="Cómo es el modelo"></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">5</div><div class="tx"><b class="tt">Escribe el precio</b><p>Lo que paga el cliente por el modelo tal cual.</p></div></div>
+  <div class="cap"><img src="shots/v5-precio.png" alt="Precio"></div>
+  <div class="nota solo-vend"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg><span><b>La categoría de pago no la pones tú.</b> Al guardar, al administrador le sale el aviso para ponérsela.</span></div>
+  <div class="solo-admin">
+    <div class="nota"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg><span><b>Tú ves también la categoría de pago</b> debajo del precio. Elígela ahí mismo.</span></div>
+    <div class="cap"><img src="shots/a5-campo.png" alt="Categoría de pago en el modelo"></div>
+  </div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">6</div><div class="tx"><b class="tt">Toca "Guardar modelo"</b><p>Si falta algo, la app lo marca en rojo y te dice qué es.</p></div></div>
+  <div class="cap"><img src="shots/v6-guardar.png" alt="Guardar modelo"></div>
+</div>
+
+<h2>Según el tipo</h2>
+<p class="sub">Cada tipo se registra distinto. Esto es lo que importa.</p>
+
+<div class="tipo">
+  <div class="tipo-h"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="1.5"/><path d="M15 11v2.5"/><path d="M9 7h.01M9 12h.01M9 17h.01"/></svg></div><div><b>Puerta Multilock</b><small>Puerta de seguridad</small></div></div>
+  <div class="fila"><span>Llenas</span><span>Medidas, vidrio o farquilla, manillón, y si trae marco decorativo o protección.</span></div>
+  <div class="fila"><span>Precio</span><span>El que escribes. Al vender suma solo lo que el modelo no trae: manillón <b>+$20</b>; protección o marco, con el monto que escribe la vendedora.</span></div>
+  <div class="fila"><span>Al vender</span><span>Se pide hacia dónde abre, adentro o afuera y el bloque. Aquí no.</span></div>
+</div>
+
+<div class="tipo">
+  <div class="tipo-h"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M12 4.5v15M3.5 12h17"/></svg></div><div><b>Ventana</b><small>Con o sin protección</small></div></div>
+  <div class="fila"><span>Llenas</span><span>Medidas, papel ahumado, y si lleva protección, marco en protección o más de 2 hojas.</span></div>
+  <div class="fila"><span>Precio</span><span>Al vender se calcula solo por metro cuadrado según el aluminio. El de aquí solo se ve como "Desde".
+    <div class="precio"><div>Panorámica<b>$90 / m²</b>con protección $190</div><div>Ecobel<b>$120 / m²</b>con protección $220</div></div></span></div>
+  <div class="ojo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg><span><b>Con protección y sin protección son dos modelos.</b> Si el modelo trae protección, siempre se vende con ella.</span></div>
+</div>
+
+<div class="tipo">
+  <div class="tipo-h"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="9" height="18" rx="1.2"/><path d="M9.5 11.5v2"/><rect x="14" y="6" width="7" height="7" rx="1"/><path d="M17.5 6v7M14 9.5h7"/></svg></div><div><b>Combo</b><small>Puerta y 2 ventanas</small></div></div>
+  <div class="fila"><span>Llenas</span><span>Medidas de la puerta, protección en la puerta, vidrio, manillón, ahumado y <b>medidas de las 2 ventanas</b>.</span></div>
+  <div class="fila"><span>Precio</span><span>El que escribes, con aluminio Panorámica. Con Ecobel suma <b>+$80</b>.</span></div>
+  <div class="ojo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg><span><b>Sin las medidas de las ventanas, el combo no se puede vender.</b> Y al vender no se cambian.</span></div>
+  <div class="cap" style="margin-top:12px"><img src="shots/combo-ventanas.png" alt="Medidas de las 2 ventanas"></div>
+</div>
+
+<div class="tipo">
+  <div class="tipo-h"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 20.5h19"/><rect x="3.5" y="6" width="17" height="14.5" rx="1"/><path d="M7.8 6v14.5M12 6v14.5M16.2 6v14.5"/></svg></div><div><b>Portón</b><small>Vidrio o farquilla</small></div></div>
+  <div class="fila"><span>Llenas</span><span>Medidas, vidrio o farquilla y manillón.</span></div>
+  <div class="fila"><span>Precio</span><span>El que escribes. Manillón que no trae <b>+$20</b>.</span></div>
+</div>
+
+<div class="tipo">
+  <div class="tipo-h"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="1.5"/><rect x="8.5" y="5" width="7" height="6" rx=".8"/><rect x="8.5" y="13" width="7" height="6" rx=".8"/></svg></div><div><b>Puerta de Madera</b><small>Un solo acabado</small></div></div>
+  <div class="fila"><span>Llenas</span><span>Una sola foto, medidas y la cerradura: pomo, manilla negra o personalizada.</span></div>
+  <div class="fila"><span>Precio</span><span>El que escribes.</span></div>
+</div>
+
+<h2>Entrega inmediata</h2>
+<p class="sub">Cuando hay una pieza ya hecha en la tienda, lista para llevar.</p>
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Abre el modelo y toca "Entrega inmediata"</b><p>Luego eliges el color, la sede donde está, cuántas hay y el precio de esa pieza.</p></div></div>
+  <div class="cap"><img src="shots/entrega-inmediata.png" alt="Entrega inmediata"></div>
+</div>
+
+
+<h2>Después de registrar</h2>
+<p class="sub">Buscar, cambiar, quitar y lo que ve el cliente.</p>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">1</div><div class="tx"><b class="tt">Buscar un modelo</b><p>Escribe parte del nombre, o toca un tipo arriba. "Entrega inmediata" muestra solo lo que hay en tienda.</p></div></div>
+  <div class="cap"><img src="shots/d1-buscar.png" alt="Buscar y filtrar"></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">2</div><div class="tx"><b class="tt">Editar un modelo</b><p>Tócalo para abrirlo y toca "Editar". Cambia lo que necesites y guarda.</p></div></div>
+  <div class="cap"><img src="shots/d2-editar.png" alt="Botón Editar"></div>
+  <div class="cap"><img src="shots/d3-form-editar.png" alt="Editar modelo"></div>
+  <div class="nota"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg><span><b>Las cotizaciones y ventas ya hechas no cambian.</b> Conservan el precio y los datos que tenían.</span></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">3</div><div class="tx"><b class="tt">Lo que ve el cliente</b><p>En el formulario, abre "Para el catálogo público": etiqueta (Nuevo, Oferta), descripción en palabras sencillas y características.</p></div></div>
+  <div class="cap"><img src="shots/d4-publico.png" alt="Para el catálogo público"></div>
+  <p class="sub" style="margin:12px 0 0 46px">Para verlo como el cliente o mandarle el enlace: toca tu inicial arriba en Inicio.</p>
+  <div class="cap"><img src="shots/d8-publico-menu.png" alt="Catálogo público en el menú"></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">4</div><div class="tx"><b class="tt">Cambiar o quitar una pieza de entrega inmediata</b><p>Abre el modelo y toca la pieza. "Editar pieza" para cambiar precio, foto o cantidad. "Ya no está" cuando salió de la tienda.</p></div></div>
+  <div class="cap"><img src="shots/d5a-piezas.png" alt="Piezas del modelo"></div>
+  <div class="cap"><img src="shots/d5b-pieza.png" alt="Editar o quitar la pieza"></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">5</div><div class="tx"><b class="tt">Eliminar un modelo</b><p>Solo si ya no se vende. Toca la papelera y confirma. Se quitan también sus piezas de entrega inmediata.</p></div></div>
+  <div class="cap"><img src="shots/d6-eliminar.png" alt="Eliminar modelo"></div>
+</div>
+
+<div class="paso">
+  <div class="paso-h"><div class="n">6</div><div class="tx"><b class="tt">Revisar repetidos</b><p>Sale cuando hay modelos con el mismo nombre y tipo, o la misma foto. Tócalo, compara y elimina el que sobra.</p></div></div>
+  <div class="cap"><img src="shots/d7-repetidos.png" alt="Revisar repetidos"></div>
+</div>
+
+<div class="solo-admin">
+  <div class="tag-admin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Solo administrador</div>
+  <h2>Poner la categoría de pago</h2>
+  <p class="sub">Cuando la vendedora crea un modelo, llega sin categoría. Sin ella el taller no puede fabricarlo.</p>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">1</div><div class="tx"><b class="tt">Toca el aviso en Inicio</b><p>"En catálogo: X modelos sin categoría".</p></div></div>
+    <div class="cap"><img src="shots/a1-pendiente.png" alt="Aviso en Inicio"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">2</div><div class="tx"><b class="tt">Abre la categoría y toca "Asignar a modelos"</b><p>Te dice en cuántos modelos se usa y cuántos faltan.</p></div></div>
+    <div class="cap"><img src="shots/a2-asignar.png" alt="Asignar a modelos"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">3</div><div class="tx"><b class="tt">Marca los modelos de esa categoría</b><p>Salen primero los que no tienen categoría.</p></div></div>
+    <div class="cap"><img src="shots/a3-marcar.png" alt="Marcar modelos"></div>
+  </div>
+  <div class="paso">
+    <div class="paso-h"><div class="n az">4</div><div class="tx"><b class="tt">Toca "Asignar a N modelos"</b><p>Si alguno ya tenía otra categoría, la app te pregunta antes de cambiarla.</p></div></div>
+    <div class="cap"><img src="shots/a4-boton.png" alt="Botón asignar"></div>
+  </div>
+</div>
+
+<h2>Normas</h2>
+<div class="norma si">
+  <div class="norma-h"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Siempre</div>
+  <ul>
+    <li>Sube foto en <b>cada color</b> que se ofrece.</li>
+    <li>Marca solo lo que el modelo <b>trae incluido</b> en su precio.</li>
+    <li>A los combos, ponles las <b>medidas de las 2 ventanas</b>.</li>
+    <li>Si cambia el precio, <b>edita</b> el modelo. Las ventas ya hechas conservan el suyo.</li>
+    <li class="solo-admin">Ponle <b>categoría de pago</b> a cada modelo nuevo el mismo día.</li>
+  </ul>
+</div>
+<div class="norma no">
+  <div class="norma-h"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span>Nunca</div>
+  <ul>
+    <li>Crear modelos de prueba o con nombres sin sentido.</li>
+    <li>Registrar un combo como puerta, o al revés: el taller lo fabricaría mal.</li>
+    <li>Repetir un modelo que ya existe. Si la app muestra "Revisar repetidos", arréglalo.</li>
+    <li>Borrar un modelo para cambiarle algo: edítalo.</li>
+    <li>Bajar el precio del catálogo para hacerle un descuento a un cliente.</li>
+  </ul>
+</div>
+
+<div class="solo-admin">
+  <h2>Avisos que te salen</h2>
+  <p class="sub">En Inicio, en "Pendientes". Tócalos y te llevan a arreglarlo.</p>
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12l-8 8-9-9V3h8l9 9z"/></svg></div>
+    <div><b>En catálogo: X modelos sin categoría</b><p>El taller no puede fabricarlos ni cobrarlos.</p><div class="hacer">Qué hacer: <strong>ponles su categoría</strong> (ver arriba).</div></div></div>
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="9" height="18" rx="1.2"/><rect x="14" y="6" width="7" height="7" rx="1"/></svg></div>
+    <div><b>X combos sin medidas de las ventanas</b><p>Esos combos no se pueden vender.</p><div class="hacer">Qué hacer: <strong>ábrelo y pon las medidas de las 2 ventanas.</strong></div></div></div>
+  <div class="aviso"><div class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/></svg></div>
+    <div><b>X modelos sin foto en un color</b><p>Se vendió en un color que no tiene foto.</p><div class="hacer">Qué hacer: <strong>ábrelo y sube la foto de ese color.</strong></div></div></div>
+</div>
+
+<h2>Qué pasa después</h2>
+<p class="sub">El modelo guardado aparece al instante en:</p>
+<div class="flujo"><span class="on">Catálogo</span><i>›</i><span>Cotización y venta</span><i>›</i><span>Catálogo público</span></div>
+<p class="sub" style="margin-top:12px">Sin <b>categoría de pago</b>, el taller no puede recibir la asignación cuando se venda.</p>
+
+<div class="pie">Herrería Artesanos · Manual de uso · Catálogo</div>
+</div>
+<script>
+(function(){
+  'use strict';
+  var bots = document.querySelectorAll('.rol [data-rol]');
+  function poner(r){
+    document.body.className = r;
+    bots.forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.rol === r)); });
+  }
+  document.querySelector('.rol').addEventListener('click', function(e){
+    var b = e.target.closest('[data-rol]');
+    if(b) poner(b.dataset.rol);
+  });
+  var q = new URLSearchParams(location.search).get('rol');
+  if(q === 'a' || q === 'v') poner(q);
+})();
+</script>
+</body></html>

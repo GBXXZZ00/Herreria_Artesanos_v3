@@ -221,6 +221,8 @@
   let prod = null;        // copia que se edita
   let prodIndex = null;   // null = nuevo
   let prodSucio = false;
+  // Para la ayuda: qué producto se está viendo (sale solo lo de ese tipo)
+  window.AyudaVenta = () => ({ origen: prod ? prod.origen : null, tipo: prod ? prod.tipo : null, modo });
 
   function modeloDe(it){ return modelos.find(x => x.id === it.catalogo_id) || null; }
   // A medida con tipo del catálogo: lleva las mismas especificaciones. "Otro" solo lleva descripción.

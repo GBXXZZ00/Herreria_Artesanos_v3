@@ -1,0 +1,12 @@
+{"t1-elegir":[[[".el-op","1"]]],
+ "t1b-ordenar":[[["#listaOrden","1"],["#btnGuardarOrden","2"]]],
+ "t1c-haciendo":[[[".hoy [data-terminar-t=\"501\"]","1"]]],
+ "t2-detalle":[],
+ "t3-terminar":[],
+ "t3c-terminar-foto":[[["#btnTConfirmar",""]]],
+ "t5-pagos":[],
+ "t5b-hecho":[],
+ "t6-historial":[[["[data-pg-tab=\"historial\"]",""]]],
+ "t8-vale":[],"t1d-empezar":[[[".hoy [data-empezar=\"501\"]","1"]]],
+ "__insertar":[["await t.click('#btnAbrirVale');await t.waitForSelector('#sheetVale.open');","await F(t,'t8-vale');"],
+   ["await t.click('.el-op[data-elegir=\"501\"]');await t.waitForTimeout(150);","await F(t,'t1d-empezar');"]]}

@@ -1,0 +1,7 @@
+{"n1-lista":[[[".n-card","1"]]],
+ "n2-luis":[[["#trabBody [data-item=\"71\"]","1"],["#btnPagar","2"]]],
+ "n3b-vale-pedido":[[[".vp","1"]]],
+ "n3-vale":[[["#valeNota","1"],["#btnValeBs","2"],["#btnGuardarVale","3"]]],
+ "n5-sin-monto":[],"n0-gualfredo":[[["#trabFoot",""]]],"n4-pedro":[[["#btnPagar",""]]],
+ "__insertar":[["await r.click('#trabBody [data-item=\"72\"]');await r.waitForSelector('#sheetItem.open');await r.waitForTimeout(300);","await F(r,'n5-sin-monto');"],
+   ["await g.click('.n-card >> nth=0');await g.waitForSelector('#sheetTrab.open');","await F(g,'n0-gualfredo');"]]}

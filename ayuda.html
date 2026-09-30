@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Manuales de uso · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=65">
+<style>
+  .page{padding-bottom:calc(var(--safe-b) + 40px)}
+  .m-lista{display:flex;flex-direction:column;gap:4px;padding:10px 18px 0}
+  .m-item{display:flex;align-items:center;gap:13px;width:100%;padding:12px 4px;text-decoration:none;color:var(--ink);border-radius:var(--radius-md);animation:mIn 360ms var(--ease-out) backwards;animation-delay:calc(var(--i,0) * 40ms);transition:transform 140ms var(--ease-out)}
+  @keyframes mIn{from{opacity:0;transform:translateY(8px)}}
+  .m-item:active{transform:scale(0.98)}
+  .m-ico{width:42px;height:42px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .m-tx{flex:1;min-width:0}
+  .m-nom{display:block;font-size:15.5px;font-weight:800}
+  .m-sub{display:block;font-size:13px;color:var(--ink-soft);margin-top:1px}
+  .m-item .flecha{color:var(--ink-faint);flex-shrink:0}
+  .m-intro{padding:16px 18px 0;color:var(--ink-soft);font-size:14px}
+  .m-manual{padding:6px 18px 0}
+  .m-error{margin:24px 18px;padding:18px;border-radius:var(--radius-md);background:var(--surface-2);text-align:center;display:flex;flex-direction:column;gap:8px}
+  .m-error span{color:var(--ink-soft);font-size:14px}
+</style>
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <button class="icon-btn" id="btnVolver" type="button" aria-label="Volver">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+  </button>
+  <div class="topbar-text">
+    <div class="topbar-title" id="titulo">Manuales de uso</div>
+    <div class="topbar-sub" id="subtitulo">Cómo se usa la app, paso a paso</div>
+  </div>
+</header>
+
+<main class="page" id="pagina">
+  <div class="ayuda-cargando" style="padding:18px"><div class="sk-linea"></div><div class="sk-linea"></div><div class="sk-linea corta"></div></div>
+</main>
+
+<script src="assets/vendor/supabase.js?v=65"></script>
+<script src="assets/js/supabase-client.js?v=65"></script>
+<script src="assets/js/comun.js?v=65"></script>
+<script src="assets/js/sesion.js?v=65"></script>
+<script src="assets/js/ayuda.js?v=65"></script>
+<script>
+(function(){
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const A = window.Ayuda;
+  const SUB = {
+    inicio:'Avisos y pendientes', catalogo:'Registrar y cambiar modelos', venta:'Cotizar y vender paso a paso',
+    cotizaciones:'Seguir y convertir en venta', ventas:'Pedidos, pagos y entregas', produccion:'Cómo avanza cada trabajo',
+    deposito:'Materiales y entregas', nomina:'Pagos del sábado y vales', admin:'Solo para el administrador',
+    taller:'Lo que hace el trabajador'
+  };
+  const FLECHA = '<svg class="flecha" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+  const LIBRO = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>';
+
+  // Volver: a la pantalla anterior de la app; si se abrió directo, a Inicio
+  $('btnVolver').addEventListener('click', () => {
+    let desdeApp = false;
+    try{ desdeApp = !!document.referrer && new URL(document.referrer).origin === location.origin && history.length > 1; }catch(e){}
+    if(desdeApp) history.back(); else location.replace('index.html');
+  });
+
+  function lista(rol){
+    $('titulo').textContent = 'Manuales de uso';
+    $('subtitulo').textContent = 'Cómo se usa la app, paso a paso';
+    const mods = A.manualesDe(rol);
+    $('pagina').innerHTML = `<p class="m-intro">En cada pantalla tienes el botón <b>Ayuda</b> con lo de esa pantalla. Aquí están los manuales completos.</p>
+      <nav class="m-lista">${mods.map((m, i) => `<a class="m-item" style="--i:${i}" href="ayuda.html?m=${encodeURIComponent(m)}">
+        <span class="m-ico" aria-hidden="true">${LIBRO}</span>
+        <span class="m-tx"><span class="m-nom">${A.esc(A.MODULOS[m])}</span><span class="m-sub">${A.esc(SUB[m] || '')}</span></span>${FLECHA}</a>`).join('')}</nav>`;
+  }
+
+  async function manual(m){
+    $('titulo').textContent = A.MODULOS[m];
+    $('subtitulo').textContent = 'Manual completo';
+    document.title = A.MODULOS[m] + ' · Manuales';
+    const cont = document.createElement('div');
+    cont.className = 'm-manual';
+    try{
+      await A.manualCompleto(m, cont);
+      $('pagina').innerHTML = '';
+      $('pagina').appendChild(cont);
+    } catch(e){
+      $('pagina').innerHTML = `<div class="m-error"><b>No se pudo abrir el manual.</b><span>Revisa tu internet y toca otra vez.</span><button type="button" class="btn-secondary" id="btnReintentar">Reintentar</button></div>`;
+      $('btnReintentar').addEventListener('click', () => manual(m));
+    }
+  }
+
+  async function iniciar(){
+    const fallo = () => {
+      $('pagina').innerHTML = `<div class="m-error"><b>No se pudo abrir.</b><span>Revisa tu internet y toca otra vez.</span><button type="button" class="btn-secondary" id="btnReintentar">Reintentar</button></div>`;
+      $('btnReintentar').addEventListener('click', () => location.reload());
+    };
+    let p = null;
+    try{ p = await window.Sesion.requerir(); } catch(e){ fallo(); return; }
+    if(!p){
+      // Sin sesión ya se fue a Inicio; con sesión pero sin perfil es la señal
+      try{ if(await window.Sesion.sesionActual()) fallo(); } catch(e){ fallo(); }
+      return;
+    }
+    const rol = await A.leerRol();
+    const m = new URLSearchParams(location.search).get('m');
+    // Cada quien solo abre los manuales que le tocan
+    if(m && A.manualesDe(rol).includes(m)) manual(m); else lista(rol);
+  }
+  iniciar();
+})();
+</script>
+</body>
+</html>

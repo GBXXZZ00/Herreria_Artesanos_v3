@@ -1,0 +1,120 @@
+const __L=require('./lib');const __fs=require('fs');const __OUT=__dirname+'/shots-categorias/';__fs.mkdirSync(__OUT,{recursive:true});
+const __MAP={"c1-lista":[[[".c-card","1"],["#btnNuevo","2"]],{"completa":true}],
+ "c2-nueva":[[[".cat-fila[data-esp=\"hierro\"]","1"],[".cat-fila[data-esp=\"hierro\"].prot","2"]]],
+ "c3-final":[]}
+;
+async function F(pg,n){const m=__MAP[n];if(m===undefined)return;try{await pg.waitForTimeout(300);if(!m.length)return await pg.screenshot({path:__OUT+n+'.png'});await __L.foto(pg,__OUT,n,m[0],Object.assign({completa:true},m[1]||{}));}catch(e){console.log('marca',n,e.message.split('\n')[0]);await pg.screenshot({path:__OUT+n+'.png'});}}
+// Categorías de pago: solo admin, crear/editar/eliminar, tarifa fijo o por m² por especialidad.
+const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
+const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
+const now=Math.floor(Date.now()/1000);
+const ses=(sub)=>({access_token:b64({alg:'HS256',typ:'JWT'})+'.'+b64({sub,exp:now+3600,role:'authenticated',aud:'authenticated'})+'.sig',token_type:'bearer',expires_in:3600,expires_at:now+3600,refresh_token:'r1',user:{id:sub,aud:'authenticated',role:'authenticated'}});
+const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+(x!==undefined?'  → '+JSON.stringify(x):''));if(!c)fallas++;};
+
+let categorias=[
+  {id:1,nombre:'General',tarifas:{herrero:{monto:25,modo:'fijo'},masilla_pintura:{monto:30,modo:'fijo'}},activo:true},
+  {id:2,nombre:'Ventana con protección',tarifas:{masilla_pintura:{monto:10,modo:'m2'},ventanero:{monto:10,modo:'fijo'}},activo:true}
+];
+let catalogo=[
+  {id:101,categoria_pago_id:1},{id:102,categoria_pago_id:1},{id:103,categoria_pago_id:2}
+];
+const llamadas=[];
+
+function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{const req=r.request();const u=decodeURIComponent(req.url());const method=req.method();const j=(x,st=200)=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(x)});
+  if(u.includes('/auth/v1/token'))return j(ses(user));
+  if(u.includes('/auth/v1/user'))return j({id:user});
+  if(u.includes('/perfiles')){ if(u.includes('id=eq'))return j({id:user,usuario:rol==='admin'?'raymundo':'yulimar',nombre:rol==='admin'?'Ray':'Yulimar',rol,sede_id:1,confirma_abonos:false}); return j([{usuario:rol==='admin'?'raymundo':'yulimar',nombre:rol==='admin'?'Ray':'Yulimar',rol,orden:1}]);}
+  if(u.includes('/categorias_pago')){
+    if(rol!=='admin') return j({message:'permission denied'},403);
+    if(method==='GET') return j(categorias);
+    if(method==='POST'){
+      const body=JSON.parse(req.postData()||'{}');
+      llamadas.push(['crear',body]);
+      const nuevo={id:99,nombre:body.nombre,tarifas:body.tarifas,activo:true};
+      categorias.push(nuevo);
+      return j([nuevo],201);
+    }
+    if(method==='PATCH'){
+      const body=JSON.parse(req.postData()||'{}');
+      const id=Number(new URL(req.url()).searchParams.get('id').replace('eq.',''));
+      llamadas.push(['editar',id,body]);
+      const c=categorias.find(x=>x.id===id); if(c) Object.assign(c,body);
+      return j([c]);
+    }
+    if(method==='DELETE'){
+      const id=Number(new URL(req.url()).searchParams.get('id').replace('eq.',''));
+      llamadas.push(['eliminar',id]);
+      categorias=categorias.filter(x=>x.id!==id);
+      catalogo.forEach(c=>{ if(c.categoria_pago_id===id) c.categoria_pago_id=null; });
+      return j([]);
+    }
+  }
+  if(u.includes('/catalogo')){
+    if(method==='GET') return j(catalogo.map(c=>({id:c.id,nombre:'Modelo '+c.id,tipo:'Puerta Multilock',fotos:{},categoria_pago_id:c.categoria_pago_id})));
+  }
+  return j([]);});}
+
+(async()=>{ const b=await chromium.launch(); const err=[]; try{
+ // Vendedora: no ve el módulo ni puede entrar directo
+ const cy=await b.newContext({...devices['iPhone 13'],locale:'es-VE',timezoneId:'America/Caracas'});await mock(cy,'u3','vendedor');
+ const y=await cy.newPage();y.on('pageerror',e=>err.push('vend:'+e.message));
+ await y.goto('http://127.0.0.1:8765/index.html');await y.waitForSelector('.quien-btn');await y.click('.quien-btn');
+ for(const d of '333333') await y.click(`#pinTeclado [data-t="${d}"]`);
+ await y.waitForSelector('#vInicio.entra');
+ await y.goto('http://127.0.0.1:8765/categorias-pago.html');await y.waitForURL('**/index.html');
+ ok('Vendedora no puede entrar a categorias-pago.html directo',y.url().includes('index.html'));
+
+ // Admin: entra desde Mi cuenta
+ const ca=await b.newContext({...devices['iPhone 13'],locale:'es-VE',timezoneId:'America/Caracas'});await mock(ca,'u2','admin');
+ const a=await ca.newPage();a.on('pageerror',e=>err.push('admin:'+e.message));a.on('dialog',d=>d.accept());
+ await a.goto('http://127.0.0.1:8765/index.html');await a.waitForSelector('.quien-btn');await a.click('.quien-btn');
+ for(const d of '222222') await a.click(`#pinTeclado [data-t="${d}"]`);
+ await a.waitForSelector('#vInicio.entra');
+ await a.click('#btnCuenta');await a.waitForSelector('#sheetCuenta.open');
+ await a.click('#btnCategoriasPago');await a.waitForSelector('.c-card');
+ ok('Lista muestra las 2 categorías existentes',(await a.$$('.c-card')).length===2);
+ ok('Se ven las tarifas de "General"',(await a.textContent('.c-card')).includes('Herrero') && (await a.textContent('.c-card')).includes('$25'));
+ ok('Se ve cuántos modelos usan cada una',(await a.textContent('#lista')).includes('Usada en 2 modelos') && (await a.textContent('#lista')).includes('Usada en 1 modelo'));
+ await F(a,'c1-lista');
+
+ // Crear una nueva categoría: por oficio, con extra si lleva protección
+ await a.click('#btnNuevo');await a.waitForSelector('#sheetFicha.open');
+ ok('La ficha pide Hierro, Masilla, Pintura, Detalles y Armar, y el extra de protección en los 3 primeros',(await a.$$eval('.cat-fila:not(.prot)',x=>x.map(f=>f.dataset.esp))).join()==='hierro,masilla,pintura,detalles,armar' && (await a.$$eval('.cat-fila.prot',x=>x.map(f=>f.dataset.esp))).join()==='hierro,masilla,pintura' && (await a.textContent('#sheetFicha')).includes('Instalar la ventana no se paga'));
+ await a.fill('#fNombre','Puertas');
+ await a.locator('.cat-fila[data-esp="hierro"]:not(.prot) input').fill('20');
+ await a.locator('.cat-fila[data-esp="hierro"].prot input').fill('8');
+ await a.locator('.cat-fila[data-esp="pintura"]:not(.prot) button[data-modo="m2"]').click();
+ await a.locator('.cat-fila[data-esp="pintura"]:not(.prot) input').fill('4');
+ await a.locator('.cat-fila[data-esp="pintura"].prot button[data-modo="m2"]').click();
+ await a.locator('.cat-fila[data-esp="pintura"].prot input').fill('2');
+ await a.locator('.cat-fila[data-esp="masilla"].prot input').fill('5');
+ await F(a,'c2-nueva');
+ await a.click('#btnGuardar');await a.waitForTimeout(400);
+ ok('Extra de protección sin tarifa del oficio: avisa y no guarda',!llamadas.some(x=>x[0]==='crear') && (await a.textContent('#toast')).includes('por masilla') && !!(await a.$('.cat-oficio.invalid [data-esp="masilla"]')));
+ await a.locator('.cat-fila[data-esp="masilla"].prot input').fill('');
+ await a.click('#btnGuardar');await a.waitForTimeout(500);
+ const crea=llamadas.find(x=>x[0]==='crear');
+ const tc=crea&&crea[1].tarifas;
+ ok('Se crea con nombre y tarifas por oficio',crea&&crea[1].nombre==='Puertas'&&tc.hierro.monto===20&&tc.hierro.modo==='fijo'&&tc.hierro.prot_monto===8&&tc.hierro.prot_modo==='fijo'&&tc.pintura.monto===4&&tc.pintura.modo==='m2'&&tc.pintura.prot_monto===2&&tc.pintura.prot_modo==='m2',tc);
+ ok('Sin monto no se guarda',tc && !tc.masilla && !tc.detalles && !tc.armar,tc);
+ ok('Se cierra la hoja y aparece la nueva categoría con su extra',(await a.$$('.c-card')).length===3 && (await a.textContent('#lista')).includes('+$8 prot.'));
+
+ // Editar una categoría de antes: se llena por oficio y se conservan sus tarifas viejas
+ await a.click('.c-card >> text=General');await a.waitForSelector('#sheetFicha.open');
+ ok('El botón eliminar aparece al editar (no al crear)',!(await a.$eval('#btnEliminar',x=>x.classList.contains('hidden'))));
+ await a.locator('.cat-fila[data-esp="hierro"]:not(.prot) input').fill('27');
+ await a.click('#btnGuardar');await a.waitForTimeout(500);
+ const edita=llamadas.find(x=>x[0]==='editar');
+ ok('Guarda el oficio nuevo y conserva las tarifas viejas (pedidos de antes)',edita&&edita[2].tarifas.hierro.monto===27&&edita[2].tarifas.herrero.monto===25&&edita[2].tarifas.masilla_pintura.monto===30,edita&&edita[2]);
+ ok('La lista muestra el monto actualizado',(await a.textContent('#lista')).includes('$27'));
+
+ // Eliminar una categoría usada: avisa cuántos modelos se quedan sin categoría
+ await a.click('.c-card >> text=Ventana con protección');await a.waitForSelector('#sheetFicha.open');
+ await a.click('#btnEliminar');await a.waitForTimeout(500);
+ const elimina=llamadas.find(x=>x[0]==='eliminar');
+ ok('Se llamó a eliminar con el id correcto',elimina&&elimina[1]===2,elimina&&elimina[1]);
+ ok('Ya no aparece en la lista',(await a.$$('.c-card')).length===2);
+ await F(a,'c3-final');
+
+ console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
+ }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();
