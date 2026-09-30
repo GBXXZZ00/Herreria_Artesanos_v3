@@ -35,6 +35,15 @@
     if(!reg) return 'no-soportado';
     const sub = await reg.pushManager.getSubscription();
     if(sub && Notification.permission === 'granted'){ guardar(sub).catch(() => {}); return 'activo'; }
+    // Ya dio permiso antes (por ejemplo, salió y entró con otro usuario): se vuelve a activar solo
+    let apagado = false; try{ apagado = localStorage.getItem('ah_push_off') === '1'; } catch(e){}
+    if(!sub && Notification.permission === 'granted' && !apagado){
+      try{
+        const nueva = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: clave(VAPID) });
+        await guardar(nueva);
+        return 'activo';
+      } catch(e){}
+    }
     return 'inactivo';
   }
 
@@ -47,11 +56,14 @@
     let sub = await reg.pushManager.getSubscription();
     if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: clave(VAPID) });
     await guardar(sub);
+    try{ localStorage.removeItem('ah_push_off'); } catch(e){}
     return 'activo';
   }
 
   // Al salir, este teléfono deja de recibir los avisos de esa persona
-  async function olvidar(){
+  // manual: la persona los apagó en este teléfono (no se vuelven a activar solos)
+  async function olvidar(manual){
+    try{ if(manual) localStorage.setItem('ah_push_off', '1'); } catch(e){}
     try{
       const reg = await registrar();
       const sub = reg && await reg.pushManager.getSubscription();

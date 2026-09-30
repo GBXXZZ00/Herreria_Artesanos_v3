@@ -105,8 +105,10 @@
     $('filtrosWrap').classList.add('hidden');
     const l = datos.materiales;
     if(!l.length){
-      $('cont').innerHTML = `<div class="vacio-d"><b>Todavía no hay materiales</b>Agrega los que quieres controlar: discos, sierras, pintura. Se cuentan por unidad.</div>
-        <button class="btn-nuevo" type="button" data-nuevo-mat>+ Agregar material</button>`;
+      $('cont').innerHTML = datos.es_admin
+        ? `<div class="vacio-d"><b>Todavía no hay materiales</b>Agrega los que quieres controlar: discos, sierras, pintura. Se cuentan por unidad.</div>
+          <button class="btn-nuevo" type="button" data-nuevo-mat>+ Agregar material</button>`
+        : '<div class="vacio-d"><b>Todavía no hay materiales</b>Un administrador los agrega.</div>';
       return;
     }
     const activos = l.filter(m => m.activo);
@@ -128,7 +130,7 @@
         <span class="mat-n"><b>${esc(m.stock)}</b><span>${m.stock === 1 ? 'unidad' : 'unidades'}</span></span>
       </button>`;
     }).join('');
-    html += '</div><button class="btn-nuevo" type="button" data-nuevo-mat>+ Agregar material</button>';
+    html += '</div>' + (datos.es_admin ? '<button class="btn-nuevo" type="button" data-nuevo-mat>+ Agregar material</button>' : '');
     $('cont').innerHTML = html;
     // La entrada en cascada solo la primera vez (no en cada repintada)
     if(!$('cont').classList.contains('ya')) setTimeout(() => $('cont').classList.add('ya'), 700);
@@ -338,9 +340,9 @@
     $('matBody').innerHTML = html;
     $('matFoot').innerHTML = datos.es_admin && m.activo
       ? '<div class="pie-dos"><button class="btn-secondary" type="button" data-editar-mat>Editar</button><button class="btn-primary" type="button" data-comprar>Registrar compra</button></div>'
-      : m.activo && bajo(m) && !datos.es_admin
-        ? '<div class="pie-dos"><button class="btn-secondary" type="button" data-editar-mat>Editar</button><button class="btn-primary" type="button" data-reponer>Avisar para comprar</button></div>'
-        : '<button class="btn-secondary" type="button" data-editar-mat style="width:100%;height:54px">Editar</button>';
+      : datos.es_admin ? '<button class="btn-secondary" type="button" data-editar-mat style="width:100%;height:54px">Editar</button>'
+      : m.activo && bajo(m) ? '<button class="btn-primary" type="button" data-reponer style="width:100%">Avisar para comprar</button>' : '';
+    $('matFoot').classList.toggle('hidden', !$('matFoot').innerHTML);
   }
   $('matBody').addEventListener('click', (e) => {
     const en = e.target.closest('[data-entrega]');

@@ -71,7 +71,7 @@ async function pagina(b,uid){
  const mb=await p.textContent('#matBody');
  ok('Ficha: en depósito, mínimo y faltan',mb.includes('En depósito2')&&mb.includes('Faltan1'),mb.slice(0,80));
  ok('Rinde por trabajador: Pedro 8 c/u y con el actual lleva 1',mb.includes('Pedro')&&mb.includes('8 c/u')&&mb.includes('con el actual lleva 1 trabajo'));
- ok('La vendedora no ve costos ni compras, ni "Registrar compra"',!mb.includes('Compra')&&!mb.includes('$')&&!(await p.$('[data-comprar]'))&&!!(await p.$('[data-editar-mat]')));
+ ok('La vendedora no ve costos ni compras, ni "Registrar compra"',!mb.includes('Compra')&&!mb.includes('$')&&!(await p.$('[data-comprar]'))&&!(await p.$('[data-editar-mat]'))&&!!(await p.$('[data-reponer]')));
  await p.screenshot({path:'shots5/d2-ficha-material.png'});
  await p.click('#sheetMat [data-cerrar="sheetMat"]');await w(500);
  // Entregar: paso 1 materiales
@@ -113,16 +113,8 @@ async function pagina(b,uid){
  await p.click('[data-trabajo="0"]');await w(500);
  ok('Detalle del trabajo sin el pago (vendedora)',await p.isVisible('#sheetItem')&&(await p.textContent('#itemBody')).includes('Ver la venta N° 12')&&!(await p.textContent('#itemBody')).includes('Pago por esta parte'));
  await p.click('#sheetItem [data-cerrar="sheetItem"]');await w(400);await p.click('#sheetEntrega [data-cerrar="sheetEntrega"]');await w(400);
- // Nuevo material
  await p.click('[data-tab="materiales"]');await w(300);
- await p.click('[data-nuevo-mat]');await w(400);
- await p.fill('#mfMin','1.5');await p.click('#btnGuardarMat');await w(300);
- ok('Material: pide nombre y mínimo entero',await p.$eval('#campoMatNombre',x=>x.classList.contains('invalid'))&&await p.$eval('#campoMatMin',x=>x.classList.contains('invalid')));
- await p.fill('#mfNombre','Masilla');await p.fill('#mfMin','4');await p.click('#matFormBody [data-oficio="masilla"]');
- await p.screenshot({path:'shots5/d7-nuevo-material.png'});
- await p.click('#btnGuardarMat');await w(900);
- const mg=st.rpcs.find(x=>x[0]==='deposito_material_guardar');
- ok('Guarda el material con su oficio',mg&&mg[1].p.nombre==='Masilla'&&mg[1].p.minimo===4&&mg[1].p.oficio==='masilla'&&mg[1].p.id===null,mg&&mg[1]);
+ ok('La vendedora no agrega materiales',!(await p.$('[data-nuevo-mat]')));
  ok('Errores JS (vendedora)',!st.err.length,st.err);
  await p.context().close();
 
@@ -154,6 +146,16 @@ async function pagina(b,uid){
  await r.click('#btnGuardarCompra');await wr(900);
  const cp=R.st.rpcs.find(x=>x[0]==='deposito_comprar');
  ok('Guarda la compra y sube el stock',cp&&cp[1].mid===1&&cp[1].cantidad===6&&cp[1].costo===30&&(await r.textContent('#matBody')).includes('En depósito8'),cp&&cp[1]);
+ // Nuevo material (solo admin)
+ await r.click('#sheetMat [data-cerrar="sheetMat"]');await wr(500);
+ await r.click('[data-nuevo-mat]');await wr(400);
+ await r.fill('#mfMin','1.5');await r.click('#btnGuardarMat');await wr(300);
+ ok('Material: pide nombre y mínimo entero',await r.$eval('#campoMatNombre',x=>x.classList.contains('invalid'))&&await r.$eval('#campoMatMin',x=>x.classList.contains('invalid')));
+ await r.fill('#mfNombre','Masilla');await r.fill('#mfMin','4');await r.click('#matFormBody [data-oficio="masilla"]');
+ await r.screenshot({path:'shots5/d7-nuevo-material.png'});
+ await r.click('#btnGuardarMat');await wr(900);
+ const mg=R.st.rpcs.find(x=>x[0]==='deposito_material_guardar');
+ ok('Guarda el material con su oficio',mg&&mg[1].p.nombre==='Masilla'&&mg[1].p.minimo===4&&mg[1].p.oficio==='masilla'&&mg[1].p.id===null,mg&&mg[1]);
  ok('Errores JS (Ray)',!R.st.err.length,R.st.err);
  console.log(res.join('\n'));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();
