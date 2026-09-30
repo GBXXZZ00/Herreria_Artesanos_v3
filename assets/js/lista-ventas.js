@@ -316,6 +316,15 @@
       ${Number(v.instalacion) ? `<div class="t-fila"><span>Instalación</span><b>${dinero(v.instalacion)}</b></div>` : ''}
       ${Number(v.traslado) ? `<div class="t-fila"><span>Traslado</span><b>${dinero(v.traslado)}</b></div>` : ''}
       <div class="t-total"><span>Total</span><b>${dinero(v.total)}</b></div>`;
+    html += acordeon('productos', 'Productos', `${v.items.length} ${v.items.length === 1 ? 'producto' : 'productos'}`,
+      v.items.map(it => `<div class="f-item">
+        <div class="f-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 24)}</div>
+        <div style="flex:1;min-width:0"><div class="f-item-t">${esc(it.nombre)}</div>
+          <div class="f-item-d">${esc(AV.detalleItem(it))}</div>
+          <div class="f-item-p"><span>${it.cantidad} × ${dinero(it.precio_unitario)}</span><b>${dinero(it.precio_unitario * it.cantidad)}</b></div>
+          ${v.estado === 'en_produccion' ? `<div class="f-item-fab" data-fab-item="${it.id}"></div>` : ''}</div>
+      </div>`).join('')
+      + (v.estado === 'en_produccion' ? `<a class="f-ver-prod" href="produccion.html?abrir=${v.id}">Ver en producción<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''));
     if(cot){
       html += acordeon('precio', 'Precio', dinero(v.total), `<div class="totales">${totales}</div>`, true);
     } else {
@@ -340,13 +349,6 @@
           <span class="bg-t">Registrar pago</span><span class="bg-s">Cuando el cliente pague lo que resta o una parte. Queda por confirmar.</span></button>` : ''}`;
       html += acordeon('pagos', 'Pagos', `${r > 0 ? 'Resta ' + dinero(r) : 'Pagado completo'}${pend ? ' · ' + pend + ' por confirmar' : ''}`, cuerpo, true);
     }
-    html += acordeon('productos', 'Productos', `${v.items.length} ${v.items.length === 1 ? 'producto' : 'productos'}`,
-      v.items.map(it => `<div class="f-item">
-        <div class="f-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 24)}</div>
-        <div style="flex:1;min-width:0"><div class="f-item-t">${esc(it.nombre)}</div>
-          <div class="f-item-d">${esc(AV.detalleItem(it))}</div>
-          <div class="f-item-p"><span>${it.cantidad} × ${dinero(it.precio_unitario)}</span><b>${dinero(it.precio_unitario * it.cantidad)}</b></div></div>
-      </div>`).join(''));
     const datos = [];
     datos.push(`<div class="f-dato"><span>${cot ? 'Hecha' : 'Confirmada'}</span><b>${esc(AV.fechaNum(cot ? v.creado_en : (v.confirmada_en || v.creado_en)))}</b></div>`);
     datos.push(`<div class="f-dato"><span>Por</span><b>${esc(v.vendedor || '-')}</b></div>`);
@@ -404,11 +406,13 @@
   const SIGUIENTE = {
     lista:         { t:'Marcar como Entregada', s:'El cliente ya se lo llevó' }
   };
-  // Cuántos pasos lleva el taller y en cuál va (sin montos ni nombres)
+  // Cuántos pasos lleva el taller, en cuál va y, por producto, quién lo tiene (sin montos)
   async function cargarAvance(vid){
+    // sin respuesta: se quitan las líneas vacías de cada producto
+    const limpiar = () => { if(document.querySelector(`[data-avance="${vid}"]`)) document.querySelectorAll('#fichaBody [data-fab-item]').forEach(x => x.remove()); };
     try{
       const { data, error } = await db.rpc('avance_venta', { vid });
-      if(error || !data) return;
+      if(error || !data){ limpiar(); return; }
       const el = document.querySelector(`[data-avance="${vid}"]`);
       if(!el) return;
       const t = Number(data.total) || 0, h = Number(data.hechas) || 0;
@@ -416,7 +420,23 @@
       el.querySelector('.bg-t').textContent = t ? `En fabricación · ${h} de ${t} pasos` : 'En fabricación';
       if(act.length) el.querySelector('.bg-s').textContent = 'Ahora en ' + act.join(' y ') + '. Pasa solo a Lista al terminar.';
       requestAnimationFrame(() => { const b = el.querySelector('.av-barra i'); if(b) b.style.transform = `scaleX(${t ? h / t : 0})`; });
-    } catch(e){}
+      // Cada producto: dónde está y quién lo tiene
+      const its = data.items || {};
+      document.querySelectorAll('#fichaBody [data-fab-item]').forEach(x => {
+        const a = its[x.dataset.fabItem];
+        if(!a || !Number(a.total)){ x.remove(); return; }
+        const tot = Number(a.total), he = Number(a.hechas) || 0;
+        let punto = 'espera', txt = 'Esperando el paso anterior';
+        if(he >= tot){ punto = 'listo'; txt = 'Terminado'; }
+        else if((a.ahora || []).length){
+          const ah = a.ahora;
+          const uno = ah.find(z => z.haciendo) || ah.find(z => z.quien) || ah[0];
+          punto = uno.haciendo ? 'haciendo' : uno.quien ? 'porhacer' : 'sin';
+          txt = ah.map(z => `${z.paso || 'Paso'} · ${z.quien ? z.quien + (z.haciendo ? ', lo está haciendo' : '') : 'sin asignar'}`).join(' y ');
+        }
+        x.innerHTML = `<span class="fab-punto ${punto}"></span><span class="fab-t">${esc(txt)}</span><span class="fab-n">${he} de ${tot}</span>`;
+      });
+    } catch(e){ limpiar(); }
   }
   function estadoBloque(v){
     if(v.estado === 'cancelada') return '';
@@ -435,8 +455,8 @@
     }
     // En producción no hay botón: queda Lista sola cuando el taller termina el último paso
     if(v.estado === 'en_produccion'){
-      // Toca para verlo en Producción: quién tiene cada paso y cómo va
-      html += `<a class="btn-guia hecho avance-taller" data-avance="${v.id}" href="produccion.html?abrir=${v.id}"><span class="bg-t">En fabricación</span><span class="bg-s">Pasa solo a Lista cuando el taller termine el último paso</span><span class="av-barra"><i style="transform:scaleX(0)"></i></span><span class="av-ver">Ver en producción<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>`;
+      // Una línea fina: el detalle por producto está en Productos
+      html += `<div class="avance-fino" data-avance="${v.id}"><span class="bg-t">En fabricación</span><span class="av-barra"><i style="transform:scaleX(0)"></i></span><span class="bg-s">Pasa solo a Lista cuando el taller termine el último paso</span></div>`;
       return html;
     }
     const info = sig === 'lista' && v.estado === 'confirmada' ? { t:'Marcar como Lista', s:'Ya está en tienda, lista para entregar' } : SIGUIENTE[v.estado];
