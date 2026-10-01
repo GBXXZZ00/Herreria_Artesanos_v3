@@ -115,11 +115,13 @@
   const refPedidoCorto = (t) => t.interna ? 'Para exhibición' : refPedido(t);
   // Las piezas que incluye un trabajo (reglas nuevas, con "oficio"): ej. Hierro de un combo =
   // la puerta, su protección si la lleva y las 2 protecciones de las ventanas, cada una con su medida
-  const PROT = ['hierro', 'masilla', 'pintura'];
+  const PROT = ['hierro', 'masilla', 'pintura', 'masilla_pintura'];
+  // Cada unidad de un producto es un trabajo aparte: "Unidad 1 de 2"
+  const unidadTxt = (t) => Number(t.de) > 1 ? 'Unidad ' + t.unidad + ' de ' + t.de : '';
   // "masilla y pintura" / "la pintura de las protecciones": qué espera, en minúscula
   function esperaTxt(t){
     const e = String(t.espera || '').toLowerCase();
-    if(t.oficio === 'instalar' && /^pintura/.test(e)) return 'la pintura de ' + (t.tipo === 'Combo' ? 'las protecciones' : 'la protección');
+    if(t.oficio === 'instalar' && /pintura$/.test(e)) return 'la pintura de ' + (t.tipo === 'Combo' ? 'las protecciones' : 'la protección');
     return e;
   }
   // Instalar no se paga; la masilla se paga junto con la pintura
@@ -208,7 +210,7 @@
         <div class="hoy-txt">
           <div class="hoy-etapa haciendo"><span class="en-dot"></span>Estás haciendo · ${esc(desde(t.iniciada_en))}</div>
           <div class="hoy-nom">${esc(t.nombre)} · ${esc(t.producto)}</div>
-          <div class="hoy-sub">${esc([t.cantidad > 1 ? t.cantidad + ' unidades' : '', refPedidoCorto(t)].filter(Boolean).join(' · '))}${t.para_el ? ' · ' + topeHtml(t, 'hoy-tope') : ''}</div>
+          <div class="hoy-sub">${esc([unidadTxt(t) || (t.cantidad > 1 ? t.cantidad + ' unidades' : ''), refPedidoCorto(t)].filter(Boolean).join(' · '))}${t.para_el ? ' · ' + topeHtml(t, 'hoy-tope') : ''}</div>
           ${piezasHtml(t)}
           ${chips.length ? `<div class="spec-chips">${specChipsHtml(chips)}</div>` : ''}
         </div>
@@ -293,7 +295,7 @@
 
   // ---------- Todos los trabajos (desde "Ver todos") ----------
   function trabajoHtml(t){
-    const det = [t.cantidad > 1 ? t.cantidad + ' unidades' : '', refPedidoCorto(t)].filter(Boolean).join(' · ');
+    const det = [unidadTxt(t) || (t.cantidad > 1 ? t.cantidad + ' unidades' : ''), refPedidoCorto(t)].filter(Boolean).join(' · ');
     const tt = t.para_el ? topeTrab(t.para_el) : null;
     const estado = t.iniciada_en ? `<span class="tr-estado" style="color:#1B6B3A"><span class="en-dot" style="margin-top:4px"></span>Estás haciendo este</span>`
       : t.espera ? `<span class="tr-estado bloq">${ICON_CANDADO}Espera ${esc(esperaTxt(t))}</span>`
@@ -331,7 +333,7 @@
       <div class="det-type">${esc(t.tipo === 'Combo' ? 'Combo · 1 puerta + 2 ventanas + 2 protecciones' : (t.tipo || ''))}</div>
       ${piezasHtml(t)}
       <div class="tj-datos">
-        ${t.cantidad > 1 ? `<span><b>${t.cantidad}</b> unidades</span>` : ''}
+        ${unidadTxt(t) ? `<span><b>${esc(unidadTxt(t))}</b></span>` : t.cantidad > 1 ? `<span><b>${t.cantidad}</b> unidades</span>` : ''}
         <span>${t.interna ? '<b>Para exhibición</b>' : `<b>${esc(refPedido(t))}</b>${t.fecha_entrega ? ' · entrega al cliente ' + esc(fechaCorta(t.fecha_entrega)) : ''}`}</span>
         ${noSePaga(t) ? (t.oficio === 'masilla' ? '<span>Se paga <b>al terminar la pintura</b></span>' : '<span>Este paso <b>no se paga</b></span>') : t.monto != null ? `<span>Ganas <b>${esc(dinero(t.monto))}</b></span>` : ''}
       </div>
@@ -489,7 +491,7 @@
       ${etq ? `<p class="cmp-nota">${esc(etq)}</p>` : ''}
       ${piezasHtml(t)}
       <div class="tj-datos">
-        ${m.cantidad > 1 ? `<span><b>${m.cantidad}</b> unidades</span>` : ''}
+        ${unidadTxt(m) ? `<span><b>${esc(unidadTxt(m))}</b></span>` : m.cantidad > 1 ? `<span><b>${m.cantidad}</b> unidades</span>` : ''}
         <span>${noSePaga(m) ? (m.oficio === 'masilla' ? 'Se paga <b>al terminar la pintura</b>' : 'Este paso <b>no se paga</b>') : m.monto == null ? 'Monto <b>por definir</b>' : `Te suma <b>${esc(dinero(m.monto))}</b>`}</span>
       </div>
       ${cd ? `<div class="tj-color"><span class="sw ${SW_COLOR[cd.c] || ''}"></span>${esc(cd.t)}</div>` : ''}

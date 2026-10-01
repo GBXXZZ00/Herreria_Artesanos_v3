@@ -79,7 +79,7 @@
     return l.length >= 2 ? Math.round(l.reduce((a, x) => a + x.trabajos, 0) / l.length * 10) / 10 : null;
   }
   // Trabajos pendientes (asignados y sin terminar) del trabajador que gastan ese material
-  const ESP_DE = { hierro:'herrero', masilla:'masilla_pintura', pintura:'masilla_pintura', detalles:'acabados', armar:'ventanero', instalar:'ventanero' };
+  const ESP_DE = { hierro:'herrero', masilla:'masilla_pintura', pintura:'masilla_pintura', masilla_pintura:'masilla_pintura', detalles:'acabados', armar:'ventanero', instalar:'ventanero' };
   function pendientesDe(tid, m){
     const t = (datos.trabajadores || []).find(x => x.id === tid);
     return ((t && t.pendientes) || []).filter(p => !m || !m.oficio || p.oficio === m.oficio || (!p.oficio && p.especialidad === ESP_DE[m.oficio]))
@@ -560,7 +560,7 @@
   function filaTrabajo(it, i, lista){
     return `<button class="mov" type="button" data-trabajo="${i}" data-lista="${lista || 'esta'}">
       <span class="mov-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 20)}</span>
-      <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${it.cantidad > 1 ? ' ×' + esc(it.cantidad) : ''}</span>
+      <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${Number(it.de) > 1 ? ' · ' + esc(it.unidad) + ' de ' + esc(it.de) : it.cantidad > 1 ? ' ×' + esc(it.cantidad) : ''}</span>
       <span class="mov-s">${it.interna ? '<b>Exhibición</b>' + (it.sede ? ' · ' + esc(it.sede) : '') : `<b>${esc(it.cliente || 'Cliente')}</b> · N° ${esc(it.venta_id)}`} · ${esc(fechaCorta(it.fecha))}</span></span>
       ${it.foto_trabajo ? `<span class="mov-foto suya" style="width:38px;height:38px;margin-left:auto">${window.AH.imgMini(it.foto_trabajo, "Foto del trabajo")}</span>` : ''}${CHEV}</button>`;
   }
@@ -650,7 +650,7 @@
     $('itemBody').innerHTML = `
       <div ${heroAttrs(it.foto)}>${it.foto ? `<img src="${esc(it.foto)}" alt="${esc(it.producto)}">` : iconoTipo(it.tipo, 56)}${lb ? `<span class="foto-otra">${esc(lb)}</span>` : ''}${heroZoom(it.foto)}</div>
       <div class="d-parte">${esc(it.etapa)} · terminó ${esc(fechaCorta(it.fecha))}</div>
-      <div class="det-name" style="margin-top:10px">${esc(it.producto)}${it.cantidad > 1 ? ' ×' + esc(it.cantidad) : ''}</div>
+      <div class="det-name" style="margin-top:10px">${esc(it.producto)}${Number(it.de) > 1 ? ' · ' + esc(it.unidad) + ' de ' + esc(it.de) : it.cantidad > 1 ? ' ×' + esc(it.cantidad) : ''}</div>
       <div class="det-type">${esc([it.tipo, e.color].filter(Boolean).join(' · '))}</div>
       <div class="d-datos" style="margin-top:14px">
         <div class="d-dato"><span>${it.interna ? 'Para' : 'Cliente'}</span><b>${esc(it.interna ? 'Exhibición' : (it.cliente || ''))}</b></div>

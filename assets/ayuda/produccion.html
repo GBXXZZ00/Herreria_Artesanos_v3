@@ -4,12 +4,13 @@
   Un pedido llega solo cuando Ray confirma el pago. Cuando se termina el último paso, pasa solo a Lista.
 </div><div class="ay-nota solo-vend" style="margin-left:0"><svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-width="2" viewbox="0 0 24 24" width="20"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.5h.01"></path></svg><span><b>Tú solo miras.</b> Sirve para contestarle al cliente en qué va su pedido. No asignas ni ves cuánto se paga.</span></div></section>
 <section data-b="los-pasos-de-cada-producto" data-t="Los pasos de cada producto"><h2>Los pasos de cada producto</h2><p class="ay-sub">Cada oficio hace su parte, en orden.</p><div class="ay-tipo">
-<div class="ay-fila"><span>Puerta y portón</span><span>Hierro › Masilla › Pintura › Detalles. Si lleva protección, va en los mismos pasos.</span></div>
+<div class="ay-fila"><span>Puerta y portón</span><span>Hierro › Masilla y pintura › Detalles. Si lleva protección, va en los mismos pasos.</span></div>
 <div class="ay-fila"><span>Ventana sin protección</span><span>Aluminio. Si el modelo lleva detalles, después Detalles.</span></div>
-<div class="ay-fila"><span>Ventana con protección</span><span>La protección: Hierro › Masilla › Pintura. La ventana: Aluminio › Instalar en la protección (espera que la protección esté pintada) › Detalles si el modelo los lleva.</span></div>
-<div class="ay-fila"><span>Combo</span><span>Puerta y protecciones: Hierro › Masilla › Pintura › Detalles. Las 2 ventanas: Aluminio › Instalar en las protecciones. Si el modelo dice que las ventanas llevan detalles, van en el mismo paso Detalles de la puerta.</span></div>
-<div class="ay-fila"><span>Solo protección</span><span>Hierro › Masilla › Pintura.</span></div>
+<div class="ay-fila"><span>Ventana con protección</span><span>La protección: Hierro › Masilla y pintura. La ventana: Aluminio › Instalar en la protección (espera que la protección esté pintada) › Detalles si el modelo los lleva.</span></div>
+<div class="ay-fila"><span>Combo</span><span>Puerta y protecciones: Hierro › Masilla y pintura › Detalles. Las 2 ventanas: Aluminio › Instalar en las protecciones. Si el modelo dice que las ventanas llevan detalles, van en el mismo paso Detalles de la puerta.</span></div>
+<div class="ay-fila"><span>Solo protección</span><span>Hierro › Masilla y pintura.</span></div>
 <div class="ay-fila"><span>Puerta de madera</span><span>Hierro › Masilla y pintura › Detalles.</span></div>
+<div class="ay-fila"><span>2 o más iguales</span><span>Cada una es un trabajo aparte ("1 de 2", "2 de 2"): se asigna, se termina con su foto y se paga por separado.</span></div>
 </div></section>
 <section data-b="la-lista" data-t="La lista"><h2>La lista</h2><div class="ay-paso">
 <div class="ay-paso-h"><div class="ay-n">1</div><div class="ay-tx"><b class="ay-tt">Filtra arriba</b><p class="solo-vend">"Todos" o "Atrasados".</p><p class="solo-admin">"Todos", "Por asignar", "Sin categoría" y "Atrasados".</p></div></div>
@@ -30,7 +31,7 @@
 <div class="ay-paso-h"><div class="ay-n ay-az">2</div><div class="ay-tx"><b class="ay-tt">Toca "Asignar trabajadores"</b><p>Uno por producto. Te dice qué incluye cada bloque.</p></div></div>
 <div class="ay-cap"><img alt="Asignar trabajadores" decoding="async" loading="lazy" src="img/prod-a4-boton.jpg"/></div>
 </div><div class="ay-paso">
-<div class="ay-paso-h"><div class="ay-n ay-az">3</div><div class="ay-tx"><b class="ay-tt">Elige quién hace cada parte</b><p>Salen solo los trabajadores de ese oficio. Masilla y pintura se asignan juntas a la misma persona; aluminio e instalar también.</p></div></div>
+<div class="ay-paso-h"><div class="ay-n ay-az">3</div><div class="ay-tx"><b class="ay-tt">Elige quién hace cada parte</b><p>Salen solo los trabajadores de ese oficio. Aluminio e instalar se asignan juntos a la misma persona.</p></div></div>
 <div class="ay-cap"><img alt="Elegir trabajador" decoding="async" loading="lazy" src="img/prod-a5-asignar.jpg"/></div>
 </div><div class="ay-paso">
 <div class="ay-paso-h"><div class="ay-n ay-az">4</div><div class="ay-tx"><b class="ay-tt">¿Para cuándo?</b><p>Este sábado o el próximo. Es el sábado en que se le paga si lo termina.</p></div></div>
@@ -62,7 +63,7 @@
 </div></section>
 <section data-b="avisos-admin" data-t="Avisos" class="solo-admin"><h2>Avisos</h2><p class="ay-sub">Les llegan a los administradores.</p><div class="ay-aviso"><div class="ay-dot"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"></path></svg></div>
 <div><b>Pedido en fabricación</b><p>N° y cliente. "Asigna quién lo fabrica."</p><div class="ay-hacer">Qué hacer: <strong>ábrelo y asigna.</strong></div></div></div><div class="ay-aviso"><div class="ay-dot"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24" width="18"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
-<div><b>Terminó Hierro (o el paso que sea)</b><p>Quién, qué y en qué pedido. Te dice lo que sigue: "Asigna Masilla", "Revisa el avance" o "El pedido quedó listo".</p><div class="ay-hacer">Qué hacer: <strong>si dice "Asigna", asígnalo.</strong></div></div></div><p class="ay-sub" style="margin-top:14px">En Inicio, "Pendientes":</p><div class="ay-cap" style="margin-left:auto"><img alt="Pendientes del taller" decoding="async" loading="lazy" src="img/prod-a0-pend.jpg"/></div><div class="ay-caja">
+<div><b>Terminó Hierro (o el paso que sea)</b><p>Quién, qué y en qué pedido. Te dice lo que sigue: "Asigna Masilla y pintura", "Revisa el avance" o "El pedido quedó listo".</p><div class="ay-hacer">Qué hacer: <strong>si dice "Asigna", asígnalo.</strong></div></div></div><p class="ay-sub" style="margin-top:14px">En Inicio, "Pendientes":</p><div class="ay-cap" style="margin-left:auto"><img alt="Pendientes del taller" decoding="async" loading="lazy" src="img/prod-a0-pend.jpg"/></div><div class="ay-caja">
 <div class="ay-orig"><span class="ay-nn" style="background:var(--amb)">1</span><span><b>Trabajos sin asignar:</b> toca y asígnalos.</span></div>
 <div class="ay-orig"><span class="ay-nn" style="background:var(--amb)">2</span><span><b>Trabajos pasaron su sábado:</b> habla con quien lo tiene y cámbiale la fecha.</span></div>
 <div class="ay-orig"><span class="ay-nn" style="background:var(--az)">$</span><span><b>En fabricación: productos sin categoría:</b> dales su categoría.</span></div>

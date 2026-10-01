@@ -95,7 +95,7 @@
     const monto = nota ? `<span class="mov-m gris">${nota}${CHEV}</span>` : it.monto == null ? `<span class="mov-m gris rojo">Por definir${CHEV}</span>` : `<span class="mov-m">${esc(dinero(it.monto))}${CHEV}</span>`;
     return `<button class="mov" type="button" data-item="${it.id}">
       <span class="mov-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 20)}</span>
-      <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</span>
+      <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${Number(it.de) > 1 ? ' · ' + esc(it.unidad) + ' de ' + esc(it.de) : it.cantidad > 1 ? ' ×' + esc(it.cantidad) : ''}</span>
       <span class="mov-s">${refItem(it)} · ${esc(fechaHora(it.fecha))}</span></span>${monto}</button>`;
   }
   function filaVale(v, pendiente){
@@ -231,7 +231,7 @@
     $('itemBody').innerHTML = `
       <div ${heroAttrs(it.foto)}>${it.foto ? `<img src="${esc(it.foto)}" alt="${esc(it.producto)}">` : iconoTipo(it.tipo, 56)}${(() => { const lb = etiquetaOtroColor({ otroColor: !!(it.foto && it.foto_de && e.color && it.foto_de !== e.color), de: it.foto_de, color: e.color }, it.tipo); return lb ? `<span class="foto-otra">${esc(lb)}</span>` : ''; })()}${heroZoom(it.foto)}</div>
       <div class="d-parte">${esc(it.etapa)} · terminó ${esc(fechaHora(it.fecha))}</div>
-      <div class="det-name" style="margin-top:10px">${esc(it.producto)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div>
+      <div class="det-name" style="margin-top:10px">${esc(it.producto)}${Number(it.de) > 1 ? ' · ' + esc(it.unidad) + ' de ' + esc(it.de) : it.cantidad > 1 ? ' ×' + esc(it.cantidad) : ''}</div>
       <div class="det-type">${esc([it.tipo, e.color].filter(Boolean).join(' · '))}</div>
       ${atajoMontoHtml(it)}
       <div class="d-datos">

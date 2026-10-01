@@ -119,7 +119,7 @@
       }
       const [rv, rc] = await Promise.all([
         db.from('ventas')
-          .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,pieza_id,cantidad,categoria_pago_id,especificaciones,catalogo:catalogo(fotos),etapas(id,rama,nombre,orden,especialidad,oficio,incluye,despues_de,estado,unidades,para_el,trabajador_id,foto,terminada_en,iniciada_en,monto,trabajador:perfiles(nombre)))')
+          .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,pieza_id,cantidad,categoria_pago_id,especificaciones,catalogo:catalogo(fotos),etapas(id,unidad,rama,nombre,orden,especialidad,oficio,incluye,despues_de,estado,unidades,para_el,trabajador_id,foto,terminada_en,iniciada_en,monto,trabajador:perfiles(nombre)))')
           .eq('estado', 'en_produccion'),
         db.from('categorias_pago').select('id,nombre,producto').eq('activo', true).order('nombre', { ascending:true })
       ]);
@@ -132,7 +132,19 @@
       toast((e && e.message) || 'No se pudo cargar', 'error');
     }
   }
+  // Cada unidad de un producto (ej. 2 puertas iguales) es un trabajo aparte: se muestra y se asigna por separado
+  function porUnidad(items){
+    const out = [];
+    (items || []).forEach(it => {
+      const us = [...new Set((it.etapas || []).map(e => e.unidad || 1))].sort((a, b) => a - b);
+      if(us.length <= 1){ out.push(it); return; }
+      us.forEach(u => out.push(Object.assign({}, it, { _key: it.id + '-' + u, _unidad: u, _de: us.length, etapas: it.etapas.filter(e => (e.unidad || 1) === u) })));
+    });
+    return out;
+  }
+  const claveItem = (it) => String(it._key || it.id);
   function mostrarPedidos(lista){
+      lista.forEach(v => { v._prod = (v.items || []).filter(it => (it.etapas || []).length).map(it => it.nombre + (it.cantidad > 1 ? ' ×' + it.cantidad : '')).join(', '); v.items = porUnidad(v.items); });
       pedidos = lista.map(v => Object.assign(v, { _resumen: resumenPedido(v) }));
       pedidos.sort((a, b) => {
         const da = diasAtraso(a) || 0, db_ = diasAtraso(b) || 0;
@@ -195,7 +207,7 @@
         : r.sinAsignar > 0 ? `<span class="plazo">${r.sinAsignar} sin asignar</span>`
         : r.sinCat > 0 ? '<span class="plazo aviso">Sin categoría de pago</span>'
         : '<span class="plazo ok">Todo asignado</span>';
-      const prod = itemsFabrica(v).map(it => it.nombre + (it.cantidad > 1 ? ' ×' + it.cantidad : '')).join(', ');
+      const prod = v._prod || '';
       const pct = r.total ? r.hechas / r.total : 0;
       return `<button class="vcard" style="--i:${i}" data-id="${v.id}">
         <div class="vcard-top">
@@ -282,13 +294,13 @@
     return `<div class="p-item">
       <div class="p-item-cab">
         <div class="p-item-foto">${fi.url ? window.AH.imgMini(fi.url, "", it.tipo) : iconoTipo(it.tipo, 22)}</div>
-        <div><div class="p-item-nom">${esc(it.nombre)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div><div class="p-item-cant">${esc(sub)}${color ? ' · ' + esc(color) : ''}</div>${catHtml(it)}</div>
+        <div><div class="p-item-nom">${esc(it.nombre)}${it._de ? ` <span class="p-unidad">${it._unidad} de ${it._de}</span>` : it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div><div class="p-item-cant">${esc(sub)}${color ? ' · ' + esc(color) : ''}</div>${catHtml(it)}</div>
       </div>
       ${fi.otroColor ? `<p class="p-foto-otra">${esc(etiquetaOtroColor(fi, it.tipo))}.${lectura ? '' : ` Sube la foto en ${esc(String(fi.color).toLowerCase())} en Catálogo.`}</p>` : ''}
       ${catFaltaHtml(it)}
       ${bloques}
       ${!lectura && it.categoria_pago_id && (it.etapas || []).some(x => x.estado === 'pendiente')
-        ? `<button class="btn-asignar-todo" type="button" data-asignar-todo="${it.id}">Asignar trabajadores</button>` : ''}
+        ? `<button class="btn-asignar-todo" type="button" data-asignar-todo="${esc(claveItem(it))}">Asignar trabajadores</button>` : ''}
     </div>`;
   }
   // ---------------------------------------------------------------------------
@@ -297,7 +309,7 @@
   let itemTodo = null, elegidos = {}, guardandoTodo = false, paraElegido = null, paraTocado = false;
   async function abrirAsignarTodo(iid){
     const v = pedidoActual; if(!v) return;
-    const it = (v.items || []).find(x => x.id === iid); if(!it) return;
+    const it = (v.items || []).find(x => claveItem(x) === String(iid)); if(!it) return;
     const todos = await cargarTrabajadores();
     itemTodo = it; elegidos = {}; paraTocado = false;
     const sab = sabados();
@@ -341,7 +353,7 @@
         </div>`;
       });
     });
-    $('todoTitulo').textContent = 'Asignar: ' + it.nombre;
+    $('todoTitulo').textContent = 'Asignar: ' + it.nombre + (it._de ? ' (' + it._unidad + ' de ' + it._de + ')' : '');
     $('todoBody').innerHTML = html;
     pintarBotonTodo();
     abrirHoja('sheetTodo');
@@ -418,7 +430,7 @@
     const bo = e.target.closest('[data-cancelar-orden]');
     if(bo){ cancelarOrden(Number(bo.dataset.cancelarOrden), bo); return; }
     const bat = e.target.closest('[data-asignar-todo]');
-    if(bat){ abrirAsignarTodo(Number(bat.dataset.asignarTodo)); return; }
+    if(bat){ abrirAsignarTodo(bat.dataset.asignarTodo); return; }
   });
 
   // ---------------------------------------------------------------------------
