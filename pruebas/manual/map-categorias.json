@@ -1,3 +1,1 @@
-{"c1-lista":[[[".c-card","1"],["#btnNuevo","2"]],{"completa":true}],
- "c2-nueva":[[[".cat-fila[data-esp=\"hierro\"]","1"],[".cat-fila[data-esp=\"hierro\"].prot","2"]]],
- "c3-final":[]}
+{"c1-lista": [[[".c-card", "1"], ["#btnNuevo", "2"]], {"completa": true}], "c2-nueva": [[["#optsProducto", "1"], ["#filasTarifa > .cat-fila[data-k=\"masilla_pintura\"]", "2"]], {"completa": true}], "c2b-extra": [[[".cat-extra", "1"]], {"completa": true}], "c3-final": [], "__insertar": [["await F(a,'c2-nueva');", "\n await a.evaluate(()=>document.querySelector('.cat-extra').scrollIntoView({block:'center'}));await F(a,'c2b-extra');"]]}

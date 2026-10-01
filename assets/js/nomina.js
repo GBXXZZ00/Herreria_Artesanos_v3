@@ -9,7 +9,7 @@
   const S = window.Sesion;
   const $ = (id) => document.getElementById(id);
 
-  const ESPECIALIDAD = { herrero:'Herrero', masilla_pintura:'Masilla y pintura', acabados:'Detalles', ventanero:'Ventanero', carpintero:'Carpintero' };
+  const ESPECIALIDAD = { herrero:'Herrero', masilla_pintura:'Masilla y pintura', acabados:'Detalles', ventanero:'Aluminio', carpintero:'Carpintero' };
   const CHEV = '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
   const CHEV_ABAJO = '<svg class="ac-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
   const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
@@ -91,7 +91,8 @@
   }
   function filaItem(it){
     items[it.id] = it;
-    const monto = it.oficio === 'instalar' ? `<span class="mov-m gris">No se paga${CHEV}</span>` : it.monto == null ? `<span class="mov-m gris rojo">Por definir${CHEV}</span>` : `<span class="mov-m">${esc(dinero(it.monto))}${CHEV}</span>`;
+    const nota = window.AH.notaPago(it.oficio);
+    const monto = nota ? `<span class="mov-m gris">${nota}${CHEV}</span>` : it.monto == null ? `<span class="mov-m gris rojo">Por definir${CHEV}</span>` : `<span class="mov-m">${esc(dinero(it.monto))}${CHEV}</span>`;
     return `<button class="mov" type="button" data-item="${it.id}">
       <span class="mov-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 20)}</span>
       <span style="min-width:0"><span class="mov-t">${esc(it.etapa)} · ${esc(it.producto)}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}</span>
@@ -199,23 +200,23 @@
   // Atajo: un trabajo sin monto lleva a donde se arregla (categoría del producto o tarifa de la categoría)
   let categorias = null;   // se cargan la primera vez que hacen falta
   function atajoMontoHtml(it){
-    if(it.monto != null || it.oficio === 'instalar' || it.pago_id) return '';   // lo ya pagado no se toca
+    if(it.monto != null || window.AH.notaPago(it.oficio) || it.pago_id) return '';   // lo ya pagado no se toca
     const link = (href, t) => `<a class="btn-primary atajo-btn" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${href}">${t}</a>`;
     if(it.categoria_id) return `<div class="aviso-falta" style="margin:14px 0 0">A la categoría ${esc(it.categoria || '')} le falta la tarifa de este paso.
       ${link('categorias-pago.html?editar=' + esc(it.categoria_id), 'Poner la tarifa')}</div>`;
     let cuerpo;
     if(categorias === 'error') cuerpo = '<button class="btn-secondary atajo-btn" type="button" data-reintentar-cat style="width:100%">No se pudieron cargar. Reintentar</button>';
     else if(categorias === null) cuerpo = '<span class="atajo-t" style="margin-top:8px;font-weight:600">Cargando categorías…</span>';
-    else if(!categorias.length) cuerpo = link('categorias-pago.html?nueva=1', 'Crear una categoría');
+    else if(!categorias.some(c => window.AH.categoriaSirve(c, it.tipo))) cuerpo = link('categorias-pago.html?nueva=1', 'Crear una categoría');
     else cuerpo = `<div class="atajo-caja"><span class="atajo-t">Elige su categoría. Se calcula el monto enseguida.</span>
-      <div class="opts" style="--cols:2;margin-top:8px">${categorias.map(c => `<button type="button" class="opt" data-cat-item="${esc(it.venta_item_id)}" data-trabajo="${esc(it.id)}" data-cid="${c.id}">${esc(c.nombre)}</button>`).join('')}</div></div>`;
+      <div class="opts" style="--cols:2;margin-top:8px">${categorias.filter(c => window.AH.categoriaSirve(c, it.tipo)).map(c => `<button type="button" class="opt" data-cat-item="${esc(it.venta_item_id)}" data-trabajo="${esc(it.id)}" data-cid="${c.id}">${esc(c.nombre)}</button>`).join('')}</div></div>`;
     return `<div class="aviso-falta" style="margin:14px 0 0">Este producto no tiene categoría de pago: por eso no tiene monto.${cuerpo}</div>`;
   }
   async function cargarCategorias(it){
     try{
-      const { data, error } = await db.from('categorias_pago').select('id,nombre').order('id');
+      const { data, error } = await db.from('categorias_pago').select('id,nombre,producto').order('id');
       if(error) throw error;
-      categorias = data || [];
+      categorias = data || [];   // se filtran por el tipo del producto al mostrarlas
     } catch(e){ categorias = 'error'; toast(mensaje(e), 'error'); }
     if($('sheetItem').classList.contains('open') && itemAbierto === it) abrirItem(it, true);
   }
@@ -224,7 +225,7 @@
   // ---------- Ficha de un trabajo ----------
   function abrirItem(it, repintar){
     itemAbierto = it;
-    if(it.monto == null && it.oficio !== 'instalar' && !it.pago_id && !it.categoria_id && (categorias === null || categorias === 'error') && !repintar){ categorias = null; cargarCategorias(it); }
+    if(it.monto == null && !window.AH.notaPago(it.oficio) && !it.pago_id && !it.categoria_id && (categorias === null || categorias === 'error') && !repintar){ categorias = null; cargarCategorias(it); }
     const e = it.especificaciones || {};
     const specs = resumenSpecs(it.tipo, e);
     $('itemBody').innerHTML = `
@@ -236,7 +237,7 @@
       <div class="d-datos">
         <div class="d-dato"><span>${it.interna ? 'Para' : 'Cliente'}</span><b>${esc(it.interna ? 'Exhibición' : (it.cliente || ''))}</b></div>
         <div class="d-dato"><span>${it.interna ? 'Sede' : 'Pedido'}</span><b>${esc(it.interna ? (it.sede || '') : 'N° ' + it.venta_id)}</b></div>
-        <div class="d-dato"><span>Pago por esta parte</span><b>${it.oficio === 'instalar' ? 'No se paga' : it.monto == null ? 'Por definir' : esc(dinero(it.monto))}</b></div>
+        <div class="d-dato"><span>Pago por esta parte</span><b>${window.AH.notaPago(it.oficio) ? window.AH.notaPago(it.oficio) : it.monto == null ? 'Por definir' : esc(dinero(it.monto))}</b></div>
         <div class="d-dato"><span>Categoría</span><b>${esc(it.categoria || 'Sin categoría')}</b></div>
       </div>
       ${specs.length ? `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}

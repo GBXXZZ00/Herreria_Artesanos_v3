@@ -122,7 +122,8 @@
     if(t.oficio === 'instalar' && /^pintura/.test(e)) return 'la pintura de ' + (t.tipo === 'Combo' ? 'las protecciones' : 'la protección');
     return e;
   }
-  const noSePaga = (t) => t.oficio === 'instalar';
+  // Instalar no se paga; la masilla se paga junto con la pintura
+  const noSePaga = (t) => !!window.AH.notaPago(t.oficio);
   function piezasDe(t){
     if(!t.oficio) return [];
     const e = t.especificaciones || {}, c = Number(t.cantidad) || 1;
@@ -332,7 +333,7 @@
       <div class="tj-datos">
         ${t.cantidad > 1 ? `<span><b>${t.cantidad}</b> unidades</span>` : ''}
         <span>${t.interna ? '<b>Para exhibición</b>' : `<b>${esc(refPedido(t))}</b>${t.fecha_entrega ? ' · entrega al cliente ' + esc(fechaCorta(t.fecha_entrega)) : ''}`}</span>
-        ${noSePaga(t) ? '<span>Este paso <b>no se paga</b></span>' : t.monto != null ? `<span>Ganas <b>${esc(dinero(t.monto))}</b></span>` : ''}
+        ${noSePaga(t) ? (t.oficio === 'masilla' ? '<span>Se paga <b>al terminar la pintura</b></span>' : '<span>Este paso <b>no se paga</b></span>') : t.monto != null ? `<span>Ganas <b>${esc(dinero(t.monto))}</b></span>` : ''}
       </div>
       ${cd ? `<div class="tj-color"><span class="sw ${SW_COLOR[cd.c] || ''}"></span>${esc(cd.t)}</div>` : ''}
       ${specsTabla(t)}
@@ -382,7 +383,7 @@
   const miniFoto = (url, tipo) => `<span>${url ? window.AH.imgMini(url, "", tipo) : iconoTipo(tipo, 18)}</span>`;
   // Cada trabajo hecho: la foto del catálogo y la suya, juntas. Al tocarlo se ve el detalle.
   function filaTrabajo(m){
-    const monto = noSePaga(m) ? '<span class="pg-mov-m gris">No se paga</span>' : m.monto == null ? '<span class="pg-mov-m gris">Por definir</span>' : `<span class="pg-mov-m">${esc(dinero(m.monto))}</span>`;
+    const monto = noSePaga(m) ? `<span class="pg-mov-m gris">${esc(window.AH.notaPago(m.oficio))}</span>` : m.monto == null ? '<span class="pg-mov-m gris">Por definir</span>' : `<span class="pg-mov-m">${esc(dinero(m.monto))}</span>`;
     return `<button class="pg-mov" type="button" data-hecho="${m.id}">
       <span class="duo">${miniFoto(m.foto, m.tipo)}${miniFoto(m.foto_trabajo, m.tipo)}</span>
       <span style="min-width:0"><span class="pg-mov-t">${esc(m.etapa)} · ${esc(m.producto)}</span>
@@ -489,7 +490,7 @@
       ${piezasHtml(t)}
       <div class="tj-datos">
         ${m.cantidad > 1 ? `<span><b>${m.cantidad}</b> unidades</span>` : ''}
-        <span>${noSePaga(m) ? 'Este paso <b>no se paga</b>' : m.monto == null ? 'Monto <b>por definir</b>' : `Te suma <b>${esc(dinero(m.monto))}</b>`}</span>
+        <span>${noSePaga(m) ? (m.oficio === 'masilla' ? 'Se paga <b>al terminar la pintura</b>' : 'Este paso <b>no se paga</b>') : m.monto == null ? 'Monto <b>por definir</b>' : `Te suma <b>${esc(dinero(m.monto))}</b>`}</span>
       </div>
       ${cd ? `<div class="tj-color"><span class="sw ${SW_COLOR[cd.c] || ''}"></span>${esc(cd.t)}</div>` : ''}
       ${specsTabla(t)}

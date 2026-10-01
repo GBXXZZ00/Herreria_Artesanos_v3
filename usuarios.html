@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Usuarios · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=65">
+<link rel="stylesheet" href="assets/css/base.css?v=66">
 <style>
   .page{padding-bottom:calc(var(--safe-b) + 110px)}
   .u-vlista{display:flex;flex-direction:column;gap:10px;padding:14px 18px 0}
@@ -41,6 +41,9 @@
   .u-ficha-cab{display:flex;align-items:center;gap:12px;padding:6px 0 16px}
   .u-ficha-cab .u-avatar{width:52px;height:52px;font-size:19px}
   .u-vacio{text-align:center;padding:60px 20px;color:var(--ink-soft);font-size:15px}
+  /* Los errores de este formulario se ven apenas tienen texto */
+  .field-error:not(:empty){display:block}
+  .u-hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
 </style>
 </head>
 <body data-requiere-sesion="si">
@@ -81,6 +84,7 @@
     <div class="field">
       <label class="field-label" for="nUsuario">Usuario (para entrar)</label>
       <input class="input" id="nUsuario" type="text" autocomplete="off" autocapitalize="none" placeholder="ej: pedro">
+      <p class="u-hint hidden" id="hUsuario"></p>
       <p class="field-error" id="eUsuario"></p>
     </div>
     <div class="field">
@@ -95,6 +99,7 @@
         <button type="button" class="opt" data-v="trabajador">Trabajador</button>
         <button type="button" class="opt" data-v="admin">Admin</button>
       </div>
+      <p class="field-error" id="eRol"></p>
     </div>
     <div class="field hidden" id="fEspecialidad">
       <label class="field-label">Especialidades (puedes elegir más de una)</label>
@@ -102,7 +107,7 @@
         <button type="button" class="opt" data-v="herrero">Herrero</button>
         <button type="button" class="opt" data-v="masilla_pintura">Masilla y pintura</button>
         <button type="button" class="opt" data-v="acabados">Detalles</button>
-        <button type="button" class="opt" data-v="ventanero">Ventanero</button>
+        <button type="button" class="opt" data-v="ventanero">Aluminio</button>
         <button type="button" class="opt" data-v="carpintero">Carpintero</button>
       </div>
       <p class="field-error" id="eEspecialidad"></p>
@@ -140,11 +145,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=65"></script>
-<script src="assets/js/supabase-client.js?v=65"></script>
-<script src="assets/js/comun.js?v=65"></script>
-<script src="assets/js/sesion.js?v=65"></script>
-<script src="assets/js/ayuda.js?v=65"></script>
-<script src="assets/js/usuarios.js?v=65"></script>
+<script src="assets/vendor/supabase.js?v=66"></script>
+<script src="assets/js/supabase-client.js?v=66"></script>
+<script src="assets/js/comun.js?v=66"></script>
+<script src="assets/js/sesion.js?v=66"></script>
+<script src="assets/js/ayuda.js?v=66"></script>
+<script src="assets/js/usuarios.js?v=66"></script>
 </body>
 </html>

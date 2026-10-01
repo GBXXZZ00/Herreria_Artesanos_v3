@@ -14,9 +14,10 @@ const modelos=[
   {id:2,nombre:'Imperial',tipo:'Puerta Multilock',fotos:{Blanco:GIF},especificaciones_base:{},precio_base:300,categoria_pago_id:null},
   {id:3,nombre:'Colonial',tipo:'Puerta Multilock',fotos:{Blanco:GIF},especificaciones_base:{},precio_base:250,categoria_pago_id:7},
   {id:4,nombre:'Ventana Simple',tipo:'Ventana',fotos:{Blanco:GIF},especificaciones_base:{},precio_base:90,categoria_pago_id:8},
-  {id:5,nombre:'Combo Real',tipo:'Combo',fotos:{},especificaciones_base:{},precio_base:700,categoria_pago_id:null}
+  {id:5,nombre:'Combo Real',tipo:'Combo',fotos:{},especificaciones_base:{},precio_base:700,categoria_pago_id:null},
+  {id:6,nombre:'Imperial Dos',tipo:'Puerta Multilock',fotos:{Blanco:GIF},especificaciones_base:{},precio_base:320,categoria_pago_id:9}
 ];
-const categorias=[{id:7,nombre:'General',tarifas:{herrero:{monto:25,modo:'fijo'}},activo:true},{id:8,nombre:'Ventanas',tarifas:{ventanero:{monto:10,modo:'fijo'}},activo:true}];
+const categorias=[{id:7,nombre:'General',producto:'Puerta Multilock',tarifas:{hierro:{monto:25,modo:'fijo'}},activo:true},{id:8,nombre:'Ventanas',producto:'Ventana',tarifas:{armar:{monto:10,modo:'fijo'}},activo:true},{id:9,nombre:'Puertas lujo',producto:'Puerta Multilock',tarifas:{hierro:{monto:40,modo:'fijo'}},activo:true}];
 const llamadas=[];
 
 function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{const req=r.request();const u=decodeURIComponent(req.url());const j=(x,st=200,h={})=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'content-range',...h},body:JSON.stringify(x)});
@@ -53,9 +54,9 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
 
  // Abrir "General" y asignar a modelos
  await a.click('.c-card >> text=General');await a.waitForSelector('#sheetFicha.open');
- ok('La ficha tiene "Asignar a modelos" con cuántos usan y cuántos faltan',(await a.textContent('#btnAsignarModelos')).includes('Usada en 1 modelo') && (await a.textContent('#btnAsignarModelos')).includes('3 sin categoría'));
+ ok('La ficha tiene "Asignar a modelos" con cuántos usan y cuántos faltan',(await a.textContent('#btnAsignarModelos')).includes('Usada en 1 modelo') && (await a.textContent('#btnAsignarModelos')).includes('2 sin categoría'));
  await a.click('#btnAsignarModelos');await a.waitForSelector('#sheetModelos.open');
- ok('Abre en "Sin categoría" con solo los 3 que no tienen',(await a.textContent('#chipsModelos .chip.active')).includes('Sin categoría · 3') && (await a.$$('#listaModelos .m-fila')).length===3);
+ ok('Abre en "Sin categoría" con solo las 2 puertas que no tienen (el combo no sale)',(await a.textContent('#chipsModelos .chip.active')).includes('Sin categoría · 2') && (await a.$$('#listaModelos .m-fila')).length===2);
  ok('Botón desactivado sin marcar nada',await a.$eval('#btnAsignar',x=>x.disabled));
  await a.click('.m-fila[data-mid="1"]');await a.click('.m-fila[data-mid="2"]');
  ok('Al marcar 2, el botón dice "Asignar a 2 modelos"',(await a.textContent('#btnAsignar'))==='Asignar a 2 modelos');
@@ -64,29 +65,23 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  // Pestaña "Todos": se ve la categoría de cada uno
  await a.click('[data-pestana="todos"]');await a.waitForTimeout(150);
  const todos=await a.textContent('#listaModelos');
- ok('En "Todos" se ven los 5 con su categoría',(await a.$$('#listaModelos .m-fila')).length===5 && todos.includes('Tiene: Ventanas'));
+ ok('En "Todos" se ven solo las 4 puertas con su categoría',(await a.$$('#listaModelos .m-fila')).length===4 && todos.includes('Tiene: Puertas lujo') && !todos.includes('Ventana Simple'));
  ok('El que ya está en General sale con ✓ y no se puede marcar',todos.includes('Ya está en General') && await a.$eval('.m-fila[data-mid="3"]',x=>x.disabled));
  ok('Al cambiar de pestaña no quedan marcados escondidos',(await a.$$('.m-fila.sel')).length===0 && (await a.textContent('#btnAsignar'))==='Elige los modelos');
  await a.click('.m-fila[data-mid="1"]');await a.click('.m-fila[data-mid="2"]');
- await a.click('.m-fila[data-mid="4"]');await a.waitForTimeout(100);
- ok('Marcar uno con otra categoría avisa que pasará de Ventanas a General',(await a.textContent('.m-fila[data-mid="4"]')).includes('Pasará de Ventanas a General'));
+ await a.click('.m-fila[data-mid="6"]');await a.waitForTimeout(100);
+ ok('Marcar uno con otra categoría avisa que pasará de Puertas lujo a General',(await a.textContent('.m-fila[data-mid="6"]')).includes('Pasará de Puertas lujo a General'));
  await a.screenshot({path:'shots5/k2-todos.png'});
 
  // Confirmación antes de cambiar una categoría
  a._dlg=[];
  await a.click('#btnAsignar');await a.waitForTimeout(800);
  ok('Pregunta antes de cambiar la categoría de uno que ya tenía',a._dlg.length===1 && a._dlg[0].includes('1 modelo ya tiene otra categoría'),a._dlg);
- ok('Se guardan los 3 marcados con General',llamadas.length===1 && JSON.stringify(llamadas[0].ids.sort())==='[1,2,4]' && llamadas[0].cid===7,llamadas[0]);
+ ok('Se guardan los 3 marcados con General',llamadas.length===1 && JSON.stringify(llamadas[0].ids.sort())==='[1,2,6]' && llamadas[0].cid===7,llamadas[0]);
  ok('La hoja se cierra y General dice "Usada en 4 modelos"',!(await a.$('#sheetModelos.open')) && (await a.textContent('#asigSub')).includes('Usada en 4 modelos'));
 
- // Si todos estaban sin categoría, no pregunta
- await a.click('#btnAsignarModelos');await a.waitForSelector('#sheetModelos.open');
- ok('Queda 1 sin categoría',(await a.$$('#listaModelos .m-fila')).length===1);
- a._dlg=[];
- await a.click('#btnMarcarTodos');await a.click('#btnAsignar');await a.waitForTimeout(800);
- ok('Sin cambios de categoría, guarda directo sin preguntar',a._dlg.length===0 && llamadas.length===2 && llamadas[1].ids[0]===5);
  await a.click('#sheetFicha [data-cerrar="sheetFicha"]');await a.waitForTimeout(400);
- ok('El aviso de arriba desaparece cuando todos tienen categoría',(await a.textContent('#avisoSin')).trim()==='');
+ ok('Arriba sigue el aviso del combo sin categoría',(await a.textContent('#avisoSin')).includes('1 modelo sin categoría'));
 
  // Nombre vacío: el error se ve debajo del campo
  await a.click('#btnNuevo');await a.waitForSelector('#sheetFicha.open');

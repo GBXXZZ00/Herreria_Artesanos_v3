@@ -92,7 +92,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Se llamó a crear con los datos correctos (varias especialidades)',crea&&crea[1].nombre==='Pedro Pérez'&&crea[1].usuario==='pedro'&&crea[1].rol==='trabajador'&&crea[1].especialidades.includes('herrero')&&crea[1].especialidades.includes('ventanero')&&crea[1].especialidades.length===2,crea&&crea[1]);
  await a.waitForTimeout(500);
  ok('Se cierra la hoja y aparece el nuevo usuario',(await a.$$('.u-card')).length===4);
- ok('Muestra las especialidades del nuevo trabajador',(await a.textContent('#lista')).includes('Herrero')&&(await a.textContent('#lista')).includes('Ventanero'));
+ ok('Muestra las especialidades del nuevo trabajador',(await a.textContent('#lista')).includes('Herrero')&&(await a.textContent('#lista')).includes('Aluminio'));
 
  // Restablecer PIN del nuevo trabajador
  await a.click('.u-card >> text=Pedro Pérez');await a.waitForSelector('#sheetFicha.open');await F(a,'s1b-ficha');

@@ -9,7 +9,7 @@
 
   const NOMBRE_ROL = { admin:'Admin', vendedor:'Vendedor', trabajador:'Trabajador' };
   const NOMBRE_ESPECIALIDAD = {
-    herrero:'Herrero', masilla_pintura:'Masilla y pintura', acabados:'Detalles', ventanero:'Ventanero', carpintero:'Carpintero'
+    herrero:'Herrero', masilla_pintura:'Masilla y pintura', acabados:'Detalles', ventanero:'Aluminio', carpintero:'Carpintero'
   };
   // Un icono chiquito sobre el avatar según el tipo de cuenta, para distinguir de un vistazo.
   const ICONO_ROL = {
@@ -84,6 +84,7 @@
   $('nRol').addEventListener('click', (e) => {
     const b = e.target.closest('.opt'); if(!b) return;
     nRol = b.dataset.v;
+    $('eRol').textContent = '';
     marcarOpt($('nRol'), nRol);
     $('fEspecialidad').classList.toggle('hidden', nRol !== 'trabajador');
   });
@@ -99,22 +100,38 @@
     nRol = null; nEspecialidades = [];
     marcarOpt($('nRol'), null); marcarOpt($('nEspecialidad'), null);
     $('fEspecialidad').classList.add('hidden');
-    ['eNombre', 'eUsuario', 'ePin', 'eEspecialidad'].forEach(id => $(id).textContent = '');
+    ['eNombre', 'eUsuario', 'ePin', 'eEspecialidad', 'eRol'].forEach(id => $(id).textContent = '');
+    $('hUsuario').classList.add('hidden');
   }
+  // El usuario para entrar: sin acentos, sin espacios y en minúscula (jesús → jesus, luis paz → luispaz)
+  const limpiarUsuario = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9._-]/g, '');
+  $('nUsuario').addEventListener('input', () => {
+    const crudo = $('nUsuario').value.trim().toLowerCase();
+    const limpio = limpiarUsuario(crudo);
+    $('eUsuario').textContent = '';
+    $('hUsuario').textContent = limpio ? 'Entrará como: ' + limpio : '';
+    $('hUsuario').classList.toggle('hidden', !limpio || limpio === crudo);
+  });
   $('btnNuevo').addEventListener('click', () => { limpiarForm(); abrirHoja('sheetNuevo'); });
 
   $('btnCrear').addEventListener('click', async () => {
     const nombre = $('nNombre').value.trim();
-    const usuario = $('nUsuario').value.trim().toLowerCase();
+    const usuario = limpiarUsuario($('nUsuario').value);
     const pin = $('nPin').value.trim();
-    ['eNombre', 'eUsuario', 'ePin', 'eEspecialidad'].forEach(id => $(id).textContent = '');
+    ['eNombre', 'eUsuario', 'ePin', 'eEspecialidad', 'eRol'].forEach(id => $(id).textContent = '');
     let ok = true;
     if(!nombre){ $('eNombre').textContent = 'Escribe el nombre'; ok = false; }
-    if(!/^[a-z0-9._-]+$/i.test(usuario)){ $('eUsuario').textContent = 'Solo letras, números, punto o guion'; ok = false; }
+    if(!usuario){ $('eUsuario').textContent = $('nUsuario').value.trim() ? 'Usa letras o números' : 'Escribe el usuario para entrar'; ok = false; }
     if(!/^\d{6}$/.test(pin)){ $('ePin').textContent = 'Debe ser de 6 números'; ok = false; }
-    if(!nRol){ toast('Elige el tipo de cuenta', 'error'); ok = false; }
+    if(!nRol){ $('eRol').textContent = 'Elige el tipo de cuenta'; ok = false; }
     if(nRol === 'trabajador' && !nEspecialidades.length){ $('eEspecialidad').textContent = 'Elige al menos una especialidad'; ok = false; }
-    if(!ok) return;
+    if(!ok){
+      // Lleva al primer campo con error para que se vea qué falta
+      const err = ['eNombre', 'eUsuario', 'ePin', 'eRol', 'eEspecialidad'].map($).find(x => x.textContent);
+      if(err) err.closest('.field').scrollIntoView({ block:'center', behavior:'smooth' });
+      toast('Revisa lo que está en rojo', 'error');
+      return;
+    }
 
     $('btnCrear').disabled = true;
     try{

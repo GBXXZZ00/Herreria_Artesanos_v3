@@ -61,7 +61,8 @@
       extras:[
         { k:'proteccion', label:'Protección' },
         { k:'marco_decorativo', label:'Marco en protección' },
-        { k:'mas_hojas', label:'Más de 2 hojas' }
+        { k:'mas_hojas', label:'Más de 2 hojas' },
+        { k:'lleva_detalles', label:'Lleva detalles', soloModelo:true }
       ]
     },
     'Portón': {
@@ -92,7 +93,10 @@
         { g:'ahumado', label:'Papel ahumado de las ventanas', opts:OPC_AHUMADO, def:'Espejo', zona:'ventanas' },
         { g:'ventanas_medidas', label:'Medidas de las 2 ventanas', tipo:'medidas', keys:['ventanas_alto','ventanas_ancho'], def:[1, 1], zona:'ventanas' }
       ],
-      extras:[ { k:'marco_decorativo', label:'Marco decorativo en la puerta' } ]
+      extras:[
+        { k:'marco_decorativo', label:'Marco decorativo en la puerta' },
+        { k:'ventanas_detalles', label:'Las ventanas llevan detalles', soloModelo:true }
+      ]
     },
     'Puerta de Madera': {
       medidas:{ alto:2, ancho:0.9 },
@@ -157,7 +161,8 @@
     const extra = PEDIDO[tipo] || { antes:[], despues:[] };
     // Lo de las ventanas del combo va junto, después de todo lo de la puerta
     const todos = [...extra.antes, ...base.grupos, ...extra.despues];
-    return { medidas: base.medidas, grupos: [...todos.filter(g => !g.zona), ...todos.filter(g => g.zona)], extras: base.extras };
+    // Lo que solo define el modelo (ej. si lleva detalles) no se toca en la venta: lo copia el servidor
+    return { medidas: base.medidas, grupos: [...todos.filter(g => !g.zona), ...todos.filter(g => g.zona)], extras: base.extras.filter(x => !x.soloModelo) };
   }
   // Detalles para fabricar: no hacen falta para cotizar, sí para vender. Los de instalación
   // (hacia dónde abre, adentro o afuera, bloque, hacia dónde abre la protección) nunca vienen
@@ -276,6 +281,22 @@
     // Pedidos viejos con las ventanas de otro color (ya no se puede elegir)
     if(e.ventanas_color && e.color && e.ventanas_color !== e.color) out.push({ t:'Ventanas ' + e.ventanas_color.toLowerCase(), sw:SW_COLOR[e.ventanas_color] });
     return out;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pago al taller: cada categoría es de un producto (Puerta, Portón, Ventana o Combo)
+  // ---------------------------------------------------------------------------
+  const PRODUCTOS_PAGO = [
+    { v:'Puerta Multilock', t:'Puerta' }, { v:'Portón', t:'Portón' }, { v:'Ventana', t:'Ventana' }, { v:'Combo', t:'Combo' }
+  ];
+  const nombreProducto = (v) => (PRODUCTOS_PAGO.find(p => p.v === v) || {}).t || '';
+  // ¿Esta categoría sirve para este tipo de producto? (la puerta de madera usa las de puerta)
+  const categoriaSirve = (c, tipo) => !c || !c.producto || c.producto === tipo || (c.producto === 'Puerta Multilock' && tipo === 'Puerta de Madera');
+  // Pasos que no llevan monto propio: instalar no se paga; la masilla se paga junto con la pintura
+  function notaPago(oficio){
+    if(oficio === 'instalar') return 'No se paga';
+    if(oficio === 'masilla') return 'Se paga con la pintura';
+    return '';
   }
 
   // ¿La pieza lleva protección pero la foto que se muestra es la del modelo sin protección?
@@ -699,6 +720,7 @@
     TIPOS, TIPO_INFO, iconoTipo, acabados, tieneColores, ESQUEMA, SW_COLOR, esquema, grupoActivo, avisoFotoProteccion,
     especificacionesDesdeEstado, estadoDesdeEspecificaciones, resumenSpecs, medidas,
     FAB_INSTALACION, esFab, NOMBRE_FAB, faltanDetalles,
+    PRODUCTOS_PAGO, nombreProducto, categoriaSirve, notaPago,
     fotoModelo, fotoPieza, fotoItem, etiquetaOtroColor, sabados, sabadoCorto, topeTexto, esc, numOrNull, montoOrNull, fmt, dinero, specChipsHtml, toast,
     abrirHoja, cerrarHoja, hojaAbierta, alCerrar, antesDeCerrar, clavesGrupo, activarDeslizar,
     profundidad: prof, vistaInterna

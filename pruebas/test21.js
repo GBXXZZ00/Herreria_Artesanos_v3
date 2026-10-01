@@ -209,14 +209,14 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
      E(2002,'principal','Masilla',2,'masilla_pintura','masilla',{incluye:incC}),
      E(2003,'principal','Pintura',3,'masilla_pintura','pintura',{incluye:incC}),
      E(2004,'principal','Detalles',4,'acabados','detalles',{incluye:'Solo la puerta'}),
-     E(2005,'ventana','Armar 2 ventanas',1,'ventanero','armar',{incluye:'2 ventanas',estado:'hecha',trabajador_id:'t3',trabajador:{nombre:'Luis'},terminada_en:new Date().toISOString()}),
+     E(2005,'ventana','Aluminio 2 ventanas',1,'ventanero','armar',{incluye:'2 ventanas',estado:'hecha',trabajador_id:'t3',trabajador:{nombre:'Luis'},terminada_en:new Date().toISOString()}),
      E(2006,'ventana','Instalar en las protecciones',2,'ventanero','instalar',{incluye:'2 ventanas en sus protecciones',despues_de:['principal/3']})
    ]},
    {id:202,nombre:'Ventana Protegida',tipo:'Ventana',foto:null,categoria_pago_id:1,especificaciones:{alto:1.5,ancho:2,color:'Blanco',proteccion:true,aluminio:'Panorámica'},catalogo:{fotos:{Blanco:GIF}},etapas:[
      E(2011,'proteccion','Hierro',1,'herrero','hierro',{incluye:'La protección'}),
      E(2012,'proteccion','Masilla',2,'masilla_pintura','masilla',{incluye:'La protección'}),
      E(2013,'proteccion','Pintura',3,'masilla_pintura','pintura',{incluye:'La protección'}),
-     E(2014,'ventana','Armar',1,'ventanero','armar',{incluye:'La ventana'}),
+     E(2014,'ventana','Aluminio',1,'ventanero','armar',{incluye:'La ventana'}),
      E(2015,'ventana','Instalar en la protección',2,'ventanero','instalar',{incluye:'La ventana en su protección',despues_de:['proteccion/3']})
    ]}
  ]});
@@ -227,7 +227,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Dice lo que incluye el bloque del combo',(await a.textContent('#fichaBody .e-rama-inc'))==='Incluye: puerta con protección + 2 protecciones de ventana');
  const fn=await a.textContent('#fichaBody');
  ok('Masilla y Pintura son pasos separados',fn.includes('Masilla') && fn.includes('Pintura') && !fn.includes('Masilla y pintura'));
- ok('Instalar espera la pintura de la otra parte',fn.includes('Espera: pintura de puerta y protecciones') && fn.includes('Después de armar'),fn.match(/Espera:[^.]{0,40}/g));
+ ok('Instalar espera la pintura de la otra parte',fn.includes('Espera: pintura de puerta y protecciones') && fn.includes('Después de aluminio'),fn.match(/Espera:[^.]{0,40}/g));
  ok('Pasos que se pueden hacer ya: masilla del combo, hierro y armar de la ventana (instalar no)',(await a.$$('#fichaBody .etapa.actual')).length===3);
  await a.screenshot({path:'shots5/r1-combo-nuevo.png',fullPage:true});
  await a.click('[data-asignar-todo="201"]');await a.waitForSelector('#sheetTodo.open');await a.waitForTimeout(200);
@@ -242,7 +242,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Se guardan Masilla y Pintura con Pedro',at && at[1].p.length===2 && at[1].p.every(c=>c.tid==='t2') && at[1].p.map(c=>c.eid).sort().join()==='2002,2003',at&&at[1].p);
  await a.click('[data-asignar-todo="202"]');await a.waitForSelector('#sheetTodo.open');await a.waitForTimeout(200);
  const fv2=await a.$$eval('#todoBody .at-paso .at-nom',x=>x.map(y=>y.textContent.trim()));
- ok('Ventana con protección: Hierro, Masilla y pintura, y Armar e instalar',fv2.join('|')==='Hierro|Masilla y pintura|Armar e instalar',fv2);
+ ok('Ventana con protección: Hierro, Masilla y pintura, y Aluminio e instalar',fv2.join('|')==='Hierro|Masilla y pintura|Aluminio e instalar',fv2);
 
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

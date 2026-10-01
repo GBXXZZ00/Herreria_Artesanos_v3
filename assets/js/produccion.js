@@ -11,7 +11,7 @@
   const S = window.Sesion;
   const $ = (id) => document.getElementById(id);
 
-  const NOMBRE_ESPECIALIDAD = { herrero:'Herrero', masilla_pintura:'Masilla y pintura', acabados:'Detalles', ventanero:'Ventanero', carpintero:'Carpintero' };
+  const NOMBRE_ESPECIALIDAD = { herrero:'Herrero', masilla_pintura:'Masilla y pintura', acabados:'Detalles', ventanero:'Aluminio', carpintero:'Carpintero' };
   const TIPOS_PRODUCCION = ['Puerta Multilock', 'Portón', 'Puerta de Madera', 'Ventana', 'Combo'];
   const inicial = (n) => (String(n || '?').trim()[0] || '?').toUpperCase();
 
@@ -121,7 +121,7 @@
         db.from('ventas')
           .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,pieza_id,cantidad,categoria_pago_id,especificaciones,catalogo:catalogo(fotos),etapas(id,rama,nombre,orden,especialidad,oficio,incluye,despues_de,estado,unidades,para_el,trabajador_id,foto,terminada_en,iniciada_en,monto,trabajador:perfiles(nombre)))')
           .eq('estado', 'en_produccion'),
-        db.from('categorias_pago').select('id,nombre').eq('activo', true).order('nombre', { ascending:true })
+        db.from('categorias_pago').select('id,nombre,producto').eq('activo', true).order('nombre', { ascending:true })
       ]);
       if(rv.error) throw rv.error;
       if(rc.error) toast('No se pudieron cargar las categorías de pago', 'error');
@@ -315,7 +315,7 @@
       if(!pendR.length) return;
       const tit = Object.keys(grupos).length > 1 || it.tipo === 'Combo' ? tituloRama(it, r, grupos[r]) : '';
       if(tit) html += `<p class="e-rama-tit">${esc(tit)}</p>`;
-      // Un rol, una persona: los pasos del mismo oficio (Masilla y Pintura, Armar e Instalar) se asignan juntos
+      // Un rol, una persona: los pasos del mismo oficio (Masilla y Pintura, Aluminio e Instalar) se asignan juntos
       const porRol = [];
       pendR.forEach(e => { let g = porRol.find(x => x.esp === e.especialidad); if(!g){ g = { esp:e.especialidad, l:[] }; porRol.push(g); } g.l.push(e); });
       porRol.forEach(g => {
@@ -325,7 +325,7 @@
         g.l.forEach(x => { elegidos[x.id] = x.trabajador_id || ''; });
         const ops = todos.filter(t => (t.especialidades || []).includes(e.especialidad));
         const nombre = g.l.length > 1
-          ? ({ masilla_pintura:'Masilla y pintura', ventanero:'Armar e instalar' }[e.especialidad] || g.l.map(x => x.nombre).join(' y '))
+          ? ({ masilla_pintura:'Masilla y pintura', ventanero:'Aluminio e instalar' }[e.especialidad] || g.l.map(x => x.nombre).join(' y '))
           : e.nombre;
         const inc = (g.l.find(x => x.incluye && x.incluye.includes('+')) || {}).incluye;
         const sub = [inc, g.l.length > 1 ? g.l.length + ' pasos · la misma persona' : ''].filter(Boolean).join(' · ');
@@ -430,9 +430,10 @@
     if(!it) return;
     itemParaCat = it;
     $('catItemSub').textContent = it.nombre + ': con esto se calcula lo que gana cada trabajador.';
-    $('listaCatItem').innerHTML = categorias.length
-      ? categorias.map(c => `<button class="fila-cat ${c.id === it.categoria_pago_id ? 'sel' : ''}" type="button" data-cid="${c.id}">${esc(c.nombre)}</button>`).join('')
-      : '<p class="field-error" style="display:block">Aún no hay categorías de pago.</p><a class="btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px;height:46px" href="categorias-pago.html?nueva=1">Crear una categoría</a>';
+    const cats = categorias.filter(c => window.AH.categoriaSirve(c, it.tipo));
+    $('listaCatItem').innerHTML = cats.length
+      ? cats.map(c => `<button class="fila-cat ${c.id === it.categoria_pago_id ? 'sel' : ''}" type="button" data-cid="${c.id}">${esc(c.nombre)}</button>`).join('')
+      : `<p class="field-error" style="display:block">Aún no hay categorías de pago de ${esc(window.AH.nombreProducto(it.tipo) || it.tipo)}.</p><a class="btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px;height:46px" href="categorias-pago.html?nueva=1">Crear una categoría</a>`;
     abrirHoja('sheetCatItem');
   }
   $('listaCatItem').addEventListener('click', async (e) => {
@@ -521,11 +522,12 @@
         </button>${fieldErr('eModelo', 'Elige el modelo')}</div>`;
     }
     if(o.modelo){
+      const catsO = categorias.filter(c => window.AH.categoriaSirve(c, o.modelo.tipo));
       if(!o.modelo.categoria_pago_id){
-        html += categorias.length
-          ? `<div class="field" id="campoOCat">${SP.optsCuerpo({ g:'__ocat', label:'Categoría de pago', cols:1, opts: categorias.map(c => ({ v:String(c.id), t:c.nombre })) }, o.cat == null ? null : String(o.cat))}
+        html += catsO.length
+          ? `<div class="field" id="campoOCat">${SP.optsCuerpo({ g:'__ocat', label:'Categoría de pago', cols:1, opts: catsO.map(c => ({ v:String(c.id), t:c.nombre })) }, o.cat == null ? null : String(o.cat))}
               <p class="field-hint aviso">Este modelo no tiene. La que elijas queda guardada en el modelo.</p>${fieldErr('eOCat', 'Elige la categoría de pago')}</div>`
-          : `<div class="field"><p class="field-error" style="display:block">Este modelo no tiene categoría de pago y todavía no hay ninguna.</p><a class="btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px;height:46px" href="categorias-pago.html?nueva=1">Crear una categoría</a></div>`;
+          : `<div class="field"><p class="field-error" style="display:block">Este modelo no tiene categoría de pago y todavía no hay ninguna de ${esc(window.AH.nombreProducto(o.modelo.tipo) || o.modelo.tipo)}.</p><a class="btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px;height:46px" href="categorias-pago.html?nueva=1">Crear una categoría</a></div>`;
       }
       html += SP.specsHtml(o.prod, o.modelo, { marcar: !!o.marcar, atajo: true });   // en exhibición se ve todo; el aluminio de la ventana se elige
       html += `<div class="field" id="campoOSede">${SP.optsCuerpo({ g:'__osede', label:'Sede donde quedará', cols:2, opts: sedes.map(x => ({ v:String(x.id), t:x.nombre })) }, o.sede == null ? null : String(o.sede))}
@@ -545,7 +547,7 @@
     }
     cuerpo.innerHTML = html;
     cuerpo.scrollTop = scroll;
-    $('btnCrearOrden').disabled = enviandoOrden || !!(o.modelo && !o.modelo.categoria_pago_id && !categorias.length);
+    $('btnCrearOrden').disabled = enviandoOrden || !!(o.modelo && !o.modelo.categoria_pago_id && !categorias.some(c => window.AH.categoriaSirve(c, o.modelo.tipo)));
   }
   function refrescarPrecioOrden(){
     const o = orden; if(!o || !o.modelo) return;

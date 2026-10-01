@@ -1,25 +1,52 @@
-// Categorías de pago: los "grupos" que definen cuánto se le paga a cada trabajador por
-// oficio al terminar un paso (fijo o por m²), más un extra si el producto lleva protección
-// (puerta con protección o combo con protección en la puerta). Instalar no se paga. Solo lo ve un admin.
-// Las tarifas viejas por especialidad (pedidos de antes) se conservan al guardar.
+// Categorías de pago: cuánto se le paga al taller por cada trabajo de un producto
+// (Puerta, Portón, Ventana o Combo), fijo o por m². Cada categoría es de un solo producto y
+// muestra solo sus trabajos. Masilla y pintura es un solo monto (se paga al terminar la
+// pintura). Aluminio es por cada ventana. La puerta y el combo tienen aparte el extra si la
+// puerta lleva protección. Instalar no se paga. Solo lo ve un admin.
 (function(){
   'use strict';
   const db = window.db;
-  const { esc, toast, abrirHoja, cerrarHoja, fotoModelo, iconoTipo } = window.AH;
+  const { esc, toast, abrirHoja, cerrarHoja, fotoModelo, iconoTipo, PRODUCTOS_PAGO, nombreProducto, categoriaSirve } = window.AH;
   const S = window.Sesion;
   const $ = (id) => document.getElementById(id);
 
-  const OFICIOS = [
-    { v:'hierro', n:'Hierro', prot:true },
-    { v:'masilla', n:'Masilla', prot:true },
-    { v:'pintura', n:'Pintura', prot:true },
-    { v:'detalles', n:'Detalles' },
-    { v:'armar', n:'Armar ventana' }
-  ];
-  const ESPECIALIDADES_VIEJAS = [
-    { v:'herrero', n:'Herrero' }, { v:'masilla_pintura', n:'Masilla y pintura' }, { v:'acabados', n:'Detalles' }, { v:'ventanero', n:'Ventanero' }
-  ];
+  // Trabajos de cada producto (k = clave de la tarifa). sub: qué abarca. cu: por cada ventana.
+  const TRABAJOS = {
+    'Puerta Multilock': [
+      { k:'hierro', n:'Hierro' },
+      { k:'masilla_pintura', n:'Masilla y pintura', sub:'Se paga al terminar la pintura' },
+      { k:'detalles', n:'Detalles' }
+    ],
+    'Portón': [
+      { k:'hierro', n:'Hierro' },
+      { k:'masilla_pintura', n:'Masilla y pintura', sub:'Se paga al terminar la pintura' },
+      { k:'detalles', n:'Detalles' }
+    ],
+    'Ventana': [
+      { k:'hierro', n:'Hierro', sub:'De la protección' },
+      { k:'masilla_pintura', n:'Masilla y pintura', sub:'De la protección' },
+      { k:'armar', n:'Aluminio', sub:'Por cada ventana', cu:true },
+      { k:'detalles', n:'Detalles', sub:'Si el modelo lleva detalles', cu:true }
+    ],
+    'Combo': [
+      { k:'hierro', n:'Hierro', sub:'Puerta y 2 protecciones' },
+      { k:'masilla_pintura', n:'Masilla y pintura', sub:'Puerta y 2 protecciones' },
+      { k:'detalles', n:'Detalles', sub:'De la puerta' },
+      { k:'armar', n:'Aluminio', sub:'Por cada ventana (son 2)', cu:true },
+      { k:'detalles_ventana', n:'Detalles de ventana', sub:'Por cada ventana, si el modelo los lleva', cu:true }
+    ]
+  };
+  const PIE = {
+    'Puerta Multilock':'Masilla y pintura es un solo monto. Instalar no se paga.',
+    'Portón':'Masilla y pintura es un solo monto.',
+    'Ventana':'Hierro y Masilla y pintura se pagan solo si el modelo trae protección. Instalar no se paga.',
+    'Combo':'Por m² se suman la puerta y las 2 ventanas. Instalar no se paga.'
+  };
+  // Extra si la puerta lleva protección (solo puerta y combo)
+  const CON_EXTRA = ['Puerta Multilock', 'Combo'];
+  const EXTRA = [{ k:'hierro', n:'Hierro' }, { k:'masilla_pintura', n:'Masilla y pintura' }];
   const ICONO_MONEDA = '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v.01M18 15v.01"/>';
+  const ESCUDO = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg>';
 
   let categorias = [];
   let usoPorCategoria = {};
@@ -55,15 +82,13 @@
       <span><b>${n === 1 ? '1 modelo sin categoría.' : n + ' modelos sin categoría.'}</b> Abre una categoría y toca "Asignar a modelos".</span></div>` : '';
   }
 
-  const precio = (monto, modo) => '$' + Number(monto) + (modo === 'm2' ? '/m²' : '');
-  function tarifasHtml(t){
-    let filas = OFICIOS
-      .filter(e => t && t[e.v] && Number(t[e.v].monto) > 0)
-      .map(e => `<span class="c-tarifa">${esc(e.n)} <b>${precio(t[e.v].monto, t[e.v].modo)}</b>${Number(t[e.v].prot_monto) > 0 ? ` <span class="c-prot">+${precio(t[e.v].prot_monto, t[e.v].prot_modo)} prot.</span>` : ''}</span>`);
-    // Categoría de antes (por especialidad), hasta que se llene con los oficios nuevos
-    if(!filas.length) filas = ESPECIALIDADES_VIEJAS
-      .filter(e => t && t[e.v] && Number(t[e.v].monto) > 0)
-      .map(e => `<span class="c-tarifa vieja">${esc(e.n)} <b>${precio(t[e.v].monto, t[e.v].modo)}</b></span>`);
+  const precio = (monto, modo, cu) => '$' + Number(monto) + (modo === 'm2' ? '/m²' : '') + (cu ? ' c/u' : '');
+  function tarifasHtml(c){
+    const t = c.tarifas || {};
+    const filas = (TRABAJOS[c.producto] || [])
+      .filter(e => t[e.k] && Number(t[e.k].monto) > 0)
+      .map(e => `<span class="c-tarifa">${esc(e.n)} <b>${precio(t[e.k].monto, t[e.k].modo, e.cu)}</b>${CON_EXTRA.includes(c.producto) && EXTRA.some(x => x.k === e.k) && Number(t[e.k].prot_monto) > 0 ? ` <span class="c-prot">+${precio(t[e.k].prot_monto, t[e.k].prot_modo)} prot.</span>` : ''}</span>`);
+    if(!c.producto) return '<p class="c-usado c-falta" style="margin-top:9px">Falta elegir el producto</p>';
     return filas.length ? `<div class="c-tarifas">${filas.join('')}</div>` : '<p class="c-usado" style="margin-top:9px">Sin tarifas todavía</p>';
   }
 
@@ -78,8 +103,8 @@
       <button class="c-card" data-id="${esc(c.id)}" style="--i:${i}">
         <span class="c-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONO_MONEDA}</svg></span>
         <span class="c-body">
-          <div class="c-nom">${esc(c.nombre)}</div>
-          ${tarifasHtml(c.tarifas)}
+          <div class="c-nom">${esc(c.nombre)}${c.producto ? ` <span class="c-prod">${esc(nombreProducto(c.producto))}</span>` : ''}</div>
+          ${tarifasHtml(c)}
           <div class="c-usado">${usados ? `Usada en ${usados} ${usados === 1 ? 'modelo' : 'modelos'} del catálogo` : 'Todavía no se usa en el catálogo'}</div>
         </span>
       </button>`;
@@ -88,34 +113,82 @@
 
   // ---------------- Ficha: crear/editar ----------------
   let categoriaActual = null;
-  function filaHtml(of, nombre, modo, monto, prot){
+  let producto = null;
+  let memo = {};   // lo escrito del producto que se está viendo
+  let memoPor = {};   // lo escrito en cada producto, por si cambia de producto antes de guardar (no se mezcla)
+  function filaHtml(k, nombre, sub, modo, monto, prot){
     return `
-      <div class="cat-fila ${prot ? 'prot' : ''}" data-esp="${of.v}" ${prot ? 'data-prot="1"' : ''}>
-        <span class="cat-esp">${esc(nombre)}</span>
+      <div class="cat-fila ${prot ? 'prot' : ''}" data-k="${k}" ${prot ? 'data-prot="1"' : ''}>
+        <span class="cat-esp">${esc(nombre)}${sub ? `<small>${esc(sub)}</small>` : ''}</span>
         <div class="cat-modo" role="group" aria-label="${esc(nombre)}: fijo o por m²">
           <button type="button" data-modo="fijo" class="${modo === 'fijo' ? 'on' : ''}" aria-pressed="${modo === 'fijo'}">Fijo</button>
           <button type="button" data-modo="m2" class="${modo === 'm2' ? 'on' : ''}" aria-pressed="${modo === 'm2'}">m²</button>
         </div>
-        <div class="cat-monto"><input type="text" inputmode="decimal" value="${esc(monto)}" placeholder="0" aria-label="${esc(nombre)}: monto"></div>
+        <div class="cat-monto"><input type="text" inputmode="decimal" value="${esc(monto)}" aria-label="${esc(nombre)}${prot ? ' (extra por protección)' : ''}: monto"></div>
       </div>`;
   }
-  function filaTarifaHtml(of, datos){
-    const d = datos || {};
-    const val = (x) => x != null && x !== '' ? x : '';
-    return `<div class="cat-oficio">${filaHtml(of, of.n, d.modo || 'fijo', val(d.monto), false)}
-      ${of.prot ? filaHtml(of, 'Si lleva protección, suma', d.prot_modo || 'fijo', val(d.prot_monto), true) : ''}</div>`;
+  const val = (x) => x != null && x !== '' ? x : '';
+  function pintarTrabajos(){
+    const cont = $('filasTarifa');
+    $('tarifasPie').textContent = producto ? PIE[producto] : '';
+    $('tarifasTit').classList.toggle('hidden', !producto);
+    if(!producto){ cont.innerHTML = '<p class="cat-elige">Elige el producto para ver sus trabajos.</p>'; return; }
+    let html = TRABAJOS[producto].map(e => {
+      const d = memo[e.k] || {};
+      return filaHtml(e.k, e.n, e.sub, d.modo || 'fijo', val(d.monto), false);
+    }).join('');
+    if(CON_EXTRA.includes(producto)){
+      html += `<div class="cat-extra">
+        <div class="cat-extra-h">${ESCUDO}Extra si la puerta lleva protección</div>
+        <p class="cat-extra-s">Se suma solo cuando ${producto === 'Combo' ? 'el combo tiene protección en la puerta' : 'la puerta sale con protección'}.</p>
+        ${EXTRA.map(e => { const d = memo[e.k] || {}; return filaHtml(e.k, e.n, '', d.prot_modo || 'fijo', val(d.prot_monto), true); }).join('')}
+      </div>`;
+    }
+    cont.innerHTML = html;
+  }
+  function pintarProducto(){
+    // Si ya la usan modelos, el producto no se cambia (si todavía no tiene producto, sí se elige)
+    const enUso = !!(categoriaActual && categoriaActual.producto && usoPorCategoria[categoriaActual.id]);
+    $('optsProducto').innerHTML = PRODUCTOS_PAGO.map(p =>
+      `<button type="button" class="opt ${producto === p.v ? 'selected' : ''}" data-v="${esc(p.v)}" ${enUso && producto !== p.v ? 'disabled' : ''} aria-pressed="${producto === p.v}">${esc(p.t)}</button>`).join('');
+    $('hintProducto').textContent = enUso ? 'Ya la usan modelos. Para cambiar el producto, quítasela primero.' : 'Solo verás los trabajos de ese producto.';
+    $('campoProducto').classList.remove('invalid');
   }
   function pintarFicha(c){
     categoriaActual = c;
+    producto = c ? (c.producto || null) : null;
+    memo = JSON.parse(JSON.stringify((c && c.tarifas) || {}));
+    memoPor = {};
     $('fichaTitulo').textContent = c ? 'Editar categoría' : 'Nueva categoría';
     $('fNombre').value = c ? c.nombre : '';
     $('campoNombre').classList.remove('invalid');
-    $('btnAsignarModelos').classList.toggle('hidden', !c);
+    $('btnAsignarModelos').classList.toggle('hidden', !c || !c.producto);
     pintarAsigSub();
-    $('filasTarifa').innerHTML = OFICIOS.map(e => filaTarifaHtml(e, c && c.tarifas ? c.tarifas[e.v] : null)).join('');
+    pintarProducto();
+    pintarTrabajos();
     $('btnEliminar').classList.toggle('hidden', !c);
     abrirHoja('sheetFicha');
   }
+  // Guarda en memo lo que hay escrito en pantalla
+  function recordar(){
+    $('filasTarifa').querySelectorAll('.cat-fila').forEach(fila => {
+      const k = fila.dataset.k;
+      const monto = fila.querySelector('.cat-monto input').value.trim();
+      const modo = fila.querySelector('button[data-modo].on').dataset.modo;
+      memo[k] = memo[k] || {};
+      if(fila.dataset.prot){ memo[k].prot_monto = monto; memo[k].prot_modo = modo; }
+      else { memo[k].monto = monto; memo[k].modo = modo; }
+    });
+  }
+  $('optsProducto').addEventListener('click', (e) => {
+    const b = e.target.closest('.opt'); if(!b || b.disabled || b.dataset.v === producto) return;
+    recordar();
+    if(producto) memoPor[producto] = memo;
+    producto = b.dataset.v;
+    memo = memoPor[producto] || (categoriaActual && categoriaActual.producto === producto ? JSON.parse(JSON.stringify(categoriaActual.tarifas || {})) : {});
+    pintarProducto();
+    pintarTrabajos();
+  });
   $('btnNuevo').addEventListener('click', () => pintarFicha(null));
   $('lista').addEventListener('click', (e) => {
     const b = e.target.closest('.c-card'); if(!b) return;
@@ -127,19 +200,19 @@
     const fila = b.closest('.cat-fila');
     fila.querySelectorAll('button[data-modo]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
   });
+  $('filasTarifa').addEventListener('input', (e) => { const f = e.target.closest('.cat-fila'); if(f) f.classList.remove('invalid'); });
 
-  // Se parte de lo que ya tenía (así no se pierden las tarifas viejas por especialidad)
+  const num = (t) => parseFloat(String(t || '').replace(',', '.'));
+  // Solo los trabajos de este producto (lo de otros productos no se guarda)
   function leerTarifas(){
-    const tarifas = Object.assign({}, (categoriaActual && categoriaActual.tarifas) || {});
-    OFICIOS.forEach(of => { delete tarifas[of.v]; });
+    const tarifas = {};
     $('filasTarifa').querySelectorAll('.cat-fila').forEach(fila => {
-      const of = fila.dataset.esp;
-      const monto = parseFloat(fila.querySelector('.cat-monto input').value.replace(',', '.'));
+      const k = fila.dataset.k;
+      const monto = num(fila.querySelector('.cat-monto input').value);
       const modo = fila.querySelector('button[data-modo].on').dataset.modo;
       if(isNaN(monto) || !(monto > 0)) return;
-      if(fila.dataset.prot){
-        if(tarifas[of]){ tarifas[of].prot_monto = monto; tarifas[of].prot_modo = modo; }
-      } else tarifas[of] = { monto, modo };
+      if(fila.dataset.prot){ if(tarifas[k]){ tarifas[k].prot_monto = monto; tarifas[k].prot_modo = modo; } }
+      else tarifas[k] = { monto, modo };
     });
     return tarifas;
   }
@@ -148,34 +221,36 @@
     const nombre = $('fNombre').value.trim();
     $('campoNombre').classList.remove('invalid');
     if(!nombre){ $('eNombre').textContent = 'Escribe el nombre'; $('campoNombre').classList.add('invalid'); $('fNombre').focus(); return; }
-    // El extra de protección necesita la tarifa del oficio
-    const sinBase = [...$('filasTarifa').querySelectorAll('.cat-oficio')].find(g => {
-      const n = (f) => parseFloat((f && f.querySelector('input').value || '').replace(',', '.'));
-      return n(g.querySelector('.cat-fila.prot')) > 0 && !(n(g.querySelector('.cat-fila:not(.prot)')) > 0);
-    });
-    $('filasTarifa').querySelectorAll('.cat-oficio.invalid').forEach(g => g.classList.remove('invalid'));
+    if(!producto){ $('campoProducto').classList.add('invalid'); $('campoProducto').scrollIntoView({ block:'center', behavior:'smooth' }); return; }
+    // El extra de protección necesita el monto de ese trabajo
+    const filas = [...$('filasTarifa').querySelectorAll('.cat-fila')];
+    const baseDe = (k) => filas.find(x => !x.dataset.prot && x.dataset.k === k);
+    const monto = (f) => f ? num(f.querySelector('input').value) : NaN;
+    const sinBase = filas.find(f => f.dataset.prot && monto(f) > 0 && !(monto(baseDe(f.dataset.k)) > 0));
+    filas.forEach(f => f.classList.remove('invalid'));
     if(sinBase){
-      sinBase.classList.add('invalid');
-      sinBase.scrollIntoView({ block:'center', behavior:'smooth' });
-      toast('Escribe cuánto se paga por ' + sinBase.querySelector('.cat-esp').textContent.toLowerCase() + ' para poder sumar el extra de protección', 'error');
+      const base = baseDe(sinBase.dataset.k);
+      if(base){ base.classList.add('invalid'); base.scrollIntoView({ block:'center', behavior:'smooth' }); }
+      toast('Escribe cuánto se paga por ' + sinBase.querySelector('.cat-esp').firstChild.textContent.toLowerCase() + ' para poder sumar el extra', 'error');
       return;
     }
     const tarifas = leerTarifas();
     $('btnGuardar').disabled = true;
     try{
       if(categoriaActual){
-        const { error } = await db.from('categorias_pago').update({ nombre, tarifas }).eq('id', categoriaActual.id);
+        const { error } = await db.from('categorias_pago').update({ nombre, producto, tarifas }).eq('id', categoriaActual.id);
         if(error) throw error;
         toast('Categoría actualizada');
       } else {
-        const { error } = await db.from('categorias_pago').insert({ nombre, tarifas });
+        const { error } = await db.from('categorias_pago').insert({ nombre, producto, tarifas });
         if(error) throw error;
         toast('Categoría creada');
       }
       cerrarHoja('sheetFicha');
       cargar();
     } catch(e){
-      toast(e.message || 'No se pudo guardar', 'error');
+      const m = String((e && e.message) || '');
+      toast(/fetch|network|Failed/i.test(m) ? 'Sin conexión. Intenta de nuevo' : m || 'No se pudo guardar', 'error');
     } finally {
       $('btnGuardar').disabled = false;
     }
@@ -189,18 +264,21 @@
   // uno que tiene otra, se avisa en la fila y se pide confirmar antes de guardar.
   let pestana = 'sin';
   const marcados = new Set();
+  // Solo los modelos del producto de la categoría
+  const delProducto = () => modelos.filter(m => categoriaSirve(categoriaActual, m.tipo));
+  const sinCategoriaProd = () => delProducto().filter(m => !m.categoria_pago_id);
   function pintarAsigSub(){
     const c = categoriaActual; if(!c) return;
-    const n = usoPorCategoria[c.id] || 0, sin = sinCategoria().length;
+    const n = usoPorCategoria[c.id] || 0, sin = sinCategoriaProd().length;
     $('asigSub').textContent = (n ? `Usada en ${n} ${n === 1 ? 'modelo' : 'modelos'}` : 'Todavía no la usa ningún modelo') + (sin ? ` · ${sin} sin categoría` : '');
   }
   function visibles(){
-    return pestana === 'sin' ? sinCategoria() : modelos;
+    return pestana === 'sin' ? sinCategoriaProd() : delProducto();
   }
   function pintarModelosAsignar(){
     const c = categoriaActual;
-    const nSin = sinCategoria().length;
-    $('chipsModelos').innerHTML = [['sin', `Sin categoría · ${nSin}`], ['todos', `Todos · ${modelos.length}`]]
+    const nSin = sinCategoriaProd().length;
+    $('chipsModelos').innerHTML = [['sin', `Sin categoría · ${nSin}`], ['todos', `Todos · ${delProducto().length}`]]
       .map(([id, t]) => `<button class="chip ${pestana === id ? 'active' : ''}" type="button" role="tab" aria-selected="${pestana === id}" data-pestana="${id}">${esc(t)}</button>`).join('');
     const lista = visibles();
     const elegibles = lista.filter(m => m.categoria_pago_id !== c.id);
@@ -222,14 +300,14 @@
         <span class="m-txt"><span class="m-nom">${esc(m.nombre)}</span>${tag}</span>
         <span class="m-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
       </button>`;
-    }).join('') : `<div class="m-vacio">${pestana === 'sin' ? 'Todos los modelos tienen categoría.' : 'No hay modelos en el catálogo.'}</div>`;
+    }).join('') : `<div class="m-vacio">${pestana === 'sin' ? 'Todos tienen categoría.' : 'No hay modelos de ' + esc(nombreProducto(c.producto)) + ' en el catálogo.'}</div>`;
     const n = marcados.size;
     $('btnAsignar').disabled = !n;
     $('btnAsignar').textContent = n ? `Asignar a ${n === 1 ? '1 modelo' : n + ' modelos'}` : 'Elige los modelos';
   }
   $('btnAsignarModelos').addEventListener('click', () => {
     if(!categoriaActual) return;
-    pestana = sinCategoria().length ? 'sin' : 'todos';
+    pestana = sinCategoriaProd().length ? 'sin' : 'todos';
     marcados.clear();
     $('modelosTitulo').textContent = 'Asignar ' + categoriaActual.nombre;
     pintarModelosAsignar();
@@ -257,7 +335,7 @@
   $('btnAsignar').addEventListener('click', async () => {
     const c = categoriaActual; if(!c || !marcados.size) return;
     const ids = [...marcados];
-    const cambian = modelos.filter(m => marcados.has(m.id) && m.categoria_pago_id && m.categoria_pago_id !== c.id);
+    const cambian = delProducto().filter(m => marcados.has(m.id) && m.categoria_pago_id && m.categoria_pago_id !== c.id);
     if(cambian.length && !confirm(`${cambian.length === 1 ? '1 modelo ya tiene otra categoría y se cambiará' : cambian.length + ' modelos ya tienen otra categoría y se cambiarán'} a ${c.nombre}. ¿Seguro?`)) return;
     const btn = $('btnAsignar');
     btn.disabled = true;

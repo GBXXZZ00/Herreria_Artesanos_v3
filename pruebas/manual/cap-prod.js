@@ -25,10 +25,10 @@ let ventas=[
    E(12,'principal','Masilla',2,'masilla_pintura','masilla',{incluye:'Puerta con protección + 2 protecciones de ventana'}),
    E(13,'principal','Pintura',3,'masilla_pintura','pintura',{incluye:'Puerta con protección + 2 protecciones de ventana'}),
    E(14,'principal','Detalles',4,'acabados','detalles',{incluye:'Solo la puerta'}),
-   E(15,'ventana','Armar 2 ventanas',1,'ventanero','armar',{incluye:'2 ventanas'}),
+   E(15,'ventana','Aluminio 2 ventanas',1,'ventanero','armar',{incluye:'2 ventanas'}),
    E(16,'ventana','Instalar en las protecciones',2,'ventanero','instalar',{incluye:'2 ventanas en sus protecciones',despues_de:['principal/3']})]},
   {id:202,nombre:'Ventana Panorámica',tipo:'Ventana',cantidad:2,categoria_pago_id:null,especificaciones:{alto:1.2,ancho:1.5,color:'Negro',aluminio:'Ecobel'},catalogo:{fotos:{}},etapas:[
-   E(21,'ventana','Armar',1,'ventanero','armar',{incluye:'La ventana'})]}]},
+   E(21,'ventana','Aluminio',1,'ventanero','armar',{incluye:'La ventana'})]}]},
  {id:1051,interna:false,fecha_entrega:dia(10),cliente:{nombre:'Luis Parra'},estado:'en_produccion',items:[
   {id:301,nombre:'Modelo Arco 3 vidrios',tipo:'Puerta Multilock',cantidad:1,categoria_pago_id:1,especificaciones:{alto:2,ancho:0.9,color:'Blanco'},catalogo:{fotos:{Blanco:FOTO}},etapas:[
    E(31,'principal','Hierro',1,'herrero','hierro',hecha('t1')),E(32,'principal','Masilla',2,'masilla_pintura','masilla',hecha('t2')),E(33,'principal','Pintura',3,'masilla_pintura','pintura',hecha('t2')),E(34,'principal','Detalles',4,'acabados','detalles',asig('t1',SAB.este))]}]}

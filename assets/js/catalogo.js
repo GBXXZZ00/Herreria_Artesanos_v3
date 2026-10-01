@@ -193,7 +193,7 @@
         db.from('catalogo').select('*').order('id', { ascending:false }),
         db.from('disponibles').select('*').eq('estado', 'disponible').gt('cantidad', 0).order('id', { ascending:true }),
         db.from('sedes').select('*').eq('activa', true).order('orden', { ascending:true }),
-        db.from('categorias_pago').select('id,nombre').eq('activo', true).order('nombre', { ascending:true })
+        db.from('categorias_pago').select('id,nombre,producto').eq('activo', true).order('nombre', { ascending:true })
       ]);
       const err = rc.error || rp.error || rs.error;
       if(err) throw new Error(err.message);
@@ -519,10 +519,14 @@
     $('categoriaTexto').textContent = c ? c.nombre : 'Sin categoría';
   }
 
+  // Solo las categorías de este producto (una de ventana no sirve para una puerta)
+  const categoriasDelTipo = () => categorias.filter(c => window.AH.categoriaSirve(c, tipoActual));
   function abrirSelectorCategoria(){
+    const lista = categoriasDelTipo();
     $('listaCategorias').innerHTML = `
       <button type="button" class="cat-fila-op ${categoriaSeleccionada == null ? 'sel' : ''}" data-cat="">Sin categoría</button>
-      ${categorias.map(c => `<button type="button" class="cat-fila-op ${c.id === categoriaSeleccionada ? 'sel' : ''}" data-cat="${c.id}">${esc(c.nombre)}</button>`).join('')}`;
+      ${lista.length ? '' : `<p class="field-hint" style="margin:10px 2px 0">No hay categorías de ${esc(window.AH.nombreProducto(tipoActual) || tipoActual)}. Créala en Categorías de pago.</p>`}
+      ${lista.map(c => `<button type="button" class="cat-fila-op ${c.id === categoriaSeleccionada ? 'sel' : ''}" data-cat="${c.id}">${esc(c.nombre)}</button>`).join('')}`;
     abrirHoja('sheetCategoria');
   }
 
@@ -746,6 +750,9 @@
     const altoPrevio = estado.alto, anchoPrevio = estado.ancho, tocoMedidas = estado._medidasTocadas;
     tipoActual = t;
     estado = estadoDesdeEspecificaciones(t, null);
+    // La categoría de otro producto no sirve: queda sin categoría
+    const cs = categorias.find(x => x.id === categoriaSeleccionada);
+    if(cs && !window.AH.categoriaSirve(cs, t)){ categoriaSeleccionada = null; pintarCategoriaTexto(); }
     if(tocoMedidas){ estado.alto = altoPrevio; estado.ancho = anchoPrevio; estado._medidasTocadas = true; }
     pintarTipoFila();
     pintarFotos();
