@@ -292,7 +292,10 @@ async function entrar(b,user,rol,nombre){
  ok('Instalar espera la pintura de las protecciones (en gris)',(await t.textContent('.dp.gris')).includes('Espera la pintura de las protecciones'));
  await t.screenshot({path:'shots5/t7-combo-piezas.png',fullPage:true});
  await t.click('.hoy-foto');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
- ok('El detalle también dice lo que incluye y el aluminio',(await t.$$('#trabajoBody .pz > span:not(.pz-n)')).length===3 && (await t.textContent('#trabajoBody')).includes('AluminioEcobel'));
+ const gm=await t.$$eval('#trabajoBody .tj-gem-c',x=>x.map(c=>c.textContent.replace(/\s+/g,' ').trim()));
+ ok('El detalle del combo se parte en dos cuadros: la puerta y las protecciones, cada uno con sus medidas',gm.length===2 && gm[0].includes('La puerta') && gm[0].includes('2.1 × 1 m') && gm[0].includes('Protección') && gm[1].includes('Las protecciones') && gm[1].includes('2 piezas') && gm[1].includes('1.2 × 1 m') && !(await t.$('#trabajoBody .tj-specs')) && (await t.textContent('#trabajoBody')).includes('un solo trabajo, una foto'),gm);
+ await t.$eval('#trabajoBody .tj-gem',x=>x.scrollIntoView({block:'center'}));await t.waitForTimeout(250);
+ await t.screenshot({path:'shots6/g1-combo-gemelos.png'});
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
  await t.click('.dp[data-detalle="702"]');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
  ok('Instalar: "Este paso no se paga" y dice que espera la pintura de las protecciones',(await t.textContent('#trabajoBody')).includes('Este paso no se paga') && (await t.textContent('#trabajoFoot')).includes('Espera la pintura de las protecciones'));

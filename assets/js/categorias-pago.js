@@ -34,9 +34,13 @@
       { k:'detalles', n:'Detalles', sub:'De la puerta' },
       { k:'armar', n:'Aluminio', sub:'Por cada ventana (son 2)', cu:true },
       { k:'detalles_ventana', n:'Detalles de ventana', sub:'Por cada ventana, si el modelo los lleva', cu:true }
+    ],
+    'Puerta de Madera': [
+      { k:'madera', n:'Puerta completa', sub:'Estructura, armado, pintura y ensamblado' }
     ]
   };
   const PIE = {
+    'Puerta de Madera':'Un monto por puerta. La mitad al cerrar la semana si ya empezó y el resto al terminar.',
     'Puerta Multilock':'Masilla y pintura es un solo monto. Instalar no se paga.',
     'Portón':'Masilla y pintura es un solo monto.',
     'Ventana':'Hierro y Masilla y pintura se pagan solo si el modelo trae protección. Instalar no se paga.',
@@ -145,6 +149,7 @@
       </div>`;
     }
     cont.innerHTML = html;
+    cont.classList.toggle('solo-fijo', producto === 'Puerta de Madera');   // la madera es un monto por puerta
   }
   function pintarProducto(){
     // Si ya la usan modelos, el producto no se cambia (si todavía no tiene producto, sí se elige)

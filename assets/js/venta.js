@@ -102,7 +102,7 @@
   // En modo venta, qué productos todavía no tienen sus detalles para fabricar
   // Lo que ya está hecho (solo se entrega) no pide detalles para fabricar
   const faltanDe = (it) => SP.faltanEn(it, it.yaHecho ? 'cotizacion' : modo);
-  const faltaItem = (it) => faltanDe(it).length > 0;
+  const faltaItem = (it) => !it.bloqueado && faltanDe(it).length > 0;   // lo que ya tiene pasos terminados no se toca
   function pintarItems(){
     $('items').innerHTML = items.length ? items.map((it, i) => `
       <div class="item ${faltaItem(it) ? 'falta' : ''}" style="--i:${i}">
@@ -995,6 +995,8 @@
       if($('cTel').value || $('cCedula').value) buscarCliente();
     } catch(e){
       cargado = true;
+      // Si no cargó la venta que se iba a editar, no se deja guardar a medias
+      if(editId) $('pie').classList.add('hidden');
       toast('Sin conexión. Revisa tu internet y vuelve a entrar', 'error');
     }
   })();

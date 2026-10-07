@@ -263,7 +263,7 @@ async function entrar(b,user,rol,nombre){
  // Historial: todas cerradas
  await t.click('[data-pg-tab="historial"]');await t.waitForTimeout(200);
  ok('Historial: una fila por semana pagada, todas cerradas',(await t.$$('.pg-sem')).length===2 && (await t.$$('.pg-sem[open]')).length===0 && (await t.$$('.pg-sem .pg-est.pagado')).length===2);
- ok('La semana va de lunes a sábado',/\d+ al \d+ \w+/.test(await t.textContent('.pg-sem .pg-sem-s')));
+ ok('La semana va de lunes a sábado',/\d+( \w+)? al \d+ \w+/.test(await t.textContent('.pg-sem .pg-sem-s')));
  await F(t,'t6-historial');
  await t.click('.pg-sem >> nth=0 >> summary');await t.waitForTimeout(250);
  const rec=await t.textContent('.pg-sem[open]');
@@ -307,7 +307,10 @@ async function entrar(b,user,rol,nombre){
  ok('Instalar espera la pintura de las protecciones (en gris)',(await t.textContent('.dp.gris')).includes('Espera la pintura de las protecciones'));
  await F(t,'t7-combo-piezas');
  await t.click('.hoy-foto');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
- ok('El detalle también dice lo que incluye y el aluminio',(await t.$$('#trabajoBody .pz > span:not(.pz-n)')).length===3 && (await t.textContent('#trabajoBody')).includes('AluminioEcobel'));
+ const gm=await t.$$eval('#trabajoBody .tj-gem-c',x=>x.map(c=>c.textContent.replace(/\s+/g,' ').trim()));
+ ok('El detalle del combo se parte en dos cuadros: la puerta y las protecciones, cada uno con sus medidas',gm.length===2 && gm[0].includes('La puerta') && gm[0].includes('2.1 × 1 m') && gm[0].includes('Protección') && gm[1].includes('Las protecciones') && gm[1].includes('2 piezas') && gm[1].includes('1.2 × 1 m') && !(await t.$('#trabajoBody .tj-specs')) && (await t.textContent('#trabajoBody')).includes('un solo trabajo, una foto'),gm);
+ await t.$eval('#trabajoBody .tj-gem',x=>x.scrollIntoView({block:'center'}));await t.waitForTimeout(250);
+ await F(t,'g1-combo-gemelos');
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
  await t.click('.dp[data-detalle="702"]');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
  ok('Instalar: "Este paso no se paga" y dice que espera la pintura de las protecciones',(await t.textContent('#trabajoBody')).includes('Este paso no se paga') && (await t.textContent('#trabajoFoot')).includes('Espera la pintura de las protecciones'));

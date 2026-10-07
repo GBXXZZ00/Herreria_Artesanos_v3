@@ -655,7 +655,7 @@
       <div class="d-datos" style="margin-top:14px">
         <div class="d-dato"><span>${it.interna ? 'Para' : 'Cliente'}</span><b>${esc(it.interna ? 'Exhibición' : (it.cliente || ''))}</b></div>
         <div class="d-dato"><span>${it.interna ? 'Sede' : 'Pedido'}</span><b>${esc(it.interna ? (it.sede || '') : 'N° ' + it.venta_id)}</b></div>
-        ${'monto' in it ? `<div class="d-dato"><span>Pago por esta parte</span><b>${window.AH.notaPago(it.oficio) ? window.AH.notaPago(it.oficio) : it.monto == null ? 'Por definir' : esc(dinero(it.monto))}</b></div>` : ''}
+        ${'monto' in it ? `<div class="d-dato"><span>Pago por esta parte</span><b>${window.AH.notaPago(it.oficio, it.monto) ? window.AH.notaPago(it.oficio, it.monto) : it.monto == null ? 'Por definir' : esc(dinero(it.monto))}</b></div>` : ''}
         <div class="d-dato"><span>Categoría</span><b>${esc(it.categoria || 'Sin categoría')}</b></div>
       </div>
       ${specs.length ? `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}

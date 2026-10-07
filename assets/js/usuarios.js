@@ -21,6 +21,7 @@
 
   let usuarios = [];
   let quienSoy = null;
+  let lineas = {};   // id de la vendedora -> 'hierro' | 'madera'
 
   async function llamar(accion, payload){
     const { data, error } = await db.functions.invoke('gestionar_usuarios', { body: { accion, payload } });
@@ -69,6 +70,8 @@
     try{
       const r = await llamar('listar', {});
       usuarios = (r.usuarios || []).sort((a, b) => (a.orden || 0) - (b.orden || 0));
+      // Línea de cada vendedora (si falla, se ve como hierro)
+      try{ const l = await db.from('perfiles').select('id,linea').eq('rol', 'vendedor'); if(!l.error) lineas = Object.fromEntries((l.data || []).map(x => [x.id, x.linea])); } catch(e){}
       pintarLista();
     } catch(e){
       $('lista').innerHTML = '<div class="u-vacio">No se pudo cargar. Desliza para reintentar.</div>';
@@ -160,6 +163,9 @@
         <div class="opts" style="--cols:2">${Object.entries(NOMBRE_ESPECIALIDAD).map(([v, t]) => `<button type="button" class="opt ${(u.especialidades || []).includes(v) ? 'selected' : ''}" data-esp="${v}" aria-pressed="${(u.especialidades || []).includes(v)}">${esc(t)}</button>`).join('')}</div>
         <p class="field-error">Elige al menos una</p>
         <button class="btn-primary" type="button" data-accion="especialidades" style="margin-top:10px;height:48px">Guardar especialidades</button></div>` : ''}
+      ${u.rol === 'vendedor' ? `<div class="field" style="margin:14px 0 6px"><span class="field-label">¿Qué vende más?</span>
+        <div class="opts" style="--cols:2" id="optsLinea">${[['hierro', 'Hierro'], ['madera', 'Madera']].map(([v, t]) => `<button type="button" class="opt ${(lineas[u.id] || 'hierro') === v ? 'selected' : ''}" data-linea="${v}" aria-pressed="${(lineas[u.id] || 'hierro') === v}">${t}</button>`).join('')}</div>
+        <p class="field-hint">Las dos venden de todo. La de madera además marca los pasos de las puertas de madera.</p></div>` : ''}
       <button class="f-link" data-accion="pin">Restablecer PIN</button>
       ${soyYo ? '' : `<button class="f-link" data-accion="${u.activo ? 'desactivar' : 'activar'}">${u.activo ? 'Desactivar cuenta' : 'Activar cuenta'}</button>`}
       ${soyYo ? '' : `<button class="btn-peligro" data-accion="eliminar">Eliminar usuario</button>`}
@@ -174,6 +180,24 @@
   $('fichaBody').addEventListener('click', async (e) => {
     const ob = e.target.closest('[data-esp]');
     if(ob){ const on = !ob.classList.contains('selected'); ob.classList.toggle('selected', on); ob.setAttribute('aria-pressed', on); $('campoEsp').classList.remove('invalid'); return; }
+    const bl = e.target.closest('[data-linea]');
+    if(bl && fichaActual){
+      const v = bl.dataset.linea, antes = lineas[fichaActual.id] || 'hierro';
+      if(v === antes || bl.disabled) return;
+      const caja = $('optsLinea');
+      const marcar = (x) => caja.querySelectorAll('[data-linea]').forEach(o => { const on = o.dataset.linea === x; o.classList.toggle('selected', on); o.setAttribute('aria-pressed', on); });
+      const uid = fichaActual.id;
+      marcar(v);
+      caja.querySelectorAll('button').forEach(o => o.disabled = true);
+      try{
+        const { error } = await db.rpc('usuario_linea', { uid, p_linea: v });
+        if(error) throw error;
+        lineas[uid] = v;
+        toast(v === 'madera' ? 'Listo: vendedora de madera' : 'Listo: vendedora de hierro');
+      } catch(err){ const m = String((err && err.message) || ''); marcar(antes); toast(/fetch|network|Failed/i.test(m) ? 'Sin conexión. Intenta de nuevo' : m || 'No se pudo guardar', 'error'); }
+      caja.querySelectorAll('button').forEach(o => o.disabled = false);
+      return;
+    }
     const b = e.target.closest('[data-accion]'); if(!b || !fichaActual) return;
     const accion = b.dataset.accion;
     if(accion === 'especialidades'){

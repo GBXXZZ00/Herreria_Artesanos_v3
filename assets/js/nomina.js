@@ -91,7 +91,7 @@
   }
   function filaItem(it){
     items[it.id] = it;
-    const nota = window.AH.notaPago(it.oficio);
+    const nota = window.AH.notaPago(it.oficio, it.monto);
     const monto = nota ? `<span class="mov-m gris">${nota}${CHEV}</span>` : it.monto == null ? `<span class="mov-m gris rojo">Por definir${CHEV}</span>` : `<span class="mov-m">${esc(dinero(it.monto))}${CHEV}</span>`;
     return `<button class="mov" type="button" data-item="${it.id}">
       <span class="mov-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 20)}</span>
@@ -200,7 +200,7 @@
   // Atajo: un trabajo sin monto lleva a donde se arregla (categoría del producto o tarifa de la categoría)
   let categorias = null;   // se cargan la primera vez que hacen falta
   function atajoMontoHtml(it){
-    if(it.monto != null || window.AH.notaPago(it.oficio) || it.pago_id) return '';   // lo ya pagado no se toca
+    if(it.monto != null || window.AH.notaPago(it.oficio, it.monto) || it.pago_id) return '';   // lo ya pagado no se toca
     const link = (href, t) => `<a class="btn-primary atajo-btn" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${href}">${t}</a>`;
     if(it.categoria_id) return `<div class="aviso-falta" style="margin:14px 0 0">A la categoría ${esc(it.categoria || '')} le falta la tarifa de este paso.
       ${link('categorias-pago.html?editar=' + esc(it.categoria_id), 'Poner la tarifa')}</div>`;
@@ -225,7 +225,7 @@
   // ---------- Ficha de un trabajo ----------
   function abrirItem(it, repintar){
     itemAbierto = it;
-    if(it.monto == null && !window.AH.notaPago(it.oficio) && !it.pago_id && !it.categoria_id && (categorias === null || categorias === 'error') && !repintar){ categorias = null; cargarCategorias(it); }
+    if(it.monto == null && !window.AH.notaPago(it.oficio, it.monto) && !it.pago_id && !it.categoria_id && (categorias === null || categorias === 'error') && !repintar){ categorias = null; cargarCategorias(it); }
     const e = it.especificaciones || {};
     const specs = resumenSpecs(it.tipo, e);
     $('itemBody').innerHTML = `
@@ -237,7 +237,7 @@
       <div class="d-datos">
         <div class="d-dato"><span>${it.interna ? 'Para' : 'Cliente'}</span><b>${esc(it.interna ? 'Exhibición' : (it.cliente || ''))}</b></div>
         <div class="d-dato"><span>${it.interna ? 'Sede' : 'Pedido'}</span><b>${esc(it.interna ? (it.sede || '') : 'N° ' + it.venta_id)}</b></div>
-        <div class="d-dato"><span>Pago por esta parte</span><b>${window.AH.notaPago(it.oficio) ? window.AH.notaPago(it.oficio) : it.monto == null ? 'Por definir' : esc(dinero(it.monto))}</b></div>
+        <div class="d-dato"><span>Pago por esta parte</span><b>${window.AH.notaPago(it.oficio, it.monto) ? window.AH.notaPago(it.oficio, it.monto) : it.monto == null ? 'Por definir' : esc(dinero(it.monto))}</b></div>
         <div class="d-dato"><span>Categoría</span><b>${esc(it.categoria || 'Sin categoría')}</b></div>
       </div>
       ${specs.length ? `<div class="det-section"><div class="det-label">Especificaciones</div><div class="spec-chips">${specChipsHtml(specs)}</div></div>` : ''}

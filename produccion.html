@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Producción · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=68">
+<link rel="stylesheet" href="assets/css/base.css?v=70">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   .p-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
@@ -44,6 +44,11 @@
   .solo-lectura #btnNuevaOrden{display:none}
   .btn-asignar-todo{display:flex;align-items:center;justify-content:center;width:100%;height:46px;margin-top:14px;border:1.5px solid var(--accent);border-radius:14px;color:var(--accent);font-size:14.5px;font-weight:800;background:var(--surface);transition:transform 130ms var(--ease-out)}
   .btn-asignar-todo:active{transform:scale(0.98)}
+  .btn-madera{display:flex;align-items:center;justify-content:center;height:40px;padding:0 16px;margin-top:8px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800;white-space:nowrap;transition:transform 130ms var(--ease-out)}
+  .btn-madera:active{transform:scale(0.97)}
+  .p-madera-nota{margin-top:12px;font-size:13.5px;color:var(--ink-soft)}
+  .madera-foto{display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;border-radius:var(--radius-md);background:var(--surface-2);color:var(--ink-soft);font-size:14px;overflow:hidden;margin-bottom:10px}
+  .madera-foto img{width:100%;height:100%;object-fit:cover}
   .at-paso{padding:12px 0}
   .at-paso + .at-paso{border-top:1px solid var(--line)}
   .at-nom{font-size:15px;font-weight:800;margin:0 0 8px}
@@ -205,17 +210,32 @@
   </div>
 </section>
 
+<div class="sheet-scrim scrim-top" id="scrimMadera" data-cerrar="sheetMadera"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetMadera" role="dialog" aria-modal="true" aria-labelledby="maderaTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="maderaTitulo">Terminar paso</h2>
+    <button class="icon-btn" data-cerrar="sheetMadera" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="sheet-sub" id="maderaSub" style="margin-bottom:12px"></p>
+    <div class="madera-foto" id="maderaFoto"></div>
+    <button class="btn-secondary" type="button" id="btnMaderaFoto" style="width:100%">Tomar la foto</button>
+    <input type="file" accept="image/*" capture="environment" id="maderaInput" class="hidden">
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnMaderaOk" disabled>Primero toma la foto</button></div>
+</section>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=68"></script>
-<script src="assets/js/supabase-client.js?v=68"></script>
-<script src="assets/js/img-compress.js?v=68"></script>
-<script src="assets/js/comun.js?v=68"></script>
-<script src="assets/js/avisos.js?v=68"></script>
-<script src="assets/js/sesion.js?v=68"></script>
-<script src="assets/js/ayuda.js?v=68"></script>
-<script src="assets/js/ventas-comun.js?v=68"></script>
-<script src="assets/js/specs-producto.js?v=68"></script>
-<script src="assets/js/produccion.js?v=68"></script>
+<script src="assets/vendor/supabase.js?v=70"></script>
+<script src="assets/js/supabase-client.js?v=70"></script>
+<script src="assets/js/img-compress.js?v=70"></script>
+<script src="assets/js/comun.js?v=70"></script>
+<script src="assets/js/avisos.js?v=70"></script>
+<script src="assets/js/sesion.js?v=70"></script>
+<script src="assets/js/ayuda.js?v=70"></script>
+<script src="assets/js/ventas-comun.js?v=70"></script>
+<script src="assets/js/specs-producto.js?v=70"></script>
+<script src="assets/js/produccion.js?v=70"></script>
 </body>
 </html>

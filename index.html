@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=68">
+<link rel="stylesheet" href="assets/css/base.css?v=70">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -220,6 +220,17 @@
   .tj-color{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--ink);color:#fff;font-size:16px;font-weight:800}
   .tj-color .sw{width:22px;height:22px;border-radius:50%;border:2px solid #fff;flex-shrink:0}
   .tj-specs{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:14px}
+  /* Detalle partido en dos: la puerta y sus protecciones, cada una con lo suyo */
+  .tj-gem{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;align-items:start}
+  .tj-gem-c{border:1.5px solid var(--line);border-radius:18px;padding:10px 10px 2px;min-width:0}
+  .tj-gem-c.b{border-color:#BCD6D8;background:#F6FAFA}
+  .tj-gem-ico{height:64px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .tj-gem-c.b .tj-gem-ico{background:#E9F1F1}
+  .tj-gem-t{font-size:15px;font-weight:800;margin-top:9px}
+  .tj-gem-n{font-size:12px;color:var(--ink-soft);margin-bottom:6px}
+  .tj-gem-f{padding:7px 0;border-top:1px solid var(--line)}
+  .tj-gem-f span{display:block;font-size:11.5px;color:var(--ink-soft)}
+  .tj-gem-f b{font-size:14px;overflow-wrap:anywhere}
   .tj-specs div{font-size:15px;font-weight:700;line-height:1.25;min-width:0}
   .tj-specs span{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:1px}
   .tj-specs .ancho{grid-column:1 / -1}
@@ -564,14 +575,14 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=68"></script>
-<script src="assets/js/supabase-client.js?v=68"></script>
-<script src="assets/js/img-compress.js?v=68"></script>
-<script src="assets/js/comun.js?v=68"></script>
-<script src="assets/js/avisos.js?v=68"></script>
-<script src="assets/js/sesion.js?v=68"></script>
-<script src="assets/js/ayuda.js?v=68"></script>
-<script src="assets/js/mi-trabajo.js?v=68"></script>
+<script src="assets/vendor/supabase.js?v=70"></script>
+<script src="assets/js/supabase-client.js?v=70"></script>
+<script src="assets/js/img-compress.js?v=70"></script>
+<script src="assets/js/comun.js?v=70"></script>
+<script src="assets/js/avisos.js?v=70"></script>
+<script src="assets/js/sesion.js?v=70"></script>
+<script src="assets/js/ayuda.js?v=70"></script>
+<script src="assets/js/mi-trabajo.js?v=70"></script>
 <script>
 (function(){
   'use strict';

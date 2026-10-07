@@ -19,6 +19,9 @@
   let trabajadores = [];
   let categorias = [];
   let lectura = false;   // vendedora: solo mirar
+  let llevaMadera = false;   // quien asigna la madera (Gualfredo)
+  let puedeMadera = false;   // quien marca los pasos de madera (quien la lleva y la vendedora de madera)
+  const esMadera = (it) => it.tipo === 'Puerta de Madera';
   const FILTROS_ADMIN = [ { id:'todos', t:'Todos' }, { id:'asignar', t:'Por asignar' }, { id:'sincat', t:'Sin categoría' }, { id:'atrasados', t:'Atrasados' } ];
   let FILTROS = FILTROS_ADMIN;
   const params = new URLSearchParams(location.search);
@@ -289,7 +292,10 @@
           }
           abajo = partes.join('');
         }
-        return `<div class="etapa ${cls}"><div class="e-dot">${dot}</div><div class="e-cuerpo"><div class="e-linea"><div class="e-nom">${esc(e.nombre)}</div>${derecha}</div><div class="e-fila">${abajo}</div></div></div>`;
+        // Madera: el carpintero no usa teléfono; el paso que toca lo marca quien lleva la madera
+        const btnMadera = puedeMadera && e.oficio === 'madera' && e.estado === 'pendiente' && !espera && e.trabajador_id
+          ? `<button class="btn-madera" type="button" data-madera="${e.id}">Marcar terminado</button>` : '';
+        return `<div class="etapa ${cls}"><div class="e-dot">${dot}</div><div class="e-cuerpo"><div class="e-linea"><div class="e-nom">${esc(e.nombre)}</div>${derecha}</div><div class="e-fila">${abajo}</div>${btnMadera}</div></div>`;
       }).join('') + '</div>';
     }).join('');
     const fi = fotoItem(it);
@@ -303,7 +309,8 @@
       ${fi.otroColor ? `<p class="p-foto-otra">${esc(etiquetaOtroColor(fi, it.tipo))}.${lectura ? '' : ` Sube la foto en ${esc(String(fi.color).toLowerCase())} en Catálogo.`}</p>` : ''}
       ${catFaltaHtml(it)}
       ${bloques}
-      ${!lectura && it.categoria_pago_id && (it.etapas || []).some(x => x.estado === 'pendiente')
+      ${!lectura && esMadera(it) && !llevaMadera ? '<p class="p-madera-nota">Las puertas de madera las asigna Gualfredo.</p>'
+        : !lectura && it.categoria_pago_id && (it.etapas || []).some(x => x.estado === 'pendiente')
         ? `<button class="btn-asignar-todo" type="button" data-asignar-todo="${esc(claveItem(it))}">Asignar trabajadores</button>` : ''}
     </div>`;
   }
@@ -435,6 +442,68 @@
     if(bo){ cancelarOrden(Number(bo.dataset.cancelarOrden), bo); return; }
     const bat = e.target.closest('[data-asignar-todo]');
     if(bat){ abrirAsignarTodo(bat.dataset.asignarTodo); return; }
+    const bm = e.target.closest('[data-madera]');
+    if(bm){ abrirMadera(Number(bm.dataset.madera)); return; }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Madera: marcar un paso terminado con su foto (obligatoria)
+  // ---------------------------------------------------------------------------
+  let maderaId = null, maderaBlob = null, maderaUrlObj = null, maderaSubida = null;
+  function soltarMadera(){ if(maderaUrlObj) URL.revokeObjectURL(maderaUrlObj); maderaBlob = null; maderaUrlObj = null; maderaSubida = null; }
+  function pintarMadera(){
+    $('maderaFoto').innerHTML = maderaUrlObj ? `<img src="${maderaUrlObj}" alt="Foto del paso terminado">` : '<span>Falta la foto</span>';
+    $('btnMaderaFoto').textContent = maderaBlob ? 'Tomar otra foto' : 'Tomar la foto';
+    const b = $('btnMaderaOk'); b.disabled = !maderaBlob; b.textContent = maderaBlob ? 'Marcar terminado' : 'Primero toma la foto';
+  }
+  function abrirMadera(eid){
+    const v = pedidoActual; if(!v) return;
+    let et = null, item = null;
+    (v.items || []).forEach(it => (it.etapas || []).forEach(e => { if(e.id === eid){ et = e; item = it; } }));
+    if(!et) return;
+    maderaId = eid; soltarMadera();
+    $('maderaInput').value = '';
+    $('maderaTitulo').textContent = 'Terminar ' + et.nombre;
+    $('maderaSub').textContent = item.nombre + (et.trabajador ? ' · ' + et.trabajador.nombre : '');
+    pintarMadera();
+    abrirHoja('sheetMadera');
+  }
+  $('btnMaderaFoto').addEventListener('click', () => $('maderaInput').click());
+  $('maderaInput').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if(!f) return;
+    try{
+      const blob = typeof window.comprimirFoto === 'function' ? await window.comprimirFoto(f) : f;
+      if(maderaUrlObj) URL.revokeObjectURL(maderaUrlObj);
+      maderaBlob = blob; maderaUrlObj = URL.createObjectURL(blob);
+      pintarMadera();
+    } catch(err){ toast('No se pudo procesar la foto. Tómala otra vez.', 'error'); }
+  });
+  $('btnMaderaOk').addEventListener('click', async () => {
+    const btn = $('btnMaderaOk');
+    if(!maderaId || btn.disabled || !maderaBlob) return;
+    const eid = maderaId, blob = maderaBlob;   // fijos: aunque se abra otro paso mientras sube
+    btn.disabled = true; btn.textContent = 'Subiendo la foto…';
+    try{
+      let subida = maderaSubida && maderaSubida.blob === blob ? maderaSubida : null;
+      if(!subida){
+        const path = new Date().toISOString().slice(0, 7) + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+        subida = { blob, url: await window.AH.subirFoto('etapas-fotos', path, blob) };
+        if(maderaBlob === blob) maderaSubida = subida;
+      }
+      const { data, error } = await db.rpc('terminar_etapa_madera', { eid, foto_url: subida.url });
+      if(error) throw error;
+      cerrarHoja('sheetMadera');
+      const listo = data && data.listo;
+      abrirAlCargar = listo ? null : pedidoActual && pedidoActual.id;
+      if(listo) cerrarHoja('sheetFicha');
+      maderaId = null; soltarMadera();
+      toast(listo ? 'Puerta terminada. El pedido quedó listo para entregar.' : 'Paso terminado. Sigue el próximo.');
+      await cargar();
+    } catch(err){
+      const m = String((err && err.message) || '');
+      toast(/fetch|network|Failed/i.test(m) ? 'Sin conexión. Intenta de nuevo' : m || 'No se pudo marcar', 'error');
+      if(maderaId) pintarMadera();
+    }
   });
 
   // ---------------------------------------------------------------------------
@@ -697,6 +766,12 @@
       if(!FILTROS.some(f => f.id === filtro)) filtro = 'todos';
       document.body.classList.add('solo-lectura');
     }
+    // Madera: quién la asigna y quién marca sus pasos (el servidor lo vuelve a revisar)
+    try{
+      const r = await db.from('perfiles').select('lleva_madera,linea').eq('id', p.id).maybeSingle();
+      if(r.error) toast('No se pudo revisar lo de madera. Toca actualizar.', 'error');
+      if(r.data){ llevaMadera = !!r.data.lleva_madera; puedeMadera = llevaMadera || (p.rol === 'vendedor' && r.data.linea === 'madera'); }
+    } catch(e){}
     cargar();
   })();
 })();

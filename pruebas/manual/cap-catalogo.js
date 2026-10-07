@@ -16,7 +16,7 @@ const modelos=[
  P(121,'Modelo Cuadro','Puerta Multilock',470,{alto:2,ancho:1},null),
 ];
 const piezas=[{id:50,catalogo_id:7,color:'Negro',sede_id:1,cantidad:1,precio:300,especificaciones:{alto:2,ancho:1,sentido:'Derecha',posicion:'Afuera'},foto:null}];
-const cats=[{id:1,nombre:'Puerta sencilla',tarifas:{hierro:{modo:'fijo',monto:40}},activo:true},{id:2,nombre:'Combo',tarifas:{},activo:true},{id:3,nombre:'Ventana',tarifas:{armar:{modo:'m2',monto:10}},activo:true}];
+const cats=[{id:1,nombre:'Puerta sencilla',producto:'Puerta Multilock',tarifas:{hierro:{modo:'fijo',monto:40}},activo:true},{id:2,nombre:'Combo',producto:'Combo',tarifas:{},activo:true},{id:3,nombre:'Ventana',producto:'Ventana',tarifas:{armar:{modo:'m2',monto:10}},activo:true}];
 const H='http://127.0.0.1:8765/';
 const OUT=__dirname+'/shots/';fs.mkdirSync(OUT,{recursive:true});
 

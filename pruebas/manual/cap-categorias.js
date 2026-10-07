@@ -89,7 +89,9 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.locator('.cat-fila[data-k="armar"] input').fill('12');
  await a.click('#optsProducto .opt[data-v="Combo"]');
  ok('Combo: 5 trabajos y el extra de la puerta',(await filas())==='hierro,masilla_pintura,detalles,armar,detalles_ventana'&&(await extras())==='hierro,masilla_pintura'&&(await a.textContent('#filasTarifa')).includes('Puerta y 2 protecciones'));
- ok('Lo escrito se mantiene al cambiar de producto',(await a.inputValue('.cat-fila[data-k="armar"] input'))==='12');
+ ok('Lo escrito en Ventana no pasa al Combo',(await a.inputValue('.cat-fila[data-k="armar"] input'))==='');
+ await a.click('#optsProducto .opt[data-v="Ventana"]');
+ ok('Al volver a Ventana sigue lo que escribiste',(await a.inputValue('.cat-fila[data-k="armar"] input'))==='12');
  await a.click('#optsProducto .opt[data-v="Portón"]');
  ok('Portón: sin extra de protección',(await filas())==='hierro,masilla_pintura,detalles'&&(await extras())==='');
  await a.click('#optsProducto .opt[data-v="Puerta Multilock"]');

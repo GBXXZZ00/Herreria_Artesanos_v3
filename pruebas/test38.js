@@ -42,7 +42,7 @@ const llamadas=[];
  const np=await p.evaluate(()=>[AH.notaPago('masilla'),AH.notaPago('instalar'),AH.notaPago('pintura'),AH.notaPago(null)]);
  ok('La masilla se paga con la pintura; instalar no se paga; la pintura sí lleva monto',np[0]==='Se paga con la pintura'&&np[1]==='No se paga'&&np[2]===''&&np[3]==='',np);
  const sirve=await p.evaluate(()=>[AH.categoriaSirve({producto:'Ventana'},'Puerta Multilock'),AH.categoriaSirve({producto:'Puerta Multilock'},'Puerta de Madera'),AH.categoriaSirve({producto:null},'Combo'),AH.categoriaSirve({producto:'Combo'},'Combo')]);
- ok('Una categoría sirve solo para su producto (la de puerta también para madera)',sirve.join()==='false,true,true,true',sirve);
+ ok('Una categoría sirve solo para su producto (la madera tiene las suyas)',sirve.join()==='false,false,true,true',sirve);
  const ext=await p.evaluate(()=>[AH.esquema('Ventana','modelo').extras.map(x=>x.k),AH.esquema('Ventana','pedido').extras.map(x=>x.k),AH.esquema('Combo','modelo').extras.map(x=>x.k),AH.esquema('Combo','pedido').extras.map(x=>x.k)]);
  ok('"Lleva detalles" está en el modelo y no en la venta',ext[0].includes('lleva_detalles')&&!ext[1].includes('lleva_detalles')&&ext[2].includes('ventanas_detalles')&&!ext[3].includes('ventanas_detalles'),ext);
  const pedido=await p.evaluate(()=>AH.especificacionesDesdeEstado('Ventana',{alto:1,ancho:1,lleva_detalles:true,proteccion:true},'pedido'));

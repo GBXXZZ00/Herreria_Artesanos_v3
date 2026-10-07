@@ -58,8 +58,8 @@
         b: () => { const a = txt('#accionTitulo'); return /confirmar pago/i.test(a) ? ['confirmar-un-pago-admin'] : /cancelar/i.test(a) ? ['cancelar-una-venta-admin'] : ['pagos']; } }
     ],
     'produccion.html': [
-      { ref:'#btnActualizar', etiqueta:'Actualizar', mod:'produccion', t:'El taller', b:['intro', 'los-pasos-de-cada-producto', 'la-lista', 'normas', 'avisos-admin', 'avisos-vend'] },
-      { ref:'#sheetFicha .sheet-x', flotante:true, mod:'produccion', t:'Este pedido en el taller', b:['la-ficha', 'asignar-el-trabajo-admin', 'los-pasos-de-cada-producto'] },
+      { ref:'#btnActualizar', etiqueta:'Actualizar', mod:'produccion', t:'El taller', b:['intro', 'los-pasos-de-cada-producto', 'la-lista', 'puertas-de-madera', 'normas', 'avisos-admin', 'avisos-vend'] },
+      { ref:'#sheetFicha .sheet-x', flotante:true, mod:'produccion', t:'Este pedido en el taller', b:['la-ficha', 'asignar-el-trabajo-admin', 'puertas-de-madera', 'los-pasos-de-cada-producto'] },
       { ref:'#sheetTodo [data-cerrar="sheetTodo"]', etiqueta:'Cerrar', mod:'produccion', t:'Asignar trabajadores', b:['asignar-el-trabajo-admin'] },
       { ref:'#sheetCatItem [data-cerrar="sheetCatItem"]', etiqueta:'Cerrar', mod:'admin', t:'Categoría de pago', b:['categorias-de-pago'] },
       { ref:'#sheetOrden [data-cerrar="sheetOrden"]', etiqueta:'Cerrar', mod:'produccion', t:'Fabricar para exhibición', b:['fabricar-para-exhibicion-admin'] }

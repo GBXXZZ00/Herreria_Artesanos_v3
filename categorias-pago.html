@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Categorías de pago · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=68">
+<link rel="stylesheet" href="assets/css/base.css?v=70">
 <style>
   .page{padding-bottom:calc(var(--safe-b) + 110px)}
   .c-vlista{display:flex;flex-direction:column;gap:10px;padding:14px 18px 0}
@@ -88,6 +88,7 @@
   .m-fila.sel .m-check,.m-fila[disabled] .m-check{background:var(--accent);border-color:var(--accent)}
   .m-fila.sel .m-check svg,.m-fila[disabled] .m-check svg{opacity:1}
   .m-vacio{text-align:center;padding:36px 10px;color:var(--ink-soft);font-size:14.5px}
+  .solo-fijo .cat-modo{display:none}
 </style>
 </head>
 <body data-requiere-sesion="si">
@@ -128,7 +129,7 @@
     </div>
     <div class="field" id="campoProducto">
       <span class="field-label">¿Para qué producto?</span>
-      <div class="opts" style="--cols:4" id="optsProducto"></div>
+      <div class="opts" style="--cols:3" id="optsProducto"></div>
       <p class="field-hint" id="hintProducto"></p>
       <p class="field-error">Elige el producto</p>
     </div>
@@ -164,11 +165,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=68"></script>
-<script src="assets/js/supabase-client.js?v=68"></script>
-<script src="assets/js/comun.js?v=68"></script>
-<script src="assets/js/sesion.js?v=68"></script>
-<script src="assets/js/ayuda.js?v=68"></script>
-<script src="assets/js/categorias-pago.js?v=68"></script>
+<script src="assets/vendor/supabase.js?v=70"></script>
+<script src="assets/js/supabase-client.js?v=70"></script>
+<script src="assets/js/comun.js?v=70"></script>
+<script src="assets/js/sesion.js?v=70"></script>
+<script src="assets/js/ayuda.js?v=70"></script>
+<script src="assets/js/categorias-pago.js?v=70"></script>
 </body>
 </html>

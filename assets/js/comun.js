@@ -287,13 +287,15 @@
   // Pago al taller: cada categoría es de un producto (Puerta, Portón, Ventana o Combo)
   // ---------------------------------------------------------------------------
   const PRODUCTOS_PAGO = [
-    { v:'Puerta Multilock', t:'Puerta' }, { v:'Portón', t:'Portón' }, { v:'Ventana', t:'Ventana' }, { v:'Combo', t:'Combo' }
+    { v:'Puerta Multilock', t:'Puerta' }, { v:'Portón', t:'Portón' }, { v:'Ventana', t:'Ventana' }, { v:'Combo', t:'Combo' }, { v:'Puerta de Madera', t:'Madera' }
   ];
   const nombreProducto = (v) => (PRODUCTOS_PAGO.find(p => p.v === v) || {}).t || '';
-  // ¿Esta categoría sirve para este tipo de producto? (la puerta de madera usa las de puerta)
-  const categoriaSirve = (c, tipo) => !c || !c.producto || c.producto === tipo || (c.producto === 'Puerta Multilock' && tipo === 'Puerta de Madera');
+  // ¿Esta categoría sirve para este tipo de producto? (la madera tiene las suyas)
+  const categoriaSirve = (c, tipo) => !c || !c.producto || c.producto === tipo;
   // Pasos que no llevan monto propio: instalar no se paga; la masilla se paga junto con la pintura
-  function notaPago(oficio){
+  // En madera el pago va en el primer paso (mitad) y en el último (el resto)
+  function notaPago(oficio, monto){
+    if(oficio === 'madera') return monto != null && Number(monto) === 0 ? 'Va en el pago de la puerta' : '';
     if(oficio === 'instalar') return 'No se paga';
     if(oficio === 'masilla') return 'Se paga con la pintura';
     return '';

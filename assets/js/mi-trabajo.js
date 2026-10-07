@@ -112,6 +112,49 @@
     if(e.bloque) add('Bloque', e.bloque);
     return f.length ? `<div class="tj-specs">${f.map(x => `<div class="${x.ancho ? 'ancho' : ''}"><span>${esc(x.l)}</span>${esc(x.v)}</div>`).join('')}</div>` : '';
   }
+  // Trabajos que incluyen dos cosas distintas (la puerta y sus protecciones): el detalle se parte en
+  // dos cuadros gemelos, cada uno con sus medidas y especificaciones. Sigue siendo un solo trabajo y una foto.
+  function gemelos(t){
+    if(!t.oficio) return null;
+    const e = t.especificaciones || {};
+    const fila = (l, v) => (v !== undefined && v !== null && v !== '') ? { l, v:String(v) } : null;
+    const m = (a, b) => (a && b) ? medidas({ alto:a, ancho:b }) : '';
+    const vidrio = e.vidrio_o_farquilla === 'Farquilla' ? 'Farquilla' : e.vidrio_o_farquilla === 'Vidrio' ? (e.color_vidrio || 'Sí') : '';
+    const manillon = e.manillon === true ? (e.manillon_tipo || 'Sí') : e.manillon === false ? 'Sin' : '';
+    const abre = [e.sentido, e.posicion ? String(e.posicion).toLowerCase() : ''].filter(Boolean).join(' · ');
+    const puerta = (prot) => [
+      fila('Medidas', m(e.alto, e.ancho)), fila('Abre', abre), fila('Bloque', e.bloque),
+      fila(vidrio === 'Farquilla' ? 'Vidrio o farquilla' : 'Vidrio', vidrio), fila('Manillón', manillon),
+      prot === undefined ? null : fila('Protección', prot ? 'Sí' + (e.proteccion_sentido ? ' · abre a la ' + String(e.proteccion_sentido).toLowerCase() : '') : 'No'),
+      fila('Marco decorativo', e.marco_decorativo ? 'Sí' : 'No')
+    ].filter(Boolean);
+    if(t.tipo === 'Combo' && PROT.includes(t.oficio)){
+      return [
+        { ico:'Puerta Multilock', t:'La puerta', n:'1 pieza', f: puerta(e.variante === 'Con protección en puerta') },
+        { ico:'Ventana', t:'Las protecciones', n:'2 piezas, de ventana', f:[fila('Medidas de cada una', m(e.ventanas_alto, e.ventanas_ancho)), fila('Bloque', e.bloque)].filter(Boolean) }
+      ];
+    }
+    if(t.tipo === 'Combo' && t.oficio === 'detalles' && e.ventanas_detalles){
+      return [
+        { ico:'Puerta Multilock', t:'La puerta', n:'1 pieza', f: puerta(undefined) },
+        { ico:'Ventana', t:'Las ventanas', n:'2 piezas', f:[fila('Medidas de cada una', m(e.ventanas_alto, e.ventanas_ancho)), fila('Aluminio', e.aluminio),
+            fila('Papel ahumado', e.papel_ahumado === true ? (e.color_ahumado || 'Sí') : e.papel_ahumado === false ? 'Sin' : '')].filter(Boolean) }
+      ];
+    }
+    if(t.tipo === 'Puerta Multilock' && PROT.includes(t.oficio) && e.proteccion){
+      return [
+        { ico:'Puerta Multilock', t:'La puerta', n:'1 pieza', f: puerta(undefined) },
+        { ico:'Ventana', t:'La protección', n:'1 pieza', f:[fila('Medidas', m(e.alto, e.ancho)), fila('Abre a la', e.proteccion_sentido), fila('Bloque', e.bloque)].filter(Boolean) }
+      ];
+    }
+    return null;
+  }
+  function gemelosHtml(g){
+    return `<div class="tj-gem">${g.map((c, i) => `<div class="tj-gem-c ${i ? 'b' : ''}">
+      <div class="tj-gem-ico">${iconoTipo(c.ico, 26)}</div>
+      <div class="tj-gem-t">${esc(c.t)}</div><div class="tj-gem-n">${esc(c.n)}</div>
+      ${c.f.map(x => `<div class="tj-gem-f"><span>${esc(x.l)}</span><b>${esc(x.v)}</b></div>`).join('')}</div>`).join('')}</div>`;
+  }
   const refPedidoCorto = (t) => t.interna ? 'Para exhibición' : refPedido(t);
   // Las piezas que incluye un trabajo (reglas nuevas, con "oficio"): ej. Hierro de un combo =
   // la puerta, su protección si la lleva y las 2 protecciones de las ventanas, cada una con su medida
@@ -125,7 +168,7 @@
     return e;
   }
   // Instalar no se paga; la masilla se paga junto con la pintura
-  const noSePaga = (t) => !!window.AH.notaPago(t.oficio);
+  const noSePaga = (t) => !!window.AH.notaPago(t.oficio, t.monto);
   function piezasDe(t){
     if(!t.oficio) return [];
     const e = t.especificaciones || {}, c = Number(t.cantidad) || 1;
@@ -326,19 +369,20 @@
     const etq = etiquetaFoto(t);
     const cd = colorDe(t);
     const tt = t.para_el ? topeTrab(t.para_el) : null;
+    const gem = gemelos(t);
     $('trabajoBody').innerHTML = `
       <div ${heroAttrs(t.foto)}>${t.foto ? `<img src="${esc(t.foto)}" alt="${esc(t.producto)}">` : iconoTipo(t.tipo, 56)}${etq ? `<span class="hoy-badge">${esc(etq)}</span>` : ''}${heroZoom(t.foto)}</div>
       <div><span class="tj-parte">Tu parte: ${esc(t.nombre)}</span>${tt ? `<span class="tj-tope ${tt.tarde ? 'tarde' : ''}">${esc(tt.t)}</span>` : ''}</div>
       <div class="det-name" style="margin-top:10px">${esc(t.producto)}</div>
-      <div class="det-type">${esc(t.tipo === 'Combo' ? 'Combo · 1 puerta + 2 ventanas + 2 protecciones' : (t.tipo || ''))}</div>
-      ${piezasHtml(t)}
+      <div class="det-type">${esc(t.tipo === 'Combo' ? 'Combo · 1 puerta + 2 ventanas + 2 protecciones' : (t.tipo || ''))}${gem ? ' · un solo trabajo, una foto' : ''}</div>
+      ${gem ? '' : piezasHtml(t)}
       <div class="tj-datos">
         ${unidadTxt(t) ? `<span><b>${esc(unidadTxt(t))}</b></span>` : t.cantidad > 1 ? `<span><b>${t.cantidad}</b> unidades</span>` : ''}
         <span>${t.interna ? '<b>Para exhibición</b>' : `<b>${esc(refPedido(t))}</b>${t.fecha_entrega ? ' · entrega al cliente ' + esc(fechaCorta(t.fecha_entrega)) : ''}`}</span>
-        ${noSePaga(t) ? (t.oficio === 'masilla' ? '<span>Se paga <b>al terminar la pintura</b></span>' : '<span>Este paso <b>no se paga</b></span>') : t.monto != null ? `<span>Ganas <b>${esc(dinero(t.monto))}</b></span>` : ''}
+        ${noSePaga(t) ? (t.oficio === 'masilla' ? '<span>Se paga <b>al terminar la pintura</b></span>' : t.oficio === 'madera' ? '<span>Va en el <b>pago de la puerta</b></span>' : '<span>Este paso <b>no se paga</b></span>') : t.monto != null ? `<span>Ganas <b>${esc(dinero(t.monto))}</b></span>` : ''}
       </div>
       ${cd ? `<div class="tj-color"><span class="sw ${SW_COLOR[cd.c] || ''}"></span>${esc(cd.t)}</div>` : ''}
-      ${specsTabla(t)}
+      ${gem ? gemelosHtml(gem) : specsTabla(t)}
       ${t.notas ? `<div class="tj-nota"><b>Nota de la venta:</b> ${esc(t.notas)}</div>` : ''}`;
     const ep = enProceso();
     $('trabajoFoot').innerHTML = t.espera
@@ -385,7 +429,7 @@
   const miniFoto = (url, tipo) => `<span>${url ? window.AH.imgMini(url, "", tipo) : iconoTipo(tipo, 18)}</span>`;
   // Cada trabajo hecho: la foto del catálogo y la suya, juntas. Al tocarlo se ve el detalle.
   function filaTrabajo(m){
-    const monto = noSePaga(m) ? `<span class="pg-mov-m gris">${esc(window.AH.notaPago(m.oficio))}</span>` : m.monto == null ? '<span class="pg-mov-m gris">Por definir</span>' : `<span class="pg-mov-m">${esc(dinero(m.monto))}</span>`;
+    const monto = noSePaga(m) ? `<span class="pg-mov-m gris">${esc(window.AH.notaPago(m.oficio, m.monto))}</span>` : m.monto == null ? '<span class="pg-mov-m gris">Por definir</span>' : `<span class="pg-mov-m">${esc(dinero(m.monto))}</span>`;
     return `<button class="pg-mov" type="button" data-hecho="${m.id}">
       <span class="duo">${miniFoto(m.foto, m.tipo)}${miniFoto(m.foto_trabajo, m.tipo)}</span>
       <span style="min-width:0"><span class="pg-mov-t">${esc(m.etapa)} · ${esc(m.producto)}</span>
@@ -492,7 +536,7 @@
       ${piezasHtml(t)}
       <div class="tj-datos">
         ${unidadTxt(m) ? `<span><b>${esc(unidadTxt(m))}</b></span>` : m.cantidad > 1 ? `<span><b>${m.cantidad}</b> unidades</span>` : ''}
-        <span>${noSePaga(m) ? (m.oficio === 'masilla' ? 'Se paga <b>al terminar la pintura</b>' : 'Este paso <b>no se paga</b>') : m.monto == null ? 'Monto <b>por definir</b>' : `Te suma <b>${esc(dinero(m.monto))}</b>`}</span>
+        <span>${noSePaga(m) ? (m.oficio === 'masilla' ? 'Se paga <b>al terminar la pintura</b>' : m.oficio === 'madera' ? 'Va en el <b>pago de la puerta</b>' : 'Este paso <b>no se paga</b>') : m.monto == null ? 'Monto <b>por definir</b>' : `Te suma <b>${esc(dinero(m.monto))}</b>`}</span>
       </div>
       ${cd ? `<div class="tj-color"><span class="sw ${SW_COLOR[cd.c] || ''}"></span>${esc(cd.t)}</div>` : ''}
       ${specsTabla(t)}
