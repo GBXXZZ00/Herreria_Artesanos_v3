@@ -65,7 +65,7 @@
     perfilesCache = {}; (data || []).forEach(p => { perfilesCache[p.id] = p.nombre; });
     return perfilesCache;
   }
-  const SELECT_VENTA = '*, cliente:clientes(*), sede:sedes(id,nombre), items:venta_items(*, catalogo:catalogo(fotos)), abonos(*)';
+  const SELECT_VENTA = '*, cliente:clientes(*), sede:sedes(id,nombre), items:venta_items(*, catalogo:catalogo(fotos)), abonos(*), cambios:venta_cambios(*)';
   async function cargarVenta(id){
     const [{ data, error }, ps] = await Promise.all([db.from('ventas').select(SELECT_VENTA).eq('id', id).single(), perfiles()]);
     if(error) throw error;
@@ -74,6 +74,7 @@
     data.items.forEach(it => { const f = window.AH.fotoItem(it); it.foto = f.url; it._foto = f; delete it.catalogo; });
     data.abonos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     data.vendedor = ps[data.vendedor_id] || '';
+    (data.cambios || []).forEach(c => { c.quien = ps[c.por] || ''; });
     return data;
   }
 

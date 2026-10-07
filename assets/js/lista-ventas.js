@@ -284,7 +284,10 @@
   }
   window.AH.alCerrar.sheetFicha = () => { actual = null; fichaSeq++; };
 
-  const editable = (v) => v.estado === 'cotizacion' || v.estado === 'confirmada' || (v.estado === 'lista' && v.items.every(it => it.pieza_id));
+  // Lo que no se fabrica: piezas de entrega inmediata y lo que ya estaba hecho
+  const noFab = (it) => !!(it.pieza_id || it.ya_hecho);
+  // En fabricación también se edita (queda anotado quién cambió qué)
+  const editable = (v) => v.estado === 'cotizacion' || v.estado === 'confirmada' || v.estado === 'en_produccion' || (v.estado === 'lista' && v.items.every(noFab));
 
   function pintarFicha(){
     const v = actual;
@@ -320,7 +323,7 @@
       v.items.map(it => `<div class="f-item">
         <div class="f-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 24)}</div>
         <div style="flex:1;min-width:0"><div class="f-item-t">${esc(it.nombre)}</div>
-          <div class="f-item-d">${esc(AV.detalleItem(it))}</div>
+          <div class="f-item-d">${it.ya_hecho ? 'Ya está hecho, solo se entrega · ' : ''}${esc(AV.detalleItem(it))}</div>
           <div class="f-item-p"><span class="f-item-cant">${it.cantidad} × ${dinero(it.precio_unitario)}${v.estado === 'en_produccion' ? `<span class="fab-chip" data-fab-item="${it.id}" hidden></span>` : ''}</span><b>${dinero(it.precio_unitario * it.cantidad)}</b></div></div>
       </div>`).join('')
       + (v.estado === 'en_produccion' ? `<a class="f-ver-prod" href="produccion.html?abrir=${v.id}">Ver fabricación<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''));
@@ -357,6 +360,13 @@
     if(v.notas) datos.push(`<div class="f-dato ancho"><span>Notas</span><b style="font-weight:600">${esc(v.notas)}</b></div>`);
     if(v.estado === 'cancelada') datos.push(`<div class="f-dato ancho"><span>${cot ? 'Descartada' : 'Cancelada'} el ${esc(AV.fechaNum(v.cancelada_en))}</span><b style="font-weight:600">${esc(v.cancelada_motivo || 'Sin motivo')}</b></div>`);
     html += acordeon('datos', cot ? 'Datos de la cotización' : 'Datos de la venta', 'Fechas, sede y notas', `<div class="f-datos">${datos.join('')}</div>`);
+    // Historial: quién cambió qué después de que entró a fabricación
+    const cambios = (v.cambios || []).slice().sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en));
+    if(cambios.length){
+      html += acordeon('cambios', 'Cambios en el pedido', cambios.length === 1 ? '1 cambio' : cambios.length + ' cambios',
+        cambios.map(c => `<div class="f-cambio"><div class="f-cambio-q">${esc(c.quien || 'Alguien')} · ${esc(AV.fechaNum(c.creado_en))}</div>
+          <ul>${(c.cambios || []).map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>`).join(''));
+    }
 
     const grid = [];
     if(v.estado !== 'cancelada' && v.estado !== 'entregada' && editable(v)){
@@ -400,7 +410,7 @@
   // Estados en orden (no se saltan pasos)
   const PASOS = ['confirmada', 'en_produccion', 'lista', 'entregada'];
   // Si todo es de entrega inmediata (ya está en tienda) no pasa por producción
-  const soloInmediata = (v) => (v.items || []).length > 0 && v.items.every(it => it.pieza_id);
+  const soloInmediata = (v) => (v.items || []).length > 0 && v.items.every(noFab);
   const pasosDe = (v) => soloInmediata(v) ? PASOS.filter(p => p !== 'en_produccion') : PASOS;
   const SIGUIENTE = {
     lista:         { t:'Marcar como Entregada', s:'El cliente ya se lo llevó' }
@@ -617,7 +627,7 @@
     acc = { tipo, monto:'', metodo:null, fecha: AV.habiles(20), blob:null, foto:null, motivo:'', guardando:false, clave: uuid(), abono: tipo === 'confirmar' ? v.abonos.find(a => a.id === abonoId) : null, nota:'' };
     if(tipo === 'convertir'){
       // Primero los detalles para fabricar: la cotización no los pedía (vidrio y ahumado venían del modelo)
-      acc.det = v.items.filter(it => !it.pieza_id && gruposDet(it, it.especificaciones || {}).length)
+      acc.det = v.items.filter(it => !noFab(it) && gruposDet(it, it.especificaciones || {}).length)
         .map(it => ({ id: it.id, it, s: estadoDesdeEspecificaciones(it.tipo, it.especificaciones, 'pedido', true), marcar:false }));
       acc.tocado = false;
       acc.paso = acc.det.length ? 'detalles' : 'pago';

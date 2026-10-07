@@ -98,25 +98,29 @@
     if(it.origen === 'pieza') partes.unshift('Entrega inmediata');
     return partes.join(' · ');
   }
+  const yaHechoTxt = (it) => it.yaHecho ? 'Ya está hecho · ' : '';
   // En modo venta, qué productos todavía no tienen sus detalles para fabricar
-  const faltaItem = (it) => SP.faltanEn(it, modo).length > 0;
+  // Lo que ya está hecho (solo se entrega) no pide detalles para fabricar
+  const faltanDe = (it) => SP.faltanEn(it, it.yaHecho ? 'cotizacion' : modo);
+  const faltaItem = (it) => faltanDe(it).length > 0;
   function pintarItems(){
     $('items').innerHTML = items.length ? items.map((it, i) => `
       <div class="item ${faltaItem(it) ? 'falta' : ''}" style="--i:${i}">
         <div class="item-foto">${it.foto ? window.AH.imgMini(it.foto, "", it.tipo) : iconoTipo(it.tipo, 26)}</div>
         <div class="item-txt">
           <div class="item-nombre">${esc(it.nombre)}</div>
-          <div class="item-det">${esc(detalleItem(it))}</div>
+          <div class="item-det">${esc(yaHechoTxt(it) + detalleItem(it))}</div>
+          ${it.bloqueado ? '<div class="item-bloq">Ya tiene pasos terminados: no se cambia</div>' : ''}
           <div class="item-pie">
             <span class="item-cant">${it.cantidad} × ${dinero(it.precio)}</span>
             <span class="item-precio">${dinero(subtotalItem(it))}</span>
           </div>
           ${faltaItem(it) ? `<button type="button" class="item-falta" data-editar="${i}">${ICON_ALERTA}Completar detalles</button>` : ''}
         </div>
-        <div class="item-acc">
+        ${it.bloqueado ? '' : `<div class="item-acc">
           <button type="button" data-editar="${i}" aria-label="Editar ${esc(it.nombre)}">${ICON_EDIT}</button>
           <button type="button" class="quitar" data-quitar="${i}" aria-label="Quitar ${esc(it.nombre)}">${ICON_DEL}</button>
-        </div>
+        </div>`}
       </div>`).join('')
       : '<div class="vacio-items">Todavía no hay productos.<br>Toca "Agregar producto".</div>';
     if(items.length) $('campoItems').classList.remove('invalid');
@@ -277,6 +281,9 @@
           <div class="field-error">Escribe qué es</div></div>`
         : `<div class="field"><label class="field-label" for="pNombre">Nombre (opcional)</label>
           <input class="input" id="pNombre" type="text" autocomplete="off" value="${esc(prod.nombre)}" placeholder="${esc(prod.tipo)} a medida"></div>`}
+        <div class="field"><span class="field-label">¿Hay que fabricarlo?</span>
+          <div class="toggles"><button type="button" class="tchip ${prod.yaHecho ? 'on' : ''}" data-ya-hecho aria-pressed="${!!prod.yaHecho}"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Ya está hecho, solo se entrega</button></div>
+          <div class="field-hint">${prod.yaHecho ? 'No va al taller ni aparece en Producción.' : 'Márcalo si la pieza ya existe y solo falta entregarla.'}</div></div>
         <div class="field"><label class="field-label" for="pDesc">Detalles (opcional)</label>
           <textarea class="input" id="pDesc" rows="3" placeholder="${otro ? 'Medidas, color y lo que pidió el cliente' : 'Lo que pidió el cliente y no aparece arriba'}">${esc(prod.descripcion || '')}</textarea></div>
         ${cantidadHtml()}${precioHtml()}`;
@@ -330,6 +337,7 @@
   $('prodBody').addEventListener('click', async (e) => {
     const at = e.target.closest('[data-atajo-medidas]');
     if(at){ if(await SP.guardarAtajoMedidas(modeloDe(prod), at)) pintarProducto(); return; }
+    if(e.target.closest('[data-ya-hecho]')){ prodSucio = true; prod.yaHecho = !prod.yaHecho; prod.marcar = false; pintarProducto(); return; }
     const o = e.target.closest('.opt[data-g]');
     if(o){
       prodSucio = true;
@@ -392,7 +400,7 @@
     const falta = SP.faltaEnModelo(prod, modeloDe(prod));
     if(falta){ toast(falta, 'error'); const a = $('prodBody').querySelector('.aviso-falta'); if(a) a.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     // Aluminio de la ventana siempre; al vender, también los detalles para fabricar
-    const faltan = SP.faltanEn(prod, modo);
+    const faltan = faltanDe(prod);
     if(faltan.length){
       prod.marcar = true;
       pintarProducto();
@@ -411,6 +419,7 @@
       prod.especificaciones = conSpecs(prod) ? especificacionesDesdeEstado(prod.tipo, prod.estado, 'pedido') : {};
     }
     delete prod.marcar;
+    if(prod.id) prod.tocado = true;   // al editar una venta en fabricación: este producto cambió
     if(prodIndex == null) items.push(prod); else items[prodIndex] = prod;
     prodSucio = false;
     cerrarHoja('sheetProducto', true);
@@ -570,6 +579,8 @@
         catalogo_id: it.origen === 'medida' ? null : it.catalogo_id,
         pieza_id: it.origen === 'pieza' ? it.pieza_id : null,
         a_medida: it.origen === 'medida',
+        ya_hecho: it.origen === 'medida' && !!it.yaHecho,
+        id: it.id || null, tocado: !!it.tocado,
         tipo: it.tipo,
         nombre: it.nombre,
         especificaciones: it.origen === 'medida'
@@ -648,10 +659,20 @@
     if(!validar()) return;
     if(editId && $('vFecha') && !$('vFecha').value){ $('campoFechaEd').classList.add('invalid'); $('campoFechaEd').scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     if(!detallesCompletos()) return;
+    // En fabricación: si se agregó algo que hay que fabricar, se pregunta una vez por la fecha de entrega
+    if(editId && editVenta && editVenta.estado === 'en_produccion' && !fechaPreguntada
+       && items.some(it => !it.id && it.origen !== 'pieza' && !it.yaHecho) && $('vFecha').value === (editVenta.fecha_entrega || '')){
+      fechaPreguntada = true;
+      $('avisoFechaEd').classList.remove('hidden');
+      $('campoFechaEd').scrollIntoView({ block:'center', behavior:'smooth' });
+      toast('Agregaste un producto: revisa la fecha de entrega y guarda de nuevo');
+      return;
+    }
     if(editId){ guardarEdicion(); return; }
     if(modo === 'cotizacion'){ guardar(false, null, $('btnGuardar')); return; }
     abrirPago();
   });
+  let fechaPreguntada = false;
   async function guardarEdicion(){
     if(guardando) return;
     guardando = true;
@@ -660,17 +681,19 @@
     try{
       await subirFotos();
       const p = payload(false, null);
-      const { error } = await db.rpc('actualizar_venta', { vid: editId, p });
+      const enFab = editVenta && editVenta.estado === 'en_produccion';
+      const { data, error } = enFab ? await db.rpc('editar_venta_fabricacion', { vid: editId, p }) : await db.rpc('actualizar_venta', { vid: editId, p });
       if(error) throw new Error(error.message);
       terminado = true;
-      toast('Cambios guardados');
+      toast(enFab && data && (data.nuevos || []).length ? 'Guardado. Hay un producto nuevo por asignar en Producción' : 'Cambios guardados');
       setTimeout(() => {
         if(window.Sesion.esSubpantalla()) history.back();
         else location.replace(editVenta && editVenta.estado === 'cotizacion' ? 'cotizaciones.html' : 'ventas.html');
       }, 500);
     } catch(err){
       const m = String(err.message || '');
-      toast(/fetch|network/i.test(m) ? 'Sin conexión. Tus cambios siguen aquí, intenta de nuevo' : m, 'error');
+      toast(/fetch|network/i.test(m) ? 'Sin conexión. Tus cambios siguen aquí, intenta de nuevo'
+        : /_item_(quitar|pasos_reiniciar)/.test(m) ? 'Todavía no se puede quitar ni cambiar el tipo de un producto en fabricación. Avísale al administrador' : m, 'error');
       btn.disabled = false; btn.textContent = 'Guardar cambios';
     } finally { guardando = false; }
   }
@@ -899,7 +922,15 @@
     document.querySelector('.topbar-title').textContent = cot ? `Editar cotización` : `Editar venta`;
     $('subVenta').textContent = `N° ${v.id} · ${v.cliente.nombre}`;
     $('btnGuardar').textContent = 'Guardar cambios';
-    const editable = ['cotizacion', 'confirmada', 'lista'].includes(v.estado);
+    const enFab = v.estado === 'en_produccion';
+    const editable = ['cotizacion', 'confirmada', 'lista', 'en_produccion'].includes(v.estado);
+    // En fabricación: los productos con pasos ya terminados no se cambian ni se quitan
+    let hechasDe = {};
+    if(enFab){
+      const { data: av, error: eav } = await db.rpc('avance_venta', { vid: v.id });
+      if(eav) throw new Error('No se pudo revisar el avance del taller. Intenta de nuevo');
+      Object.keys((av && av.items) || {}).forEach(k => { hechasDe[k] = Number(av.items[k].hechas) || 0; });
+    }
     if(!editable){
       $('pagina').innerHTML = `<div class="listo"><h1>Ya no se puede editar</h1><p>Esta venta está ${esc(window.AV.ESTADOS[v.estado].t.toLowerCase())}.</p></div>`;
       $('pie').classList.add('hidden');
@@ -909,7 +940,7 @@
       // En una venta confirmada también se puede mover la fecha de entrega
       const f = document.createElement('div');
       f.className = 'field'; f.id = 'campoFechaEd';
-      f.innerHTML = `<label class="field-label" for="vFecha">Fecha de entrega</label><input class="input" id="vFecha" type="date" value="${esc(v.fecha_entrega || '')}"><div class="field-error">Elige la fecha de entrega</div>`;
+      f.innerHTML = `<label class="field-label" for="vFecha">Fecha de entrega</label><input class="input" id="vFecha" type="date" value="${esc(v.fecha_entrega || '')}"><div class="field-hint aviso hidden" id="avisoFechaEd">Agregaste un producto. Si hace falta, cambia la fecha de entrega y guarda de nuevo.</div><div class="field-error">Elige la fecha de entrega</div>`;
       $('optsSede').closest('.field').before(f);
     }
     $('cCedula').value = v.cliente.cedula || '';
@@ -925,6 +956,8 @@
     items = v.items.map(it => {
       const e = it.especificaciones || {};
       const base = { tipo: it.tipo, nombre: it.nombre, foto: it.foto, precio: Number(it.precio_unitario), cantidad: it.cantidad };
+      if(enFab){ base.id = it.id; base.bloqueado = (hechasDe[it.id] || 0) > 0; }
+      if(it.ya_hecho) base.yaHecho = true;
       if(it.a_medida){
         const conTipo = TIPOS.includes(it.tipo);
         return Object.assign(base, { origen:'medida', descripcion: e.descripcion || '', precioManual:true,
@@ -936,7 +969,8 @@
         estado: estadoDesdeEspecificaciones(it.tipo, e, 'pedido', true), extraProteccion: e.monto_proteccion || '', extraSoloProt: e.monto_proteccion_sola || '', extraMarco: e.monto_marco || '', marcoConMonto: e.monto_marco != null, precioManual:true });
     });
     auto.nombre = auto.tel = auto.ced = false;
-    if(!cot) $('avisoBorrador').innerHTML = `<div class="borrador"><span>Es una venta confirmada: lo que cambies se refleja en el pedido y el PDF.</span></div>`;
+    if(enFab) $('avisoBorrador').innerHTML = `<div class="borrador"><span>Este pedido ya está en fabricación. Puedes agregar productos y cambiar los que todavía no tienen pasos terminados. Queda anotado quién cambió qué.</span></div>`;
+    else if(!cot) $('avisoBorrador').innerHTML = `<div class="borrador"><span>Es una venta confirmada: lo que cambies se refleja en el pedido y el PDF.</span></div>`;
   }
 
   (async function(){

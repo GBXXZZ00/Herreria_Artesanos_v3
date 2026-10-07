@@ -41,6 +41,7 @@ const rpcs=[];
     if(name==='marcar_paso'){if(a.paso==='mensaje'){v.mensaje_en=new Date().toISOString();v.mensaje_estado=v.estado;v.mensaje_por='u1';}else{v.pdf_en=new Date().toISOString();v.pdf_por='u1';}return j({id:v.id});}
     if(name==='pedir_produccion'){v.produccion_pedida_en=new Date().toISOString();v.produccion_pedida_por='u1';return j({id:v.id});}
     if(name==='seguimiento_publico'){const x=ventas.find(z=>z.token_seguimiento===a.t);if(!x)return j({error:'no_existe'});return j(Object.assign({},full(x),{cliente:{nombre:cli.nombre,cedula:'V12•••678',telefono:'•••4567'}}));}
+    if(name==='editar_venta_fabricacion'){v.cambios=[{id:1,venta_id:v.id,por:'u3',creado_en:new Date().toISOString(),cambios:['Agregó: Reja ya hecha','Agregó: Escalera nueva','Total: $850.00 → $1050.00']}];v.items=a.p.items.map((x,i)=>Object.assign({venta_id:v.id,orden:i},x,{id:x.id||200+i}));return j({id:v.id,estado:'en_produccion',total:1050,cambios:[],nuevos:['Escalera nueva']});}
     if(name==='actualizar_venta'){v.items=a.p.items.map((x,i)=>Object.assign({id:100+i,venta_id:v.id,orden:i},x));v.subtotal=v.items.reduce((s,x)=>s+x.precio_unitario*x.cantidad,0);v.total=v.subtotal-(a.p.venta.descuento||0)+(a.p.venta.instalacion||0);v.actualizado_en=new Date().toISOString();return j({id:v.id,estado:v.estado,total:v.total});}
     return j({});}
   if(u.includes('/storage/v1/object/comprobantes'))return j({Key:'comprobantes/x.jpg'});
@@ -159,7 +160,38 @@ const rpcs=[];
  await p.goBack({waitUntil:'commit'});await p.waitForURL('**/ventas.html*');await w(1800);
  ok('Atrás otra vez vuelve a la venta con su ficha abierta',await p.isVisible('#sheetFicha.open')&&(await p.textContent('#fichaBody')).includes('María González'),p.url());
  if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}
- ok('En producción ya no deja editar',(await p.textContent('#fichaBody')).includes('No se puede editar'));
+ ok('En fabricación ahora se puede editar',!!(await p.$('#fichaBody a[href="venta.html?editar=1"]'))&&!(await p.textContent('#fichaBody')).includes('No se puede editar'));
+ // Editar en fabricación: lo que ya tiene pasos terminados no se toca; agregar siempre se puede
+ await p.click('#fichaBody a[href="venta.html?editar=1"]');await p.waitForURL('**/venta.html?editar=1');await p.waitForSelector('.item');await w(700);
+ ok('Editar en fabricación: avisa que ya está en fabricación',(await p.textContent('#avisoBorrador')).includes('ya está en fabricación'));
+ const its=await p.$$eval('#items .item',x=>x.map(i=>[!!i.querySelector('.item-bloq'),!!i.querySelector('.item-acc')]));
+ ok('El producto con pasos terminados sale bloqueado; el otro se puede cambiar o quitar',JSON.stringify(its)==='[[true,false],[false,true]]',its);
+ await p.screenshot({path:'shots6/e1-editar-fab.png',fullPage:true});
+ await p.click('#btnAgregar');await w();await p.click('[data-origen="medida"]');await w(400);
+ await p.click('#prodBody .opt[data-g="__tipo"][data-v="Otro"]');await w(300);
+ await p.fill('#pNombre','Reja ya hecha');await p.fill('#pPrecio','80');
+ await p.click('#prodBody [data-ya-hecho]');await w(200);
+ ok('A medida: se puede marcar "Ya está hecho, solo se entrega"',await p.$eval('#prodBody [data-ya-hecho]',x=>x.classList.contains('on'))&&(await p.textContent('#prodBody')).includes('No va al taller'));
+ await p.screenshot({path:'shots6/e2-ya-hecho.png'});
+ await p.click('#btnProdListo');await w(500);
+ ok('En la lista dice que ya está hecho',(await p.textContent('#items .item:last-child')).includes('Ya está hecho'));
+ await p.click('#btnAgregar');await w();await p.click('[data-origen="medida"]');await w(400);
+ await p.click('#prodBody .opt[data-g="__tipo"][data-v="Otro"]');await w(300);
+ await p.fill('#pNombre','Escalera nueva');await p.fill('#pPrecio','120');
+ await p.click('#btnProdListo');await w(500);
+ await p.click('#btnGuardar');await w(500);
+ ok('Al agregar algo por fabricar, primero pide revisar la fecha de entrega',!rpcs.some(x=>x[0]==='editar_venta_fabricacion')&&await p.isVisible('#avisoFechaEd'));
+ await p.screenshot({path:'shots6/e3-fecha.png'});
+ await p.click('#btnGuardar');await w(900);
+ const ed=rpcs.find(x=>x[0]==='editar_venta_fabricacion');
+ const ei=ed&&ed[1].p.items;
+ ok('Guarda con la función de fabricación: los de antes con su id y sin tocar, los nuevos sin id',ed&&ed[1].vid===1&&ei.length===4&&ei[0].id===1&&ei[0].tocado===false&&ei[1].id===2&&ei[2].id===null&&ei[2].ya_hecho===true&&ei[3].id===null&&ei[3].ya_hecho===false,ei&&ei.map(x=>[x.id,x.tocado,x.ya_hecho,x.nombre]));
+ await p.goto(H+'ventas.html');await p.waitForSelector('.vcard');await w(600);
+ await p.click('.vcard[data-id="1"]');await p.waitForSelector('#sheetFicha.open');await w(900);
+ ok('La ficha guarda el historial de cambios',(await p.textContent('#fichaBody details[data-sec="cambios"]')).includes('Agregó: Escalera nueva')&&(await p.textContent('#fichaBody details[data-sec="cambios"]')).includes('Yulimar'));
+ if(!(await p.$eval('#fichaBody details[data-sec="cambios"]',x=>x.open))){await p.click('#fichaBody details[data-sec="cambios"] summary');await w(300);}
+ await p.$eval('#fichaBody details[data-sec="cambios"]',x=>x.scrollIntoView({block:'center'}));await w(200);
+ await p.screenshot({path:'shots6/e4-historial.png'});
  // Cancelar con devolución
  if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}
  await p.click('[data-accion="cancelar"]');await w(500);

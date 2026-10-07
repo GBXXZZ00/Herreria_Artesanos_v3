@@ -74,9 +74,12 @@
   }
   // Solo los productos que se fabrican (una pieza de exhibición ya está hecha)
   const itemsFabrica = (v) => (v.items || []).filter(it => (it.etapas || []).length);
+  // Producto que se agregó (o cambió) cuando el pedido ya estaba en fabricación y todavía tiene pasos sin asignar
+  const esNuevo = (it) => !!it.agregado_en && (it.etapas || []).some(e => e.estado === 'pendiente' && !e.trabajador_id);
   function resumenPedido(v){
-    let total = 0, hechas = 0, sinAsignar = 0, sinCat = 0, pasosTarde = 0;
+    let total = 0, hechas = 0, sinAsignar = 0, sinCat = 0, pasosTarde = 0, nuevos = 0;
     itemsFabrica(v).forEach(it => {
+      if(esNuevo(it)) nuevos++;
       if(!it.categoria_pago_id) sinCat++;
       pasosTarde += (it.etapas || []).filter(pasoAtrasado).length;
       Object.values(ramas(it)).forEach(lista => {
@@ -86,7 +89,7 @@
         if(act && !act.trabajador_id) sinAsignar++;
       });
     });
-    return { total, hechas, sinAsignar, sinCat, pasosTarde };
+    return { total, hechas, sinAsignar, sinCat, pasosTarde, nuevos };
   }
   function diasAtraso(v){
     if(!v.fecha_entrega) return null;
@@ -119,7 +122,7 @@
       }
       const [rv, rc] = await Promise.all([
         db.from('ventas')
-          .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,pieza_id,cantidad,categoria_pago_id,especificaciones,catalogo:catalogo(fotos),etapas(id,unidad,rama,nombre,orden,especialidad,oficio,incluye,despues_de,estado,unidades,para_el,trabajador_id,foto,terminada_en,iniciada_en,monto,trabajador:perfiles(nombre)))')
+          .select('id,fecha_entrega,interna,cliente:clientes(nombre),items:venta_items(id,nombre,tipo,foto,pieza_id,cantidad,agregado_en,categoria_pago_id,especificaciones,catalogo:catalogo(fotos),etapas(id,unidad,rama,nombre,orden,especialidad,oficio,incluye,despues_de,estado,unidades,para_el,trabajador_id,foto,terminada_en,iniciada_en,monto,trabajador:perfiles(nombre)))')
           .eq('estado', 'en_produccion'),
         db.from('categorias_pago').select('id,nombre,producto').eq('activo', true).order('nombre', { ascending:true })
       ]);
@@ -204,6 +207,7 @@
         : v.fecha_entrega ? `<span class="plazo">Entrega ${AV.fechaCorta(v.fecha_entrega)}</span>` : '';
       const badge = lectura ? `<span class="plazo">${esc(enQueVa(v))}</span>`
         : r.pasosTarde > 0 ? `<span class="plazo tarde">${r.pasosTarde === 1 ? '1 paso atrasado' : r.pasosTarde + ' pasos atrasados'}</span>`
+        : r.nuevos > 0 ? '<span class="plazo tarde">Producto nuevo por asignar</span>'
         : r.sinAsignar > 0 ? `<span class="plazo">${r.sinAsignar} sin asignar</span>`
         : r.sinCat > 0 ? '<span class="plazo aviso">Sin categoría de pago</span>'
         : '<span class="plazo ok">Todo asignado</span>';
@@ -294,7 +298,7 @@
     return `<div class="p-item">
       <div class="p-item-cab">
         <div class="p-item-foto">${fi.url ? window.AH.imgMini(fi.url, "", it.tipo) : iconoTipo(it.tipo, 22)}</div>
-        <div><div class="p-item-nom">${esc(it.nombre)}${it._de ? ` <span class="p-unidad">${it._unidad} de ${it._de}</span>` : it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div><div class="p-item-cant">${esc(sub)}${color ? ' · ' + esc(color) : ''}</div>${catHtml(it)}</div>
+        <div><div class="p-item-nom">${esc(it.nombre)}${esNuevo(it) ? ' <span class="p-unidad p-nuevo">Nuevo</span>' : ''}${it._de ? ` <span class="p-unidad">${it._unidad} de ${it._de}</span>` : it.cantidad > 1 ? ' ×' + it.cantidad : ''}</div><div class="p-item-cant">${esc(sub)}${color ? ' · ' + esc(color) : ''}</div>${catHtml(it)}</div>
       </div>
       ${fi.otroColor ? `<p class="p-foto-otra">${esc(etiquetaOtroColor(fi, it.tipo))}.${lectura ? '' : ` Sube la foto en ${esc(String(fi.color).toLowerCase())} en Catálogo.`}</p>` : ''}
       ${catFaltaHtml(it)}

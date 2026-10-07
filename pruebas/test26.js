@@ -248,7 +248,7 @@ async function entrar(b,user,rol,nombre){
  // Historial: todas cerradas
  await t.click('[data-pg-tab="historial"]');await t.waitForTimeout(200);
  ok('Historial: una fila por semana pagada, todas cerradas',(await t.$$('.pg-sem')).length===2 && (await t.$$('.pg-sem[open]')).length===0 && (await t.$$('.pg-sem .pg-est.pagado')).length===2);
- ok('La semana va de lunes a sábado',/\d+ al \d+ \w+/.test(await t.textContent('.pg-sem .pg-sem-s')));
+ ok('La semana va de lunes a sábado',/\d+( \w+)? al \d+ \w+/.test(await t.textContent('.pg-sem .pg-sem-s')));
  await t.screenshot({path:'shots5/t6-historial.png',fullPage:true});
  await t.click('.pg-sem >> nth=0 >> summary');await t.waitForTimeout(250);
  const rec=await t.textContent('.pg-sem[open]');
