@@ -160,7 +160,7 @@ async function entrar(b,user,rol,nombre){
  ok('Detalle: foto grande, su parte, fecha tope, pedido y lo que gana',!!(await t.$('#trabajoBody .hero img')) && det.includes('Tu parte: Hierro') && det.includes('Para el sáb') && det.includes('N° 40') && det.includes('Ganas $25'));
  ok('Franja del color: "Va en color BLANCO"',(await t.textContent('.tj-color'))==='Va en color BLANCO');
  const tabla=await t.$$eval('.tj-specs > div',x=>x.map(d=>d.textContent));
- ok('Tabla con todas las especificaciones',['Medidas2 × 1 m','VidrioNegro','ManillónH','Abre a laDerecha','AperturaAfuera','Bloque15'].every(v=>tabla.includes(v)),tabla);
+ ok('Tabla con todas las especificaciones',['Medidas2 × 1 m','Papel ahumadoNegro','ManillónH','Abre a laDerecha','AperturaAfuera','Bloque15'].every(v=>tabla.includes(v)),tabla);
  ok('Abajo, el mismo botón para terminar',(await t.textContent('#trabajoFoot [data-terminar-t="501"]'))==='Ya lo terminé · tomar foto');
  await t.screenshot({path:'shots5/t2-detalle.png'});
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
@@ -284,7 +284,7 @@ async function entrar(b,user,rol,nombre){
  const t503=trabajos.find(x=>x.id===503);
  trabajos=[
    {id:701,nombre:'Hierro',especialidad:'herrero',rama:'principal',oficio:'hierro',incluye:incC,unidades:1,para_el:SAB.este,venta_id:60,interna:false,fecha_entrega:dia(8),notas:null,producto:'Combo Imperial',tipo:'Combo',foto:GIF,foto_de:'Negro',cantidad:1,color:'Negro',especificaciones:{color:'Negro',alto:2.1,ancho:1,ventanas_alto:1.2,ventanas_ancho:1,variante:'Con protección en puerta',aluminio:'Ecobel'},espera:null,monto:40,iniciada_en:new Date().toISOString()},
-   {id:702,nombre:'Instalar en las protecciones',especialidad:'ventanero',rama:'ventana',oficio:'instalar',incluye:'2 ventanas en sus protecciones',unidades:1,para_el:SAB.este,venta_id:60,interna:false,fecha_entrega:dia(8),notas:null,producto:'Combo Imperial',tipo:'Combo',foto:GIF,foto_de:'Negro',cantidad:1,color:'Negro',especificaciones:{color:'Negro',alto:2.1,ancho:1,ventanas_alto:1.2,ventanas_ancho:1,variante:'Con protección en puerta',aluminio:'Ecobel'},espera:'Pintura',monto:0}
+   {id:702,nombre:'Instalar en las protecciones',especialidad:'ventanero',rama:'ventana',oficio:'instalar',incluye:'2 ventanas en sus protecciones',unidades:1,para_el:SAB.este,venta_id:60,interna:false,fecha_entrega:dia(8),notas:null,producto:'Combo Imperial',tipo:'Combo',foto:GIF,foto_de:'Negro',cantidad:1,color:'Negro',especificaciones:{color:'Negro',alto:2.1,ancho:1,ventanas_alto:1.2,ventanas_ancho:1,variante:'Con protección en puerta',aluminio:'Ecobel',vidrio_o_farquilla:'Vidrio',color_vidrio:'Negro',manillon:false,sentido:'Derecha',posicion:'Afuera',bloque:'10',papel_ahumado:true,color_ahumado:'Azul'},espera:'Pintura',monto:0}
  ];
  await t.goto('http://127.0.0.1:8765/index.html');await t.waitForSelector('.hoy');await t.waitForTimeout(400);
  const pz=await t.$$eval('.hoy .pz > span:not(.pz-n)',x=>x.map(y=>y.textContent));
@@ -298,6 +298,10 @@ async function entrar(b,user,rol,nombre){
  await t.screenshot({path:'shots6/g1-combo-gemelos.png'});
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
  await t.click('.dp[data-detalle="702"]');await t.waitForSelector('#sheetTrabajo.open');await t.waitForTimeout(300);
+ const gv=await t.$$eval('#trabajoBody .tj-gem-c',x=>x.map(c=>c.textContent.replace(/\s+/g,' ').trim()));
+ ok('Aluminio, instalar o detalles de un combo: dos cuadros, La puerta y Las ventanas, cada uno con lo suyo',gv.length===2 && gv[0].includes('La puerta') && gv[0].includes('2.1 × 1 m') && !/Aluminio|Ecobel/.test(gv[0]) && gv[1].includes('Las ventanas') && gv[1].includes('1.2 × 1 m') && gv[1].includes('Ecobel') && gv[1].includes('Papel ahumadoAzul') && gv[0].includes('Papel ahumadoNegro') && !/Vidrio/.test(gv.join(' ')) && gv[1].includes('En su protección') && !/Manill|Abre/.test(gv[1]) && !(await t.$('#trabajoBody .tj-specs')),gv);
+ await t.evaluate(()=>document.querySelector('#trabajoBody .tj-gem').scrollIntoView({block:'center'}));await t.waitForTimeout(300);
+ await t.screenshot({path:'shots6/g2-combo-ventanas.png'});
  ok('Instalar: "Este paso no se paga" y dice que espera la pintura de las protecciones',(await t.textContent('#trabajoBody')).includes('Este paso no se paga') && (await t.textContent('#trabajoFoot')).includes('Espera la pintura de las protecciones'));
  await t.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await t.waitForTimeout(400);
 

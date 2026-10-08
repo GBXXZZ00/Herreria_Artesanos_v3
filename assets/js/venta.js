@@ -119,7 +119,7 @@
         </div>
         ${it.bloqueado ? '' : `<div class="item-acc">
           <button type="button" data-editar="${i}" aria-label="Editar ${esc(it.nombre)}">${ICON_EDIT}</button>
-          <button type="button" class="quitar" data-quitar="${i}" aria-label="Quitar ${esc(it.nombre)}">${ICON_DEL}</button>
+          ${it.id && editVenta && editVenta.estado === 'en_produccion' ? '' : `<button type="button" class="quitar" data-quitar="${i}" aria-label="Quitar ${esc(it.nombre)}">${ICON_DEL}</button>`}
         </div>`}
       </div>`).join('')
       : '<div class="vacio-items">Todavía no hay productos.<br>Toca "Agregar producto".</div>';
@@ -693,7 +693,7 @@
     } catch(err){
       const m = String(err.message || '');
       toast(/fetch|network/i.test(m) ? 'Sin conexión. Tus cambios siguen aquí, intenta de nuevo'
-        : /_item_(quitar|pasos_reiniciar)/.test(m) ? 'Todavía no se puede quitar ni cambiar el tipo de un producto en fabricación. Avísale al administrador' : m, 'error');
+        : /_item_(quitar|pasos_reiniciar)/.test(m) ? 'A un producto que ya está en fabricación no se le cambia el tipo. Agrega uno nuevo' : m, 'error');
       btn.disabled = false; btn.textContent = 'Guardar cambios';
     } finally { guardando = false; }
   }
