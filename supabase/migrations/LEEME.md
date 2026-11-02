@@ -13,7 +13,7 @@ La clave queda guardada cifrada en GitHub: no se ve en el repo ni en los registr
 
 ## Ojo
 - Varias funciones se corrigieron después con `execute_sql` (parches con `pg_get_functiondef`). Esos cambios NO están en las migraciones. Para el estado real, mirar `supabase/esquema-actual.sql` o leer la función en la base.
-- Desde ahora, todo cambio de base se hace como migración nueva con nombre `vNN_que_hace` y se describe en el PR (ver `CLAUDE.md`).
+- Desde ahora, todo cambio de base se hace como migración nueva con nombre `vNN_<autor>_que_hace` y la primera línea `-- Autor: ...` y se describe en el PR (ver `CLAUDE.md`).
 
 ## Lista (88, en orden)
 | Versión | Nombre |

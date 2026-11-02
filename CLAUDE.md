@@ -74,15 +74,35 @@ Es una guía, no un muro: cualquiera puede tocar cualquier parte, siguiendo esta
 
 ## Base de datos y migraciones
 - RLS activo en toda tabla nueva. Las reglas importantes van en funciones `security definer` que revisan `auth.uid()` y el rol (`_es_admin()`, `_es_deposito()`, `_es_ray()`, `_lleva_madera()`, `_puede_madera()`), y con `revoke execute ... from anon` cuando no la usa el cliente sin sesión.
-- Cada cambio de base es una migración nueva: archivo `supabase/migrations/<version>_vNN_que_hace.sql` **dentro del PR**. Se aplica a la base (con el conector de Supabase, `apply_migration`, mismo nombre) **solo después de que el PR esté aprobado** por los dos, justo antes de unirlo.
+- Cada cambio de base es una migración nueva: archivo `supabase/migrations/<version>_vNN_<autor>_que_hace.sql` (empieza con `-- Autor: ...`) **dentro del PR**. Se aplica a la base (con el conector de Supabase, `apply_migration`, mismo nombre) **solo después de que el PR esté aprobado** por los dos, justo antes de unirlo.
 - Si una migración borra datos (`delete`, `drop`, `revoke`) el conector pide confirmación: si dice "cancelled", no se insiste ni se esquiva.
 - Toda llamada a Supabase maneja el error y la falta de señal con un `.toast` claro.
 
+## Quién hizo qué (obligatorio)
+Los dos usan la misma cuenta de GitHub y de Supabase. Por eso cada cambio lleva la marca de quién lo hizo **dentro** del cambio:
+
+| Dónde | Ray | Gualfredo |
+|---|---|---|
+| Nombre en git (al empezar cada sesión, dentro del repo) | `git config user.name "Ray (Claude de Ray)"` | `git config user.name "Gualfredo (Claude de Gualfredo)"` |
+| Correo en git | `git config user.email "ray@artesanos.app"` | `git config user.email "gualfredo@artesanos.app"` |
+| Última línea del mensaje de cada commit | `Hecho-por: Ray` | `Hecho-por: Gualfredo` |
+| Rama | `ray/<tema>` | `gualfredo/<tema>` |
+| Título del PR | `[Ray] ...` | `[Gualfredo] ...` |
+| Texto del PR | `Hecho por: Ray (Claude de Ray)` | `Hecho por: Gualfredo (Claude de Gualfredo)` |
+| Nombre de la migración | `vNN_ray_que_hace` | `vNN_gualfredo_que_hace` |
+| Primera línea del archivo de migración | `-- Autor: Ray (Claude de Ray)` | `-- Autor: Gualfredo (Claude de Gualfredo)` |
+| Bitácora | `## AAAA-MM-DD · Claude de Ray` | `## AAAA-MM-DD · Claude de Gualfredo` |
+
+- Antes del primer commit revisa con `git config user.name` que salga tu nombre. Si sale otro, corrígelo antes de seguir.
+- Si un socio pide que el otro Claude toque algo suyo, el commit lleva la marca de quien lo hizo, no la de quien lo pidió.
+- Para ver quién hizo qué: `git log --format='%h %an %s'`, la lista de PR en GitHub, la lista de migraciones en Supabase y la bitácora.
+- Los cambios hechos antes del 2 nov 2026 son todos de Gualfredo (Claude de Gualfredo).
+
 ## Ramas y Pull Requests
-1. Nadie trabaja directo en `main`. Crea una rama desde `main` actualizado: `ray/<tema>` o `gualfredo/<tema>` (o `docs/<tema>`).
+1. Nadie trabaja directo en `main`. Crea una rama desde `main` actualizado: `ray/<tema>` o `gualfredo/<tema>`.
 2. Anota en `docs/bitacora.md` qué vas a tocar, para no chocar.
 3. Cambios pequeños. Corre las pruebas. Haz una revisión independiente del cambio y corrige lo encontrado.
-4. Abre un PR hacia `main` con: qué cambia, por qué, pruebas corridas, migraciones incluidas y qué deben probar los socios en el teléfono.
+4. Abre un PR hacia `main` con título `[Ray]` o `[Gualfredo]` y: quién lo hizo, qué cambia, por qué, pruebas corridas, migraciones incluidas y qué deben probar los socios en el teléfono.
 5. El otro socio (o su Claude) lo revisa. Se une solo con el OK de los dos. Al unir, se publica solo en GitHub Pages.
 6. Después de unir: aplica la migración si la hay y agrega la entrada en la bitácora.
 
