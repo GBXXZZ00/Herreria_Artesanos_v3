@@ -12,7 +12,7 @@ Es una guía, no un muro: cualquiera puede tocar cualquier parte, siguiendo esta
 1. Lee `docs/bitacora.md` (qué hizo el otro y qué está tocando) y la entrada más nueva.
 2. Lee `docs/claude/documentos/traspaso-chat.md` y `traspaso-chat-novedades-v71.md`: estado, reglas y pendientes.
 3. Según lo que vayas a hacer: `docs/modulos.md` (pantallas) y `docs/base-de-datos.md` (tablas, RLS, funciones).
-4. Explica la propuesta a tu socio en palabras simples y espera su OK antes de programar algo nuevo. Si aprobó un lote, hazlo completo.
+4. Explica la propuesta a tu socio (Ray o Gualfredo, el que te está hablando) en palabras simples y espera su OK antes de programar algo nuevo. Si aprobó un lote, hazlo completo. No hace falta el OK del otro socio.
 
 ## Tecnología (no se cambia)
 - HTML, CSS nativo con variables en `:root` y JavaScript vainilla. **Prohibido** React, Next, Angular, Vue, Tailwind, Bootstrap o parecidos.
@@ -65,7 +65,8 @@ Es una guía, no un muro: cualquiera puede tocar cualquier parte, siguiendo esta
 - Sin morados, sin gradientes de adorno, sin sombras negras puras. Anima solo `transform` y `opacity`, menos de 300 ms. `:active` con `scale(0.97)`.
 - Los PDF usan el diseño del PDF de la venta (`ventas-comun.js`, jsPDF).
 
-## Qué no se toca sin acordarlo entre los dos
+## Con cuidado (avísalo en la bitácora y en el PR)
+No hace falta pedir permiso al otro socio, pero estas partes afectan a todos: dilo claro en la bitácora y en el PR.
 - `assets/js/supabase-client.js`, `sw.js`, `sesion.js` y `manifest.json`.
 - Las reglas de dinero y permisos de la base: confirmar pagos, nómina, vales, cancelar ventas, RLS.
 - Las tablas `etapas`, `vales` y `pagos_trabajador` se escriben **solo** por sus funciones.
@@ -74,7 +75,7 @@ Es una guía, no un muro: cualquiera puede tocar cualquier parte, siguiendo esta
 
 ## Base de datos y migraciones
 - RLS activo en toda tabla nueva. Las reglas importantes van en funciones `security definer` que revisan `auth.uid()` y el rol (`_es_admin()`, `_es_deposito()`, `_es_ray()`, `_lleva_madera()`, `_puede_madera()`), y con `revoke execute ... from anon` cuando no la usa el cliente sin sesión.
-- Cada cambio de base es una migración nueva: archivo `supabase/migrations/<version>_vNN_<autor>_que_hace.sql` (empieza con `-- Autor: ...`) **dentro del PR**. Se aplica a la base (con el conector de Supabase, `apply_migration`, mismo nombre) **solo después de que el PR esté aprobado** por los dos, justo antes de unirlo.
+- Cada cambio de base es una migración nueva: archivo `supabase/migrations/<version>_vNN_<autor>_que_hace.sql` (empieza con `-- Autor: ...`) **dentro del PR**. Se aplica a la base (con el conector de Supabase, `apply_migration`, mismo nombre) cuando tu socio dio el OK, justo antes de unir el PR. Nunca antes de que pasen las pruebas.
 - Si una migración borra datos (`delete`, `drop`, `revoke`) el conector pide confirmación: si dice "cancelled", no se insiste ni se esquiva.
 - Toda llamada a Supabase maneja el error y la falta de señal con un `.toast` claro.
 
@@ -103,8 +104,13 @@ Los dos usan la misma cuenta de GitHub y de Supabase. Por eso cada cambio lleva 
 2. Anota en `docs/bitacora.md` qué vas a tocar, para no chocar.
 3. Cambios pequeños. Corre las pruebas. Haz una revisión independiente del cambio y corrige lo encontrado.
 4. Abre un PR hacia `main` con título `[Ray]` o `[Gualfredo]` y: quién lo hizo, qué cambia, por qué, pruebas corridas, migraciones incluidas y qué deben probar los socios en el teléfono.
-5. El otro socio (o su Claude) lo revisa. Se une solo con el OK de los dos. Al unir, se publica solo en GitHub Pages.
+5. **Cada uno une su propio PR** cuando las pruebas pasan y su socio dio el OK del trabajo. No hace falta esperar ni pedir permiso al otro. Al unir, se publica solo en GitHub Pages.
 6. Después de unir: aplica la migración si la hay y agrega la entrada en la bitácora.
+7. Si algo publicado se daña, se deshace el PR con "Revert" en GitHub y se avisa en la bitácora.
+
+## Corregir lo del otro
+- Cualquiera puede corregir o mejorar lo que hizo el otro: en su propia rama, con su marca, y avisando en la bitácora qué corrigió y por qué.
+- Antes de tocar algo que el otro tiene en curso (mira "Está tocando" en la bitácora), trae su rama o espera a que la una, para no pisarse.
 
 ## Documentos
 - `docs/bitacora.md`: cuaderno compartido de sesiones.

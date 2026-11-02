@@ -18,7 +18,7 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 - Después: agregó a `CLAUDE.md` la sección "Quién hizo qué" (nombre en git, `Hecho-por:`, ramas, título del PR, migraciones y bitácora marcadas por autor), porque Ray y Gualfredo usan la misma cuenta de GitHub y Supabase.
 - Está tocando: solo documentación.
 - Pendientes:
-  - Ray y Gualfredo revisan y unen el PR.
+  - (Hecho) Se acordó que cada uno une su propio PR; no hace falta el OK de los dos.
   - Gualfredo agrega el secreto `SUPABASE_DB_URL` y corre "Bajar migraciones y esquema" (ver `supabase/migrations/LEEME.md`).
   - Proteger `main` en GitHub (Settings > Branches: pedir PR antes de unir).
   - Subir al repo el código de las edge functions (`notificar`, `gestionar_usuarios`, `copiar_fotos`).

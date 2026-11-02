@@ -129,4 +129,4 @@ Las 88 migraciones aplicadas están listadas en `supabase/migrations/LEEME.md`. 
 - El bucket `comprobantes` deja leer a cualquiera con sesión, también a un trabajador.
 - Cualquiera con sesión puede subir a `catalogo-fotos` y `etapas-fotos` (también un trabajador al catálogo).
 
-Nada de esto se ha cambiado: queda para un PR aparte, con el OK de los dos.
+Nada de esto se ha cambiado: queda para un PR aparte.
