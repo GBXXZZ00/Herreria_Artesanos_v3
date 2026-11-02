@@ -1,0 +1,54 @@
+# Baja de Supabase (solo lectura) las migraciones aplicadas y el esquema actual,
+# y los guarda en la rama desde la que se corre. Se corre a mano desde Actions.
+# Necesita el secreto SUPABASE_DB_URL (ver supabase/migrations/LEEME.md).
+name: Bajar migraciones y esquema
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bajar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cliente de PostgreSQL 17
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
+
+      - name: Migraciones aplicadas
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          pip install "psycopg[binary]"
+          python3 - <<'PY'
+          import os, psycopg
+          with psycopg.connect(os.environ['DB']) as c:
+              c.execute('set transaction read only')
+              filas = c.execute("select version, name, statements from supabase_migrations.schema_migrations order by version").fetchall()
+          for v, n, st in filas:
+              partes = [s.rstrip() for s in (st or []) if s and s.strip()]
+              texto = '\n\n'.join(p if p.endswith(';') else p + ';' for p in partes)
+              with open(f'supabase/migrations/{v}_{n}.sql', 'w') as f:
+                  f.write(texto + '\n')
+          print(len(filas), 'migraciones')
+          PY
+
+      - name: Esquema actual
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump "$DB" --schema-only --schema=public --no-owner > supabase/esquema-actual.sql
+
+      - name: Guardar en la rama
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/
+          git diff --cached --quiet && echo "Sin cambios" && exit 0
+          git commit -m "Migraciones y esquema bajados de Supabase (solo lectura)"
+          git push
