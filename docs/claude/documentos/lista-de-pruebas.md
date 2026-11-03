@@ -43,6 +43,8 @@ Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue 
   - [ ] PDF con un pago sin confirmar: el pago sale normal, sin "(por confirmar)" ni la nota de pago pendiente. En la ficha sí dice "Por confirmar". La página de seguimiento sigue diciendo "En revisión".
   - [ ] Teléfono de otro país pegado de WhatsApp (por ejemplo +1 305 555 1234): se guarda, se ve "+1 …" en la ficha y en el PDF, y "Escribirle" abre su chat. Uno de Venezuela sigue igual (0414…).
   - [ ] Gualfredo confirma un pago y el pedido pasa solo a fabricación. A Gualfredo le llega el aviso de cada pago por confirmar.
+  - [ ] Gualfredo también puede pagar la nómina, aprobar vales y revisar entregas del Depósito.
+  - [ ] Producción en el teléfono: una tarjeta con varios pasos a la vez no corre la pantalla hacia los lados.
 - 29 y 30 sep (v47 a v65), resumen: combos con ventanas y protecciones, asignar con fecha, inicio del trabajador, vales, Cotización o Venta con detalles para fabricar, Depósito (entregar, revisar, compra grande), atajos en avisos rojos, PDF en Android, Solo protección y monto del marco, fotos rápidas, ficha de la venta en fabricación, Ayuda dentro de la app y Manuales de uso.
 - 30 sep (v66): **Categorías de pago por producto, Aluminio y detalles de ventana.**
   - [ ] Categorías de pago: una por producto; salen solo sus trabajos. Masilla y pintura es un solo monto. El extra de protección va en su recuadro.

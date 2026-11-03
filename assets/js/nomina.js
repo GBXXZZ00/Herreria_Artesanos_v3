@@ -121,7 +121,7 @@
       html += `<div class="vp" data-vale="${esc(vp.id)}"><span style="min-width:0"><span class="vp-t">Pide un vale${vp.nota ? ' · ' + esc(vp.nota) : ''}</span>
         <span class="vp-s">${esc(fechaHora(vp.fecha))} · <b>${esc(dinero(vp.monto))}</b></span></span>
         ${ficha.puede_pagar ? '<span class="vp-acc"><button class="vp-no" type="button" data-resolver="no">Rechazar</button><button class="vp-si" type="button" data-resolver="si">Aprobar</button></span>'
-          : '<span class="vp-ray">Ray lo decide</span>'}</div>`;
+          : '<span class="vp-ray">Lo decide Ray o Gualfredo</span>'}</div>`;
     }
     if(!tr.length && !va.length) html += `<div class="vacio-s">No tiene trabajos terminados esta semana.</div>`;
     if(tr.length) html += '<p class="tit">Trabajos terminados (hasta el sábado)</p>' + tr.map(filaItem).join('');
@@ -147,7 +147,7 @@
         <button class="btn-primary" type="button" id="btnPagar" data-neto="${neto}" ${puede ? '' : 'disabled'}>${puede ? 'Marcar pagado ' + esc(dinero(neto)) : sinMonto ? 'Falta el monto de ' + (sinMonto === 1 ? 'un trabajo' : sinMonto + ' trabajos') : neto < 0 ? 'Los vales pasan lo trabajado' : 'Nada por pagar'}</button>
         <button class="btn-secondary" type="button" id="btnAnotarVale">Anotar un vale</button></div>`;
     } else {
-      $('trabFoot').innerHTML = '<p class="solo-ray">Solo Ray marca los pagos y aprueba o anota vales.</p>';
+      $('trabFoot').innerHTML = '<p class="solo-ray">Solo Ray o Gualfredo marcan los pagos y aprueban o anotan vales.</p>';
     }
   }
   function pintarHistorial(){

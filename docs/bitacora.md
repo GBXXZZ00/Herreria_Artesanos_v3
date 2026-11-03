@@ -23,7 +23,9 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
   - Prueba nueva test41 y ajuste en test15.
 - Rama o PR: `gualfredo/nueva-gestion`, PR #2.
 - Está tocando: nada más después de unir.
-- Pendientes: textos de Nómina y Depósito que dicen "Solo Ray" (ahora Gualfredo también puede). Lo de Gualfredo en la app: usuario carpintero y categoría de pago de Madera para los 6 modelos.
+  - Textos de Nómina, Depósito y el inicio del trabajador: "Solo Ray o Gualfredo…", "Lo decide Ray o Gualfredo", "Te avisamos cuando te asignen uno" (app y manual).
+  - Producción: una etiqueta larga en la tarjeta ("En masilla y pintura y ensamblar") estiraba la pantalla hacia los lados; ahora baja de línea. Por eso fallaba test21 desde antes; ya pasa y revisa que no vuelva a pasar.
+- Pendientes: lo de Gualfredo en la app (usuario carpintero y categoría de pago de Madera para los 6 modelos), se resuelve después.
 
 ## 2026-11-02 · Claude de Ray
 - Qué hizo: aplicó la limpieza de la nueva gestión (v72, con ensayo previo y OK de Ray): copia en `respaldos` y base vacía, clientes se quedan, próxima venta 1099. Desactivó el usuario vendedor "Prueba". Hizo las maquetas de los botones de PDF (aprobadas). Dejó todo lo que falta, ya aprobado por Ray, en `docs/tareas/2026-11-02-ray-pendiente-para-code.md` para hacerlo desde Claude Code.

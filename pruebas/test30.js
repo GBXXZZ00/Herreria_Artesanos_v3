@@ -57,7 +57,7 @@ const txt=async(p,s)=>((await p.textContent(s))||'').replace(/\s+/g,' ');
  ok('Gualfredo no tiene botón de pagar ni de anotar vale',!(await g.$('#btnPagar')) && !(await g.$('#btnAnotarVale')) && (await txt(g,'#trabFoot')).includes('Solo Ray'));
  await g.click('#sheetTrab [data-cerrar="sheetTrab"]');await g.waitForTimeout(400);
  await g.click('.n-card >> nth=1');await g.waitForSelector('#sheetTrab.open');await g.waitForTimeout(300);
- ok('Gualfredo ve el vale que pidió Pedro pero sin botones: "Ray lo decide"',!!(await g.$('.vp')) && !(await g.$('.vp [data-resolver]')) && (await txt(g,'.vp')).includes('Ray lo decide'));
+ ok('Gualfredo ve el vale que pidió Pedro pero sin botones: "Lo decide Ray o Gualfredo"',!!(await g.$('.vp')) && !(await g.$('.vp [data-resolver]')) && (await txt(g,'.vp')).includes('Lo decide Ray o Gualfredo'));
 
  // Ray
  const r=await entrar(b,'u2','222222');pags.push(r);
