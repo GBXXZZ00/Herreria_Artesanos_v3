@@ -39,9 +39,9 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Vendedora también puede activar avisos',!(await y.$eval('#btnNotif',x=>x.classList.contains('hidden'))));
  await y.goto('http://127.0.0.1:8765/ventas.html?abrir=2');await y.waitForSelector('#sheetFicha.open');await y.waitForTimeout(1500);
  ok('Abrir por enlace (notificación) abre la ficha',(await y.textContent('.f-num')).includes('N° 2'));
- ok('Ya no existe "Pedir a producción": explica que pasa solo al confirmar el pago',!(await y.$('[data-accion="pedir-produccion"]')) && (await y.textContent('#fichaBody .btn-guia.espera')).includes('Espera que Ray confirme el pago') && (await y.textContent('#fichaBody .btn-guia.espera')).includes('pasa solo a fabricación'));
+ ok('Ya no existe "Pedir a producción": explica que pasa solo al confirmar el pago',!(await y.$('[data-accion="pedir-produccion"]')) && (await y.textContent('#fichaBody .btn-guia.espera')).includes('Espera que confirmen el pago') && (await y.textContent('#fichaBody .btn-guia.espera')).includes('pasa solo a fabricación'));
  ok('Nadie ve "Pasar a En producción"',!(await y.$('#fichaBody [data-estado="en_produccion"]')));
- ok('La vendedora no puede cancelar una venta',!(await y.$('#fichaBody [data-accion="cancelar"]')) && (await y.textContent('#fichaBody')).includes('Editar, PDF y seguimiento'));
+ ok('La vendedora no puede cancelar una venta',!(await y.$('#fichaBody [data-accion="cancelar"]')) && (await y.textContent('#fichaBody')).includes('Editar y seguimiento'));
  ok('Enlace para ver el seguimiento en la ficha',(await y.getAttribute('#fichaBody a.btn-grid[target="_blank"]','href')).includes('seguimiento.html?t=aaaaaaaa-bbbb-4ccc-8ddd-000000000002'));
  await y.screenshot({path:'shots4/s1-pasos-vendedora.png'});
  // Admin: aviso en Inicio
