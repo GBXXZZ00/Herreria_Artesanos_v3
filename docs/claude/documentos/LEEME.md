@@ -14,6 +14,7 @@ Copia literal (2 nov 2026) de los documentos del conocimiento del proyecto "App 
 | `produccion-trabajador-nomina.md` | Cómo se definió la vista del trabajador (28 sep). Histórico. |
 | `lote-siguiente.md`, `lote-aprobado.md` | Estado de lotes al 30 sep. Histórico. |
 | `plan-finanzas-costos.md` | Plan de Ray (2 nov): Finanzas, Proveedores, Compras y Costos por lotes. La maqueta está en la rama `ray/maqueta-finanzas-costos`, carpeta `maqueta/`. |
+| `prompt-claude-code.md` | Prompt de Ray para que Claude Code haga los lotes seguidos, con pruebas, y espere su OK para unir y aplicar migraciones. |
 
 ## Lo que no se copió
 - `claude/manual/*.html` y `claude/manual/herramientas-manual.txt`: son la versión del 30 sep de los manuales y sus herramientas. En el repo ya está la versión al día: herramientas en `pruebas/manual/`, fuentes en `pruebas/manual/fuente/` y la ayuda en `assets/ayuda/`. Copiarlos dejaría dos versiones que no coinciden.

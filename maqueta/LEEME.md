@@ -18,8 +18,8 @@ En la dirección de la app publicada (`github.io`) no abre a propósito: guardar
 ## Qué es nuevo y qué cambió
 | Archivo | Qué |
 |---|---|
-| `finanzas.html`, `assets/js/finanzas.js` | Nuevo. Finanzas: Dinero (pagos por confirmar, todo lo tuyo, lo que ganas, por ubicar, cuentas, te deben), Proveedores (ficha, transferencias, estado de cuenta, cambiar saldo con historial, editar con tipos e IVA), Gastos |
-| `costos.html`, `assets/js/costos.js` | Nuevo. Costos: modelos con semáforo, ficha del costeo (piezas, barras, hojas, pintura, accesorios, extras, mano de obra), duplicar, en diseño, pasar al catálogo, materiales por proveedor, reglas |
+| `finanzas.html`, `assets/js/finanzas.js` | Nuevo. Finanzas: Dinero (pagos por confirmar; reportes sencillos de dos columnas, nombre y número con + o −: tu dinero hoy y lo que ganas este mes; por ubicar, cuentas, te deben), Proveedores (ficha, transferencias, estado de cuenta, cambiar saldo con historial, editar con tipos e IVA), Gastos |
+| `costos.html`, `assets/js/costos.js` | Nuevo. Costos en 4 pestañas: **Modelos** (semáforo, ficha del costeo con piezas, barras, hojas, pintura, accesorios, extras y mano de obra; duplicar, en diseño, pasar al catálogo), **Corte** (plan de corte de la semana: junta los pedidos en fabricación, usa primero los retazos, barras a comprar, ahorro por cortar junto, costo y ganancia por pedido, hoja de corte para el herrero), **Precios** (lista de precios sin IVA por proveedor) y **Reglas** |
 | `assets/css/modulo.css` | Nuevo. Estilos de `deposito.html` sacados aparte para Finanzas y Costos |
 | `assets/js/deposito-nuevo.js` | Nuevo. Depósito › Fabricación (barras, plan de corte, conteo) y Compras (foto o a mano, saldo del proveedor, "ya le transferí aparte") |
 | `deposito.html`, `assets/js/deposito.js` | Cambiado. Pestañas Consumibles · Fabricación · Compras; en computadora el detalle se abre al lado |

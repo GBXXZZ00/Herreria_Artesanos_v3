@@ -15,6 +15,7 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 ## 2026-11-02 · Claude de Ray
 - Qué hizo: maqueta viva de Finanzas, Proveedores, Compras (Depósito) y Costos, sobre una copia de la app con datos de ejemplo (`maqueta/`, con su `LEEME.md`). No toca la app, la base ni `main`. Plan por lotes en `docs/claude/documentos/plan-finanzas-costos.md`.
 - Rama o PR: `ray/maqueta-finanzas-costos` (PR en borrador, **no se une**: la carpeta `maqueta/` no debe publicarse).
+- Después (3 nov): Costos › Corte (plan de corte de la semana con retazos, ahorro y hoja de corte), Costos › Precios con explicación, reportes de Finanzas en dos columnas (nombre y número con + o −) y estado de cuenta en dos columnas. Prompt para Claude Code en `docs/claude/documentos/prompt-claude-code.md`. Pruebas: 25 de 27 TODO OK; `test21` se corta en un clic y `test26` falla a veces, igual en `main` (esta rama no cambia la app).
 - Está tocando: nada de la app todavía. Los próximos lotes tocan `abonos` (seguridad, lote 1), Depósito (lote 5) y una fila en la ficha del Catálogo (lote 6). Inicio gana avisos y cuadros de Finanzas y Costos (solo admin).
 - Pendientes:
   - Respuestas de los socios a las preguntas del plan (Zelle, Torniplemaca, Colores y Ambiente, quién registra, Bs, nómina con cuenta).

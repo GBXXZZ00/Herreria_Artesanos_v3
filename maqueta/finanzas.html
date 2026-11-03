@@ -24,6 +24,13 @@
   .grande.favor{background:#E6F0F0} .grande.favor b{color:var(--accent)}
   .grande.debe{background:#FDF1EF} .grande.debe b{color:#B42318}
   .dinero-l{display:flex;flex-direction:column}
+  .rep{border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .rep-f{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:12px 14px;text-align:left;font-size:15px;font-weight:700}
+  .rep-f + .rep-f{border-top:1px solid var(--line)}
+  button.rep-f:active{background:var(--surface-2)}
+  .rep-f b{font-size:16px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .rep-f.total{background:var(--surface-2);font-size:16px}
+  .rep-f.total b{font-size:20px}
   .din{display:flex;align-items:center;gap:10px;padding:11px 2px;width:100%;text-align:left}
   .din + .din{border-top:1px solid var(--line)}
   .din .din-t{flex:1;min-width:0;font-size:15px;font-weight:700}

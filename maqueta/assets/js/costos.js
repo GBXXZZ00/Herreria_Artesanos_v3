@@ -25,10 +25,10 @@
   // ================= Pantalla =================
   function pintar(){
     document.querySelectorAll('#tabs [data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-    $('tabs').classList.toggle('en-2', tab === 'materiales'); $('tabs').classList.toggle('en-3', tab === 'reglas');
+    const idx = ['modelos','corte','materiales','reglas'].indexOf(tab); $('tabs').querySelector('.seg-fondo').style.transform = `translateX(${idx * 100}%)`;
     $('filtros').classList.toggle('hidden', tab !== 'modelos');
     $('pieMat').classList.toggle('hidden', ancho.matches || tab !== 'materiales');
-    const html = tab === 'modelos' ? secModelos() : tab === 'materiales' ? secMateriales() : secReglas();
+    const html = tab === 'modelos' ? secModelos() : tab === 'corte' ? secCorte() : tab === 'materiales' ? secMateriales() : secReglas();
     $('cont').innerHTML = `<div class="cos-grid"><div style="min-width:0">${html}</div><div id="panel"></div></div>`;
     if(ancho.matches && sel && tab === 'modelos') pintarFicha();
   }
@@ -112,11 +112,89 @@
     else { $('detTitulo').textContent = m.nombre; $('detBody').innerHTML = body; $('detFoot').innerHTML = foot; }
   }
 
+  // ================= Plan de corte de la semana (como el Costeador de Ray) =================
+  // Junta las piezas de todos los pedidos en fabricación (y los que Ray agregue para probar),
+  // usa primero los retazos del depósito y acomoda el resto en el menor número de barras.
+  const COLORES = ['#17555C', '#B7791F', '#3F6E4E', '#6F7C7E', '#8A5A00', '#2E4A62'];
+  function empacarCorte(piezas, largo, corte, retazos){
+    const L = piezas.slice().sort((a, b) => b.cm - a.cm), barras = [], rets = (retazos || []).map(r => ({ piezas:[], libre:r, largo:r, retazo:true })).sort((a, b) => a.libre - b.libre);
+    for(const p of L){
+      let r = rets.find(x => x.libre + 1e-9 >= p.cm); // primero un retazo donde quepa
+      if(r){ r.piezas.push(p); r.libre = Math.max(0, r.libre - p.cm - corte); continue; }
+      let b = barras.find(x => x.libre + 1e-9 >= p.cm);
+      if(!b){ b = { piezas:[], libre:largo, largo }; barras.push(b); }
+      b.piezas.push(p); b.libre = Math.max(0, b.libre - p.cm - corte);
+    }
+    return { barras, retazos:rets.filter(r => r.piezas.length) };
+  }
+  function pedidosSemana(){
+    const d = D(), out = [];
+    d.enFabricacion.forEach(p => { const m = d.catalogo.find(x => x.nombre === p.producto); out.push({ etq:'N° ' + p.venta, det:p.cliente, m, cant:p.cantidad, pedido:true }); });
+    Object.entries(d.planPrueba || {}).forEach(([id, n]) => { if(n > 0){ const m = modelo(id); if(m) out.push({ etq:'Prueba', det:'agregado por Ray', m, cant:n, prueba:true, id:m.id }); } });
+    return out.map((p, i) => Object.assign(p, { color:COLORES[i % COLORES.length], x:p.m ? X.costear(p.m.id, { prov, modo:'metro' }) : null }));
+  }
+  function plan(){
+    const d = D(), R = d.reglas, iva = 1 + R.iva / 100, peds = pedidosSemana().filter(p => p.x);
+    const porMat = {}, solo = {}, hojas = {};
+    peds.forEach(p => {
+      p.x.c.piezas.forEach(([mid, n, cm, nota]) => { for(let i = 0; i < n * p.cant; i++) (porMat[mid] ||= []).push({ cm, nota, color:p.color, etq:p.etq }); });
+      // cuántas barras usaría este pedido cortado solo (para ver el ahorro de cortar juntos)
+      const pm = {}; p.x.c.piezas.forEach(([mid, n, cm]) => { for(let i = 0; i < n * p.cant; i++) (pm[mid] ||= []).push({ cm }); });
+      Object.entries(pm).forEach(([mid, pz]) => { const f = d.fab.find(y => y.id === mid); solo[mid] = (solo[mid] || 0) + X.empacar(pz, f.largo, R.corte).length; });
+      p.x.c.hojas.forEach(([mid, n, a, h]) => { hojas[mid] = (hojas[mid] || 0) + n * a * h / 10000 * p.cant; });
+    });
+    const mats = Object.entries(porMat).map(([mid, pz]) => {
+      const f = d.fab.find(y => y.id === mid), pr = X.precioFab(f, prov);
+      const { barras, retazos } = empacarCorte(pz, f.largo, R.corte, f.retazos);
+      const comprar = Math.max(0, barras.length - f.stock), precioBarra = pr.p * iva;
+      return { f, pz, barras, retazos, usa:barras.length, comprar, precioBarra, costoCompra:comprar * precioBarra, solo:solo[mid] || barras.length, de:pr.de };
+    });
+    const hj = Object.entries(hojas).map(([mid, m2]) => { const f = d.fab.find(y => y.id === mid), hm2 = f.hoja[0] * f.hoja[1] / 10000; return { f, m2, hojas:m2 / hm2, comprar:Math.max(0, Math.ceil(m2 / hm2 - 1e-9) - f.stock) }; });
+    const ahorroBarras = mats.reduce((a, m) => a + Math.max(0, m.solo - m.usa), 0), ahorro = mats.reduce((a, m) => a + Math.max(0, m.solo - m.usa) * m.precioBarra, 0);
+    return { peds, todos:pedidosSemana(), mats, hj, comprar:mats.reduce((a, m) => a + m.costoCompra, 0), ahorroBarras, ahorro };
+  }
+  function secCorte(){
+    const P = plan(), d = D();
+    $('subtitulo').textContent = P.peds.length ? `${P.peds.reduce((a, p) => a + p.cant, 0)} puertas para cortar esta semana` : 'Plan de corte de la semana';
+    const costoSemana = P.peds.reduce((a, p) => a + p.x.costo * p.cant, 0), ventaSemana = P.peds.filter(p => p.pedido).reduce((a, p) => a + p.x.hoy * p.cant, 0);
+    let h = `<p class="mat-s" style="margin:0 2px 10px">Junta las piezas de todos los pedidos que están en fabricación, usa primero los retazos y las acomoda en el menor número de barras. Así sabes qué comprar y cómo cortar.</p>
+      <div class="field-label">Precios de</div>
+      <div class="opts" style="--cols:2;margin-bottom:12px">${d.proveedores.filter(p => p.tipos.includes('hierro')).map(p => `<button class="opt ${p.id === prov ? 'selected' : ''}" type="button" data-prov="${p.id}">${esc(p.nombre.replace('Inversiones ', ''))}</button>`).join('')}</div>
+      <div class="res"><div class="res-c ${P.comprar ? 'rojo' : 'ok'}"><span>Comprar para esta semana</span><b>${dinero(P.comprar)}</b></div><div class="res-c"><span>Barras a comprar</span><b>${P.mats.reduce((a, m) => a + m.comprar, 0)}</b></div></div>
+      <div class="tit" style="margin-top:4px">Pedidos de la semana</div>`;
+    h += P.todos.map(p => `<div class="ped-c"><span class="dot" style="background:${p.color}"></span>
+        <span><b>${esc(p.etq)} · ${esc(p.m ? p.m.nombre : 'sin modelo')} × ${p.cant}</b><small>${esc(p.det)}${p.x ? ' · costo ' + dinero(p.x.costo * p.cant) + (p.pedido ? ' · gana ' + dinero((p.x.hoy - p.x.costo - p.x.fijos) * p.cant) : '') : ' · sin costear: no entra al plan'}</small></span>
+        ${p.prueba ? `<span class="stp"><button type="button" data-prueba="${esc(p.id)}" data-d="-1" aria-label="Menos">−</button><span>${p.cant}</span><button type="button" data-prueba="${esc(p.id)}" data-d="1" aria-label="Más">+</button></span>` : `<span class="m">${p.x ? dinero(p.x.hoy * p.cant) : ''}</span>`}</div>`).join('') || '<p class="mat-s">No hay pedidos en fabricación.</p>';
+    h += `<div class="tot" style="margin-top:8px"><div class="fila"><span>Costo de lo que se corta</span><b>${dinero(costoSemana)}</b></div><div class="fila"><span>Venta de esos pedidos</span><b>${dinero(ventaSemana)}</b></div></div>
+      <button class="btn-nuevo" type="button" data-agregar-prueba>+ Agregar modelos para probar</button>`;
+    if(P.ahorroBarras) h += `<div class="ahorro">Cortando todo junto se usan ${P.ahorroBarras} ${P.ahorroBarras === 1 ? 'barra menos' : 'barras menos'} que cortando cada puerta aparte. Ahorro: ${dinero(P.ahorro)}.</div>`;
+    h += `<div class="tit">Barras y cómo se cortan</div><div class="leg">${P.peds.map(p => `<span><i style="background:${p.color}"></i>${esc(p.etq)}</span>`).join('')}<span><i style="background:#F1E4D6"></i>Sobra</span><span><i style="background:#fff;outline:2px dashed #B7791F;outline-offset:-2px"></i>Retazo del depósito</span></div>`;
+    h += P.mats.map(m => `<div class="mat-b"><div class="mat-b-h"><b>${esc(m.f.nombre)}</b><span>Usa ${m.usa} ${m.usa === 1 ? 'barra' : 'barras'}${m.retazos.length ? ' + ' + m.retazos.length + (m.retazos.length === 1 ? ' retazo' : ' retazos') : ''} · hay ${m.f.stock}<br><b style="color:${m.comprar ? '#B42318' : 'var(--accent)'}">${m.comprar ? 'Comprar ' + m.comprar + ' · ' + dinero(m.costoCompra) : 'Alcanza'}</b></span></div>
+        ${m.retazos.map(r => `<div class="barra-l"><span>Retazo de ${r.largo} cm</span><span>sobra ${Math.round(r.libre)} cm</span></div><div class="barra">${r.piezas.map(x => `<span class="ret" style="flex:${x.cm};background:${x.color}" title="${esc(x.etq + ' · ' + (x.nota || ''))}">${x.cm}</span>`).join('')}${r.libre >= 1 ? `<span class="sob" style="flex:${r.libre}"></span>` : ''}</div>`).join('')}
+        ${m.barras.map((b, i) => `<div class="barra-l"><span>Barra ${i + 1} de ${m.f.largo / 100} m</span><span>sobra ${Math.round(b.libre)} cm${b.libre >= 50 ? ' · queda de retazo' : ''}</span></div><div class="barra">${b.piezas.map(x => `<span style="flex:${x.cm};background:${x.color}" title="${esc(x.etq + ' · ' + (x.nota || ''))}">${x.cm}</span>`).join('')}${b.libre >= 1 ? `<span class="sob" style="flex:${b.libre}">${b.libre >= 40 ? Math.round(b.libre) : ''}</span>` : ''}</div>`).join('')}
+        ${m.de && m.de !== prov ? `<div class="caja-amar">Precio de ${esc(d.proveedores.find(p => p.id === m.de).nombre)}: el proveedor elegido no lo vende.</div>` : ''}</div>`).join('');
+    if(P.hj.length) h += `<div class="tit">Lámina y vidrio</div>` + P.hj.map(x => `<div class="cg-fila"><div class="cg-nom">${esc(x.f.nombre)}<span>${x.m2.toLocaleString('es-VE', { maximumFractionDigits:2 })} m² · ${x.hojas.toLocaleString('es-VE', { maximumFractionDigits:2 })} hojas · hay ${x.f.stock}</span></div><div style="text-align:right;font-weight:800">${x.comprar ? 'Comprar ' + x.comprar : 'Alcanza'}</div></div>`).join('');
+    h += `<div class="pie-dos2" style="display:flex;gap:10px;margin-top:16px"><button class="btn-secondary" type="button" data-hoja-corte style="flex:1;height:54px">Hoja de corte</button><a class="btn-primary" href="deposito.html?tab=compras" style="flex:1.2;display:flex;align-items:center;justify-content:center;text-decoration:none">Ir a Compras</a></div>`;
+    return h;
+  }
+  function abrirHojaCorte(){
+    const P = plan();
+    $('detTitulo').textContent = 'Hoja de corte';
+    $('detBody').innerHTML = `<div class="hoja-c"><b style="font-size:16px">Hoja de corte · semana del ${new Date().toLocaleDateString('es-VE')}</b>
+      <div class="mat-s">Para el herrero. Cortar primero los retazos, después las barras nuevas. Medidas en cm.</div>
+      ${P.mats.map(m => `<h3>${esc(m.f.nombre)}</h3>
+        ${m.retazos.map(r => `<div class="r"><span>Retazo ${r.largo}: ${r.piezas.map(x => x.cm).join(' · ')}</span><b>${r.piezas.map(x => x.etq).filter((v, i, a) => a.indexOf(v) === i).join(', ')}</b></div>`).join('')}
+        ${m.barras.map((b, i) => `<div class="r"><span>Barra ${i + 1}: ${b.piezas.map(x => x.cm).join(' · ')} → sobra ${Math.round(b.libre)}</span><b>${b.piezas.map(x => x.etq).filter((v, i2, a) => a.indexOf(v) === i2).join(', ')}</b></div>`).join('')}`).join('')}</div>
+      <p class="mat-s" style="margin:10px 2px 0">En la app real sale como PDF con el diseño del PDF de la venta y se comparte por WhatsApp.</p>`;
+    $('detFoot').innerHTML = `<button class="btn-primary" type="button" data-maq-msg="En la app real se comparte el PDF por WhatsApp">Compartir hoja de corte</button>`;
+    abrirHoja('sheetDet');
+  }
+
   // ================= Materiales =================
   function secMateriales(){
     const d = D();
-    $('subtitulo').textContent = 'Precios sin IVA, por proveedor';
-    let h = '<p class="mat-s" style="margin:0 2px 8px">Los precios entran solos cuando se registra una compra en Depósito. Si un material tiene "precio fijo para costear", Costos usa ese y no el de la compra.</p>';
+    $('subtitulo').textContent = 'Lista de precios sin IVA, por proveedor';
+    let h = '<div class="caja-nota" style="margin:0 0 6px"><span>Qué es esta lista</span>Lo que cuesta cada material con cada proveedor, sin IVA. No es por pedido: es la lista de precios que usa Costos para calcular cada modelo. El costo de cada pedido está en la pestaña Corte.</div><p class="mat-s" style="margin:6px 2px 8px">Los precios entran solos cuando se registra una compra en Depósito. Si un material tiene "precio fijo para costear", Costos usa ese.</p>';
     ['hierro','laminas','vidrio'].forEach(t => {
       const L = d.fab.filter(f => f.tipo === t); if(!L.length) return;
       h += `<div class="tit">${TIPO[t]}</div><div class="mat-lista ya">` + L.map(f => {
@@ -166,6 +244,12 @@
         <div class="field"><label class="field-label" for="fNota">Para qué es</label><input class="input" id="fNota" value="${esc(F.nota || '')}"><div class="field-hint">Ejemplo: bastidor largo, divisor, marco.</div></div>
         <button class="btn-secondary" type="button" style="width:100%" data-mat-desde-pieza>¿No está el material? Crearlo aquí</button>`;
       borrar = F.i !== 'nueva';
+    }
+    if(F.t === 'prueba'){
+      $('formTitulo').textContent = 'Agregar para probar';
+      const cost = lista().filter(o => o.x && !o.x.falta.length);
+      h = `<p class="mat-s" style="margin:0 2px 10px;font-size:14px">Suma un modelo al plan para ver cuántas barras haría falta. No crea ningún pedido.</p>` + cost.map(o => `<button class="mod" type="button" data-f-prueba="${esc(o.m.id)}"><img src="${esc(foto(o.m))}" alt=""><span class="grow"><span class="mat-t">${esc(o.m.nombre)}</span><span class="mat-s">${esc(o.x.c.codigo)} · cuesta ${dinero(o.x.costo)}</span></span>${CHEV}</button>`).join('');
+      boton = 'Listo';
     }
     if(F.t === 'acc'){
       $('formTitulo').textContent = F.nuevo ? 'Accesorio nuevo' : 'Accesorio';
@@ -308,7 +392,11 @@
     const t = e.target.closest('#tabs [data-tab]'); if(t){ tab = t.dataset.tab; pintar(); window.scrollTo(0, 0); return; }
     const fl = e.target.closest('[data-filtro]'); if(fl){ filtro = fl.dataset.filtro; pintar(); return; }
     const md = e.target.closest('[data-modelo]'); if(md) return abrirFicha(isNaN(+md.dataset.modelo) ? md.dataset.modelo : +md.dataset.modelo);
-    const pv = e.target.closest('[data-prov]'); if(pv){ prov = pv.dataset.prov; return pintarFicha(); }
+    const pv = e.target.closest('[data-prov]'); if(pv){ prov = pv.dataset.prov; if(tab === 'corte' && !e.target.closest('#detBody,#panel')) return pintar(); return pintarFicha(); }
+    if(e.target.closest('[data-hoja-corte]')) return abrirHojaCorte();
+    const pb = e.target.closest('[data-prueba]'); if(pb){ const d = D(); d.planPrueba ||= {}; d.planPrueba[pb.dataset.prueba] = Math.max(0, (d.planPrueba[pb.dataset.prueba] || 0) + +pb.dataset.d); X.guardar(); return pintar(); }
+    if(e.target.closest('[data-agregar-prueba]')) return abrirForm({ t:'prueba' });
+    const pm = e.target.closest('[data-f-prueba]'); if(pm){ const d = D(); d.planPrueba ||= {}; const id = isNaN(+pm.dataset.fPrueba) ? pm.dataset.fPrueba : +pm.dataset.fPrueba; d.planPrueba[id] = (d.planPrueba[id] || 0) + 1; X.guardar(); cerrarHoja('sheetForm', true); F = null; toast('Agregado al plan para probar'); return pintar(); }
     const mo = e.target.closest('[data-modo]'); if(mo){ modo = mo.dataset.modo; return pintarFicha(); }
     const cp = e.target.closest('[data-copiar-de]'); if(cp){ X.costeoDesde(sel, +cp.dataset.copiarDe); toast('Piezas copiadas. Cambia lo que sea distinto.'); pintar(); if(!ancho.matches) pintarFicha(); return; }
     if(e.target.closest('[data-duplicar]')){ const nid = X.duplicar(sel); toast('Copia creada en diseño. Cambia sus piezas y pásala al catálogo cuando esté lista.'); filtro = 'En diseño'; sel = nid; pintar(); if(!ancho.matches) pintarFicha(); return; }

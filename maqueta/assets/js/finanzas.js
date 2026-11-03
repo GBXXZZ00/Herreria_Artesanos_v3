@@ -50,20 +50,24 @@
     if(grande && sel) pintarDetalle();
   }
 
+  // Reporte sencillo: dos columnas, nombre y número (+ entra o es tuyo, − sale o debes)
+  const signo = (v) => (v > 0.005 ? '+' : v < -0.005 ? '−' : '') + dinero(Math.abs(v));
+  function reporte(filas, totalNombre, total){
+    return `<div class="rep">${filas.map(([n, v, attr]) => `<button class="rep-f" type="button" ${attr || ''}><span>${esc(n)}</span><b class="${v > 0.005 ? 's-favor' : v < -0.005 ? 's-debe' : ''}">${signo(v)}</b></button>`).join('')}
+      <div class="rep-f total"><span>${esc(totalNombre)}</span><b class="${total < -0.005 ? 's-debe' : ''}">${total < -0.005 ? '−' : ''}${dinero(Math.abs(total))}</b></div></div>`;
+  }
   function secDinero(){
     const d = D(), r = X.resumen(), ub = X.porUbicar(), pc = X.porCobrar();
     const pc0 = X.porConfirmar();
     let top = '';
     if(pc0.length) top = `<div class="tit" style="margin-top:0">Pagos por confirmar · ${pc0.length}</div>` + pc0.map(a => `<button class="ub conf" type="button" data-confirmar="${a.id}"><span class="grow"><b>N° ${esc(a.venta_id)} · ${esc(a.cliente)}</b><small>${esc(a.metodo)} · lo registró ${esc(a.registrado_por === 'yulimar' ? 'Yulimar' : a.registrado_por)} · ¿Llegó?</small></span><span class="m">${dinero(a.monto)}</span>${CHEV}</button>`).join('') + '<div style="height:14px"></div>';
-    const fila = (t, s, v, cls, attr) => `<button class="din" type="button" ${attr || ''}><span class="din-t">${t}${s ? `<small>${s}</small>` : ''}</span><b class="${cls || ''}">${v}</b>${attr ? CHEV : ''}</button>`;
-    let h = top + `<div class="grande favor"><span>Todo lo tuyo hoy</span><b>${dinero(r.total)}</b><p>Lo que hay en cuentas, más lo que tienes en la calle, menos lo que debes.</p></div>
-      <div class="tit" style="margin-top:4px">Dónde está tu dinero</div><div class="dinero-l">
-      ${fila('En tus cuentas', d.cuentas.length + ' cuentas', dinero(r.enCuentas), '', 'data-ir="cuentas"')}
-      ${fila('Por ubicar', 'Pagos confirmados que todavía no dices dónde quedaron', dinero(r.porUbicar), r.porUbicar ? 's-debe' : '', 'data-ir="ubicar"')}
-      ${fila('A tu favor en proveedores', 'Lo que les transferiste y no has gastado', dinero(r.aFavor), 's-favor', 'data-ir="prov"')}
-      ${fila('Te deben los clientes', 'Lo que falta por cobrar de pedidos abiertos', dinero(r.porCobrar), '', 'data-ir="cobrar"')}
-      ${fila('Le debes a proveedores', '', r.debes ? '− ' + dinero(r.debes) : dinero(0), r.debes ? 's-debe' : '', 'data-ir="prov"')}
-      <div class="din total"><span class="din-t">Todo lo tuyo</span><b>${dinero(r.total)}</b></div></div>`;
+    let h = top + `<div class="tit" style="margin-top:4px">Tu dinero hoy</div>` + reporte([
+      ['En tus cuentas', r.enCuentas, 'data-ir="cuentas"'],
+      ['Pagos por ubicar', r.porUbicar, 'data-ir="ubicar"'],
+      ['A tu favor con proveedores', r.aFavor, 'data-ir="prov"'],
+      ['Te deben los clientes', r.porCobrar, 'data-ir="cobrar"'],
+      ['Le debes a proveedores', -r.debes, 'data-ir="prov"'],
+    ], 'Todo lo tuyo', r.total);
     h += secGanancia();
     // Por ubicar
     h += `<div class="tit" id="sec-ubicar">Pagos por ubicar · ${ub.length}</div>`;
@@ -92,11 +96,15 @@
     const vendido = filas.reduce((a, f) => a + f.v.total, 0);
     const ganado = filas.filter(f => f.gana != null).reduce((a, f) => a + f.gana, 0);
     const gastos = -X.datos().movs.filter(m => m.tipo === 'gasto' && !m.anulado && String(m.fecha).slice(0, 7) === mes).reduce((a, m) => a + m.ec, 0);
-    return `<div class="tit">Lo que ganas este mes</div>
-      <div class="res"><div class="res-c"><span>Vendido</span><b>${dinero(vendido)}</b></div><div class="res-c ok"><span>Ganancia de lo vendido</span><b>${dinero(ganado)}</b></div></div>
-      ${filas.map(f => `<div class="cg-fila"><div class="cg-nom">N° ${f.v.id} · ${esc(f.v.items.map(i => i.nombre + ' × ' + i.cantidad).join(', '))}<span>Vendido ${dinero(f.v.total)}${f.gana != null ? ' · costo ' + dinero(f.costo) : ' · sin costear: ' + esc(f.sin.join(', '))}</span></div><div style="text-align:right;font-weight:800">${f.gana != null ? dinero(f.gana) : '<span class="pill gris">Sin costo</span>'}</div></div>`).join('')}
-      <div class="tot" style="margin-top:8px"><div class="fila"><span>Ganancia de lo vendido</span><b>${dinero(ganado)}</b></div><div class="fila"><span>Gastos del mes pagados</span><b>− ${dinero(gastos)}</b></div><div class="fila fin"><span>Te queda</span><span>${ganado - gastos < 0 ? '− ' : ''}${dinero(Math.abs(ganado - gastos))}</span></div></div>
-      <p class="mat-s" style="margin:6px 2px 0">El costo sale de Costos (materiales y mano de obra). Los modelos sin costear no suman ganancia.</p>`;
+    const costoV = filas.filter(f => f.gana != null).reduce((a, f) => a + f.costo, 0), sinCosto = filas.filter(f => f.gana == null);
+    const vendidoC = filas.filter(f => f.gana != null).reduce((a, f) => a + f.v.total, 0);
+    return `<div class="tit">Lo que ganas este mes</div>` + reporte([
+        ['Vendido (modelos costeados)', vendidoC],
+        ['Costo de lo vendido', -costoV],
+        ['Gastos del mes pagados', -gastos],
+      ], 'Te queda', vendidoC - costoV - gastos)
+      + (sinCosto.length ? `<p class="mat-s" style="margin:6px 2px 0">No entran porque su modelo no tiene costo: ${sinCosto.map(f => 'N° ' + f.v.id).join(', ')} (${dinero(sinCosto.reduce((a, f) => a + f.v.total, 0))}). Cóstealos en Costos.</p>` : '')
+      + '<p class="mat-s" style="margin:6px 2px 0">El costo sale de Costos (materiales y mano de obra). Toca un renglón de arriba para ver el detalle.</p>';
   }
 
   function secProveedores(){
@@ -339,13 +347,12 @@
     $('pdfBody').innerHTML = `<div class="pdf">
       <div class="pdf-h"><img src="assets/img/logo.png" alt=""><span><b style="color:#1C1A17;font-size:13px">Herrería Artesanos</b><br>Maracaibo</span><div><b>Estado de cuenta</b><span>Emitido el ${d.toLocaleDateString('es-VE')}</span></div></div>
       <div class="pdf-banda">${esc(p.nombre)}${p.rif ? ' · RIF ' + esc(p.rif) : ''}</div>
-      <div class="tw"><table><thead><tr><th>Fecha</th><th>Movimiento</th><th class="r">Pagamos</th><th class="r">Compramos</th><th class="r">Saldo</th></tr></thead><tbody>
-      ${movs.map(m => `<tr><td>${fecha(m.fecha)}</td><td>${esc(NOMBRE_MOV[m.tipo])}${m.ref ? '<br>' + esc(m.ref) : ''}${m.cuenta ? '<br>' + esc(cta(m.cuenta).nombre) : ''}${m.bs ? '<br>' + m.bs.toLocaleString('es-VE') + ' Bs a ' + m.tasa : ''}</td>
-        <td class="r">${m.ep > 0 ? dinero(m.ep) : ''}</td><td class="r">${m.ep < 0 ? dinero(-m.ep) : ''}</td><td class="r">${m.saldo >= 0 ? '' : '−'}${dinero(Math.abs(m.saldo))}</td></tr>`).join('')}
+      <div class="tw"><table><thead><tr><th>Movimiento</th><th class="r">Monto</th></tr></thead><tbody>
+      ${movs.map(m => `<tr><td>${esc(NOMBRE_MOV[m.tipo])}${m.ref ? ' · ' + esc(m.ref) : ''}<br><span style="color:#6E6A64">${fecha(m.fecha)}${m.cuenta ? ' · ' + esc(cta(m.cuenta).nombre) : ''}${m.bs ? ' · ' + m.bs.toLocaleString('es-VE') + ' Bs a ' + m.tasa : ''}</span></td><td class="r" style="font-weight:700;color:${m.ep > 0 ? '#17555C' : m.ep < 0 ? '#B42318' : '#6E6A64'}">${signo(m.ep || 0)}</td></tr>`).join('')}
       </tbody></table></div>
       <div class="pdf-caja"><span>${s > 0.005 ? 'Saldo a favor de Herrería Artesanos' : s < -0.005 ? 'Herrería Artesanos debe' : 'Saldo'}</span><b>${dinero(Math.abs(s))}</b></div>
       <div class="pdf-firmas"><div>Herrería Artesanos</div><div>${esc(p.nombre)}<br>Cuadrado el ___/___/______</div></div></div>
-      <p class="mat-s" style="margin:10px 2px 0">Así se ve el PDF. En la app real sale con el mismo diseño del PDF de la venta y se comparte por WhatsApp.</p>`;
+      <p class="mat-s" style="margin:10px 2px 0">+ es lo que le pagamos (suma a nuestro favor) y − lo que le compramos. Así se ve el PDF. En la app real sale con el mismo diseño del PDF de la venta y se comparte por WhatsApp.</p>`;
     abrirHoja('sheetPdf');
   }
 
