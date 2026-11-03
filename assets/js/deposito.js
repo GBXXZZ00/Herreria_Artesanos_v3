@@ -114,15 +114,32 @@
     if(reponer) partes.push(plural(reponer, '1 por reponer', 'por reponer'));
     if(rev) partes.push(plural(rev, '1 entrega por revisar', 'entregas por revisar'));
     $('subtitulo').textContent = partes.join(' · ') || (datos.materiales.length ? 'Todo al día' : 'Agrega tus materiales');
-    document.querySelectorAll('#tabs [data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-    $('tabs').classList.toggle('en-2', tab === 'entregas');
-    $('pieEntregar').classList.toggle('hidden', !datos.materiales.some(m => m.activo));
+    // Consumibles (Materiales y Entregas) | Fabricación | Compras (estas dos solo el administrador)
+    const grupo = (tab === 'materiales' || tab === 'entregas') ? 'materiales' : tab;
+    document.querySelectorAll('#tabs [data-tab]').forEach(b => { const on = b.dataset.tab === grupo; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    $('tabs').classList.toggle('en-2', grupo === 'fab');
+    $('tabs').classList.toggle('en-3', grupo === 'compras');
+    $('subCons').classList.toggle('hidden', grupo !== 'materiales');
+    document.querySelectorAll('#subCons [data-sub]').forEach(b => b.classList.toggle('on', b.dataset.sub === tab));
+    $('pieEntregar').classList.toggle('hidden', grupo !== 'materiales' || !datos.materiales.some(m => m.activo));
+    $('pieFab').classList.toggle('hidden', grupo !== 'fab');
+    $('pieCompra').classList.toggle('hidden', grupo !== 'compras');
+    if(grupo === 'fab'){ $('filtrosWrap').classList.add('hidden'); window.DepNuevo.pintarFab(); return; }
+    if(grupo === 'compras'){ $('filtrosWrap').classList.add('hidden'); window.DepNuevo.pintarCompras(); return; }
     if(tab === 'materiales') pintarMateriales(); else pintarEntregas();
   }
   $('tabs').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-tab]'); if(!b || !datos || b.dataset.tab === tab) return;
-    tab = b.dataset.tab; pintar(); window.scrollTo(0, 0);
+    const b = e.target.closest('[data-tab]'); if(!b || !datos) return;
+    const nuevo = b.dataset.tab;
+    if(nuevo === 'materiales' && (tab === 'materiales' || tab === 'entregas')) return;
+    if(nuevo === tab) return;
+    tab = nuevo; pintar(); window.scrollTo(0, 0);
   });
+  $('subCons').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sub]'); if(!b || !datos || b.dataset.sub === tab) return;
+    tab = b.dataset.sub; pintar();
+  });
+  window.Deposito = { ir(t){ tab = t; if(datos) pintar(); }, get tab(){ return tab; } };
 
   // ---------- Materiales ----------
   function pintarMateriales(){
@@ -681,7 +698,10 @@
     if(perfil.rol !== 'admin' && perfil.rol !== 'vendedor'){ location.replace('index.html'); return; }
     // deposito.html?entrega=ID (aviso a Ray) · ?tab=entregas&filtro=revisar · ?tab=materiales
     const q = new URLSearchParams(location.search);
-    if(q.get('tab') === 'entregas') tab = 'entregas';
+    if(['entregas','fab','compras'].includes(q.get('tab'))) tab = q.get('tab');
+    if(perfil.rol !== 'admin' && (tab === 'fab' || tab === 'compras')) tab = 'materiales';
+    // La vendedora no ve Fabricación ni Compras (tienen costos y saldos)
+    if(perfil.rol !== 'admin') $('tabs').classList.add('hidden');
     if(q.get('filtro') === 'revisar') filtro = 'revisar';
     const abrir = Number(q.get('entrega'));
     if(abrir) tab = 'entregas';

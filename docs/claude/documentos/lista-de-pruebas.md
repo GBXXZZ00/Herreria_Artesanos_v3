@@ -4,6 +4,38 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
+
+## Finanzas, Depósito, Costos, Corte, Mes y Reportes (v73, 3 nov 2026, Claude de Ray)
+Primero: Ray o Gualfredo agregan sus cuentas (Finanzas › Dinero › "+ Agregar cuenta") y ponen el saldo de cada una con "Cambiar saldo".
+- [ ] Vendedora: no ve Finanzas ni Costos en Inicio; en Depósito solo ve Materiales y Entregas. Registra un pago como siempre; ya no puede cambiarlo ni borrarlo.
+- [ ] Inicio (Ray o Gualfredo): cuadros Finanzas y Costos. "Pago por confirmar" lleva a Finanzas.
+- [ ] Finanzas › Dinero: confirmar un pago y decir dónde quedó en un solo paso (cuenta, proveedor o "Después"). Con el 50 % pasa solo a fabricación.
+- [ ] Ventas: tocar un pago "Por confirmar" lleva a Finanzas.
+- [ ] "Pagos por ubicar": ubicar uno que quedó para "Después".
+- [ ] Mover entre cuentas con comisión: salen $770 de Zelle y llegan $700 en efectivo; la diferencia sale como "Comisión y cambio".
+- [ ] Cuenta en bolívares: pide Bs, tasa y de dónde es la tasa (BCV, Binance u otra).
+- [ ] Proveedores: Torniplemaca dice "Le debes $1.674,50" (nota 00-2884). Ponle el saldo real con "Cambiar saldo" y un motivo; queda en el historial.
+- [ ] "Le transferí" a un proveedor; el saldo cambia antes de guardar. Desde una cuenta: "Pagué a un proveedor" con "Todavía no sé" queda por ubicar.
+- [ ] Estado de cuenta en PDF por fechas (esta semana, este mes, mes pasado, otras fechas).
+- [ ] Gastos: registrar el alquiler; deja de salir "gasto del mes sin cargar".
+- [ ] Nómina: al marcar pagado y al anotar o aprobar un vale, pregunta de qué cuenta salió. Si cierras, queda por ubicar en Finanzas.
+- [ ] Depósito › Fabricación: subir las existencias con "Contar barras"; anotar un retazo; agregar un material.
+- [ ] Depósito › Compras: abrir la nota 00-2884 y "Registrar el material". Cargar una compra con materiales y otra "Solo el total". "Ya le transferí aparte".
+- [ ] Costos › Modelos: el Bitral da costo $223,22 y sugerido $326,79; "Barra completa" $339,23; "Con cada proveedor" muestra los dos precios.
+- [ ] Costos: empezar un modelo con el bastidor estándar o copiando el Bitral; agregar piezas; "Usar este precio".
+- [ ] Catálogo: en la ficha del Bitral sale "Costo (solo Ray o Gualfredo)".
+- [ ] Nueva venta: modelo con extra de protección o marco en Costos trae el monto sugerido (se puede cambiar).
+- [ ] Costos › Semana: asignar en Producción el Hierro de un Bitral para este sábado; sale el plan de corte. Aceptar plan. El herrero ve su hoja en Mi trabajo. "Ya cortó" baja las barras y guarda los retazos.
+- [ ] Costos › Ganancia: gastos fijos $915 ÷ 25 = $36,60 por puerta. Cambiar las puertas al mes.
+- [ ] Finanzas › Mes: números del mes pasado, "Cerrar el mes" y Reporte en PDF. Después del cierre, registrar algo con fecha de ese mes da error.
+- [ ] Finanzas › Mes › Reportes: por proveedor y por cuenta, con fechas y PDF.
+- [ ] (v74) Dinero: varios pagos por confirmar salen en una sola tarjeta; al tocarla, agrupados por venta; "Revisar uno tras otro" abre el siguiente solo.
+- [ ] (v74) Secciones que se abren y se cierran en Dinero, ficha del proveedor, Mes, Precios y Semana.
+- [ ] (v74) Costos › Precios: "Por material" y "Por proveedor". En la ficha del Bitral, "El más barato".
+- [ ] (v74) Mes: flechas ‹ › y "ver todos los meses".
+- [ ] (v74) Herrero: la hoja de corte se abre y se cierra y "Descargar PDF" funciona.
+- [ ] (v74) Descargar los PDF: tu dinero hoy, gastos, lista de precios, ganancia por producto, existencias y compras del mes.
+
 ## 1. Vendedora (Yulimar)
 - [ ] Inicio: pendientes de colores (pago no llegó, pedido listo, pago confirmado, cotización por vencer, atrasado). Al tocar cada uno lleva a su venta.
 - [ ] Nueva venta: crear una cotización y convertirla en venta. Registrar un pago con comprobante.

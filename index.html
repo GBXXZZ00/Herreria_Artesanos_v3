@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=72">
+<link rel="stylesheet" href="assets/css/base.css?v=74">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -325,6 +325,16 @@
   .pz{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:baseline;background:var(--surface-2);border-radius:14px;padding:11px 12px;margin:10px 0 2px;font-size:14px;color:var(--ink-soft)}
   .pz b{color:var(--ink);font-weight:800}
   .pz-n{font-weight:800;color:var(--ink);min-width:14px;text-align:right}
+  /* Hoja de corte del herrero (Costos › Semana) */
+  .tj-corte{border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0}
+  .tj-corte-h{list-style:none;cursor:pointer;display:block}
+  .tj-corte-h::-webkit-details-marker{display:none}
+  .tj-corte-h b{display:block;font-size:17px}
+  .tj-corte-h span,.tj-corte-n{font-size:13px;color:var(--ink-soft)}
+  .tj-corte-n{margin:6px 0 4px}
+  .tj-corte-m{font-size:13px;font-weight:800;color:var(--accent);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.3px}
+  .tj-corte-b{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14.5px}
+  .tj-corte-b span{color:var(--ink);line-height:1.45}
 </style>
 </head>
 <body>
@@ -576,14 +586,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=72"></script>
-<script src="assets/js/supabase-client.js?v=72"></script>
-<script src="assets/js/img-compress.js?v=72"></script>
-<script src="assets/js/comun.js?v=72"></script>
-<script src="assets/js/avisos.js?v=72"></script>
-<script src="assets/js/sesion.js?v=72"></script>
-<script src="assets/js/ayuda.js?v=72"></script>
-<script src="assets/js/mi-trabajo.js?v=72"></script>
+<script src="assets/vendor/supabase.js?v=74"></script>
+<script src="assets/js/supabase-client.js?v=74"></script>
+<script src="assets/js/img-compress.js?v=74"></script>
+<script src="assets/js/comun.js?v=74"></script>
+<script src="assets/js/avisos.js?v=74"></script>
+<script src="assets/js/sesion.js?v=74"></script>
+<script src="assets/js/ayuda.js?v=74"></script>
+<script src="assets/js/pdf-reporte.js?v=74"></script>
+<script src="assets/js/mi-trabajo.js?v=74"></script>
 <script>
 (function(){
   'use strict';
@@ -719,12 +730,16 @@
   // Inicio
   // ---------------------------------------------------------------------------
   const ICON_DEPOSITO = '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>';
+  const ICON_FINANZAS = '<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 10v5M18 10v5"/>';
+  const ICON_COSTOS = '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h2M12 10h2M16 10h0M8 14h2M12 14h2M8 18h2M12 18h2M16 14v4"/>';
   const ICON_NOMINA = '<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>';
 
   function pintarModulos(p){
     const mods = S.MODULOS.filter(m => m.id !== 'inicio');
     if(p && p.rol === 'admin') mods.push({ id:'nomina', nombre:'Nómina', href:'nomina.html', listo:true, icon:ICON_NOMINA });
     if(p && (p.rol === 'admin' || p.rol === 'vendedor')) mods.push({ id:'deposito', nombre:'Depósito', href:'deposito.html', listo:true, icon:ICON_DEPOSITO });
+    // Finanzas y Costos: solo quien confirma pagos (Ray o Gualfredo). La vendedora no ve dinero ni costos.
+    if(p && p.confirma_abonos) mods.push({ id:'finanzas', nombre:'Finanzas', href:'finanzas.html', listo:true, icon:ICON_FINANZAS }, { id:'costos', nombre:'Costos', href:'costos.html', listo:true, icon:ICON_COSTOS });
     // Primero los módulos que ya funcionan, a lo ancho; luego los que vienen
     const listos = mods.filter(m => m.listo), pronto = mods.filter(m => !m.listo);
     let i = 0;
@@ -823,6 +838,28 @@
     return `<a class="pend-fila ${p.color}" href="${esc(p.href)}" style="--i:${i}" data-modulo>${dentro}</a>`;
   }
 
+  // Finanzas, Compras y Costos (solo quien confirma pagos). Todo sale de la base (finanzas_avisos).
+  async function pendientesFinanzas(){
+    const pend = [], din = window.AH.dinero;
+    let a = null;
+    try{ const r = await db.rpc('finanzas_avisos'); if(!r.error) a = r.data; } catch(e){}
+    if(!a) return pend;
+    const ef = $('cuenta-finanzas');
+    if(ef) ef.innerHTML = a.por_confirmar ? `<span class="num">${a.por_confirmar}</span> por confirmar` : a.por_ubicar ? `<span class="num">${a.por_ubicar}</span> por ubicar` : 'Dónde está tu dinero';
+    if(a.por_ubicar) pend.push({ color:'naranja', icono:'dinero', titulo: plural(a.por_ubicar, '1 pago por ubicar', 'pagos por ubicar'), detalle:'¿Dónde quedó?', href:'finanzas.html?ubicar=1' });
+    (a.debes || []).forEach(pr => pend.push({ color:'rojo', icono:'dinero', titulo:'Le debes a ' + String(pr.nombre).replace('Inversiones ', ''), detalle: din(-pr.saldo), href:'finanzas.html?prov=' + pr.id }));
+    if(a.faltan_barras) pend.push({ color:'amarillo', icono:'caja', titulo: 'Faltan ' + plural(a.faltan_barras.n, '1 barra', 'barras') + ' para el ' + window.AH.sabadoCorto(a.faltan_barras.sab), detalle:'Ver plan de corte', href:'costos.html?tab=semana&para=' + a.faltan_barras.sab });
+    if(a.plan_por_aceptar) pend.push({ color:'azul', icono:'reloj', titulo:'Plan de corte del ' + window.AH.sabadoCorto(a.plan_por_aceptar.sab) + ' por aceptar', detalle: plural(a.plan_por_aceptar.n, '1 puerta', 'puertas') + ' asignadas', href:'costos.html?tab=semana&para=' + a.plan_por_aceptar.sab });
+    if(a.sin_cortes && a.sin_cortes.length) pend.push({ color:'rojo', icono:'etiqueta', titulo: plural(a.sin_cortes.length, '1 modelo en fabricación sin cortes', 'modelos en fabricación sin cortes'), detalle: a.sin_cortes.slice(0, 2).map(m => m.nombre).join(', ') + ' · cargarlos', href:'costos.html?modelo=' + a.sin_cortes[0].id });
+    if(a.mes_sin_cerrar) pend.push({ color:'naranja', icono:'reloj', titulo:'Cierra el mes de ' + a.mes_sin_cerrar.nombre, detalle:'Reporte completo en Finanzas', href:'finanzas.html?tab=mes&mes=' + a.mes_sin_cerrar.mes });
+    if(a.sin_costear && a.sin_costear.length) pend.push({ color:'azul', icono:'etiqueta', titulo: plural(a.sin_costear.length, '1 modelo vendido sin costear', 'modelos vendidos sin costear'), detalle: a.sin_costear.slice(0, 2).map(m => m.nombre).join(', '), href:'costos.html?modelo=' + a.sin_costear[0].id });
+    const ec = $('cuenta-costos'); if(ec && a.costeados) ec.innerHTML = `<span class="num">${a.costeados.listos}</span> de ${a.costeados.total} listos`;
+    else if(ec) ec.textContent = 'Costo de cada modelo';
+    const g = a.gastos_sin_cargar || [];
+    if(g.length) pend.push({ color:'amarillo', icono:'reloj', titulo: plural(g.length, '1 gasto del mes sin cargar', 'gastos del mes sin cargar'), detalle: g.slice(0, 2).join(', ') + (g.length > 2 ? '…' : ''), href:'finanzas.html?tab=gastos' });
+    return pend;
+  }
+
   let estadoNotif = null;
   async function pintarAvisosAdmin(p){
     const cont = $('avisosAdmin');
@@ -836,12 +873,13 @@
         if(data && data.length){
           const total = data.reduce((a, x) => a + Number(x.monto), 0);
           pend.push({ color:'rojo', icono:'dinero', titulo: plural(data.length, '1 pago por confirmar', 'pagos por confirmar'), detalle: window.AH.dinero(total),
-            href: `ventas.html?abrir=${data.length === 1 ? data[0].venta_id : ''}${data.length > 1 ? '&filtro=confirmar' : ''}` });
+            href: 'finanzas.html?confirmar=' + (data.length === 1 ? data[0].id : '1') });
         }
       } catch(e){}
     }
     if(p && (admin || p.rol === 'vendedor')) pend.push(...await pendientesDeposito(p));
     if(admin) pend.push(...await pendientesTaller());
+    if(p && p.confirma_abonos) pend.push(...await pendientesFinanzas());
     if(p && p.rol === 'vendedor') pend.push(...await pendientesVendedor(p));
 
     // Se pueden minimizar (el teléfono recuerda cómo los dejaste); cerrados muestran un

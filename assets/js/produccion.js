@@ -243,8 +243,17 @@
     $('fichaBody').innerHTML = `
       <p class="field-label" style="margin-bottom:2px">${cab}</p>
       ${itemsFabrica(v).map(it => itemHtml(it)).join('')}
+      ${planCorteHtml(v)}
       ${v.interna && !lectura ? `<button class="btn-cancelar-orden" type="button" data-cancelar-orden="${v.id}">Cancelar esta orden</button>` : ''}`;
     abrirHoja('sheetFicha');
+  }
+  // El Hierro asignado entra solo al plan de corte de ese sábado (Costos › Semana, solo Ray o Gualfredo)
+  let verCostos = false;
+  if(window.Sesion) window.Sesion.perfil().then(p => { verCostos = !!(p && p.confirma_abonos); }).catch(() => {});
+  function planCorteHtml(v){
+    if(lectura || !verCostos) return '';
+    const sabs = [...new Set((v.items || []).flatMap(it => (it.etapas || []).filter(e => e.oficio === 'hierro' && e.estado === 'pendiente' && e.trabajador_id && e.para_el).map(e => e.para_el)))];
+    return sabs.map(sb => `<a class="row-link" href="costos.html?tab=semana&para=${esc(sb)}" style="margin-top:10px"><span>Entra al plan de corte del ${esc(sabadoCorto(sb))}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>`).join('');
   }
   function catHtml(it){
     if(lectura || !it.categoria_pago_id) return '';

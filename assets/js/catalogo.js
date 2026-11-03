@@ -333,6 +333,23 @@
       </div>`, null);
   }
 
+  // Atajo a Costos en la ficha del modelo: solo quien confirma pagos (Ray o Gualfredo). Los costos no se guardan en el catálogo.
+  let costosCat = null;
+  async function pintarCosto(m){
+    const el = $('filaCosto'); if(!el) return;
+    try{
+      const p = window.Sesion ? await window.Sesion.perfil() : null;
+      if(!p || !p.confirma_abonos) return;
+      if(!costosCat){ const r = await db.rpc('costeo_resumen'); if(r.error) return; costosCat = r.data || {}; }
+      const x = costosCat[m.id], cur = $('filaCosto'); if(!cur || cur.dataset.mid !== String(m.id)) return;
+      const ok = x && x.falta && !x.falta.length;
+      const s = !x ? 'gris' : !ok ? 'gris' : x.pct >= 30 ? 'verde' : x.pct >= 15 ? 'amar' : x.pct >= 0 ? 'rojo' : 'negro';
+      const col = { verde:'#1B6B3A', amar:'var(--amber)', rojo:'var(--danger)', negro:'var(--ink)', gris:'var(--ink-soft)' }[s];
+      const gana = ok ? Number(m.precio_base) - Number(x.fijos) - Number(x.costo) : 0;
+      cur.innerHTML = `<div class="det-section" style="margin-top:14px"><div class="det-label">Costo (solo Ray o Gualfredo)</div>
+        <a class="row-link" href="costos.html?modelo=${encodeURIComponent(m.id)}"><span>${ok ? `Cuesta ${dinero(x.costo)} · gana <b style="color:${col}">${dinero(gana)} (${Math.round(x.pct)} %)</b><br><small style="color:var(--ink-soft)">Sugerido ${dinero(x.final)} · ver costeo</small>` : `<b style="color:${col}">${x ? 'Faltan datos' : 'Sin costear'}</b> · ${x ? 'completar costeo' : 'cargar costeo y cortes'}`}</span>${ICON_CHEV}</a></div>`;
+    } catch(e){}
+  }
   function mostrarModelo(m, desdeLista){
     det.vista = 'modelo';
     det.acabado = acabados(m.tipo).filter(x => (m.fotos || {})[x.key]).map(x => x.key)[0] || null;
@@ -361,6 +378,7 @@
       <div class="det-name">${esc(m.nombre)}</div>
       <div class="det-type">${esc(m.tipo)}</div>
       <div class="det-price">Desde ${dinero(m.precio_base)}</div>
+      <div id="filaCosto" data-mid="${esc(m.id)}"></div>
       <div class="det-section" style="margin-top:14px">
         ${n
           ? `<button class="row-link" data-ir="lista"><span><span class="tag-disp" style="position:static">Entrega inmediata · ${n}</span></span>${ICON_CHEV}</button>`
@@ -382,6 +400,7 @@
         <button class="btn-primary" type="button" data-accion="marcar">Entrega inmediata</button>
       </div>`;
     pintarVista(html, foot, desdeLista ? 'lista' : null);
+    pintarCosto(m);
   }
 
   function mostrarPieza(p, m){

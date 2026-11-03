@@ -47,11 +47,41 @@
   const disponibles = () => trabajos.filter(t => !t.espera && !t.iniciada_en);
 
   async function cargarTrabajador(){
-    const [rt, rp] = await Promise.all([db.rpc('mis_trabajos'), db.rpc('mis_pagos')]);
+    const [rt, rp, rc] = await Promise.all([db.rpc('mis_trabajos'), db.rpc('mis_pagos'), Promise.resolve(db.rpc('mi_hoja_corte')).catch(() => ({}))]);
     if(rt.error || rp.error) throw (rt.error || rp.error);
     trabajos = rt.data || [];
     pagos = rp.data || {};
+    hojasCorte = (rc && !rc.error && rc.data) || [];
   }
+  // Hoja de corte del sábado (cuando Ray o Gualfredo aceptan el plan de Costos › Semana)
+  let hojasCorte = [];
+  function hojaCorteHtml(){
+    return hojasCorte.filter(h => !h.cortado && ((h.barras || []).length || (h.manual || []).length)).map((h, hi) => {
+      const porMat = {}; (h.barras || []).forEach(b => (porMat[b.material || 'Material'] ||= []).push(b));
+      const nb = (h.barras || []).length;
+      return `<details class="tj-corte" aria-label="Hoja de corte"><summary class="tj-corte-h"><b>Tu hoja de corte</b><span>Para el ${esc(window.AH.sabadoCorto(h.sab))} · ${nb === 1 ? '1 barra o retazo' : nb + ' barras y retazos'} · toca para ver</span></summary>
+        <button class="btn-secondary" type="button" data-hoja-pdf="${hi}" style="width:100%;margin:10px 0 4px">Descargar PDF</button>
+        <p class="tj-corte-n">Corta primero los retazos. Guarda lo que sobre de 50 cm o más.</p>
+        ${Object.entries(porMat).map(([mat, bs]) => `<div class="tj-corte-m">${esc(mat)}</div>${bs.map(b => `<div class="tj-corte-b"><b>${b.tipo === 'retazo' ? 'Retazo de ' + Math.round(b.largo) : 'Barra ' + (b.n || '') + (b.comprar ? ' (nueva)' : '')}</b>
+          <span>${(b.piezas || []).map(x => `${x.cm} · ${esc(x.etq || '')}`).join('<br>')}${Number(b.libre) >= 50 ? '<br><b>Guarda el retazo de ' + Math.round(b.libre) + '</b>' : ''}</span></div>`).join('')}`).join('')}
+        ${(h.pasar || []).length ? `<div class="tj-corte-m">Pásale a tu compañero</div>${h.pasar.map(x => `<div class="tj-corte-b"><span>${x.cm} cm · ${esc(x.etq || '')} → ${esc(x.a || '')}</span></div>`).join('')}` : ''}
+        ${(h.manual || []).map(u => `<div class="tj-corte-m">N° ${esc(u.venta)} · ${esc(u.nombre)}</div><div class="tj-corte-b"><span>Este modelo no tiene plan. Córtalo como siempre.</span></div>`).join('')}
+      </details>`; }).join('');
+  }
+  // PDF de la hoja de corte (mismo diseño del PDF de la venta)
+  async function pdfHojaCorte(i){
+    const h = hojasCorte.filter(x => !x.cortado && ((x.barras || []).length || (x.manual || []).length))[i]; if(!h || !window.PDFR) return;
+    const bloques = [{ t:'nota', texto:'Corta primero los retazos. Guarda lo que sobre de 50 cm o más. Medidas en cm.' }];
+    const porMat = {}; (h.barras || []).forEach(b => (porMat[b.material || 'Material'] ||= []).push(b));
+    Object.entries(porMat).forEach(([mat, bs]) => { bloques.push({ t:'titulo', texto:mat });
+      bs.forEach(b => bloques.push({ t:'barra', etiqueta:b.tipo === 'retazo' ? 'Retazo de ' + Math.round(b.largo) + ' cm' : 'Barra ' + (b.n || '') + (b.comprar ? ' (nueva)' : ''), der:'sobra ' + Math.round(b.libre) + ' cm' + (Number(b.libre) >= 50 ? ' · guardar' : ''), largo:Number(b.largo), sobra:Number(b.libre), piezas:(b.piezas || []).map(x => ({ cm:x.cm, txt:'(' + (x.etq || '') + ')' })) })); });
+    if((h.pasar || []).length){ bloques.push({ t:'titulo', texto:'Pásale a tu compañero' }); h.pasar.forEach(x => bloques.push({ t:'fila', a:x.cm + ' cm · ' + (x.etq || ''), b:x.a || '' })); }
+    if((h.manual || []).length){ bloques.push({ t:'titulo', texto:'Sin plan: cortar a mano' }); h.manual.forEach(u => bloques.push({ t:'fila', a:'N° ' + u.venta + ' · ' + u.nombre, b:'a mano' })); }
+    try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear({ titulo:'Hoja de corte', derecha:window.AH.sabadoCorto(h.sab), subtitulo:'Para el ' + window.AH.sabadoCorto(h.sab) + '.', bloques });
+      const r = await window.PDFR.compartir(blob, 'Hoja-de-corte-' + h.sab + '.pdf'); if(r === 'descargado') toast('PDF listo'); }
+    catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }
+  }
+  document.addEventListener('click', (e) => { const b = e.target.closest('[data-hoja-pdf]'); if(b) pdfHojaCorte(+b.dataset.hojaPdf); });
 
   const fotoHtml = (t, size) => t.foto ? window.AH.imgMini(t.foto, t.producto, t.tipo) : iconoTipo(t.tipo, size);
   // La foto puede ser de otro color si el modelo no tiene la de ese: se dice arriba de la foto
@@ -339,7 +369,7 @@
   function pintarInicioTrabajador(){
     const v = $('vistaTrabajo');
     if(v.dataset.pintado) v.classList.add('sin-entrada');
-    v.innerHTML = ahoraHtml() + despuesHtml() + pagosFilaHtml();
+    v.innerHTML = ahoraHtml() + hojaCorteHtml() + despuesHtml() + pagosFilaHtml();
     v.dataset.pintado = '1';
   }
   function pintarCargando(){

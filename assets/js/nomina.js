@@ -187,10 +187,12 @@
     resolviendo = true;
     fila.querySelectorAll('button').forEach(x => x.disabled = true);
     try{
-      const { error } = await db.rpc('resolver_vale', { vid: Number(fila.dataset.vale), aprobar });
+      const vid = Number(fila.dataset.vale);
+      const { error } = await db.rpc('resolver_vale', { vid, aprobar });
       if(error) throw error;
       toast(aprobar ? `Vale aprobado. Se descuenta en el próximo pago de ${t.nombre}.` : 'Vale rechazado. Le avisamos.');
       await Promise.all([abrirTrabajador(t.id, 'semana'), cargar()]);
+      if(aprobar) pedirCuenta('vale_salida', { vid, p: {} }, null, `Vale de ${t.nombre}.`);
     } catch(err){
       toast(mensaje(err), 'error');
       await abrirTrabajador(t.id).catch(() => {});
@@ -278,10 +280,11 @@
     if(!confirm(`¿Marcar pagado ${dinero(neto)} a ${t.nombre}? Queda en su historial y le llega el aviso.`)) return;
     pagando = true; b.disabled = true;
     try{
-      const { error } = await db.rpc('pagar_trabajador', { tid: t.id, esperado: neto });
+      const { data, error } = await db.rpc('pagar_trabajador', { tid: t.id, esperado: neto });
       if(error) throw error;
       toast(`Pagado. Le avisamos a ${t.nombre}.`);
       await Promise.all([abrirTrabajador(t.id, 'historial'), cargar()]);
+      if(data && data.id) pedirCuenta('nomina_salida', { pid: data.id, p: {} }, neto, `Nómina de ${t.nombre}: ${dinero(neto)}.`);
     } catch(err){
       toast(mensaje(err), 'error');
       await abrirTrabajador(t.id).catch(() => {});
@@ -319,13 +322,74 @@
     const btn = $('btnGuardarVale');
     guardandoVale = true; btn.disabled = true;
     try{
-      const { error } = await db.rpc('anotar_vale', { tid: ficha.trabajador.id, p_monto: monto, p_nota: $('valeNota').value.trim() || null, p_bs: bs > 0 ? bs : null, p_tasa: tasa > 0 ? tasa : null });
+      const { data, error } = await db.rpc('anotar_vale', { tid: ficha.trabajador.id, p_monto: monto, p_nota: $('valeNota').value.trim() || null, p_bs: bs > 0 ? bs : null, p_tasa: tasa > 0 ? tasa : null });
       if(error) throw error;
       cerrarHoja('sheetVale', true);
       toast('Vale anotado. Se descuenta en su próximo pago.');
+      const nom = ficha.trabajador.nombre;
       await Promise.all([abrirTrabajador(ficha.trabajador.id, 'semana'), cargar()]);
+      if(data && data.id) pedirCuenta('vale_salida', { vid: data.id, p: {} }, monto, `Vale de ${nom}: ${dinero(monto)}.`);
     } catch(err){ toast(mensaje(err), 'error'); }
     finally { guardandoVale = false; btn.disabled = false; }
+  });
+
+  // ---------- De qué cuenta salió (Finanzas): un toque después de pagar o entregar un vale ----------
+  // La salida queda "por ubicar" en Finanzas; aquí se dice la cuenta. Si se cierra, queda por ubicar.
+  let CUENTAS = null, SAL = null;
+  async function cuentasActivas(){
+    if(CUENTAS) return CUENTAS;
+    const { data, error } = await db.from('cuentas').select('id,nombre,tipo,moneda,orden').eq('activa', true).order('orden');
+    if(error) throw error;
+    CUENTAS = data || []; return CUENTAS;
+  }
+  async function pedirCuenta(fn, args, monto, texto){
+    let mid = null;
+    try{ const { data, error } = await db.rpc(fn, args); if(error) throw error; mid = data && data.id; }
+    catch(e){ toast('El pago quedó. No se pudo anotar en Finanzas: ' + mensaje(e), 'error'); return; }
+    if(!mid) return;
+    let cs = [];
+    try{ cs = await cuentasActivas(); } catch(e){ cs = []; }
+    if(!cs.length){ toast('Queda por ubicar en Finanzas: agrega tus cuentas allí.'); return; }
+    SAL = { mid, monto, texto, cuenta:null, origen:null, mas:false, guardando:false };
+    pintarSal(); abrirHoja('sheetSalida');
+  }
+  function pintarSal(){
+    const c = SAL.cuenta ? CUENTAS.find(x => x.id === SAL.cuenta) : null, ves = c && c.moneda === 'VES';
+    const opt = (lista, val, attr, cols) => `<div class="opts" style="--cols:${cols}">${lista.map(([v, t]) => `<button class="opt ${String(val) === String(v) ? 'selected' : ''}" type="button" ${attr}="${esc(v)}">${t}</button>`).join('')}</div>`;
+    $('salBody').innerHTML = `<p class="field-hint" style="margin:0 2px 12px;font-size:14px">${esc(SAL.texto)} Si cierras, queda "por ubicar" en Finanzas.</p>
+      <div class="field"><span class="field-label">Cuenta</span>${opt(CUENTAS.map(x => [x.id, esc(x.nombre)]), SAL.cuenta, 'data-sal-cuenta', 2)}</div>
+      ${ves ? `<div class="input-row"><div class="field"><label class="field-label" for="salBs">Bolívares que salieron</label><input class="input" id="salBs" inputmode="decimal"></div><div class="field"><label class="field-label" for="salTasa">Tasa</label><input class="input" id="salTasa" inputmode="decimal"></div></div>
+        <div class="field"><span class="field-label">¿De dónde es la tasa?</span>${opt([['BCV','BCV'],['Binance','Binance'],['Otra','Otra']], SAL.origen, 'data-sal-origen', 3)}</div>`
+      : c ? `<button type="button" class="link-btn" data-sal-mas style="font-size:13px;font-weight:800;color:var(--accent)">${SAL.mas ? 'Salió lo mismo' : '¿Salió más de la cuenta? (comisión o cambio)'}</button>
+        ${SAL.mas ? `<div class="field" style="margin-top:8px"><label class="field-label" for="salMonto">Salió de la cuenta</label><div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="salMonto" inputmode="decimal"></div><div class="field-hint">La diferencia queda como "Comisión y cambio".</div></div>` : ''}` : ''}`;
+  }
+  $('salBody').addEventListener('click', (e) => {
+    if(!SAL) return;
+    const c = e.target.closest('[data-sal-cuenta]'); if(c){ SAL.cuenta = Number(c.dataset.salCuenta); SAL.mas = false; pintarSal(); return; }
+    const o = e.target.closest('[data-sal-origen]'); if(o){ const bs = $('salBs').value, ta = $('salTasa').value; SAL.origen = o.dataset.salOrigen; pintarSal(); $('salBs').value = bs; $('salTasa').value = ta; return; }
+    if(e.target.closest('[data-sal-mas]')){ SAL.mas = !SAL.mas; pintarSal(); }
+  });
+  $('btnSalida').addEventListener('click', async () => {
+    if(!SAL || SAL.guardando) return;
+    if(!SAL.cuenta){ toast('Elige la cuenta', 'error'); return; }
+    const c = CUENTAS.find(x => x.id === SAL.cuenta), p = { cuenta_id: SAL.cuenta };
+    if(c.moneda === 'VES'){
+      const bs = montoOrNull($('salBs').value), ta = montoOrNull($('salTasa').value);
+      if(!(bs > 0) || !(ta > 0)){ toast('Escribe los bolívares y la tasa', 'error'); return; }
+      if(!SAL.origen){ toast('Elige de dónde es la tasa', 'error'); return; }
+      Object.assign(p, { monto_bs: bs, tasa: ta, tasa_origen: SAL.origen });
+    } else if(SAL.mas){
+      const m = montoOrNull($('salMonto').value);
+      if(!(m > 0)){ toast('Escribe lo que salió de la cuenta', 'error'); return; }
+      p.monto_salio = m;
+    }
+    SAL.guardando = true; $('btnSalida').disabled = true;
+    try{
+      const { error } = await db.rpc('movimiento_ubicar', { mid: SAL.mid, p });
+      if(error) throw error;
+      cerrarHoja('sheetSalida', true); toast('Listo: quedó en ' + c.nombre); SAL = null;
+    } catch(err){ toast(mensaje(err), 'error'); }
+    finally { if(SAL) SAL.guardando = false; $('btnSalida').disabled = false; }
   });
 
   $('btnActualizar').addEventListener('click', cargar);

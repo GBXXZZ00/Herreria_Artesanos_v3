@@ -42,10 +42,8 @@ async function entrar(page){
  const p1=await c1.newPage();p1.on('pageerror',e=>err.push('ray:'+e.message));
  await entrar(p1);
  await p1.goto('http://127.0.0.1:8765/ventas.html?abrir=3&confirmar=5');
- await p1.waitForSelector('#sheetAccion.open',{timeout:8000});
- ok('Ray: enlace del aviso abre "Confirmar pago" ya lista',(await p1.textContent('#accionTitulo'))==='Confirmar pago');
- ok('Ray: muestra el pago correcto',(await p1.textContent('#accionBody')).includes('150'));
- ok('La dirección se limpia (no reabre al refrescar)',!p1.url().includes('confirmar='));
+ await p1.waitForURL(/finanzas\.html\?confirmar=5/,{timeout:10000}).catch(()=>{});
+ ok('Ray: el enlace del aviso lleva a Finanzas a confirmar ese pago',p1.url().includes('finanzas.html?confirmar=5'),p1.url());
  await p1.screenshot({path:'shots4/s5-confirmar-desde-aviso.png'});
 
  // Gualfredo (admin, confirma_abonos:false) toca el mismo tipo de enlace → NO se abre confirmar (no puede)

@@ -12,6 +12,34 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-03 · Claude de Ray (4)
+- Ray dio el OK para publicar. Las migraciones no se pudieron aplicar desde el Claude de Ray: el conector de Supabase pide la confirmación a Gualfredo y se venció el tiempo (2 veces, no se cambió nada en la base).
+- **Para Gualfredo:** seguir `docs/tareas/2026-11-03-ray-publicar-finanzas-costos.md` (aplicar v73 a v80 y unir el PR #4). Hay un archivo con todo junto para el SQL Editor: `docs/tareas/2026-11-03-aplicar-v73-a-v80.sql`.
+- Está tocando: nada más.
+
+## 2026-11-03 · Claude de Ray (3)
+- Qué hizo (pedido de Ray después de ver el PR, `?v=74`, misma rama y mismo PR):
+  - Finanzas › Dinero: los pagos por confirmar van en **una sola tarjeta**; al tocarla salen en una hoja **agrupados por venta** y se confirman **uno tras otro** (al confirmar se abre solo el siguiente). Pagos por ubicar, Cuentas y Te deben son secciones que se abren y se cierran. Ficha del proveedor y de la cuenta también.
+  - Costos › Precios: **Por material** (el más barato arriba y al abrir la comparación con cuánto más caro sale cada uno) o **Por proveedor** (lo que vende cada uno). En la ficha del modelo se puede costear con **"El más barato"** de cada material.
+  - Finanzas › Mes: selector **‹ mes ›** con "ver todos los meses" (por año), tarjetas de resumen (ganancia, entró, salió, compras) y secciones plegables. Ya no se acumulan botones de meses.
+  - Hoja de corte: en Mi trabajo es una tarjeta que se abre y se cierra con **"Descargar PDF"**; en Costos › Semana cada herrero es plegable con su PDF.
+  - PDF en todos los informes: tu dinero hoy, gastos del mes, estado de cuenta, cierre del mes, reportes, lista de precios, ganancia por producto, existencias, compras del mes, plan de compra y hoja de corte.
+- Sin migraciones nuevas. Las de v73 a v80 siguen sin aplicar.
+- Pendientes: OK de Ray para aplicar migraciones y unir el PR.
+
+## 2026-11-03 · Claude de Ray (2)
+- Qué hizo: corrida única de Finanzas y Costos (lotes 1, 2, 3, 4, 5, 6, 7, 9, 10 y 10b del plan `docs/claude/documentos/plan-finanzas-costos.md`), `?v=73`.
+  - **`CLAUDE.md` cambió** (sección "Ahorro de consumo" y "El manual se deja en blanco por ahora"). Lo usa también Gualfredo.
+  - **Con cuidado (dinero y permisos):** v73 la vendedora ya no cambia ni borra pagos (RLS), `registrar_abono` y `cancelar_venta` pasan a `security definer`, borrar una venta no borra sus pagos. v75 libreta de dinero, nómina y vales con cuenta. v76 confirmar pagos ahora es en Finanzas (en Ventas queda el atajo "Confirmar en Finanzas"; la regla de `confirmar_abono` no cambió).
+  - Todo lo que el plan decía "solo Ray" lo hacen Ray y Gualfredo (`_es_ray()` = quien confirma pagos). La vendedora no ve dinero ni costos.
+  - El material de fabricación va en una tabla nueva `materiales_fab`, aparte de los consumibles, para no tocar entregas ni revisión del Depósito.
+  - Datos reales cargados en v78b: proveedores, precios de Colores y Ambiente y Torniplemaca, insumos, gastos fijos $915, costeo del Bitral y la nota 00-2884 de Torniplemaca (Le debes $1.674,50, material por registrar). No se cargaron saldos ni existencias.
+  - Dato de control: Bitral = $223,22 · $290,19 · $326,79 · barra completa $339,23 (base local con el mismo esquema y prueba test44).
+- Rama o PR: `ray/finanzas-costos`, un PR sin unir. Migraciones v73 a v80 (y v78b) **sin aplicar**: esperan el OK de Ray.
+- Pruebas: test14 a test45 en verde. Nuevas: test42 (Finanzas), test43 (Depósito), test44 (Costos y corte), test45 (Mes y reportes). Ajustadas por el cambio de confirmar en Finanzas: test17, test19, test28, test33.
+- Está tocando: Finanzas, Costos, Depósito, Nómina (cuenta de pago), Inicio (avisos), Ventas (atajo), Catálogo (fila Costo), venta (extras), Mi trabajo (hoja de corte), Producción (enlace al plan).
+- Pendientes: OK de Ray para aplicar migraciones y unir. Después: lote 8 (leer facturas con foto), 11 (3D), aluminio y madera en Costos. El Bitral no tiene categoría de pago en el Catálogo (Costos usa Puerta Estándar como la maqueta).
+
 ## 2026-11-03 · Claude de Ray
 - Qué hizo (v72, todo lo de `docs/tareas/2026-11-02-ray-pendiente-para-code.md`):
   - Ficha de la venta: "Enviar PDF" y "Descargar PDF" siempre arriba (menos en canceladas). Debajo: "Primero envíale el PDF…", "✓ PDF enviado hoy … · quién", en Android "2. Enviar el mensaje" aparte y luego el paso del día. Se quitó "PDF" de "Más opciones".

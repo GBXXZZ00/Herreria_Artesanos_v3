@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Nómina · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=72">
+<link rel="stylesheet" href="assets/css/base.css?v=74">
 <style>
   .page{padding-bottom:calc(var(--safe-b) + 110px)}
   .n-lista{display:flex;flex-direction:column;gap:10px;padding:14px 18px 0}
@@ -176,13 +176,23 @@
   <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarVale">Anotar vale</button></div>
 </section>
 
+<!-- De qué cuenta salió el pago o el vale (Finanzas) -->
+<div class="sheet-scrim scrim-top" id="scrimSalida" data-cerrar="sheetSalida"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetSalida" role="dialog" aria-modal="true" aria-labelledby="salTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="salTitulo">¿De qué cuenta salió?</h2>
+    <button class="icon-btn" data-cerrar="sheetSalida" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body" id="salBody"></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnSalida">Guardar</button></div>
+</section>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=72"></script>
-<script src="assets/js/supabase-client.js?v=72"></script>
-<script src="assets/js/comun.js?v=72"></script>
-<script src="assets/js/sesion.js?v=72"></script>
-<script src="assets/js/ayuda.js?v=72"></script>
-<script src="assets/js/nomina.js?v=72"></script>
+<script src="assets/vendor/supabase.js?v=74"></script>
+<script src="assets/js/supabase-client.js?v=74"></script>
+<script src="assets/js/comun.js?v=74"></script>
+<script src="assets/js/sesion.js?v=74"></script>
+<script src="assets/js/ayuda.js?v=74"></script>
+<script src="assets/js/nomina.js?v=74"></script>
 </body>
 </html>

@@ -20,6 +20,16 @@ Es una guía, no un muro: cualquiera puede tocar cualquier parte, siguiendo esta
 - Cliente en JS: `window.db` (lo crea `assets/js/supabase-client.js`). **Nunca** declares un global llamado `supabase`: rompe todo.
 - Avisos: Web Push con `sw.js` y la edge function `notificar`.
 
+## Ahorro de consumo
+- Durante cada lote corre solo la prueba del módulo que tocaste. La batería completa una sola vez al final, en segundo plano y partida en dos mitades (`test14` a `test27` y `test28` en adelante), con un tiempo largo: toda junta pasa de 30 minutos. `test26` a veces falla por tiempo, también en `main`: anótalo, no lo arregles salvo que sea por tu cambio.
+- El servidor de pruebas (`python3 -m http.server 8765`) se levanta una sola vez.
+- Capturas solo en iPhone 13, solo de las pantallas nuevas o cambiadas, y solo al final.
+- Revisión propia una sola vez al final, como si el código fuera de otro (permisos, RLS, texto escapado, errores de red). Sin agentes revisores salvo que el socio lo pida.
+- No releas archivos completos ni la salida entera de las pruebas: busca el tramo (`grep`, `sed -n`) y muestra solo los fallos. No releas un archivo después de editarlo. `node --check` antes de dar algo por hecho.
+- Prueba cada migración una vez contra la base real con `execute_sql` dentro de `begin ... rollback`: salen los errores de SQL temprano y no queda nada guardado.
+- Para reglas que ya existen en una maqueta, parte de ella y pásalas a funciones de Supabase; no las deduzcas de cero.
+- El ahorro viene de hacer menos repeticiones, no de bajar la calidad.
+
 ## Carpetas
 | Dónde | Qué |
 |---|---|
@@ -47,7 +57,7 @@ Es una guía, no un muro: cualquiera puede tocar cualquier parte, siguiendo esta
   `python3 -m http.server 8765` en la raíz y, desde `pruebas/`, `NODE_PATH=$(npm root -g) node testNN.js`. Cada una termina en `TODO OK`.
 - Lo nuevo lleva su prueba nueva (`test41.js` en adelante) o se agrega a la que ya existe.
 - Mira capturas en tamaño iPhone (las pruebas usan iPhone 13) de cada pantalla nueva o cambiada.
-- Si cambia una pantalla, rehaz su captura del manual y corre `python3 pruebas/manual/construir.py`.
+- El manual se deja en blanco por ahora (no se rehacen capturas del manual ni se corre `construir.py`).
 - Si pruebas en la base real: dentro de una transacción con rollback, o borra los datos de prueba y resetea las secuencias.
 - Agrega a `docs/claude/documentos/lista-de-pruebas.md` lo que los socios deben probar en el teléfono.
 

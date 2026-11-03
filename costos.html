@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Costos · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=74">
+<link rel="stylesheet" href="assets/css/modulo.css?v=74">
+<style>
+  /* Costos: lista de modelos con semáforo y ficha de costeo (al lado en computadora) */
+  .sem-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
+  .pill.negro{background:var(--ink);color:#fff}
+  .mod{display:flex;align-items:center;gap:12px;width:100%;padding:10px 2px;text-align:left;transition:transform 140ms var(--ease-out)}
+  .mod:active{transform:scale(0.98)}
+  .mod + .mod{border-top:1px solid var(--line)}
+  .mod img{width:52px;height:52px;border-radius:12px;object-fit:cover;background:var(--surface-2);flex-shrink:0}
+  .mod .grow{flex:1;min-width:0}
+  .mod .mat-n b{font-size:17px}
+  .mod.sel{background:var(--accent-soft);border-radius:14px}
+  .precio-caja{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 8px}
+  .precio-caja .res-c b{font-size:22px}
+  .precio-caja .res-c.final{grid-column:1/-1;background:var(--accent);}
+  .precio-caja .res-c.final span,.precio-caja .res-c.final b{color:#fff}
+  .grp{margin-top:6px}
+  .grp-h{display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:var(--ink-soft);padding:12px 2px 4px;border-bottom:1px solid var(--line)}
+  .ln{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 2px;width:100%;text-align:left}
+  .ln + .ln{border-top:1px solid var(--line)}
+  .ln-t{font-size:14.5px;font-weight:700}
+  .ln-s{font-size:12.5px;color:var(--ink-soft)}
+  .ln-v{font-size:14.5px;font-weight:800;text-align:right;white-space:nowrap}
+  button.ln:active{background:var(--surface-2)}
+  .pz{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 2px;width:100%;text-align:left}
+  .pz + .pz{border-top:1px solid var(--line)}
+  .pz-n{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+  .pz-t{font-size:14.5px;font-weight:700}
+  .pz-s{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .pz-m{font-size:15px;font-weight:800;white-space:nowrap}
+  .barra-t{font-size:12px;font-weight:700;color:var(--ink-soft);margin-top:10px}
+  .tog{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px}
+  .regla{display:flex;align-items:center;gap:10px;width:100%;padding:13px 2px;text-align:left}
+  .regla + .regla{border-top:1px solid var(--line)}
+  .regla .grow{flex:1;min-width:0}
+  .regla b{font-size:18px;font-weight:800;white-space:nowrap}
+  .formula{border-radius:16px;background:var(--surface-2);padding:12px 14px;font-size:14px;line-height:1.55}
+  .formula b{color:var(--accent)}
+  .leyenda{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px;margin-top:8px}
+  .prov-p{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0}
+  .prov-p + .prov-p{border-top:1px solid var(--line)}
+  /* Cuatro pestañas */
+  #tabs.seg-d{grid-template-columns:repeat(4,1fr)}
+  #tabs .seg-fondo{width:calc(25% - 2px)}
+  #tabs button{font-size:14px}
+  /* Plan de corte */
+  .ped-c{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 2px}
+  .ped-c + .ped-c{border-top:1px solid var(--line)}
+  .ped-c .dot{width:12px;height:12px;border-radius:4px}
+  .ped-c b{font-size:15px}
+  .ped-c small{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .ped-c .m{text-align:right;font-weight:800;font-size:15px;white-space:nowrap}
+  .stp{display:flex;align-items:center;border:1px solid var(--line-strong);border-radius:12px;height:38px}
+  .stp button{width:36px;height:36px;font-size:18px;font-weight:800;color:var(--accent)}
+  .stp span{min-width:22px;text-align:center;font-weight:800}
+  .mat-b{border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:10px}
+  .mat-b-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .mat-b-h b{font-size:15px}
+  .mat-b-h span{font-size:12.5px;color:var(--ink-soft);text-align:right}
+  .barra-l{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-top:8px}
+  .barra span.ret{outline:2px dashed #B7791F;outline-offset:-2px}
+  .leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;font-weight:700;margin:6px 0 2px}
+  .leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .ahorro{border-radius:16px;background:#DDF2E6;color:#1B6B3A;padding:12px 14px;font-size:14px;font-weight:700;line-height:1.4;margin-top:10px}
+  .hoja-c{font-family:Helvetica,Arial,sans-serif;border:1px solid var(--line);border-radius:8px;padding:14px}
+  .hoja-c h3{margin:12px 0 4px;font-size:14px;color:var(--accent)}
+  .hoja-c .r{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid #EFEDE9}
+  .hoja-c .r b{white-space:nowrap}
+  /* Plan semanal: por herrero, barras que se tocan para cambiarlas, hoja del herrero */
+  .hr-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 2px 4px;border-bottom:1px solid var(--line)}
+  .hr-h b{font-size:16px}
+  .hr-h span{font-size:12.5px;color:var(--ink-soft)}
+  .ped-c.falta b{color:var(--ink-soft)}
+  a.ped-c{text-decoration:none;color:inherit}
+  .barra-btn{display:block;width:100%;text-align:left;padding:2px 0 6px;border-radius:10px;transition:transform 140ms var(--ease-out)}
+  .barra-btn:active{transform:scale(0.98)}
+  .barra-btn + .barra-btn{border-top:1px solid var(--line)}
+  .barra.es-comp{outline:2px dashed var(--danger);outline-offset:1px}
+  .barra.es-ret{outline:2px dashed var(--amber);outline-offset:1px}
+  .barra-n{display:block;font-size:12px;font-weight:700;color:var(--amber);margin-top:4px}
+  .link-b{font-size:14px;font-weight:800;color:var(--accent)}
+  .gris-l{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);color:var(--ink-soft);font-size:13.5px;font-weight:700}
+  .dos-btn{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .btn-mini{display:inline-flex;align-items:center;height:38px;padding:0 14px;border-radius:12px;background:var(--danger);color:#fff;font-size:14px;font-weight:800;text-decoration:none}
+  .btn-mini.sec{background:var(--surface);color:var(--danger);border:1px solid currentColor}
+  .btn-mini:active{transform:scale(0.97)}
+  .pz.on{background:var(--accent-soft);border-radius:12px}
+  .opt-grande{display:block;width:100%;text-align:left;border:1px solid var(--line-strong);border-radius:16px;padding:12px 14px;margin-top:10px}
+  .opt-grande b{display:block;font-size:15px}
+  .opt-grande span{display:block;font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .telefono{border:1px solid var(--line-strong);border-radius:22px;padding:14px;background:var(--surface)}
+  .tel-h b{display:block;font-size:17px}
+  .tel-h span{font-size:12.5px;color:var(--ink-soft)}
+  .tel-n{font-size:13px;color:var(--ink-soft);margin:8px 0 2px}
+  .tel-m{font-size:13px;font-weight:800;color:var(--accent);margin-top:12px}
+  .tel-b{padding:6px 0;border-bottom:1px solid var(--line)}
+  .tel-bt{display:block;font-size:12.5px;font-weight:800;margin-bottom:4px}
+  .tel-p{display:block;font-size:13px;line-height:1.5;margin-top:4px}
+  /* Ganancia */
+  .meta{border-radius:16px;background:var(--surface-2);padding:12px 14px;margin-bottom:10px}
+  .meta-b{height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+  .meta-b span{display:block;height:100%;background:var(--accent);border-radius:999px}
+  .meta-t{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:13px;color:var(--ink-soft)}
+  .meta-t b{color:var(--ink);font-size:15px}
+  .rent{display:flex;align-items:center;gap:10px;width:100%;padding:10px 2px;text-align:left}
+  .rent + .rent{border-top:1px solid var(--line)}
+  .rent .grow{flex:1;min-width:0}
+  .rent .mat-n b{font-size:16px}
+  .sin-c{margin-top:8px;border:1px solid var(--line);border-radius:16px;padding:4px 12px}
+  .sin-c summary{padding:10px 0;font-size:14px;font-weight:800;color:var(--ink-soft);cursor:pointer}
+  .col-t{display:none}
+  @media (min-width:1024px){
+    .page{max-width:1400px;margin:0 auto}
+    .cos-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:24px;align-items:start}
+    #panel{position:sticky;top:76px;border:1px solid var(--line);border-radius:18px;padding:16px;max-height:calc(100vh - 100px);overflow:auto}
+    #panel:empty::before{content:"Toca un modelo para ver su costeo aquí.";color:var(--ink-soft);font-size:14px}
+    .pie-entregar{display:none}
+    .seg-d{max-width:560px}
+  }
+  @media (max-width:1023px){ #panel{display:none} }
+</style>
+</head>
+<body data-requiere-sesion="si">
+
+<header class="topbar" id="topbar">
+  <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+  <div class="topbar-text">
+    <div class="topbar-title">Costos</div>
+    <div class="topbar-sub" id="subtitulo">Cuánto cuesta cada modelo</div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="seg-d" id="tabs" role="group" aria-label="Qué ver">
+    <span class="seg-fondo" aria-hidden="true"></span>
+    <button class="on" type="button" data-tab="modelos" aria-pressed="true">Modelos</button>
+    <button type="button" data-tab="semana" aria-pressed="false">Semana</button>
+    <button type="button" data-tab="ganancia" aria-pressed="false">Ganancia</button>
+    <button type="button" data-tab="materiales" aria-pressed="false">Precios</button>
+  </div>
+  <div class="mostrar" id="filtros"><span class="mostrar-t">Mostrar</span><div class="mostrar-l" id="filtrosL"></div></div>
+  <section class="d-cont" id="cont" aria-live="polite"></section>
+</main>
+
+<div class="pie-entregar hidden" id="pieMat"><button class="btn-primary" type="button" id="btnNuevoMat">Agregar material</button></div>
+
+<div class="bottom-nav-wrap" id="menuModulos" data-activo="costos"></div>
+
+<div class="sheet-scrim" id="scrimDet" data-cerrar="sheetDet"></div>
+<section class="sheet" id="sheetDet" role="dialog" aria-modal="true" aria-labelledby="detTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="detTitulo">Costeo</h2>
+    <button class="icon-btn" data-cerrar="sheetDet" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body" id="detBody"></div>
+  <div class="sheet-foot" id="detFoot"></div>
+</section>
+
+<div class="sheet-scrim scrim-top" id="scrimForm" data-cerrar="sheetForm"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetForm" role="dialog" aria-modal="true" aria-labelledby="formTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="formTitulo">Formulario</h2>
+    <button class="icon-btn" data-cerrar="sheetForm" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body" id="formBody"></div>
+  <div class="sheet-foot" id="formFoot"><button class="btn-primary" type="button" id="btnForm">Guardar</button></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/vendor/supabase.js?v=74"></script>
+<script src="assets/js/supabase-client.js?v=74"></script>
+<script src="assets/js/comun.js?v=74"></script>
+<script src="assets/js/sesion.js?v=74"></script>
+<script src="assets/js/pdf-reporte.js?v=74"></script>
+<script src="assets/js/costeo.js?v=74"></script>
+<script src="assets/js/corte.js?v=74"></script>
+<script src="assets/js/costos.js?v=74"></script>
+</body>
+</html>

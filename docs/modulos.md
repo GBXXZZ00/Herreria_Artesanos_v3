@@ -95,7 +95,19 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 ## Importar (`importar.html`)
 - **Para qué:** herramienta de una vez para traer datos de la app vieja a la tabla `respaldos`. No es parte del uso diario.
 
+## Finanzas (`finanzas.html` + `finanzas.js` + `finanzas-mes.js`)
+- **Para qué:** Dinero (pagos por confirmar y por ubicar, tu dinero hoy, lo que ganas este mes, cuentas, te deben), Proveedores (cuenta corriente, ficha, le transferí, cambiar saldo, estado de cuenta en PDF), Gastos (fijos previsto y pagado, nómina, vales, comisión) y Mes (cierre y reportes por proveedor y por cuenta con PDF).
+- **Roles:** solo quien confirma pagos (Ray y Gualfredo).
+- **Datos:** RPC `finanzas_datos` y las funciones de la libreta (ver `base-de-datos.md`). PDF con `pdf-reporte.js` (mismo diseño del PDF de la venta).
+
+## Costos (`costos.html` + `costos.js` + `costeo.js` + `corte.js`)
+- **Para qué:** Modelos (costeo con semáforo, precio con cada proveedor, barra completa, duplicar, pasar al catálogo), Semana (plan de corte del sábado desde Producción, hoja de corte y plan de compra en PDF), Ganancia (gastos fijos, ¿alcanzamos?, ganancia por producto, reglas) y Precios (sin IVA por proveedor).
+- **Roles:** solo Ray y Gualfredo. El herrero ve su hoja de corte en Mi trabajo.
+- **Reglas:** `costeo.js` calcula igual que `_costeo` de la base para que la ficha responda al instante; el número que vale es el de la base.
+
+## Depósito (cambios v73)
+- Pestañas Consumibles (Materiales y Entregas, como antes) · Fabricación (barras, hojas, retazos, conteo, faltan para el sábado) · Compras (facturas y notas, solo el total, registrar el material, ya le transferí aparte). Fabricación y Compras solo el administrador (`deposito-nuevo.js`).
+
 ## Lo que todavía no existe
 - Resumen del taller en PDF (maqueta en `docs/claude/documentos/maqueta-resumen-v6.html`).
-- Módulo de Finanzas (se replantea desde cero).
-- Costos y precios de modelos (lo trabaja el Claude de Ray).
+- Lectura de facturas con foto (lote 8), 3D (lote 11), aluminio y madera en Costos.

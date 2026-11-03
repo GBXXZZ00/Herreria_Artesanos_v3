@@ -60,15 +60,13 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Ficha muestra "Por confirmar"',(await a.textContent('#fichaBody')).includes('Por confirmar'));
  ok('A Ray le dice que falta que confirme el pago',(await a.textContent('#fichaBody .btn-guia.espera')).includes('Falta que confirmes el pago'));
  ok('El admin sí puede cancelar la venta',!!(await a.$('#fichaBody [data-accion="cancelar"]')));
- await a.click('#fichaBody [data-confirmar="1"]');await a.waitForTimeout(600);
- ok('Hoja de confirmar abono',(await a.textContent('#accionTitulo'))==='Confirmar pago');
- await a.fill('#aNota','Llegó a Zelle de Ray');await a.screenshot({path:'shots4/s4-confirmar.png'});
- await a.click('#btnAccion');
- const tst=await a.waitForSelector('#toast.show',{timeout:4000}).then(e=>e.textContent()).catch(()=>'');
- ok('Al confirmar avisa que pasó a fabricación',/pasó a fabricación/i.test(tst),tst);
- await a.waitForTimeout(1300);
+ await a.click('#fichaBody [data-confirmar="1"]');await a.waitForURL(/finanzas\.html\?confirmar=1/,{timeout:10000}).catch(()=>{});
+ ok('Confirmar el pago lleva a Finanzas (confirmar y ubicar en un paso)',a.url().includes('finanzas.html?confirmar=1'),a.url());
+ // La regla de confirmar_abono no cambia: se confirma (como lo hace Finanzas) y la venta pasa a fabricación
+ await a.evaluate(()=>db.rpc('confirmar_abono',{aid:1,llego:true,nota:'Llegó a Zelle de Ray'}));
+ await a.goto('http://127.0.0.1:8765/ventas.html?abrir=1');await a.waitForSelector('#sheetFicha.open');await a.waitForTimeout(1200);
  const ca1=rpcs.find(x=>x[0]==='confirmar_abono');ok('Confirma con su nota',ca1&&ca1[1].aid===1&&ca1[1].llego===true&&ca1[1].nota==='Llegó a Zelle de Ray',ca1&&ca1[1]);
- ok('Ficha muestra confirmado y la nota',(await a.textContent('#fichaBody')).includes('Confirmado')&&(await a.textContent('#fichaBody')).includes('Nota de Ray: Llegó a Zelle de Ray'));
+ /* La ficha de Ventas ya no confirma: el pago se confirma en Finanzas (test42) */
  ok('Ahora está En producción y no se puede devolver a Confirmada',!(await a.$('#fichaBody [data-retro]')) && !(await a.$('#fichaBody .btn-guia.espera')));
  await a.screenshot({path:'shots4/s5-en-produccion.png'});
  // Página pública
