@@ -12,6 +12,12 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-02 · Claude de Gualfredo (2)
+- Qué hizo: dejó lista la tarea de la nueva gestión para que la ejecute el Claude de Ray: plan en `docs/tareas/2026-11-03-nueva-gestion.md` y SQL de respaldo y limpieza SIN aplicar en `supabase/migrations/PENDIENTE_v72_...sql`.
+- Rama o PR: `gualfredo/nueva-gestion`.
+- Está tocando: nada más; la sigue el Claude de Ray en esa misma rama.
+- Pendientes: los 4 puntos de la tarea, hoy o antes de que abran mañana.
+
 ## 2026-11-02 · Claude de Gualfredo
 - Qué hizo: preparó el repo para trabajar entre los dos Claude, sin tocar código de la app ni la base. Creó `CLAUDE.md` (reglas), `docs/modulos.md`, `docs/base-de-datos.md`, esta bitácora, copia literal de las instrucciones y de los documentos del proyecto de Gualfredo (`docs/claude/`), las 4 skills sacadas de las instrucciones, `docs/claude/memoria-app.md`, la lista de las 88 migraciones y una acción de GitHub para bajar su texto y el esquema actual.
 - Rama o PR: `docs/reglas-compartidas`, PR #1.
