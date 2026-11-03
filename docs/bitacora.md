@@ -12,6 +12,16 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-03 · Claude de Gualfredo (2)
+- Qué hizo: publicó Finanzas y Costos siguiendo `docs/tareas/2026-11-03-ray-publicar-finanzas-costos.md` (con el OK de Ray).
+  - Aplicó en la base, en orden y con `apply_migration`: v73, v74, v75, v76, v77, v78, v78b, v79 y v80 (Gualfredo tocó Permitir). Las primeras 3 veces se venció la confirmación del conector sin cambiar nada; a la cuarta pasó.
+  - Dato de control revisado en la base real: Bitral $223,22 · $326,79 · barra completa $339,23. `registrar_abono` ya es `security definer`.
+  - Unió el PR #4. Sale en vivo con `?v=74`.
+  - Torniplemaca queda en "Le debes $1.674,50" por la nota 00-2884 (cargada en v78b). Gualfredo dijo dejarlo así: Ray lo corrige en Finanzas (cuadrar, cambiar saldo o anular la compra con motivo).
+- Rama o PR: PR #4 unido; esta nota va en `gualfredo/bitacora-finanzas-publicado`.
+- Está tocando: nada.
+- Pendientes: los socios prueban en el teléfono la lista de `docs/claude/documentos/lista-de-pruebas.md` (sección v73 y v74). Lo primero: crear las cuentas en Finanzas y ponerles saldo.
+
 ## 2026-11-03 · Claude de Ray (4)
 - Ray dio el OK para publicar. Las migraciones no se pudieron aplicar desde el Claude de Ray: el conector de Supabase pide la confirmación a Gualfredo y se venció el tiempo (2 veces, no se cambió nada en la base).
 - **Para Gualfredo:** seguir `docs/tareas/2026-11-03-ray-publicar-finanzas-costos.md` (aplicar v73 a v80 y unir el PR #4). Hay un archivo con todo junto para el SQL Editor: `docs/tareas/2026-11-03-aplicar-v73-a-v80.sql`.
