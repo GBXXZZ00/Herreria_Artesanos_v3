@@ -19,12 +19,17 @@ if(/github\.io$/i.test(location.hostname)){
   const dia = (iso) => { const d = new Date(iso); return isNaN(d) ? String(iso).slice(0, 10) : d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   const lunes = (ms) => { const t = new Date(ms); t.setHours(0,0,0,0); t.setDate(t.getDate() - ((t.getDay() + 6) % 7)); return t.toISOString().slice(0,10); };
   const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  // Este sábado y el próximo (igual que AH.sabados de la app)
+  const isoL = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  function sabados(){ const d = new Date(); d.setHours(12,0,0,0); const w = d.getDay(); d.setDate(d.getDate() + (w === 0 ? 6 : 6 - w)); const este = isoL(d); d.setDate(d.getDate() + 7); return { este, proximo:isoL(d) }; }
 
   const PERF = {
     ray:{ id:'ray', usuario:'ray', nombre:'Ray', rol:'admin', activo:true, confirma_abonos:true, lleva_madera:false, linea:'hierro', especialidades:[], sede_id:1, orden:1 },
     gualfredo:{ id:'gualfredo', usuario:'gualfredo', nombre:'Gualfredo', rol:'admin', activo:true, confirma_abonos:false, lleva_madera:true, linea:'hierro', especialidades:[], sede_id:1, orden:2 },
     yulimar:{ id:'yulimar', usuario:'yulimar', nombre:'Yulimar', rol:'vendedor', activo:true, confirma_abonos:false, lleva_madera:false, linea:'hierro', especialidades:[], sede_id:1, orden:3 },
     jesus:{ id:'jesus', usuario:'jesus', nombre:'Jesus', rol:'trabajador', activo:true, especialidades:['herrero'], orden:4 },
+    pedro:{ id:'pedro', usuario:'pedro', nombre:'Pedro', rol:'trabajador', activo:true, especialidades:['herrero'], orden:6 },
+    carlos:{ id:'carlos', usuario:'carlos', nombre:'Carlos', rol:'trabajador', activo:true, especialidades:['acabados'], orden:7 },
     luis:{ id:'luis', usuario:'luispaz', nombre:'Luis Paz', rol:'trabajador', activo:true, especialidades:['masilla_pintura'], orden:5 },
   };
 
@@ -51,6 +56,20 @@ if(/github\.io$/i.test(location.hostname)){
     {id:6,nombre:'Porton',producto:'Portón',activo:true,tarifas:{hierro:{modo:'m2',monto:25},detalles:{modo:'fijo',monto:20},masilla_pintura:{modo:'m2',monto:25}}},
   ];
 
+  // Pasos de cada unidad (reglas-produccion.md): puerta = Hierro → Masilla y pintura → Detalles; combo suma Aluminio
+  let etapaSig = 5000;
+  function crearEtapas(it, asig){
+    const out = [], n = it.cantidad;
+    for(let u = 1; u <= n; u++){
+      const [tid, para] = asig[u - 1] || [null, null];
+      const pasos = [['Hierro','hierro','herrero','puerta'],['Masilla y pintura','masilla_pintura','masilla_pintura','puerta'],['Detalles','detalles','acabados','puerta']];
+      if(it.tipo === 'Combo') pasos.splice(2, 0, ['Aluminio','aluminio','ventanero','ventanas']);
+      pasos.forEach(([nombre, oficio, esp, rama], i) => { const h = i === 0 && tid;
+        out.push({ id:++etapaSig, venta_item_id:it.id, unidad:u, unidades:1, rama, nombre, orden:i + 1, especialidad:esp, oficio, incluye:it.tipo === 'Combo' && oficio === 'hierro' ? 'Puerta + 2 protecciones' : null, despues_de:null,
+          estado:'pendiente', para_el:h ? para : null, trabajador_id:h ? tid : null, trabajador:h ? { nombre:PERF[tid].nombre } : null, foto:null, terminada_en:null, iniciada_en:null, monto:null }); });
+    }
+    return out;
+  }
   function inicial(){
     const catalogo = CAT.map(([id, tipo, nombre, precio]) => ({
       id, tipo, nombre, precio_base:precio, fotos: tipo === 'Puerta de Madera' ? { Principal:FOTO + '?' + id } : { Blanco:FOTO + '?b' + id, Negro:FOTO + '?' + id },
@@ -58,16 +77,28 @@ if(/github\.io$/i.test(location.hostname)){
       categoria_pago_id: id === 7 ? 3 : id === 4 ? 2 : null, badge:null, caracteristicas:[], descripcion_publica:null, creado_en:hace(30)
     }));
     const cli = { a:{id:1,nombre:'Cliente de ejemplo A',telefono:'0414 000 0001',cedula:'V-1',direccion:null}, b:{id:2,nombre:'Cliente de ejemplo B',telefono:'0414 000 0002',cedula:'V-2',direccion:null}, c:{id:3,nombre:'Cliente de ejemplo C',telefono:'0414 000 0003',cedula:'V-3',direccion:null} };
-    const item = (vid, id, cant, precio) => ({ id:vid*10, venta_id:vid, catalogo_id:id, pieza_id:null, a_medida:false, tipo:'Puerta Multilock', nombre:CAT.find(c => c[0] === id)[2], especificaciones:{ color:'Negro', alto:2, ancho:1 }, foto:null, precio_unitario:precio, cantidad:cant, orden:0, categoria_pago_id:3, ya_hecho:false, catalogo:{ fotos:{ Blanco:FOTO, Negro:FOTO } } });
+    const item = (vid, id, cant, precio, asig) => { const c = CAT.find(x => x[0] === id); const it = { id:vid*10, venta_id:vid, catalogo_id:id, pieza_id:null, a_medida:false, tipo:c[1], nombre:c[2], especificaciones:{ color:'Negro', alto:2, ancho:1 }, foto:null, precio_unitario:precio, cantidad:cant, orden:0, categoria_pago_id:c[1] === 'Combo' ? 4 : 3, ya_hecho:false, catalogo:{ fotos:{ Blanco:FOTO, Negro:FOTO } } };
+      if(asig) it.etapas = crearEtapas(it, asig); return it; };
     const venta = (id, c, estado, total, items, abonos, dias) => ({ id, cliente_id:c.id, cliente:c, estado, sede_id:1, sede:{id:1,nombre:'Cumbres de Maracaibo'}, vendedor_id:'yulimar', descuento:0, instalacion:0, traslado:0, subtotal:total, total, notas:null,
       vence_en:dia(hace(-20)), fecha_entrega:dia(hace(-15)), confirmada_en: estado === 'cotizacion' ? null : hace(dias), cancelada_en:null, creado_en:hace(dias), actualizado_en:hace(dias), token_seguimiento:'demo'+id, interna:false,
       produccion_en: estado === 'en_produccion' ? hace(dias - 1) : null, lista_en:null, entregada_en: estado === 'entregada' ? hace(1) : null, mensaje_en:null, mensaje_estado:null, pdf_en:null, items, abonos, cambios:[] });
     const ab = (id, vid, monto, metodo, estado, dias, ubicado) => ({ id, venta_id:vid, tipo:'abono', monto, metodo, tasa:null, monto_bs:null, comprobante:'demo.jpg', nota:null, fecha:hace(dias), registrado_por:'yulimar', estado, confirmado_por: estado === 'confirmado' ? 'ray' : null, confirmado_en: estado === 'confirmado' ? hace(dias) : null, ubicado: ubicado || null });
+    // Asignaciones de ejemplo en Producción: [herrero, para qué sábado] por unidad (null = sin asignar)
+    const S = sabados();
+    const otros = { d:{id:4,nombre:'Cliente de ejemplo D',telefono:'0414 000 0004',cedula:'V-4',direccion:null}, e:{id:5,nombre:'Cliente de ejemplo E',telefono:'0414 000 0005',cedula:'V-5',direccion:null}, f:{id:6,nombre:'Cliente de ejemplo F',telefono:'0414 000 0006',cedula:'V-6',direccion:null}, g:{id:7,nombre:'Cliente de ejemplo G',telefono:'0414 000 0007',cedula:'V-7',direccion:null} };
+    Object.assign(cli, otros);
     const ventas = [
       venta(1071, cli.b, 'confirmada', 640, [item(1071, 7, 2, 320)], [ab(9, 1071, 320, 'Zelle', 'por_confirmar', 0)], 0),
-      venta(1066, cli.a, 'en_produccion', 320, [item(1066, 7, 1, 320)], [ab(8, 1066, 160, 'Zelle', 'confirmado', 3, null)], 4),
+      venta(1066, cli.a, 'en_produccion', 320, [item(1066, 7, 1, 320, [['jesus', S.este]])], [ab(8, 1066, 160, 'Zelle', 'confirmado', 3, null)], 4),
+      venta(1068, cli.d, 'en_produccion', 640, [item(1068, 7, 2, 320, [['jesus', S.este], ['pedro', S.este]])], [ab(10, 1068, 320, 'Efectivo', 'confirmado', 3, { a:'cuenta', cuenta:'efc' })], 3),
+      venta(1069, cli.e, 'en_produccion', 280, [item(1069, 133, 1, 280, [['pedro', S.este]])], [ab(11, 1069, 140, 'Zelle', 'confirmado', 2, { a:'cuenta', cuenta:'zr' })], 2),
+      venta(1070, cli.f, 'en_produccion', 240, [item(1070, 29, 1, 240, [[null, null]])], [ab(12, 1070, 120, 'Binance', 'confirmado', 1, { a:'cuenta', cuenta:'bin' })], 1),
+      venta(1072, cli.g, 'en_produccion', 500, [item(1072, 93, 1, 500, [[null, null]])], [ab(13, 1072, 250, 'Zelle', 'confirmado', 1, { a:'cuenta', cuenta:'zg' })], 1),
       venta(1060, cli.c, 'entregada', 480, [item(1060, 108, 1, 480)], [ab(6, 1060, 240, 'Zelle', 'confirmado', 9, { a:'cuenta', cuenta:'zr' }), ab(7, 1060, 240, 'Efectivo', 'confirmado', 1, null)], 10),
     ];
+    // Orden para exhibición (sin cliente): Bitral para el próximo sábado
+    const exh = venta(1073, { id:null, nombre:'Exhibición' }, 'en_produccion', 0, [item(1073, 7, 1, 0, [['jesus', S.proximo]])], [], 1);
+    exh.interna = true; exh.cliente = null; exh.cliente_id = null; ventas.splice(6, 0, exh);
     return {
       catalogo, ventas, clientes:Object.values(cli),
       // ---------- Depósito: consumibles (los 18 reales; stock real, mínimos de ejemplo) ----------
@@ -97,7 +128,7 @@ if(/github\.io$/i.test(location.hostname)){
         {id:1,material_id:3,trabajador_id:'jesus',trabajador:'Jesus',entregado_por:'Ray',fecha:hace(9),semana:lunes(Date.now()-9*864e5),nota:null,estado:'aprobada',revisado_por:'Ray',revisado_en:hace(8),rara:false,trabajos:6,abierta:false},
       ],
       compras:[{id:1,material_id:11,cantidad:20,costo:80,nota:'Ferretería',fecha:hace(12),por:'Ray'}],
-      trabajadores:[{id:'jesus',nombre:'Jesus',especialidades:['herrero'],pendientes:[{oficio:'hierro',especialidad:'herrero',n:3}]},{id:'luis',nombre:'Luis Paz',especialidades:['masilla_pintura'],pendientes:[{oficio:'masilla_pintura',especialidad:'masilla_pintura',n:2}]}],
+      trabajadores:[{id:'jesus',nombre:'Jesus',especialidades:['herrero'],pendientes:[{oficio:'hierro',especialidad:'herrero',n:3}]},{id:'pedro',nombre:'Pedro',especialidades:['herrero'],pendientes:[{oficio:'hierro',especialidad:'herrero',n:2}]},{id:'luis',nombre:'Luis Paz',especialidades:['masilla_pintura'],pendientes:[{oficio:'masilla_pintura',especialidad:'masilla_pintura',n:2}]}],
 
       // ---------- Proveedores: cada uno con los tipos que vende y si cobra IVA ----------
       proveedores:[
@@ -107,7 +138,7 @@ if(/github\.io$/i.test(location.hostname)){
       ],
       // ---------- Material de fabricación ----------
       fab:[
-        {id:'t1x3',nombre:'Tubo 1" x 3"',tipo:'hierro',pres:'barra',largo:600,stock:1,retazos:[],precios:{cya:{p:12.98,esp:'0,90 mm'}}},
+        {id:'t1x3',nombre:'Tubo 1" x 3"',tipo:'hierro',pres:'barra',largo:600,stock:2,retazos:[],precios:{cya:{p:12.98,esp:'0,90 mm'}}},
         {id:'t1x2',nombre:'Tubo 1" x 2"',tipo:'hierro',pres:'barra',largo:600,stock:3,retazos:[120],precios:{cya:{p:9.69,esp:'0,90 mm'},tor:{p:9.50,esp:'0,80 mm'}}},
         {id:'t1x1',nombre:'Tubo 1" x 1"',tipo:'hierro',pres:'barra',largo:600,stock:5,retazos:[],precios:{cya:{p:6.43,esp:'0,90 mm'},tor:{p:6.50,esp:'0,80 mm'}}},
         {id:'t12',nombre:'Tubo 1/2" x 1/2" 0,70',tipo:'hierro',pres:'barra',largo:600,stock:2,retazos:[210],precios:{cya:{p:2.66,esp:'0,70 mm'}}},
@@ -115,7 +146,7 @@ if(/github\.io$/i.test(location.hostname)){
         {id:'pl1',nombre:'Platina 1" x 1/8"',tipo:'hierro',pres:'barra',largo:600,stock:3,retazos:[],precios:{cya:{p:6.51},tor:{p:6.50}}},
         {id:'m10',nombre:'Marco de puerta 10',tipo:'hierro',pres:'barra',largo:510,stock:1,retazos:[],precios:{cya:{p:12.28,esp:'0,70 mm'},tor:{p:13.00,esp:'0,70 mm'}},fijo:12.28},
         {id:'m15',nombre:'Marco de puerta 15',tipo:'hierro',pres:'barra',largo:510,stock:2,retazos:[],precios:{cya:{p:15.07},tor:{p:15.50}}},
-        {id:'lam14',nombre:'Lámina pulida C/14',tipo:'laminas',pres:'hoja',hoja:[122,244],stock:1,precios:{cya:{p:61.05}}},
+        {id:'lam14',nombre:'Lámina pulida C/14',tipo:'laminas',pres:'hoja',hoja:[122,244],stock:1,sobrantes:[[61,60]],precios:{cya:{p:61.05}}},
         {id:'lam16',nombre:'Lámina calibre 16',tipo:'laminas',pres:'hoja',hoja:[122,244],stock:2,precios:{cya:{p:49.66},tor:{p:52.00}}},
         {id:'vid5',nombre:'Vidrio 5 mm',tipo:'vidrio',pres:'hoja',hoja:[330,244],stock:0,precios:{otro:{p:100}}},
       ],
@@ -137,10 +168,10 @@ if(/github\.io$/i.test(location.hostname)){
             rend:{fondo:3,esmalte:3,masilla:3,thinner:3,d7:3,carton:3}, acc:{bisagra:3,cerradura:1,manillon:1}, extras:[] }
       },
       enDiseno:[],
-      cortes:{ 'Modelo bitral':[['t1x3',2,200],['t1x3',2,88],['m10',1,500],['t1x2',1,194],['pl12',1,600],['t12',1,600],['t12',1,390]] },
-      enFabricacion:[{venta:1066,cliente:'Cliente de ejemplo A',producto:'Modelo bitral',cantidad:1}],
-      movsFab:[{id:'t1x3',t:'Compra',n:2,fecha:hace(10),por:'Ray'},{id:'t1x3',t:'Corte',n:-1,fecha:hace(5),por:'Jesus'}],
-      conteo:null, cortado:false,
+      // Plan de corte por sábado: lo que Ray ajustó o aceptó (si no hay, la app sugiere en vivo)
+      planes:{}, cortadas:{},
+      movsFab:[{id:'t1x3',t:'Compra',n:2,fecha:hace(10),por:'Ray'},{id:'t1x3',t:'Corte · plan del sábado',n:-1,fecha:hace(5),por:'Ray'}],
+      conteo:null, cierres:{},
       // ---------- Compras (facturas y notas) ----------
       facturas:[{id:1,prov:'tor',doc:'nota',numero:'00-2884',fecha:'2026-10-31',subtotal:1674.50,iva:0,total:1674.50,foto:false,lineas:12,nota:'Nota de entrega real de Torniplemaca'}],
       // ---------- Cuentas y libreta de movimientos (saldos de EJEMPLO: los llena Ray) ----------
@@ -171,7 +202,7 @@ if(/github\.io$/i.test(location.hostname)){
   }
   let D;
   try{ D = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e){ D = null; }
-  if(!D || !D.movs) D = inicial();
+  if(!D || !D.movs || !D.planes) D = inicial();
   const guardar = () => { try{ localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} };
   let sig = Date.now();
   const nuevoId = () => ++sig;
@@ -186,8 +217,8 @@ if(/github\.io$/i.test(location.hostname)){
     return D.movs.filter(filtro).sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : a.id - b.id)).map(m => { if(!m.anulado) s = r2(s + (m[campo] || 0)); return Object.assign({}, m, { saldo:s }); });
   }
   const pagado = (v) => r2((v.abonos || []).filter(a => a.estado === 'confirmado').reduce((x, a) => x + (a.tipo === 'devolucion' ? -1 : 1) * a.monto, 0));
-  const porUbicar = () => D.ventas.flatMap(v => v.abonos.filter(a => a.estado === 'confirmado' && !a.ubicado).map(a => Object.assign({}, a, { cliente:v.cliente.nombre })));
-  const porCobrar = () => D.ventas.filter(v => ['confirmada','en_produccion','lista'].includes(v.estado)).map(v => ({ id:v.id, cliente:v.cliente.nombre, estado:v.estado, total:v.total, pagado:pagado(v), resta:r2(v.total - pagado(v)) })).filter(x => x.resta > 0.005);
+  const porUbicar = () => D.ventas.flatMap(v => v.abonos.filter(a => a.estado === 'confirmado' && !a.ubicado).map(a => Object.assign({}, a, { cliente:(v.cliente || {}).nombre })));
+  const porCobrar = () => D.ventas.filter(v => ['confirmada','en_produccion','lista'].includes(v.estado)).map(v => ({ id:v.id, cliente:(v.cliente || {}).nombre || 'Exhibición', estado:v.estado, total:v.total, pagado:pagado(v), resta:r2(v.total - pagado(v)) })).filter(x => x.resta > 0.005);
   const mov = (m) => { const x = Object.assign({ id:nuevoId(), fecha:dia(ahora()), por:'Ray' }, m); D.movs.push(x); return x; };
 
   const API = {
@@ -304,7 +335,7 @@ if(/github\.io$/i.test(location.hostname)){
     ab.estado = a.llego ? 'confirmado' : 'rechazado'; ab.confirmado_por = 'ray'; ab.confirmado_en = ahora(); ab.nota_confirmacion = a.nota || null;
     let produccion = false;
     if(a.llego && v.estado === 'confirmada' && pagado(v) >= v.total * 0.5 - 0.005){ v.estado = 'en_produccion'; v.produccion_en = ahora(); produccion = true;
-      v.items.forEach(it => D.enFabricacion.push({ venta:v.id, cliente:v.cliente.nombre, producto:it.nombre, cantidad:it.cantidad })); }
+      v.items.forEach(it => { it.etapas = crearEtapas(it, []); }); }
     guardar();
     if(a.llego && a.destino) API.ubicar(a.aid, { destino:a.destino, cuenta:a.cuenta, prov:a.prov });
     return { id:a.aid, produccion };
@@ -312,6 +343,110 @@ if(/github\.io$/i.test(location.hostname)){
   API.porConfirmar = () => D.ventas.flatMap(v => v.abonos.filter(x => x.estado === 'por_confirmar' && x.tipo === 'abono').map(x => Object.assign({}, x, { cliente:v.cliente.nombre, total:v.total, pagado:pagado(v), estadoVenta:v.estado })));
   API.costear = costear; API.empacar = empacar; API.precioFab = precioFab; API.CATPAGO = CATPAGO;
   API.semaforo = (x) => !x ? ['gris','Sin costear'] : x.falta.length ? ['gris','Faltan datos'] : x.pct >= 30 ? ['verde','Gana ' + Math.round(x.pct) + ' %'] : x.pct >= 15 ? ['amar','Gana ' + Math.round(x.pct) + ' %'] : x.pct >= 0 ? ['rojo','Gana ' + Math.round(x.pct) + ' %'] : ['negro','Pierde'];
+  // ================= Plan de corte de la semana =================
+  // Sale de Producción: los pasos de Hierro asignados a un herrero para ese sábado.
+  // Junta las piezas de todas esas puertas por perfil y las acomoda en retazos y barras.
+  const COLORES = ['#17555C', '#B7791F', '#3F6E4E', '#6F7C7E', '#8A5A00', '#2E4A62', '#7A4E3A'];
+  const nombreP = (id) => (PERF[id] || {}).nombre || 'Sin asignar';
+  function pasosHierro(){
+    const out = [];
+    D.ventas.filter(v => v.estado === 'en_produccion').forEach(v => v.items.forEach(it => {
+      const de = new Set((it.etapas || []).map(e => e.unidad)).size;
+      (it.etapas || []).forEach(e => { if(e.oficio !== 'hierro' || e.estado !== 'pendiente') return;
+        out.push({ eid:e.id, venta:v.id, interna:!!v.interna, cliente:v.interna ? 'Exhibición' : v.cliente.nombre, entrega:v.fecha_entrega, item:it, mid:it.catalogo_id, nombre:it.nombre, tipo:it.tipo,
+          unidad:e.unidad, de, tid:e.trabajador_id, herrero:e.trabajador_id ? nombreP(e.trabajador_id) : null, para:e.para_el, incluye:e.incluye, cortado:!!D.cortadas[e.id],
+          etq:(v.interna ? 'Exhibición' : 'N° ' + v.id) + (de > 1 ? ' (' + e.unidad + ' de ' + de + ')' : ''), precio:it.precio_unitario }); });
+    }));
+    return out;
+  }
+  const tieneCortes = (mid) => !!(D.costeo[mid] && D.costeo[mid].piezas && D.costeo[mid].piezas.length);
+  // Acomoda piezas: primero los retazos del depósito, después las barras del depósito y, si faltan, barras a comprar
+  function acomodar(piezas, f, corte, limiteBarras){
+    const L = piezas.slice().sort((a, b) => b.cm - a.cm);
+    const rets = (f.retazos || []).map((r, i) => ({ mid:f.id, tipo:'retazo', ri:i, largo:r, libre:r, piezas:[] })).sort((a, b) => a.libre - b.libre);
+    const barras = [], sinLugar = [];
+    for(const p of L){
+      const r = rets.find(x => x.libre + 1e-9 >= p.cm); if(r){ r.piezas.push(p); r.libre = Math.max(0, r.libre - p.cm - corte); continue; }
+      let b = barras.find(x => x.libre + 1e-9 >= p.cm);
+      if(!b){ if(limiteBarras != null && barras.length >= limiteBarras){ sinLugar.push(p); continue; } b = { mid:f.id, tipo:'barra', largo:f.largo, libre:f.largo, piezas:[] }; barras.push(b); }
+      b.piezas.push(p); b.libre = Math.max(0, b.libre - p.cm - corte);
+    }
+    barras.forEach((b, i) => { b.n = i + 1; b.comprar = i >= f.stock; });
+    return { usados:rets.filter(r => r.piezas.length), barras, sinLugar };
+  }
+  // El herrero de una barra: el que tiene más centímetros en ella
+  function duenoBarra(b){ const cm = {}; b.piezas.forEach(p => { cm[p.tid] = (cm[p.tid] || 0) + p.cm; }); return Object.entries(cm).sort((a, b2) => b2[1] - a[1])[0][0]; }
+  function piezasDe(unidades){
+    const por = {};
+    unidades.forEach(u => D.costeo[u.mid].piezas.forEach(([mid, n, cm, nota]) => { for(let i = 0; i < n; i++) (por[mid] ||= []).push({ cm, nota, eid:u.eid, etq:u.etq, tid:u.tid, color:u.color }); }));
+    return por;
+  }
+  function sugerir(unidades){
+    const por = piezasDe(unidades), barras = [];
+    Object.entries(por).forEach(([mid, pz]) => { const f = D.fab.find(x => x.id === mid); const r = acomodar(pz, f, D.reglas.corte); r.usados.concat(r.barras).forEach(b => { b.tid = duenoBarra(b); barras.push(b); }); });
+    return barras;
+  }
+  const firma = (unidades) => unidades.map(u => u.eid + ':' + u.tid).sort().join(',');
+  API.sabados = sabados;
+  API.planSemana = (sab, prov) => {
+    prov = prov || 'cya';
+    const todos = pasosHierro();
+    const asign = todos.filter(u => u.tid && u.para === sab);
+    asign.forEach((u, i) => { u.color = COLORES[i % COLORES.length]; u.x = costear(u.mid, { prov }); u.conCortes = tieneCortes(u.mid); });
+    const conPlan = asign.filter(u => u.conCortes && !u.cortado), sinCortes = asign.filter(u => !u.conCortes), cortadas = asign.filter(u => u.conCortes && u.cortado);
+    const pendientes = todos.filter(u => !u.tid), otroSab = todos.filter(u => u.tid && u.para !== sab);
+    const guardado = D.planes[sab], f0 = firma(conPlan);
+    let barras, cambio = false, ajustado = false;
+    if(guardado && guardado.firma === f0){ barras = guardado.barras; ajustado = !!guardado.ajustado; }
+    else { barras = conPlan.length ? sugerir(conPlan) : []; cambio = !!guardado && !guardado.cerrado; }
+    // Lo que hay que comprar, por perfil
+    const iva = 1 + D.reglas.iva / 100, mats = {};
+    barras.forEach(b => { const m = (mats[b.mid] ||= { f:D.fab.find(x => x.id === b.mid), barras:0, retazos:0, cm:0 }); if(b.tipo === 'barra') m.barras++; else m.retazos++; m.cm += b.piezas.reduce((a, p) => a + p.cm, 0); });
+    const compras = Object.values(mats).map(m => { const pr = precioFab(m.f, prov), comprar = Math.max(0, m.barras - m.f.stock); return Object.assign(m, { comprar, precio:pr.p * iva, costo:comprar * pr.p * iva, de:pr.de }); });
+    // Lámina y vidrio en m²
+    const hojas = {}; conPlan.forEach(u => (D.costeo[u.mid].hojas || []).forEach(([mid, n, a, h]) => { hojas[mid] = (hojas[mid] || 0) + n * a * h / 10000; }));
+    const hj = Object.entries(hojas).map(([mid, m2]) => { const f = D.fab.find(x => x.id === mid), hm2 = f.hoja[0] * f.hoja[1] / 10000, sob = (f.sobrantes || []).reduce((a, s2) => a + s2[0] * s2[1] / 10000, 0);
+      return { f, m2, hojas:m2 / hm2, sobrante:sob, comprar:Math.max(0, Math.ceil((m2 - sob) / hm2 - 1e-9) - f.stock) }; });
+    // Herreros con sus barras
+    const herreros = [...new Set(asign.map(u => u.tid))].map(tid => ({ tid, nombre:nombreP(tid), barras:barras.filter(b => b.tid === tid), unidades:asign.filter(u => u.tid === tid),
+      entregado:!!(guardado && guardado.entregado && guardado.entregado[tid]) }));
+    // Ahorro de cortar junto: barras si cada puerta se cortara sola
+    let solas = 0; conPlan.forEach(u => Object.entries(piezasDe([u])).forEach(([mid, pz]) => { const f = D.fab.find(x => x.id === mid); solas += empacar(pz, f.largo, D.reglas.corte).length; }));
+    const usadas = barras.filter(b => b.tipo === 'barra').length;
+    const aluminio = D.ventas.filter(v => v.estado === 'en_produccion').flatMap(v => v.items.flatMap(it => (it.etapas || []).filter(e => e.oficio === 'aluminio' && e.estado === 'pendiente')));
+    return { sab, asign, conPlan, sinCortes, cortadas, pendientes, otroSab, barras, compras, hj, herreros, cambio, ajustado,
+      aceptado:!!(guardado && guardado.firma === f0 && guardado.aceptado), cerrado:!!(guardado && guardado.cerrado), firma:f0,
+      comprar:r2(compras.reduce((a, m) => a + m.costo, 0)), nComprar:compras.reduce((a, m) => a + m.comprar, 0), ahorro:Math.max(0, solas - usadas), aluminio:aluminio.length };
+  };
+  // Ray cambia la sugerencia: el plan queda guardado tal cual hasta que cambie lo asignado
+  API.planGuardar = (sab, P, cambios) => { D.planes[sab] = Object.assign({ firma:P.firma, barras:JSON.parse(JSON.stringify(P.barras)), entregado:{} }, D.planes[sab] && D.planes[sab].firma === P.firma ? { entregado:D.planes[sab].entregado || {}, aceptado:D.planes[sab].aceptado } : {}, cambios || {}); guardar(); };
+  API.planReiniciar = (sab) => { delete D.planes[sab]; guardar(); };
+  // Ray marca que un herrero ya cortó: bajan las barras del depósito, se gastan los retazos usados y se guardan los nuevos (50 cm o más)
+  API.yaCorto = (sab, tid) => {
+    const g = D.planes[sab]; if(!g) return;
+    const mias = g.barras.filter(b => b.tid === tid);
+    const quitar = {};
+    mias.forEach(b => { const f = D.fab.find(x => x.id === b.mid);
+      if(b.tipo === 'barra'){ f.stock = Math.max(0, f.stock - 1); D.movsFab.unshift({ id:f.id, t:'Cortado por ' + nombreP(tid), n:-1, fecha:ahora(), por:'Ray' }); }
+      else (quitar[b.mid] ||= []).push(b.largo);
+      if(b.libre >= 50){ (f.retazos ||= []).push(Math.round(b.libre)); D.movsFab.unshift({ id:f.id, t:'Retazo guardado de ' + Math.round(b.libre) + ' cm', n:0, fecha:ahora(), por:'Ray' }); } });
+    Object.entries(quitar).forEach(([mid, l]) => { const f = D.fab.find(x => x.id === mid); l.forEach(v => { const i = f.retazos.indexOf(v); if(i >= 0) f.retazos.splice(i, 1); }); });
+    (g.entregado ||= {})[tid] = true;
+    const tids = [...new Set(g.barras.map(b => b.tid))];
+    if(tids.every(t => g.entregado[t])){ g.barras.forEach(b => b.piezas.forEach(p => { D.cortadas[p.eid] = sab; })); g.cerrado = true; }
+    guardar();
+  };
+  // ¿Qué alcanzo con lo que hay? Agrega puertas en orden de entrega mientras alcancen las barras indicadas
+  API.alcanza = (sab, hay) => {
+    const P = API.planSemana(sab), orden = P.conPlan.slice().sort((a, b) => String(a.entrega).localeCompare(String(b.entrega)) || a.venta - b.venta);
+    const si = [], no = [];
+    for(const u of orden){
+      const prueba = si.concat([u]), por = piezasDe(prueba);
+      const ok = Object.entries(por).every(([mid, pz]) => { const f = D.fab.find(x => x.id === mid); const lim = hay[mid] != null ? hay[mid] : f.stock; return acomodar(pz, f, D.reglas.corte, lim).sinLugar.length === 0; });
+      (ok ? si : no).push(u);
+    }
+    return { si, no };
+  };
   window.MAQUETA = API;
 
   // ---------- Sesión de Ray ya abierta (no pide PIN) ----------
@@ -334,7 +469,13 @@ if(/github\.io$/i.test(location.hostname)){
     if(nombre === 'avance_venta') return { pasos:[], productos:[] };
     if(nombre === 'pagado_venta') return 0;
     if(nombre === 'nomina_semana') return { trabajadores:[] };
-    if(nombre === 'produccion_lectura') return { ventas:[], ordenes:[] };
+    if(nombre === 'produccion_lectura') return D.ventas.filter(v => v.estado === 'en_produccion');
+    // Producción: asignar pasos (misma forma que la función asignar_etapas de la base)
+    if(nombre === 'asignar_etapas'){
+      (a.p || []).forEach(c => D.ventas.forEach(v => v.items.forEach(it => (it.etapas || []).forEach(e => {
+        if(e.id !== c.eid) return; e.trabajador_id = c.tid || null; e.para_el = c.tid ? c.para : null; e.trabajador = c.tid && PERF[c.tid] ? { nombre:PERF[c.tid].nombre } : null; }))));
+      guardar(); return { ok:true };
+    }
     return [];
   }
 
@@ -351,7 +492,7 @@ if(/github\.io$/i.test(location.hostname)){
     return r;
   }
   function tabla(t, params){
-    if(t === 'perfiles'){ const id = params.get('id'); if(id && id.startsWith('eq.')) return [PERF[id.slice(3)]].filter(Boolean); return Object.values(PERF); }
+    if(t === 'perfiles'){ const id = params.get('id'); if(id && id.startsWith('eq.')) return [PERF[id.slice(3)]].filter(Boolean); return filtrar(Object.values(PERF), params); }
     if(t === 'sedes') return [{id:1,nombre:'Cumbres de Maracaibo',orden:1,activa:true},{id:2,nombre:'Avenida Universidad',orden:2,activa:true}];
     if(t === 'materiales') return D.materiales.filter(m => m.activo).map(m => ({ id:m.id, nombre:m.nombre, stock:m.stock, minimo:m.minimo }));
     if(t === 'catalogo') return filtrar(D.catalogo, params);

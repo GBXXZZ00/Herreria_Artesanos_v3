@@ -9,8 +9,8 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Costos · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=71">
-<link rel="stylesheet" href="assets/css/modulo.css?v=71">
+<link rel="stylesheet" href="assets/css/base.css?v=72">
+<link rel="stylesheet" href="assets/css/modulo.css?v=72">
 <style>
   /* Costos: lista de modelos con semáforo y ficha de costeo (al lado en computadora) */
   .sem-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
@@ -78,6 +78,48 @@
   .hoja-c h3{margin:12px 0 4px;font-size:14px;color:var(--accent)}
   .hoja-c .r{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid #EFEDE9}
   .hoja-c .r b{white-space:nowrap}
+  /* Plan semanal: por herrero, barras que se tocan para cambiarlas, hoja del herrero */
+  .hr-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 2px 4px;border-bottom:1px solid var(--line)}
+  .hr-h b{font-size:16px}
+  .hr-h span{font-size:12.5px;color:var(--ink-soft)}
+  .ped-c.falta b{color:var(--ink-soft)}
+  a.ped-c{text-decoration:none;color:inherit}
+  .barra-btn{display:block;width:100%;text-align:left;padding:2px 0 6px;border-radius:10px;transition:transform 140ms var(--ease-out)}
+  .barra-btn:active{transform:scale(0.98)}
+  .barra-btn + .barra-btn{border-top:1px solid var(--line)}
+  .barra.es-comp{outline:2px dashed var(--danger);outline-offset:1px}
+  .barra.es-ret{outline:2px dashed var(--amber);outline-offset:1px}
+  .barra-n{display:block;font-size:12px;font-weight:700;color:var(--amber);margin-top:4px}
+  .link-b{font-size:14px;font-weight:800;color:var(--accent)}
+  .gris-l{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);color:var(--ink-soft);font-size:13.5px;font-weight:700}
+  .dos-btn{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .btn-mini{display:inline-flex;align-items:center;height:38px;padding:0 14px;border-radius:12px;background:var(--danger);color:#fff;font-size:14px;font-weight:800;text-decoration:none}
+  .btn-mini.sec{background:var(--surface);color:var(--danger);border:1px solid currentColor}
+  .btn-mini:active{transform:scale(0.97)}
+  .pz.on{background:var(--accent-soft);border-radius:12px}
+  .opt-grande{display:block;width:100%;text-align:left;border:1px solid var(--line-strong);border-radius:16px;padding:12px 14px;margin-top:10px}
+  .opt-grande b{display:block;font-size:15px}
+  .opt-grande span{display:block;font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .telefono{border:1px solid var(--line-strong);border-radius:22px;padding:14px;background:var(--surface)}
+  .tel-h b{display:block;font-size:17px}
+  .tel-h span{font-size:12.5px;color:var(--ink-soft)}
+  .tel-n{font-size:13px;color:var(--ink-soft);margin:8px 0 2px}
+  .tel-m{font-size:13px;font-weight:800;color:var(--accent);margin-top:12px}
+  .tel-b{padding:6px 0;border-bottom:1px solid var(--line)}
+  .tel-bt{display:block;font-size:12.5px;font-weight:800;margin-bottom:4px}
+  .tel-p{display:block;font-size:13px;line-height:1.5;margin-top:4px}
+  /* Ganancia */
+  .meta{border-radius:16px;background:var(--surface-2);padding:12px 14px;margin-bottom:10px}
+  .meta-b{height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+  .meta-b span{display:block;height:100%;background:var(--accent);border-radius:999px}
+  .meta-t{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:13px;color:var(--ink-soft)}
+  .meta-t b{color:var(--ink);font-size:15px}
+  .rent{display:flex;align-items:center;gap:10px;width:100%;padding:10px 2px;text-align:left}
+  .rent + .rent{border-top:1px solid var(--line)}
+  .rent .grow{flex:1;min-width:0}
+  .rent .mat-n b{font-size:16px}
+  .sin-c{margin-top:8px;border:1px solid var(--line);border-radius:16px;padding:4px 12px}
+  .sin-c summary{padding:10px 0;font-size:14px;font-weight:800;color:var(--ink-soft);cursor:pointer}
   .col-t{display:none}
   @media (min-width:1024px){
     .page{max-width:1400px;margin:0 auto}
@@ -105,9 +147,9 @@
   <div class="seg-d" id="tabs" role="group" aria-label="Qué ver">
     <span class="seg-fondo" aria-hidden="true"></span>
     <button class="on" type="button" data-tab="modelos" aria-pressed="true">Modelos</button>
-    <button type="button" data-tab="corte" aria-pressed="false">Corte</button>
+    <button type="button" data-tab="semana" aria-pressed="false">Semana</button>
+    <button type="button" data-tab="ganancia" aria-pressed="false">Ganancia</button>
     <button type="button" data-tab="materiales" aria-pressed="false">Precios</button>
-    <button type="button" data-tab="reglas" aria-pressed="false">Reglas</button>
   </div>
   <div class="mostrar" id="filtros"><span class="mostrar-t">Mostrar</span><div class="mostrar-l" id="filtrosL"></div></div>
   <section class="d-cont" id="cont" aria-live="polite"></section>
@@ -137,11 +179,12 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/js/falso.js?v=71"></script>
-<script src="assets/vendor/supabase.js?v=71"></script>
-<script src="assets/js/supabase-client.js?v=71"></script>
-<script src="assets/js/comun.js?v=71"></script>
-<script src="assets/js/sesion.js?v=71"></script>
-<script src="assets/js/costos.js?v=71"></script>
+<script src="assets/js/falso.js?v=72"></script>
+<script src="assets/vendor/supabase.js?v=72"></script>
+<script src="assets/js/supabase-client.js?v=72"></script>
+<script src="assets/js/comun.js?v=72"></script>
+<script src="assets/js/sesion.js?v=72"></script>
+<script src="assets/js/pdf-reporte.js?v=72"></script>
+<script src="assets/js/costos.js?v=72"></script>
 </body>
 </html>

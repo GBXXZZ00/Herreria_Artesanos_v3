@@ -3,9 +3,24 @@
 Autor: Ray (Claude de Ray), 2 nov 2026. Lo aprobaron Ray y Gualfredo después de ver la maqueta viva (`maqueta/` en la rama `ray/maqueta-finanzas-costos`). La maqueta es la guía de cómo se ve y se comporta cada pantalla; este documento dice cómo se hace de verdad.
 
 ## Un lugar para cada cosa
-- **Depósito = lo que hay:** Consumibles (igual que hoy), Fabricación (barras y hojas en el depósito, retazos, conteo del sábado; si faltan barras, lleva a Costos › Corte) y Compras.
-- **Costos = cuánto cuesta:** Modelos, Corte (plan de corte de la semana y hoja de corte), Precios y Reglas. El plan de corte vive solo aquí.
-- **Finanzas = el dinero:** Dinero, Proveedores y Gastos.
+- **Producción = quién hace qué y para qué sábado.** Es el único lugar donde se asigna. Asignar el Hierro a un herrero para un sábado es lo que manda ese trabajo al plan de corte.
+- **Costos = cuánto cuesta y cómo se corta:** Modelos (cortes y costo de cada modelo, estado Sin costear · Borrador · Listo, precio sugerido), Semana (plan de corte por sábado), Ganancia (gastos fijos, ¿alcanzamos este mes?, ganancia por producto y reglas) y Precios.
+- **Depósito = lo que hay:** Consumibles (igual que hoy), Fabricación por tubo (barras enteras, retazos con su medida, hojas y sobrantes, "faltan X para el sábado" con enlace a Costos › Semana, conteo del sábado; sin pedidos) y Compras.
+- **Finanzas = el dinero:** Dinero, Proveedores, Gastos y Mes (cierre completo y reporte mensual).
+- **Mi trabajo (herrero):** su hoja de corte del sábado cuando Ray acepta el plan.
+- **Catálogo:** costo y ganancia del modelo (solo admin) o "Sin costear · cargar costeo".
+
+## Plan de corte semanal (decidido 3 nov 2026)
+- **Sale de Producción:** entran los pasos de Hierro pendientes, con herrero, para ese sábado (`etapas.oficio = 'hierro'`, `trabajador_id`, `para_el`), de ventas en fabricación. Exhibición entra sin ganancia. Cada unidad ("1 de 2") cuenta por su sábado. Lo sin asignar sale aparte con atajo a Producción. Madera no entra. Aluminio: línea gris "llega pronto".
+- **No es por modelo:** junta las piezas de todas las puertas, perfil por perfil, y las acomoda en retazos (primero) y barras del depósito; lo que no alcanza son barras a comprar. Un tubo lleva piezas de varias puertas. Cada barra va al herrero con más piezas en ella; las piezas del otro se le pasan.
+- **Ray acepta o cambia:** tocar una barra para cambiar quién la corta o mover una pieza a otra barra. "Volver a la sugerencia". Si cambia lo asignado en Producción, la app sugiere de nuevo y avisa.
+- **Al aceptar:** cada herrero ve su hoja de corte en Mi trabajo (y en PDF). Cuando Ray marca "ya cortó", bajan las barras, se gastan los retazos usados y se guardan los nuevos de 50 cm o más. La marca de cortado es por paso, guardada fuera de `etapas`.
+- **¿Qué alcanzo con lo que hay?:** con N tubos, cuántas puertas salen en orden de entrega.
+- **Modelo sin cortes:** no frena el trabajo. Sale con "Cargar cortes ahora" o "Cortar a mano" (hoja simple). Avisos en Inicio y en Costos › Modelos (los de fabricación primero).
+- **Plan de compra y hoja de corte en PDF** con el diseño del PDF de la venta.
+
+## Mes: cierre y reporte (decidido 3 nov 2026)
+Finanzas › Mes, en dos columnas: lo que ganaste (vendido con costeo − costo − gastos), dinero que entró y salió, compras por proveedor, gastos fijos previsto y pagado, lo que dejó cada producto, saldos de cuentas y proveedores al cerrar. "Cerrar el mes" congela los números (después solo ajustes con motivo). Reporte mensual en PDF. Nómina y vales entran cuando se decida de qué cuenta salen.
 
 ## Lo que no se toca
 - La lógica actual de Ventas, Producción, Nómina, trabajador, seguimiento y catálogo público. La vendedora trabaja igual que hoy.
@@ -34,8 +49,9 @@ Autor: Ray (Claude de Ray), 2 nov 2026. Lo aprobaron Ray y Gualfredo después de
 | 6 | Costos (pestañas Modelos · Corte · Precios · Reglas): `costeo_reglas`, `costeo_modelos` (del catálogo o en diseño), `costeo_piezas`, `costeo_hojas`, `costeo_insumos`, `costeo_extras`, `costeo_calcular`. Ficha con semáforo, barras, duplicar, pasar al catálogo. Precios = lista de precios sin IVA por proveedor (no es por pedido). Atajo "Costo" en Catálogo (solo admin). **Prueba obligatoria: Bitral = 223,22 · 290,19 · 326,79 · tubo completo 339,23** | `v77_ray_costos` |
 | 7 | Extras en la venta: protección y marco decorativo toman el precio de Costos (se puede cambiar) | si hace falta |
 | 8 | OCR de facturas: foto → propuesta llena para revisar (edge function). Antes, decidir con los socios qué servicio lee la foto y su costo | `v78_ray_ocr_compras` |
-| 9 | **Costos › Corte** (como el Costeador de Ray): junta las piezas de los pedidos en fabricación (y modelos que Ray agregue para probar), usa primero los retazos del depósito, acomoda en el menor número de barras (más largas primero, con grosor del corte), dice barras a comprar y su costo con IVA, el ahorro de cortar todo junto, el costo y la ganancia de cada pedido, lámina y vidrio en m² y hojas. **Hoja de corte y plan de compra descargables en PDF**, con el mismo diseño del Resumen en PDF y del PDF de la venta (jsPDF, `ventas-comun.js`). Depósito › Fabricación solo muestra el stock y "faltan X barras" con enlace a Corte. Resumen en PDF con ganancia por pedido | `v79_ray_plan_corte` si hace falta |
-| 10 | 3D: se prototipa primero en el proyecto de Ray | — |
+| 9 | **Costos › Semana** (ver "Plan de corte semanal"): junta las piezas de lo asignado en Producción al paso Hierro para ese sábado, usa primero los retazos del depósito, acomoda en el menor número de barras (más largas primero, con grosor del corte), dice barras a comprar y su costo con IVA, el ahorro de cortar todo junto, el costo y la ganancia de cada pedido, lámina y vidrio en m² y hojas. **Hoja de corte y plan de compra descargables en PDF**, con el mismo diseño del Resumen en PDF y del PDF de la venta (jsPDF, `ventas-comun.js`). Depósito › Fabricación solo muestra el stock y "faltan X barras" con enlace a Corte. Resumen en PDF con ganancia por pedido | `v79_ray_plan_corte` si hace falta |
+| 10 | Finanzas › Mes: cierre, congelar el mes y reporte mensual en PDF (`cierres_mes`) | `v80_ray_cierre_mes` |
+| 11 | 3D: se prototipa primero en el proyecto de Ray | — |
 
 ## Reglas del costeo (no cambian)
 IVA × 1,16 · perfiles por metro usado (precio de la barra ÷ largo) · barra completa solo para comparar · lámina y vidrio por m² de hoja · proveedor elegido y, si no vende ese material, otro con aviso · rendimiento del modelo o el general · fondo, esmalte y masilla sin general ("falta") · accesorios × cantidad · mano de obra de la categoría de pago (hierro + masilla y pintura + detalles) · costo × 1,30 + gastos fijos ($915 ÷ 25 = $36,60) · extras × 1,30 sin gastos fijos · grosor del corte · redondear solo al final.

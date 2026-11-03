@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=71">
+<link rel="stylesheet" href="assets/css/base.css?v=72">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -576,15 +576,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/js/falso.js?v=71"></script>
-<script src="assets/vendor/supabase.js?v=71"></script>
-<script src="assets/js/supabase-client.js?v=71"></script>
-<script src="assets/js/img-compress.js?v=71"></script>
-<script src="assets/js/comun.js?v=71"></script>
-<script src="assets/js/avisos.js?v=71"></script>
-<script src="assets/js/sesion.js?v=71"></script>
-<script src="assets/js/ayuda.js?v=71"></script>
-<script src="assets/js/mi-trabajo.js?v=71"></script>
+<script src="assets/js/falso.js?v=72"></script>
+<script src="assets/vendor/supabase.js?v=72"></script>
+<script src="assets/js/supabase-client.js?v=72"></script>
+<script src="assets/js/img-compress.js?v=72"></script>
+<script src="assets/js/comun.js?v=72"></script>
+<script src="assets/js/avisos.js?v=72"></script>
+<script src="assets/js/sesion.js?v=72"></script>
+<script src="assets/js/ayuda.js?v=72"></script>
+<script src="assets/js/mi-trabajo.js?v=72"></script>
 <script>
 (function(){
   'use strict';
@@ -899,15 +899,19 @@
     const ef = $('cuenta-finanzas'); if(ef) ef.innerHTML = ub.length ? `<span class="num">${din(r.porUbicar)} por ubicar</span>` : 'Tienes ' + din(r.total);
     if(p.confirma_abonos && ub.length) pend.push({ color:'naranja', icono:'dinero', titulo: plural(ub.length, '1 pago por ubicar', 'pagos por ubicar'), detalle: din(r.porUbicar) + ' · ¿dónde quedó?', href:'finanzas.html?ubicar=1' });
     d.proveedores.forEach(pr => { const s = X.saldoProv(pr.id); if(s < -0.005) pend.push({ color:'rojo', icono:'dinero', titulo:'Le debes a ' + pr.nombre.replace('Inversiones ', ''), detalle: din(-s), href:'finanzas.html?prov=' + pr.id }); });
-    // Barras que faltan para lo que está en fabricación
-    let falta = 0; const por = {};
-    d.enFabricacion.forEach(ped => (d.cortes[ped.producto] || []).forEach(([mid, c, cm]) => { for(let i = 0; i < c * ped.cantidad; i++) (por[mid] ||= []).push({ cm }); }));
-    Object.entries(por).forEach(([mid, pz]) => { const f = d.fab.find(x => x.id === mid); falta += Math.max(0, X.empacar(pz, f.largo, 0).length - f.stock); });
-    if(falta) pend.push({ color:'amarillo', icono:'caja', titulo: plural(falta, 'Falta 1 barra para esta semana', 'barras faltan para esta semana'), detalle:'Comprar', href:'deposito.html?tab=fab' });
+    // Lo que falta comprar para lo asignado este sábado (sale del plan de corte de Costos › Semana)
+    const S = X.sabados(), P = X.planSemana(S.este);
+    if(P.nComprar) pend.push({ color:'amarillo', icono:'caja', titulo: 'Faltan ' + plural(P.nComprar, '1 barra', 'barras') + ' para el ' + window.AH.sabadoCorto(S.este), detalle: din(P.comprar) + ' · ver plan de corte', href:'costos.html?tab=semana&para=' + S.este });
+    if(P.asign.length && !P.aceptado && !P.cerrado && P.conPlan.length) pend.push({ color:'azul', icono:'reloj', titulo:'Plan de corte del ' + window.AH.sabadoCorto(S.este) + ' por aceptar', detalle: plural(P.conPlan.length, '1 puerta', 'puertas') + ' asignadas', href:'costos.html?tab=semana&para=' + S.este });
+    const enFabSin = [...new Set(P.sinCortes.concat(P.pendientes).filter(u => !(d.costeo[u.mid] && d.costeo[u.mid].piezas.length)).map(u => u.mid))];
+    if(enFabSin.length) pend.push({ color:'rojo', icono:'etiqueta', titulo: plural(enFabSin.length, '1 modelo en fabricación sin cortes', 'modelos en fabricación sin cortes'), detalle: enFabSin.map(id => (d.catalogo.find(m => m.id === id) || {}).nombre).slice(0, 2).join(', ') + ' · cargarlos', href:'costos.html?modelo=' + enFabSin[0] });
+    // Mes anterior sin cerrar
+    const hoy = new Date(), ant = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1), mAnt = ant.getFullYear() + '-' + String(ant.getMonth() + 1).padStart(2, '0');
+    if(!(d.cierres || {})[mAnt] && d.movs.some(m => String(m.fecha).slice(0, 7) === mAnt)) pend.push({ color:'naranja', icono:'reloj', titulo:'Cierra el mes de ' + ant.toLocaleDateString('es-VE', { month:'long' }), detalle:'Reporte completo en Finanzas', href:'finanzas.html?tab=mes&mes=' + mAnt });
     // Modelos vendidos que no tienen costo
-    const sin = [...new Set(d.ventas.filter(v => v.estado !== 'cancelada').flatMap(v => v.items).filter(it => !X.costear(it.catalogo_id)).map(it => it.catalogo_id))];
+    const sin = [...new Set(d.ventas.filter(v => v.estado !== 'cancelada' && v.estado !== 'en_produccion' && !v.interna).flatMap(v => v.items).filter(it => !X.costear(it.catalogo_id)).map(it => it.catalogo_id))];
     const ec = $('cuenta-costos'); const nCost = Object.keys(d.costeo).filter(k => d.catalogo.some(m => String(m.id) === k)).length;
-    if(ec) ec.innerHTML = `${nCost} de ${d.catalogo.length} costeados`;
+    if(ec) ec.innerHTML = `${nCost} de ${d.catalogo.length} listos`;
     if(sin.length) pend.push({ color:'azul', icono:'etiqueta', titulo: plural(sin.length, '1 modelo vendido sin costear', 'modelos vendidos sin costear'), detalle: sin.map(id => (d.catalogo.find(m => m.id === id) || {}).nombre).slice(0, 2).join(', '), href:'costos.html?modelo=' + sin[0] });
     // Gastos fijos del mes sin cargar
     const mes = new Date().toISOString().slice(0, 7);

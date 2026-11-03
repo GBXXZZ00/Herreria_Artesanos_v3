@@ -33,13 +33,14 @@
   // ================= Pantalla =================
   function pintar(){
     document.querySelectorAll('#tabs [data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-    $('tabs').classList.toggle('en-2', tab === 'prov'); $('tabs').classList.toggle('en-3', tab === 'gastos');
+    $('tabs').querySelector('.seg-fondo').style.transform = `translateX(${['dinero','prov','gastos','mes'].indexOf(tab) * 100}%)`;
     const r = X.resumen();
     const nConf = X.porConfirmar().length;
     $('subtitulo').textContent = nConf ? (nConf === 1 ? '1 pago por confirmar' : nConf + ' pagos por confirmar') : r.porUbicar ? `${dinero(r.porUbicar)} por ubicar` : 'Dónde está tu dinero';
     const grande = ancho.matches;
     $('pieProv').classList.toggle('hidden', grande || tab !== 'prov');
     $('pieGasto').classList.toggle('hidden', grande || tab !== 'gastos');
+    if(tab === 'mes'){ $('pieProv').classList.add('hidden'); $('pieGasto').classList.add('hidden'); $('cont').innerHTML = `<div class="mes-wrap">${secMes()}</div>`; return; }
     $('cont').innerHTML = `<div class="fin-grid">
       <div class="fin-col ${tab === 'dinero' ? '' : 'oculta'}"><div class="col-t">Dinero</div>${secDinero()}</div>
       <div class="fin-col ${tab !== 'dinero' ? '' : 'oculta'}">
@@ -356,6 +357,93 @@
     abrirHoja('sheetPdf');
   }
 
+  // ================= Mes: cierre completo y reporte mensual =================
+  // Junta todo lo del mes en reportes de dos columnas: lo que entró y salió, la ganancia,
+  // las compras, los gastos, lo que dejó cada producto y cómo quedaron cuentas y proveedores.
+  // "Cerrar el mes" congela los números; después se corrige solo con ajustes que llevan motivo.
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const nomMes = (m) => { const [a, n] = m.split('-'); return MESES[+n - 1] + ' ' + a; };
+  let mesSel = new URLSearchParams(location.search).get('mes') || mesActual();
+  const enMes = (f, m) => String(f || '').slice(0, 7) === m;
+  function calcMes(m){
+    const d = D(), r2 = X.r2;
+    // Entró: pagos de clientes confirmados, por forma de pago
+    const porMetodo = {};
+    d.ventas.forEach(v => (v.abonos || []).forEach(a => { if(a.estado === 'confirmado' && enMes(a.fecha, m)) porMetodo[a.metodo] = (porMetodo[a.metodo] || 0) + (a.tipo === 'devolucion' ? -1 : 1) * a.monto; }));
+    const movs = d.movs.filter(x => !x.anulado && enMes(x.fecha, m));
+    const transf = {}; movs.filter(x => x.tipo === 'transferencia').forEach(x => { transf[x.prov] = (transf[x.prov] || 0) + x.ep; });
+    const gastos = {}; movs.filter(x => x.tipo === 'gasto').forEach(x => { gastos[x.cat] = (gastos[x.cat] || 0) - x.ec; });
+    const compras = {}; movs.filter(x => x.tipo === 'compra').forEach(x => { compras[x.prov] = (compras[x.prov] || 0) - x.ep; });
+    const ajustes = movs.filter(x => x.tipo === 'ajuste').length;
+    // Ganancia: lo vendido en el mes menos su costo (Costos) y los gastos pagados
+    let vendido = 0, costo = 0, sinCosto = 0, nSin = 0, puertas = 0; const porModelo = {};
+    d.ventas.filter(v => !v.interna && !['cotizacion','cancelada'].includes(v.estado) && enMes(v.confirmada_en, m)).forEach(v => v.items.forEach(it => {
+      const n = it.cantidad, x = X.costear(it.catalogo_id); puertas += n; vendido += it.precio_unitario * n;
+      if(x && !x.falta.length){ costo += x.costo * n; const pm = (porModelo[it.nombre] ||= { n:0, gana:0 }); pm.n += n; pm.gana += (it.precio_unitario - x.costo - x.fijos) * n; }
+      else { sinCosto += it.precio_unitario * n; nSin += n; } }));
+    const gastoTot = Object.values(gastos).reduce((a, x) => a + x, 0);
+    const fijosPrev = d.gastosFijos.reduce((a, g) => a + g.monto, 0);
+    const pagadoFijo = d.gastosFijos.map(g => ({ cat:g.cat, prev:g.monto, pagado:gastos[g.cat] || 0 }));
+    // Saldos al final del mes
+    const fin = m + '-31';
+    const saldoCta = (id) => r2(d.movs.filter(x => !x.anulado && x.cuenta === id && String(x.fecha) <= fin).reduce((a, x) => a + (x.ec || 0), 0));
+    const saldoPrv = (id) => r2(d.movs.filter(x => !x.anulado && x.prov === id && String(x.fecha) <= fin).reduce((a, x) => a + (x.ep || 0), 0));
+    return {
+      entro:Object.entries(porMetodo).map(([k, v]) => ['Pagos de clientes · ' + k, r2(v)]),
+      salio:Object.entries(transf).map(([k, v]) => ['Transferencias a ' + (prov(k) || {}).nombre, -r2(v)]).concat(Object.entries(gastos).map(([k, v]) => ['Gasto · ' + k, -r2(v)])),
+      compras:Object.entries(compras).map(([k, v]) => [(prov(k) || {}).nombre, r2(v)]),
+      vendido:r2(vendido), costo:r2(costo), sinCosto:r2(sinCosto), nSin, puertas, gastoTot:r2(gastoTot), fijosPrev, pagadoFijo,
+      porModelo:Object.entries(porModelo).map(([k, v]) => [k + ' × ' + v.n, r2(v.gana)]).sort((a, b) => b[1] - a[1]),
+      cuentas:d.cuentas.map(c => [c.nombre, saldoCta(c.id)]), proveedores:d.proveedores.map(p => [p.nombre, saldoPrv(p.id)]), ajustes,
+    };
+  }
+  const suma = (l) => l.reduce((a, x) => a + x[1], 0);
+  function secMes(){
+    const d = D(), cierre = (d.cierres || {})[mesSel], C = cierre ? cierre.datos : calcMes(mesSel);
+    $('subtitulo').textContent = 'Cierre de ' + nomMes(mesSel);
+    const meses = [...new Set(d.movs.map(x => String(x.fecha).slice(0, 7)).concat([mesActual()]))].sort().reverse().slice(0, 4);
+    let h = `<div class="opts" style="--cols:${meses.length};margin-bottom:12px">${meses.map(m => `<button class="opt ${m === mesSel ? 'selected' : ''}" type="button" data-mes="${m}">${esc(MESES[+m.slice(5) - 1])}${(d.cierres || {})[m] ? '<br><small style="font-weight:600">cerrado</small>' : ''}</button>`).join('')}</div>`;
+    if(cierre) h += `<div class="caja-ok">Mes cerrado el ${fecha(cierre.fecha)} por ${esc(cierre.por)}. Estos números quedaron fijos. Si hay que corregir algo, se hace con un ajuste con motivo.</div>`;
+    else if(mesSel === mesActual()) h += `<div class="caja-nota"><span>Mes en curso</span>Los números cambian hasta que termine el mes. Se cierra a partir del día 1 del mes siguiente.</div>`;
+    const neto = suma(C.entro) + suma(C.salio), ganancia = C.vendido - C.sinCosto - C.costo - C.gastoTot;
+    h += `<div class="tit">Lo que ganaste</div>` + reporte([
+        ['Vendido con costeo (' + (C.puertas - C.nSin) + ' puertas)', C.vendido - C.sinCosto],
+        ['Costo de lo vendido (materiales y mano de obra)', -C.costo],
+        ['Gastos pagados', -C.gastoTot]], ganancia >= 0 ? 'Ganancia del mes' : 'Pérdida del mes', ganancia)
+      + (C.nSin ? `<div class="caja-amar">Además se vendieron ${C.nSin === 1 ? '1 puerta' : C.nSin + ' puertas'} sin costeo por ${dinero(C.sinCosto)}. No entran en la ganancia hasta cargar su costeo.</div>` : '');
+    h += `<div class="tit">Dinero que entró y salió</div>` + reporte(C.entro.concat(C.salio).length ? C.entro.concat(C.salio) : [['Sin movimientos', 0]], neto >= 0 ? 'Entró más de lo que salió' : 'Salió más de lo que entró', neto);
+    h += `<div class="gris-l">Nómina y vales: falta decidir de qué cuenta salen. Cuando se decida, salen aquí.</div>`;
+    h += `<div class="tit">Compras a proveedores</div>` + reporte(C.compras.length ? C.compras.map(([n, v]) => [n, -v]) : [['Sin compras este mes', 0]], 'Total comprado', -suma(C.compras));
+    h += `<div class="tit">Gastos fijos: previsto y pagado</div><div class="rep">${C.pagadoFijo.map(g => `<div class="rep-f"><span>${esc(g.cat)}<small class="mat-s" style="display:block;font-weight:600">previsto ${dinero(g.prev)}</small></span><b class="${g.pagado + 0.005 < g.prev ? 's-debe' : 's-favor'}">${g.pagado ? dinero(g.pagado) : 'Sin pagar'}</b></div>`).join('')}
+      <div class="rep-f total"><span>Pagado de ${dinero(C.fijosPrev)} previstos</span><b>${dinero(C.pagadoFijo.reduce((a, g) => a + g.pagado, 0))}</b></div></div>`;
+    if(C.porModelo.length) h += `<div class="tit">Lo que dejó cada producto</div>` + reporte(C.porModelo, 'Total después de gastos fijos', suma(C.porModelo));
+    h += `<div class="tit">Así quedaron las cuentas</div>` + reporte(C.cuentas, 'En cuentas', suma(C.cuentas));
+    h += `<div class="tit">Así quedaron los proveedores</div>` + reporte(C.proveedores, suma(C.proveedores) < 0 ? 'Les debes en total' : 'A tu favor en total', suma(C.proveedores));
+    if(C.ajustes) h += `<p class="mat-s" style="margin:8px 2px 0">${C.ajustes === 1 ? 'Hubo 1 ajuste de saldo' : 'Hubo ' + C.ajustes + ' ajustes de saldo'} este mes. Están en el historial con su motivo.</p>`;
+    const puedeCerrar = !cierre && mesSel < mesActual();
+    h += `<div class="pie-dos2" style="display:flex;gap:10px;margin-top:16px"><button class="btn-secondary" type="button" data-pdf-mes style="flex:1;height:54px">Reporte en PDF</button>${cierre ? '' : `<button class="btn-primary" type="button" data-cerrar-mes style="flex:1.2" ${puedeCerrar ? '' : 'disabled'}>Cerrar el mes</button>`}</div>`;
+    return h;
+  }
+  async function pdfMes(){
+    const d = D(), cierre = (d.cierres || {})[mesSel], C = cierre ? cierre.datos : calcMes(mesSel);
+    const f = (n, v) => ({ t:'fila', a:n, b:(v < -0.005 ? '- ' : v > 0.005 ? '+ ' : '') + dinero(Math.abs(v)), rojo:v < -0.005 });
+    const tot = (n, v) => ({ t:'total', a:n, b:(v < -0.005 ? '- ' : '') + dinero(Math.abs(v)) });
+    const ganancia = C.vendido - C.sinCosto - C.costo - C.gastoTot;
+    const b = [{ t:'titulo', texto:'Lo que ganaste' }, f('Vendido con costeo', C.vendido - C.sinCosto), f('Costo de lo vendido', -C.costo), f('Gastos pagados', -C.gastoTot), tot(ganancia >= 0 ? 'Ganancia del mes' : 'Pérdida del mes', ganancia)];
+    if(C.nSin) b.push({ t:'nota', texto:'Vendido sin costeo: ' + dinero(C.sinCosto) + ' (no entra en la ganancia).' });
+    b.push({ t:'titulo', texto:'Dinero que entró y salió' }); C.entro.concat(C.salio).forEach(([n, v]) => b.push(f(n, v))); b.push(tot('Neto', suma(C.entro) + suma(C.salio)));
+    b.push({ t:'titulo', texto:'Compras a proveedores' }); C.compras.forEach(([n, v]) => b.push(f(n, -v))); b.push(tot('Total comprado', -suma(C.compras)));
+    b.push({ t:'titulo', texto:'Gastos fijos', der:'previsto / pagado' }); C.pagadoFijo.forEach(g => b.push({ t:'fila', a:g.cat + ' (previsto ' + dinero(g.prev) + ')', b:g.pagado ? dinero(g.pagado) : 'Sin pagar', rojo:!g.pagado }));
+    if(C.porModelo.length){ b.push({ t:'titulo', texto:'Lo que dejó cada producto' }); C.porModelo.forEach(([n, v]) => b.push(f(n, v))); }
+    b.push({ t:'titulo', texto:'Cuentas al cerrar' }); C.cuentas.forEach(([n, v]) => b.push(f(n, v))); b.push(tot('En cuentas', suma(C.cuentas)));
+    b.push({ t:'titulo', texto:'Proveedores al cerrar' }); C.proveedores.forEach(([n, v]) => b.push(f(n, v)));
+    b.push({ t:'nota', texto:'+ entra o es a tu favor · - sale o se debe. Nómina y vales: pendiente decidir de qué cuenta salen.' });
+    b.push({ t:'firmas', a:'Revisado por Ray', b:'Revisado por Gualfredo' });
+    try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear({ titulo:'Cierre del mes', derecha:nomMes(mesSel), subtitulo:cierre ? 'Mes cerrado el ' + fecha(cierre.fecha) + '. Números fijos.' : 'Mes sin cerrar: los números pueden cambiar.', bloques:b });
+      const r = await window.PDFR.compartir(blob, 'Cierre-' + mesSel + '.pdf'); if(r === 'descargado') toast('PDF listo'); }
+    catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }
+  }
+
   // ================= Eventos =================
   document.addEventListener('click', (e) => {
     const t = e.target.closest('[data-tab]'); if(t && t.closest('#tabs')){ tab = t.dataset.tab; pintar(); window.scrollTo(0, 0); return; }
@@ -377,6 +465,9 @@
     const pd = e.target.closest('[data-pdf]'); if(pd) return abrirPdf(pd.dataset.pdf);
     const cq = e.target.closest('[data-cuadrar]'); if(cq){ const p = prov(cq.dataset.cuadrar); p.cuadre = { fecha:hoy(), saldo:X.saldoProv(p.id) }; X.guardar(); toast('Marcado como cuadrado hoy con ' + p.nombre); pintar(); pintarDetalle(); return; }
     const mm = e.target.closest('[data-maq-msg]'); if(mm) return toast(mm.dataset.maqMsg);
+    const ms = e.target.closest('[data-mes]'); if(ms){ mesSel = ms.dataset.mes; return pintar(); }
+    if(e.target.closest('[data-pdf-mes]')) return pdfMes();
+    if(e.target.closest('[data-cerrar-mes]')){ const d = D(); (d.cierres ||= {})[mesSel] = { fecha:hoy(), por:'Ray', datos:calcMes(mesSel) }; X.guardar(); toast('Mes cerrado. Los números quedaron fijos.'); return pintar(); }
     if(F){
       const set = (attr, campo) => { const b = e.target.closest('[' + attr + ']'); if(b){ leerCampos(); F[campo] = b.getAttribute(attr); pintarForm(); return true; } return false; };
       if(set('data-f-llego', 'llego')) return;

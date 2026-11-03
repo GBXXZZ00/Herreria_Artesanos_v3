@@ -13,89 +13,65 @@
   const CHEV = '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
   const fmtM = (cm) => (cm / 100).toLocaleString('es-VE', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' m';
 
-  // ---------- Plan de corte de la semana ----------
-  function empacar(piezas, largo){
-    const L = piezas.slice().sort((a, b) => b.cm - a.cm), barras = [];
-    for(const p of L){ let b = barras.find(x => x.libre + 1e-9 >= p.cm); if(!b){ b = { piezas:[], libre:largo }; barras.push(b); } b.piezas.push(p); b.libre -= p.cm; }
-    return barras;
-  }
-  function plan(){
-    const d = M(), por = {};
-    for(const ped of d.enFabricacion){
-      for(const [mid, c, cm] of (d.cortes[ped.producto] || [])) for(let i = 0; i < c * ped.cantidad; i++) (por[mid] ||= []).push({ cm, n:ped.venta });
-    }
-    const out = {};
-    for(const [mid, piezas] of Object.entries(por)){
-      const f = d.fab.find(x => x.id === mid); const barras = empacar(piezas, f.largo);
-      out[mid] = { barras, usa:barras.length, falta:Math.max(0, barras.length - f.stock) };
-    }
+  // ---------- Fabricación: lo que hay, por tubo ----------
+  // El depósito solo lleva el stock: barras enteras, retazos con su medida, hojas y sobrantes.
+  // Lo que se corta cada sábado y cómo vive en Costos › Semana (sale de lo asignado en Producción).
+  const SAB = () => window.MAQUETA.sabados();
+  const sabTxt = (iso) => { try{ return window.AH.sabadoCorto(iso); } catch(e){ return iso; } };
+  function necesita(){
+    const out = {}, X = window.MAQUETA;
+    [SAB().este, SAB().proximo].forEach((sab, i) => { const P = X.planSemana(sab);
+      P.compras.forEach(m => { const o = (out[m.f.id] ||= { este:null, proximo:null }); o[i ? 'proximo' : 'este'] = { usa:m.barras, retazos:m.retazos, falta:m.comprar }; });
+      P.hj.forEach(x => { const o = (out[x.f.id] ||= { este:null, proximo:null }); o[i ? 'proximo' : 'este'] = { m2:x.m2, falta:x.comprar }; }); });
     return out;
   }
-  const barrasHtml = (barras) => `<div class="barras">${barras.map(b => `<div class="barra">${b.piezas.map(p => `<span style="flex:${p.cm}">${p.cm}</span>`).join('')}${b.libre >= 1 ? `<span class="sob" style="flex:${b.libre}">${Math.round(b.libre)}</span>` : ''}</div>`).join('')}</div>`;
-
-  // ---------- Fabricación ----------
+  const retazosHtml = (f) => (f.retazos || []).length ? `<span class="ret-l">${f.retazos.slice().sort((a, b) => b - a).map(r => `<span class="ret-c">${r} cm</span>`).join('')}</span>` : '';
   function pintarFab(){
-    const d = M(), p = plan();
-    const falta = Object.values(p).reduce((a, x) => a + x.falta, 0);
-    const barras = d.fab.filter(f => f.pres === 'barra').reduce((a, f) => a + f.stock, 0);
-    const piezasSemana = d.enFabricacion.reduce((a, x) => a + x.cantidad, 0);
-    $('subtitulo').textContent = falta ? plural(falta, 'Falta 1 barra para esta semana', 'barras faltan para esta semana') : 'Hay material para esta semana';
+    const d = M(), nec = necesita(), S = SAB();
+    const falta = Object.values(nec).reduce((a, x) => a + (x.este ? x.este.falta : 0), 0);
+    const barras = d.fab.filter(f => f.pres === 'barra').reduce((a, f) => a + f.stock, 0), rets = d.fab.reduce((a, f) => a + (f.retazos || []).length, 0);
+    $('subtitulo').textContent = falta ? 'Faltan ' + plural(falta, '1 barra u hoja', 'barras u hojas') + ' para el ' + sabTxt(S.este) : 'Hay material para el ' + sabTxt(S.este);
     let h = `<div class="res">
-      <div class="res-c ${falta ? 'rojo' : 'ok'}"><span>${falta ? 'Faltan para esta semana' : 'Para esta semana'}</span><b>${falta ? plural(falta, '1 barra', 'barras') : 'Completo'}</b></div>
-      <div class="res-c"><span>Barras en depósito</span><b>${esc(barras)}</b></div></div>`;
+      <div class="res-c ${falta ? 'rojo' : 'ok'}"><span>Para el ${esc(sabTxt(S.este))}</span><b>${falta ? 'Faltan ' + falta : 'Alcanza'}</b></div>
+      <div class="res-c"><span>Barras y retazos</span><b>${esc(barras)} · ${esc(rets)}</b></div></div>`;
+    if(falta) h += `<a class="caja-amar" style="display:block;text-decoration:none;margin:0 0 12px" href="costos.html?tab=semana&para=${S.este}">Faltan ${plural(falta, '1 barra u hoja', 'barras u hojas')} para lo asignado al ${esc(sabTxt(S.este))}. Ver el plan de corte y qué comprar →</a>`;
     if(d.conteo) h += `<div class="${d.conteo.dif ? 'caja-rara' : 'caja-ok'}" style="margin:0 0 12px">${esc(d.conteo.txt)}</div>`;
-    h += `<div class="tit" style="margin-top:4px">Esta semana se corta · ${plural(piezasSemana, '1 puerta', 'puertas')}</div>
-      ${d.enFabricacion.map(x => `<div class="ped"><img src="assets/img/foto-puerta.png" alt=""><span style="min-width:0;flex:1"><span class="mat-t">N° ${esc(x.venta)} · ${esc(x.producto)} × ${esc(x.cantidad)}</span><span class="mat-s">${esc(x.cliente)}</span></span><span class="pill verde">En fabricación</span></div>`).join('')}
-      <button class="btn-secondary" type="button" id="btnCortes" style="width:100%;margin-top:8px" ${piezasSemana && !d.cortado ? '' : 'disabled'}>${d.cortado ? 'Cortes de esta semana hechos' : 'Marcar cortes hechos'}</button>
-      <p class="mat-s" style="margin:6px 2px 0">En la app real las barras bajan solas cuando el herrero empieza el paso Hierro.</p>
-      <div class="tit">Barras y hojas</div><div class="mat-lista ya">`;
-    h += d.fab.map(f => {
-      const x = p[f.id];
-      const pill = x && x.falta ? `<span class="pill rojo">Faltan ${x.falta}</span>` : x ? '<span class="pill verde">Alcanza</span>' : '';
-      const med = f.pres === 'barra' ? `Barra de ${fmtM(f.largo)}` : `Hoja ${f.hoja[0]} × ${f.hoja[1]} cm`;
-      return `<button class="mat ${x && x.falta ? 'bajo' : ''}" type="button" data-fab="${esc(f.id)}">
-        <span class="mat-ico fab">${esc(ini(f.nombre))}</span>
-        <span style="min-width:0"><span class="mat-t">${esc(f.nombre)}</span>
-          <span class="mat-s">${esc(med)} · ${esc(TIPO[f.tipo])}${x ? ' · usa ' + x.usa + ' esta semana' : ''} ${pill}</span></span>
-        <span class="mat-n"><b>${esc(f.stock)}</b><span>${f.pres === 'barra' ? (f.stock === 1 ? 'barra' : 'barras') : (f.stock === 1 ? 'hoja' : 'hojas')}</span></span>
-      </button>`;
-    }).join('');
-    h += `</div><button class="btn-nuevo" type="button" data-maq="Agregar material de fabricación">+ Agregar material de fabricación</button>`;
+    [['hierro', 'Tubos, platinas y marcos'], ['laminas', 'Láminas'], ['vidrio', 'Vidrio']].forEach(([t, tit]) => {
+      const L = d.fab.filter(f => f.tipo === t); if(!L.length) return;
+      h += `<div class="tit">${tit}</div><div class="mat-lista ya">` + L.map(f => {
+        const x = nec[f.id] && nec[f.id].este, fp = nec[f.id] && nec[f.id].proximo;
+        const pill = x && x.falta ? `<span class="pill rojo">Faltan ${x.falta}</span>` : x ? '<span class="pill verde">Alcanza</span>' : '';
+        const med = f.pres === 'barra' ? 'Barra de ' + fmtM(f.largo) : 'Hoja ' + f.hoja[0] + ' × ' + f.hoja[1] + ' cm';
+        const sob = (f.sobrantes || []).length ? ' · ' + plural(f.sobrantes.length, '1 sobrante', 'sobrantes') : '';
+        return `<button class="mat ${x && x.falta ? 'bajo' : ''}" type="button" data-fab="${esc(f.id)}">
+          <span class="mat-ico fab">${esc(ini(f.nombre))}</span>
+          <span style="min-width:0"><span class="mat-t">${esc(f.nombre)}</span>
+            <span class="mat-s">${esc(med)}${sob}${x && f.pres === 'barra' ? ' · el ' + esc(sabTxt(S.este)) + ' usa ' + x.usa : ''}${fp && fp.falta ? ' · próximo sáb faltan ' + fp.falta : ''} ${pill}</span>
+            ${retazosHtml(f)}</span>
+          <span class="mat-n"><b>${esc(f.stock)}</b><span>${f.pres === 'barra' ? (f.stock === 1 ? 'barra' : 'barras') : (f.stock === 1 ? 'hoja' : 'hojas')}</span></span>
+        </button>`; }).join('') + '</div>';
+    });
+    h += `<button class="btn-nuevo" type="button" data-maq="Agregar material de fabricación">+ Agregar material de fabricación</button>
+      <p class="mat-s" style="margin:8px 2px 0">Las barras suben con cada compra y bajan cuando Ray marca en Costos › Semana que el herrero ya cortó. Los retazos de 50 cm o más quedan anotados con su medida y el plan siguiente los usa primero.</p>`;
     $('cont').innerHTML = h;
-    const bc = $('btnCortes'); if(bc) bc.onclick = marcarCortes;
-  }
-  function marcarCortes(){
-    const d = M(), p = plan();
-    for(const [mid, x] of Object.entries(p)){
-      const f = d.fab.find(y => y.id === mid); const usa = Math.min(x.usa, f.stock);
-      f.stock -= usa; x.barras.slice(0, usa).forEach(b => { if(b.libre >= 50) (f.retazos ||= []).push(Math.round(b.libre)); });
-      if(usa) d.movsFab.unshift({ id:mid, t:'Corte de la semana', n:-usa, fecha:new Date().toISOString(), por:'Jesus' });
-    }
-    d.cortado = true; window.MAQUETA.guardar();
-    toast('Bajaron las barras usadas. Los retazos de 50 cm o más quedaron anotados.');
-    pintarFab();
   }
   function abrirFab(id){
-    const d = M(), f = d.fab.find(x => x.id === id), x = plan()[id];
+    const d = M(), f = d.fab.find(x => x.id === id), n = necesita()[id] || {}, x = n.este, S = SAB();
     $('fabTitulo').textContent = f.nombre;
-    const provs = d.proveedores;
-    const precios = Object.entries(f.precios).map(([k, v]) => ({ k, n:(provs.find(p => p.id === k) || {}).nombre, ...v }));
-    const min = Math.min(...precios.map(p => p.p));
-    const metro = (p) => f.pres === 'barra' ? dinero(p * IVA / (f.largo / 100)) + ' el metro con IVA' : dinero(p * IVA / (f.hoja[0] * f.hoja[1] / 10000)) + ' el m² con IVA';
     const movs = (d.movsFab || []).filter(m => m.id === id);
+    const hoja = f.pres === 'hoja';
     $('fabBody').innerHTML = `
       <div class="bento">
         <div class="res-c"><span>En depósito</span><b>${esc(f.stock)}</b></div>
-        <div class="res-c"><span>Usa esta semana</span><b>${x ? esc(x.usa) : 0}</b></div>
+        <div class="res-c"><span>${hoja ? 'Usa' : 'Usa el'} ${esc(sabTxt(S.este))}</span><b>${x ? (hoja ? x.m2.toLocaleString('es-VE', { maximumFractionDigits:2 }) + ' m²' : esc(x.usa)) : 0}</b></div>
         <div class="res-c ${x && x.falta ? 'rojo' : 'ok'}"><span>Falta</span><b>${x ? esc(x.falta) : 0}</b></div>
       </div>
-      ${x ? `<div class="tit">Cómo se cortan esta semana</div>${barrasHtml(x.barras)}<p class="mat-s" style="margin:6px 2px 0">Cada barra con sus piezas en cm. Lo claro es lo que sobra.</p>` : ''}
-      ${f.pres === 'barra' ? `<div class="tit">Retazos útiles</div><p style="margin:0 2px;font-size:15px;font-weight:700">${(f.retazos || []).length ? f.retazos.map(r => r + ' cm').join(' · ') : '<span class="mat-s">Ninguno</span>'}</p>` : ''}
-      <div class="tit">Precio por proveedor (sin IVA)</div>
-      ${precios.map(p => `<div class="cg-fila"><div class="cg-nom">${esc(p.n)}<span>${p.esp ? esc(p.esp) + ' · ' : ''}${esc(metro(p.p))}</span></div><div style="text-align:right;font-weight:800;font-size:16px">${dinero(p.p)}${precios.length > 1 && p.p === min ? '<br><span class="pill verde">Más barato</span>' : ''}</div></div>`).join('')}
-      ${f.fijo ? `<div class="caja-nota"><span>Precio fijo para costear</span>Costos usa ${dinero(f.fijo)} por decisión de Ray, aunque una factura traiga otro precio.</div>` : ''}
+      ${hoja ? `<div class="tit">Sobrantes útiles</div><p style="margin:0 2px;font-size:15px;font-weight:700">${(f.sobrantes || []).length ? f.sobrantes.map(s2 => s2[0] + ' × ' + s2[1] + ' cm').join(' · ') : '<span class="mat-s">Ninguno</span>'}</p>`
+        : `<div class="tit">Retazos útiles</div>${(f.retazos || []).length ? retazosHtml(f) : '<p class="mat-s" style="margin:0 2px">Ninguno</p>'}<p class="mat-s" style="margin:6px 2px 0">El plan de corte los usa primero.</p>`}
+      <a class="row-link" href="costos.html?tab=semana&para=${S.este}" style="margin-top:12px"><span>Ver cómo se corta el ${esc(sabTxt(S.este))}</span>${CHEV}</a>
+      <a class="row-link" href="costos.html?tab=materiales"><span>Precios por proveedor (en Costos)</span>${CHEV}</a>
       <div class="tit">Movimientos</div>
-      ${movs.length ? movs.map(m => `<div class="mov"><span style="min-width:0"><span class="mov-t">${esc(m.t)}</span><span class="mov-s">${new Date(m.fecha).toLocaleDateString('es-VE', { day:'numeric', month:'short' })} · ${esc(m.por)}</span></span><span class="mov-m ${m.n > 0 ? 'mas' : 'menos'}">${m.n > 0 ? '+' : ''}${m.n}</span></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin movimientos todavía.</p>'}`;
+      ${movs.length ? movs.map(m => `<div class="mov"><span style="min-width:0"><span class="mov-t">${esc(m.t)}</span><span class="mov-s">${new Date(m.fecha).toLocaleDateString('es-VE', { day:'numeric', month:'short' })} · ${esc(m.por)}</span></span><span class="mov-m ${m.n > 0 ? 'mas' : 'menos'}">${m.n > 0 ? '+' : ''}${m.n || ''}</span></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin movimientos todavía.</p>'}`;
     abrirHoja('sheetFab');
   }
   function abrirConteo(){

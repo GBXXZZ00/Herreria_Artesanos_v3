@@ -337,9 +337,9 @@
   function filaCosto(m){
     if(!window.MAQUETA) return '';
     const x = window.MAQUETA.costear(m.id), s = window.MAQUETA.semaforo(x);
-    const col = { verde:'#1B6B3A', amar:'#B7791F', rojo:'#B42318', negro:'#1C1A17', gris:'#6E6A64' }[s[0]];
+    const col = { verde:'#1B6B3A', amar:'var(--amber)', rojo:'var(--danger)', negro:'var(--ink)', gris:'var(--ink-soft)' }[s[0]];
     return `<div class="det-section" style="margin-top:14px"><div class="det-label">Costo (solo administradores)</div>
-      <a class="row-link" href="costos.html?modelo=${encodeURIComponent(m.id)}"><span>${x && !x.falta.length ? 'Cuesta ' + dinero(x.costo) + ' · ' : ''}<b style="color:${col}">${esc(s[1])}</b>${x ? ' · ver costeo' : ' · costear'}</span>${ICON_CHEV}</a></div>`;
+      <a class="row-link" href="costos.html?modelo=${encodeURIComponent(m.id)}"><span>${x && !x.falta.length ? `Cuesta ${dinero(x.costo)} · gana <b style="color:${col}">${dinero(x.ganancia)} (${Math.round(x.pct)} %)</b><br><small style="color:var(--ink-soft)">Sugerido ${dinero(x.final)} · ver costeo</small>` : `<b style="color:${col}">${x ? 'Faltan datos' : 'Sin costear'}</b> · ${x ? 'completar costeo' : 'cargar costeo y cortes'}`}</span>${ICON_CHEV}</a></div>`;
   }
   function mostrarModelo(m, desdeLista){
     det.vista = 'modelo';

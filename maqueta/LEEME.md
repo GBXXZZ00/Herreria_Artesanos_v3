@@ -18,10 +18,12 @@ En la dirección de la app publicada (`github.io`) no abre a propósito: guardar
 ## Qué es nuevo y qué cambió
 | Archivo | Qué |
 |---|---|
-| `finanzas.html`, `assets/js/finanzas.js` | Nuevo. Finanzas: Dinero (pagos por confirmar; reportes sencillos de dos columnas, nombre y número con + o −: tu dinero hoy y lo que ganas este mes; por ubicar, cuentas, te deben), Proveedores (ficha, transferencias, estado de cuenta, cambiar saldo con historial, editar con tipos e IVA), Gastos |
-| `costos.html`, `assets/js/costos.js` | Nuevo. Costos en 4 pestañas: **Modelos** (semáforo, ficha del costeo con piezas, barras, hojas, pintura, accesorios, extras y mano de obra; duplicar, en diseño, pasar al catálogo), **Corte** (plan de corte de la semana: junta los pedidos en fabricación, usa primero los retazos, barras a comprar, ahorro por cortar junto, costo y ganancia por pedido, hoja de corte para el herrero), **Precios** (lista de precios sin IVA por proveedor) y **Reglas** |
+| `finanzas.html`, `assets/js/finanzas.js` | Nuevo. Finanzas: Dinero (pagos por confirmar; reportes sencillos de dos columnas, nombre y número con + o −: tu dinero hoy y lo que ganas este mes; por ubicar, cuentas, te deben), Proveedores (ficha, transferencias, estado de cuenta, cambiar saldo con historial, editar con tipos e IVA), Gastos, **Mes** (cierre completo, cerrar el mes, reporte PDF) |
+| `costos.html`, `assets/js/costos.js` | Nuevo. Costos en 4 pestañas: **Modelos** (estado Sin costear · Borrador · Listo, los de fabricación primero, ficha con cortes, hojas, pintura, accesorios, extras y mano de obra; empezar con el bastidor estándar, duplicar, pasar al catálogo), **Semana** (plan de corte por sábado desde lo asignado en Producción, por herrero, Ray acepta o cambia, "ya cortó", ¿qué alcanzo?, sin cortes = cargar o a mano, plan de compra y hoja de corte en PDF), **Ganancia** (gastos fijos, ¿alcanzamos este mes?, ganancia por producto, reglas) y **Precios** |
+| `assets/js/pdf-reporte.js` | Nuevo. PDF de hoja de corte, plan de compra y cierre del mes con el diseño del PDF de la venta |
+| `assets/js/produccion.js` | Cambiado. Enlace "Entra al plan de corte del sáb X" en la ficha del pedido |
 | `assets/css/modulo.css` | Nuevo. Estilos de `deposito.html` sacados aparte para Finanzas y Costos |
-| `assets/js/deposito-nuevo.js` | Nuevo. Depósito › Fabricación (barras, plan de corte, conteo) y Compras (foto o a mano, saldo del proveedor, "ya le transferí aparte") |
+| `assets/js/deposito-nuevo.js` | Nuevo. Depósito › Fabricación por tubo (barras, retazos con medida, hojas y sobrantes, faltan para el sábado, conteo; sin pedidos) y Compras (foto o a mano, saldo del proveedor, "ya le transferí aparte") |
 | `deposito.html`, `assets/js/deposito.js` | Cambiado. Pestañas Consumibles · Fabricación · Compras; en computadora el detalle se abre al lado |
 | `inicio.html` | Cambiado. Cuadros Finanzas y Costos; avisos nuevos; "pago por confirmar" lleva a Finanzas |
 | `assets/js/catalogo.js` | Cambiado. Fila "Costo" en la ficha del modelo (solo admin) |

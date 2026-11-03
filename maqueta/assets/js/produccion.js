@@ -243,8 +243,15 @@
     $('fichaBody').innerHTML = `
       <p class="field-label" style="margin-bottom:2px">${cab}</p>
       ${itemsFabrica(v).map(it => itemHtml(it)).join('')}
+      ${planCorteHtml(v)}
       ${v.interna && !lectura ? `<button class="btn-cancelar-orden" type="button" data-cancelar-orden="${v.id}">Cancelar esta orden</button>` : ''}`;
     abrirHoja('sheetFicha');
+  }
+  // MAQUETA: el Hierro asignado entra solo al plan de corte de ese sábado (Costos › Semana, solo admin)
+  function planCorteHtml(v){
+    if(lectura || !window.MAQUETA) return '';
+    const sabs = [...new Set((v.items || []).flatMap(it => (it.etapas || []).filter(e => e.oficio === 'hierro' && e.estado === 'pendiente' && e.trabajador_id && e.para_el).map(e => e.para_el)))];
+    return sabs.map(sb => `<a class="row-link" href="costos.html?tab=semana&para=${esc(sb)}" style="margin-top:10px"><span>Entra al plan de corte del ${esc(sabadoCorto(sb))}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>`).join('');
   }
   function catHtml(it){
     if(lectura || !it.categoria_pago_id) return '';
@@ -408,7 +415,7 @@
       const { error } = await db.rpc('asignar_etapas', { p: cambios });
       if(error) throw error;
       cerrarHoja('sheetTodo', true);
-      toast('Listo. A cada uno le llega el aviso cuando le toque.');
+      toast(window.MAQUETA && cambios.some(c => c.tid && String(c.tid) !== '' ) ? 'Listo. El Hierro asignado ya entra al plan de corte de ese sábado.' : 'Listo. A cada uno le llega el aviso cuando le toque.');
       await refrescarFicha();
     } catch(err){
       const red = /fetch|network/i.test(String(err.message));

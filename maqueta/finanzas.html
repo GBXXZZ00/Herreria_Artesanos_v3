@@ -9,8 +9,8 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Finanzas · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=71">
-<link rel="stylesheet" href="assets/css/modulo.css?v=71">
+<link rel="stylesheet" href="assets/css/base.css?v=72">
+<link rel="stylesheet" href="assets/css/modulo.css?v=72">
 <style>
   /* Finanzas: en el teléfono, pestañas y hojas que se apilan; en computadora, todo al lado */
   .seg-d.en-3 .seg-fondo{transform:translateX(200%)}
@@ -90,6 +90,12 @@
     .pie-entregar{display:none}
   }
   @media (max-width:1023px){ #panel{display:none} .fin-col.oculta{display:none} }
+  /* Cuatro pestañas y el cierre del mes */
+  #tabs.seg-d{grid-template-columns:repeat(4,1fr)}
+  #tabs .seg-fondo{width:calc(25% - 2px)}
+  #tabs button{font-size:13.5px}
+  .gris-l{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);color:var(--ink-soft);font-size:13.5px;font-weight:700}
+  @media (min-width:1024px){ .mes-wrap{max-width:720px} }
 </style>
 </head>
 <body data-requiere-sesion="si">
@@ -109,6 +115,7 @@
     <button class="on" type="button" data-tab="dinero" aria-pressed="true">Dinero</button>
     <button type="button" data-tab="prov" aria-pressed="false">Proveedores</button>
     <button type="button" data-tab="gastos" aria-pressed="false">Gastos</button>
+    <button type="button" data-tab="mes" aria-pressed="false">Mes</button>
   </div>
   <section class="d-cont" id="cont" aria-live="polite"></section>
 </main>
@@ -150,11 +157,12 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/js/falso.js?v=71"></script>
-<script src="assets/vendor/supabase.js?v=71"></script>
-<script src="assets/js/supabase-client.js?v=71"></script>
-<script src="assets/js/comun.js?v=71"></script>
-<script src="assets/js/sesion.js?v=71"></script>
-<script src="assets/js/finanzas.js?v=71"></script>
+<script src="assets/js/falso.js?v=72"></script>
+<script src="assets/vendor/supabase.js?v=72"></script>
+<script src="assets/js/supabase-client.js?v=72"></script>
+<script src="assets/js/comun.js?v=72"></script>
+<script src="assets/js/sesion.js?v=72"></script>
+<script src="assets/js/pdf-reporte.js?v=72"></script>
+<script src="assets/js/finanzas.js?v=72"></script>
 </body>
 </html>
