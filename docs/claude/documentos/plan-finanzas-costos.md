@@ -40,7 +40,7 @@ Finanzas › Mes, en dos columnas: lo que ganaste (vendido con costeo − costo 
 8. **La vendedora no puede borrar ni cambiar pagos.**
 
 ## Corrida única de Claude Code (como en Airtek)
-Todos los lotes **seguidos en una sola corrida**, en este orden: 1, 2, 3, 4 (Dinero) · 5 (Depósito) · 6, 7 (Costos) · 9 (Corte) · 10 (Mes). Después, aparte: 8 (OCR), 11 (3D), aluminio, madera y reportes por proveedor y cuenta.
+Todos los lotes **seguidos en una sola corrida**, en este orden: 1, 2, 3, 4 (Dinero) · 5 (Depósito) · 6, 7 (Costos) · 9 (Corte) · 10 (Mes) · 10b (reportes por proveedor y por cuenta). Después, aparte: 8 (OCR), 11 (3D), aluminio, madera y reportes por proveedor y cuenta.
 - Una rama `ray/finanzas-costos` desde `main`, **un commit por lote** (con su migración) y **un solo PR** al final.
 - Ray da el OK al PR; se aplican las migraciones en orden y se une.
 
@@ -57,6 +57,7 @@ Todos los lotes **seguidos en una sola corrida**, en este orden: 1, 2, 3, 4 (Din
 | 8 | OCR de facturas: foto → propuesta llena para revisar (edge function). Antes, decidir con los socios qué servicio lee la foto y su costo | `v78_ray_ocr_compras` |
 | 9 | **Costos › Semana** (ver "Plan de corte semanal"): junta las piezas de lo asignado en Producción al paso Hierro para ese sábado, usa primero los retazos del depósito, acomoda en el menor número de barras (más largas primero, con grosor del corte), dice barras a comprar y su costo con IVA, el ahorro de cortar todo junto, el costo y la ganancia de cada pedido, lámina y vidrio en m² y hojas. **Hoja de corte y plan de compra descargables en PDF**, con el mismo diseño del Resumen en PDF y del PDF de la venta (jsPDF, `ventas-comun.js`). Depósito › Fabricación solo muestra el stock y "faltan X barras" con enlace a Corte. Resumen en PDF con ganancia por pedido | `v79_ray_plan_corte` si hace falta |
 | 10 | Finanzas › Mes: cierre, congelar el mes y reporte mensual en PDF (`cierres_mes`) | `v80_ray_cierre_mes` |
+| 10b | Reportes por proveedor y por cuenta (decisión 18), con PDF | si hace falta, `v81_ray_reportes` |
 | 11 | 3D: se prototipa primero en el proyecto de Ray | — |
 
 ## Reglas del costeo (no cambian)
@@ -71,7 +72,10 @@ Semáforo (ganancia sobre el costo, con el precio del catálogo): verde 30 % o m
 13. **Bolívares con varias tasas:** cada movimiento en Bs guarda su monto en Bs, su tasa y de dónde es la tasa (BCV, Binance u otra). No hay una tasa general.
 14. **Saldos al día poco a poco:** Ray pone los saldos iniciales a mano cuando los recuerde ("Cambiar saldo" con motivo). Nada bloquea el trabajo mientras tanto.
 15. **Gastos fijos por puerta:** se calcula con la lista de gastos fijos que Ray llena (puede agregar o cambiar) ÷ puertas al mes. Costos › Ganancia muestra además el **promedio real de los últimos 3 meses**: gastos fijos pagados en Finanzas ÷ puertas terminadas en Producción (Hierro terminado). Si el real se aleja, avisa "Tu gasto real por puerta es $X; usas $Y" y Ray decide si lo cambia (nunca cambia solo, para que los precios no salten). Hasta tener 3 meses de datos se usa lo que Ray puso.
-16. **Para después:** evaluar madera, proveedores, gastos y cuentas (reportes por proveedor y por cuenta); facturas que mezclan hierro y madera.
+16. **Datos de pago del proveedor son opcionales.** Basta decir "pagué por Binance a tal proveedor": se elige la cuenta nuestra y el proveedor.
+17. **Pago sin proveedor = "en proceso".** Se puede registrar una salida (o un pago de cliente) sin decir a quién; queda "por ubicar" con aviso en Inicio y en Finanzas hasta que se le asigne el proveedor o la cuenta.
+18. **Reportes por proveedor y por cuenta entran YA (lote 10b):** filtro por fechas (semana, mes, rango). Por proveedor: compras, pagos, saldo al inicio y al final, facturas y notas, en dos columnas y PDF. Por cuenta: entradas, salidas, comisiones y cambios, saldo corrido, y en PDF. Resumen de todos los proveedores y de todas las cuentas en una pantalla.
+19. **Para después:** evaluar madera; facturas que mezclan hierro y madera.
 
 ## Atajos entre módulos
 | Desde | Hacia | Para qué |
