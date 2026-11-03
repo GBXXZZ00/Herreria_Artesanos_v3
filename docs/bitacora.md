@@ -12,6 +12,15 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-02 · Claude de Ray
+- Qué hizo: maqueta viva de Finanzas, Proveedores, Compras (Depósito) y Costos, sobre una copia de la app con datos de ejemplo (`maqueta/`, con su `LEEME.md`). No toca la app, la base ni `main`. Plan por lotes en `docs/claude/documentos/plan-finanzas-costos.md`.
+- Rama o PR: `ray/maqueta-finanzas-costos` (PR en borrador, **no se une**: la carpeta `maqueta/` no debe publicarse).
+- Está tocando: nada de la app todavía. Los próximos lotes tocan `abonos` (seguridad, lote 1), Depósito (lote 5) y una fila en la ficha del Catálogo (lote 6). Inicio gana avisos y cuadros de Finanzas y Costos (solo admin).
+- Pendientes:
+  - Respuestas de los socios a las preguntas del plan (Zelle, Torniplemaca, Colores y Ambiente, quién registra, Bs, nómina con cuenta).
+  - Borrar datos de prueba y devoluciones viejas antes del lote 3 (lo deciden los socios).
+  - Lote 1 con el OK de Ray.
+
 ## 2026-11-02 · Claude de Gualfredo
 - Qué hizo: preparó el repo para trabajar entre los dos Claude, sin tocar código de la app ni la base. Creó `CLAUDE.md` (reglas), `docs/modulos.md`, `docs/base-de-datos.md`, esta bitácora, copia literal de las instrucciones y de los documentos del proyecto de Gualfredo (`docs/claude/`), las 4 skills sacadas de las instrucciones, `docs/claude/memoria-app.md`, la lista de las 88 migraciones y una acción de GitHub para bajar su texto y el esquema actual.
 - Rama o PR: `docs/reglas-compartidas`, PR #1.
