@@ -12,6 +12,12 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-03 · Claude de Ray (2)
+- Qué hizo: empezó la corrida única de Finanzas y Costos (plan `docs/claude/documentos/plan-finanzas-costos.md`, lotes 1 a 10b). Primer commit de docs: **`CLAUDE.md` cambió** (sección "Ahorro de consumo" y "El manual se deja en blanco por ahora"); lo usa también Gualfredo.
+- Rama o PR: `ray/finanzas-costos` (un commit por lote, un solo PR al final, sin unir hasta el OK de Ray).
+- Está tocando: abonos y `cancelar_venta` (seguridad), Finanzas (nueva), Depósito, Costos (nueva), Nómina (cuenta de pago), Inicio (avisos), Catálogo (atajo Costo), Mi trabajo (hoja de corte), venta (extras). Migraciones v73 a v82. `?v=73`.
+- Pendientes: todos los lotes; aplicar migraciones solo con el OK de Ray.
+
 ## 2026-11-03 · Claude de Ray
 - Qué hizo (v72, todo lo de `docs/tareas/2026-11-02-ray-pendiente-para-code.md`):
   - Ficha de la venta: "Enviar PDF" y "Descargar PDF" siempre arriba (menos en canceladas). Debajo: "Primero envíale el PDF…", "✓ PDF enviado hoy … · quién", en Android "2. Enviar el mensaje" aparte y luego el paso del día. Se quitó "PDF" de "Más opciones".
