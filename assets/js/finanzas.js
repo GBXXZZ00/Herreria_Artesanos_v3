@@ -67,7 +67,8 @@
       const { data:mats } = await db.from('materiales').select('id,nombre,tipo').in('id', [...new Set(EXTRA.precios.map(x => x.material_id))]);
       EXTRA.materiales = mats || [];
     }
-    if(window.COSTEO && VENTAS_MES.length){ try{ COSTOS = await window.COSTEO.costosModelos(); } catch(e){ COSTOS = null; } }
+    // Costo de cada modelo del catálogo, calculado en la base (Costos)
+    if(VENTAS_MES.length){ const rr = await db.rpc('costeo_resumen').catch(() => ({})); COSTOS = (rr && !rr.error && rr.data) || null; }
   }
   async function recargar(){ try{ await cargar(); pintar(); pintarDetalle(); } catch(e){ toast(errTxt(e), 'error'); } }
 

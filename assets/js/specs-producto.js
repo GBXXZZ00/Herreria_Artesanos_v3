@@ -244,10 +244,16 @@
       if(chips) html += `<div class="field"><span class="field-label">Extras</span><div class="toggles">${chips}</div></div>`;
     }
     esq.grupos.filter(g => dependeDeExtra(g) && grupoActivo(g, s) && !g.zona).forEach(g => { html += grupoHtml(prod, g, false, ver); });
+    // El precio de la protección y del marco decorativo sale de Costos (extras del modelo); se puede cambiar
+    const deCostos = (k) => { const e = modelo && EXTRAS && EXTRAS[modelo.id]; return e && e[k] != null ? Number(e[k]) : null; };
+    const pista = (v) => v != null ? `<div class="field-hint">Sale de Costos: ${dinero(v)}. Puedes cambiarlo.</div>` : '';
+    const sugProt = deCostos('proteccion'), sugMarco = deCostos('marco_decorativo');
+    if(sugProt != null && !prod.extraProteccion && pideMontoProteccion(prod, modelo)) prod.extraProteccion = String(sugProt);
+    if(sugMarco != null && !prod.extraMarco && pideMontoMarco(prod, modelo)) prod.extraMarco = String(sugMarco);
     if(pideMontoProteccion(prod, modelo)){
       html += `<div class="field" id="campoProt"><label class="field-label" for="pProt">Monto de la protección</label>
         <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="pProt" data-precio-extra type="text" inputmode="decimal" autocomplete="off" value="${esc(prod.extraProteccion || '')}"></div>
-        <div class="field-error">Escribe cuánto cuesta la protección</div></div>`;
+        ${pista(sugProt)}<div class="field-error">Escribe cuánto cuesta la protección</div></div>`;
     }
     if(pideMontoSoloProt(prod)){
       html += `<div class="field" id="campoSoloProt"><label class="field-label" for="pSoloProt">Precio de la protección sola</label>
@@ -258,7 +264,7 @@
     if(pideMontoMarco(prod, modelo)){
       html += `<div class="field" id="campoMarco"><label class="field-label" for="pMarco">Monto del marco decorativo</label>
         <div class="input-affix has-l"><span class="affix affix-l">$</span><input class="input" id="pMarco" type="text" inputmode="decimal" autocomplete="off" value="${esc(prod.extraMarco || '')}"></div>
-        <div class="field-error">Escribe cuánto cuesta el marco decorativo</div></div>`;
+        ${pista(sugMarco)}<div class="field-error">Escribe cuánto cuesta el marco decorativo</div></div>`;
     }
     const zona = esq.grupos.filter(g => g.zona && grupoActivo(g, s));
     if(zona.length){
@@ -299,5 +305,8 @@
     return false;
   }
 
+  // Precios sugeridos de los extras por modelo (Costos). Se cargan una vez; si falla, se escribe a mano como siempre.
+  let EXTRAS = null;
+  if(window.db && window.db.rpc) Promise.resolve(window.db.rpc('extras_precios')).then(r => { EXTRAS = (r && !r.error && r.data) || {}; }).catch(() => { EXTRAS = {}; });
   window.SpecsProducto = { TARIFA_VENTANA, PRECIO_MANILLON, ECOBEL_COMBO, calcular, pideMontoProteccion, pideMontoMarco, esSoloProt, montosFaltan, montosEsp, optsHtml, optsCuerpo, specsHtml, tocar, escribir, faltaEnModelo, faltanEn, guardarAtajoMedidas };
 })();
