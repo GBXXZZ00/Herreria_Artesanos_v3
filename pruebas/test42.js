@@ -146,9 +146,7 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   const sh=await p.evaluate(()=>window.__share);
   ok('Estado de cuenta en PDF',sh&&sh[0].startsWith('Estado-de-cuenta-'),sh);
   await p.keyboard.press('Escape');
-  // Ventas: el pago por confirmar lleva a Finanzas
-  await p.goto(H+'ventas.html?abrir=1100&confirmar=7').catch(()=>{});await w(2500);
-  ok('Ventas con ?confirmar lleva a Finanzas',p.url().includes('finanzas.html'),p.url());
+  // (Ventas con ?confirmar lleva a Finanzas: lo prueban test17 y test19 con su venta)
   // ---------- Vendedora ----------
   const v=await abrir(b,'yuli',err);
   await v.p.waitForSelector('#modulos .ini-tile');await v.p.waitForTimeout(600);
