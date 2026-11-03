@@ -12,6 +12,11 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-03 · Claude de Ray (4)
+- Ray dio el OK para publicar. Las migraciones no se pudieron aplicar desde el Claude de Ray: el conector de Supabase pide la confirmación a Gualfredo y se venció el tiempo (2 veces, no se cambió nada en la base).
+- **Para Gualfredo:** seguir `docs/tareas/2026-11-03-ray-publicar-finanzas-costos.md` (aplicar v73 a v80 y unir el PR #4). Hay un archivo con todo junto para el SQL Editor: `docs/tareas/2026-11-03-aplicar-v73-a-v80.sql`.
+- Está tocando: nada más.
+
 ## 2026-11-03 · Claude de Ray (3)
 - Qué hizo (pedido de Ray después de ver el PR, `?v=74`, misma rama y mismo PR):
   - Finanzas › Dinero: los pagos por confirmar van en **una sola tarjeta**; al tocarla salen en una hoja **agrupados por venta** y se confirman **uno tras otro** (al confirmar se abre solo el siguiente). Pagos por ubicar, Cuentas y Te deben son secciones que se abren y se cierran. Ficha del proveedor y de la cuenta también.
