@@ -18,7 +18,9 @@ Pasos:
 4. Aplica con `apply_migration`, nombre `v72_gualfredo_nueva_gestion_respaldo_y_limpieza`, y renombra el archivo con su versión real.
 5. Revisa después: ventas, etapas, vales, pagos, abonos y notificaciones en 0, y 9 hojas en `respaldos`.
 
-Ojo: 2 piezas de entrega inmediata están en "vendido" por ventas que se borran. No se tocan; pregúntale a Ray o a Gualfredo si deben volver a "disponible".
+Decidido: las 2 piezas de entrega inmediata en "vendido" se quedan como vendidas (ya se entregaron).
+
+6. **Quitar el usuario vendedor "Prueba"** (decidido por Gualfredo): después de la limpieza, elimínalo desde Usuarios (edge function `gestionar_usuarios`). Si no deja, desactívalo (`perfiles.activo = false`).
 
 ## 2. Teléfonos internacionales (código)
 Hoy el formulario solo acepta números de Venezuela. La base ya acepta cualquiera de 10 o más dígitos (`_cliente_guardar`).
@@ -34,9 +36,10 @@ Hoy el formulario solo acepta números de Venezuela. La base ya acepta cualquier
 ## 3. Botones de PDF siempre a la vista (código)
 Problema (Ray usa Samsung): después de enviar la nota, el botón "Enviar nota de pedido" desaparece y cambia por "Avisar por WhatsApp". En Android además se convierte en "2. Enviar el mensaje", y "Descargar" queda escondido en "Más opciones".
 
+- **Antes de programar**: haz la maqueta (mockup) en tamaño iPhone de cómo queda la ficha de la venta (sección "Avisar al cliente" con los dos botones y el paso guiado debajo, en cotización, confirmada y después de enviada) y de la pantalla de venta lista. Muéstrala en el chat **como imagen** (captura PNG con Playwright, no enlace) y espera el OK.
 - `assets/js/lista-ventas.js`, `avisarHtml` (línea ~494) y `pintarPie` (línea ~370): en la sección "Avisar al cliente" de la ficha, siempre dos botones fijos, uno al lado del otro: **"Enviar PDF"** (comparte con `AV.compartirPDF`) y **"Descargar PDF"** (`AV.descargarPDF`). No desaparecen en ningún estado salvo cancelada. Mientras se prepara el PDF dicen "Preparando…". Debajo sigue el paso guiado de hoy (mensaje, cliente avisado). En Android, el "2. Enviar el mensaje" sale como un botón aparte y no reemplaza a "Enviar PDF".
 - Quitar el "PDF" repetido de "Más opciones" (regla: no dos botones con el mismo propósito).
-- `assets/js/venta.js`, pantalla de venta lista (línea ~854): agregar "Descargar PDF" al lado de "Enviar PDF al cliente". Después del paso 2 de Android, "Enviar PDF al cliente" vuelve a estar disponible.
+- `assets/js/venta.js`, pantalla de venta lista (línea ~854), la hoja que sale al terminar una venta: **no quitar ningún botón** (Enviar PDF al cliente, Enviar mensaje con su seguimiento, Hacer otra venta, Volver a Inicio). Solo agregar "Descargar PDF" y que "Enviar PDF al cliente" no desaparezca nunca: en Android el "2. Enviar el mensaje" va como botón aparte, no reemplaza al de enviar.
 - Ajustar test16 y test19 (o prueba nueva) para Android y iPhone: los dos botones siguen ahí después de enviar.
 - Rehacer capturas del manual de Ventas (`cap-ventas.js`) y correr `python3 pruebas/manual/construir.py`.
 
@@ -45,7 +48,6 @@ Problema (Ray usa Samsung): después de enviar la nota, el botón "Enviar nota d
 - Crear la categoría de pago de Madera con su monto por puerta.
 - Asignarla a los 6 modelos de madera: Vinil Negra, Americana, Vinil Gris, Vinil Negro Mate, Vinil Beige y Vinil Negra Rayas.
 - Si ya hay vendedora de madera, marcarla en Usuarios como "Madera".
-- Preguntar si se desactiva el usuario vendedor "Prueba".
 
 ## Cierre
 - Subir `?v=` a 72 en todos los HTML (cambian js).
