@@ -34,7 +34,8 @@ Finanzas › Mes, en dos columnas: lo que ganaste (vendido con costeo − costo 
 3. **Saldos iniciales los llena Ray.** "Cambiar saldo" pide motivo y queda en el historial (renglón `ajuste`).
 4. **Proveedores con tipos de material** (hierro, aluminio, vidrio, láminas, pintura, consumibles, accesorios, madera) y **cobra IVA sí o no**. Compras y precios solo muestran sus tipos. La compra trae Factura o Nota según el proveedor y se puede cambiar.
 5. **IVA:** la deuda es lo que dice el papel; Costos recibe siempre el precio **sin IVA**. Material con "precio fijo para costear" (marco 10 a $12,28) sigue con el fijo.
-6. **Confirmar pagos:** Finanzas tiene "Pagos por confirmar": Ray dice si llegó y dónde quedó (una cuenta, un proveedor o "después") en un solo paso. El aviso de Inicio lleva ahí. En Ventas se puede seguir confirmando; lo confirmado ahí queda "por ubicar" con su aviso.
+6. **Confirmar pagos solo en Finanzas** (3 nov): "Pagos por confirmar": Ray dice si llegó y dónde quedó (una cuenta, un proveedor o "después") en un solo paso. El aviso de Inicio lleva ahí. En Ventas el pago sale "Por confirmar" con atajo "Confirmar en Finanzas" (solo Ray); la vendedora lo ve igual que hoy.
+9. **Nómina y vales salen de una cuenta** (3 nov): Ray paga de lo que tiene, así que son gastos. Al pagar la nómina del sábado y al entregar un vale, la app pide de qué cuenta salió (un toque). El vale es un adelanto del pago de la semana: sale de la cuenta el día que se entrega y el sábado se paga solo la diferencia, así no se cuenta dos veces. En el cierre del mes salen como "Nómina" y "Vales (adelantos)".
 7. **Datos de prueba y devoluciones viejas se borran** antes de empezar (lo hacen los socios).
 8. **La vendedora no puede borrar ni cambiar pagos.**
 
@@ -58,6 +59,22 @@ IVA × 1,16 · perfiles por metro usado (precio de la barra ÷ largo) · barra c
 
 Semáforo (ganancia sobre el costo, con el precio del catálogo): verde 30 % o más · amarillo 15 a 30 % · rojo 0 a 15 % · negro pierde · gris faltan datos.
 
+## Atajos entre módulos
+| Desde | Hacia | Para qué |
+|---|---|---|
+| Producción (ficha del pedido) | Costos › Semana del sábado | Ver el plan de corte donde entró |
+| Costos › Semana (sin asignar) | Producción | Asignar herrero y sábado |
+| Costos › Semana (sin cortes) | Costos › Modelos (ficha) y volver | Cargar los cortes |
+| Costos › Semana (qué comprar) | Depósito › Compras | Cargar la compra |
+| Depósito › Fabricación (faltan) | Costos › Semana | Ver cómo se corta y qué comprar |
+| Depósito › Fabricación (material) | Costos › Precios | Precio por proveedor |
+| Depósito › Compras (proveedor) | Finanzas › Proveedores (ficha) | Saldo y estado de cuenta |
+| Catálogo (ficha) | Costos › Modelos (ficha) | Costo, ganancia o cargar costeo |
+| Costos › Ganancia | Finanzas › Gastos | Gastos reales del mes |
+| Ventas (pago por confirmar) | Finanzas › Dinero | Confirmar y ubicar |
+| Nómina (pagar) | Finanzas | La salida queda en la cuenta elegida |
+| Inicio (avisos) | Finanzas, Costos, Depósito | Cada aviso lleva a donde se resuelve |
+
 ## Avisos en Inicio (solo admin)
 Pagos por confirmar (Ray, a Finanzas) · pagos por ubicar (Ray) · le debes a un proveedor · faltan barras para esta semana · modelo vendido sin costear · gastos del mes sin cargar.
 
@@ -73,5 +90,5 @@ Pagos por confirmar (Ray, a Finanzas) · pagos por ubicar (Ray) · le debes a un
 1. Leer `CLAUDE.md`, `docs/bitacora.md`, este plan y la pantalla en `maqueta/`.
 2. Rama `ray/<tema>` desde `main` al día. Anotar en la bitácora qué se toca.
 3. Migración en el PR (`-- Autor: Ray (Claude de Ray)`), RLS en toda tabla nueva, funciones `security definer` que revisan `auth.uid()` y el rol, `revoke execute ... from anon`.
-4. Prueba nueva (`test41.js` en adelante) con datos falsos; correr todas las de `pruebas/`; capturas en iPhone 13; manual si cambia una pantalla; subir `?v=NN` en todos los HTML.
+4. Prueba nueva (`test41.js` en adelante) con datos falsos; correr todas las de `pruebas/` una vez antes del PR; capturas en iPhone 13 solo de las pantallas nuevas o cambiadas; **el manual no se toca por ahora** (se deja en blanco); subir `?v=NN` en todos los HTML.
 5. PR `[Ray] ...`. Ray da el OK, se une, se aplica la migración y se anota en la bitácora.

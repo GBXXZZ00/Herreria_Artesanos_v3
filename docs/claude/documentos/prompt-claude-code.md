@@ -17,13 +17,21 @@ Ray aprobó los lotes **1, 2, 3, 4, 5, 6, 7 y 9** del plan. Hazlos **en orden y 
 - Cada lote con su PR `[Ray] Lote N: ...` hacia `main`, en orden, con el texto que pide `CLAUDE.md`.
 - Cada lote con su migración `supabase/migrations/<version>_vNN_ray_que_hace.sql` (primera línea `-- Autor: Ray (Claude de Ray)`), RLS en toda tabla nueva, funciones `security definer` que revisan `auth.uid()` y el rol, `revoke execute ... from anon`.
 - Cada lote con su prueba nueva (`test41.js` en adelante) con datos falsos, como las que ya existen. Corre **todas** las de `pruebas/` antes de abrir el PR. Hoy `test21` se corta en un clic y `test26` falla a veces: pasa igual en `main`; anótalo, no lo arregles salvo que sea por tu cambio.
-- Capturas en iPhone 13 de cada pantalla nueva o cambiada, comparadas con la maqueta. Rehaz las capturas del manual que cambien y corre `python3 pruebas/manual/construir.py`.
+- Capturas en iPhone 13 solo de cada pantalla nueva o cambiada, comparadas con la maqueta. **El manual no se toca por ahora** (no rehacer capturas ni correr `construir.py`).
 - Sube `?v=NN` en todos los HTML en cada lote (hoy v71).
 - Entrada en `docs/bitacora.md` en cada lote y lo que deben probar los socios en `docs/claude/documentos/lista-de-pruebas.md`.
 
+**Ahorro de tokens (sin perder calidad)**
+- Lee solo lo que el lote necesita: la parte del plan de ese lote, la pantalla de la maqueta y los archivos que vas a tocar. No releas archivos que ya leíste ni los imprimas completos: usa `grep` y lee por partes.
+- Sin subagentes salvo que haga falta revisar algo grande de forma independiente.
+- Pruebas: mientras programas corre solo la prueba nueva y las del módulo tocado; **todas** una sola vez antes de cada PR.
+- Una captura por pantalla cambiada, una revisión, una corrección. Sin rondas repetidas.
+- Respuestas y textos de PR cortos: qué cambió, pruebas y qué probar en el teléfono.
+
 **Lo que no se toca**
 - La lógica de Ventas, Producción, Nómina, trabajador, seguimiento y catálogo público. La vendedora trabaja igual.
-- La regla de `confirmar_abono` (al 50 % pasa solo a producción).
+- La regla de `confirmar_abono` (al 50 % pasa solo a producción). Confirmar pagos pasa a Finanzas (decisión 6 del plan); en Ventas queda el atajo.
+- Nómina y vales: solo se agrega elegir la cuenta de donde salió (decisión 9 del plan); el cálculo de la nómina no cambia.
 - Los costos nunca van en el catálogo (es público).
 - Nada de librerías nuevas, ni React ni parecidos. Estilo y clases de la app; sin `<select>`; textos cortos y sin guion largo.
 - No borres datos reales. No subas claves secretas.
