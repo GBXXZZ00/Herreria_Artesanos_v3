@@ -248,7 +248,7 @@
         const puede = !!(p && p.confirma_abonos);
         const ab = v.abonos.find(a => a.id === confirmarId && a.tipo === 'abono' && a.estado === 'por_confirmar');
         if(seq !== fichaSeq) return;
-        if(ab && puede){ abrirAccion('confirmar', confirmarId); return; }
+        if(ab && puede){ location.href = 'finanzas.html?confirmar=' + confirmarId; return; }
       }
       if(resaltar) resaltarMensaje();
     } catch(e){
@@ -338,7 +338,7 @@
         return `<button type="button" class="f-abono ${a.tipo === 'devolucion' ? 'dev' : ''} ${rech ? 'rech' : ''}" ${tocar}>
           <span class="f-abono-ico">${ICON_DINERO}</span>
           <span style="min-width:0"><span class="f-abono-t" style="display:block">${a.tipo === 'devolucion' ? 'Devolución' : 'Pago'} · ${esc(a.metodo)} ${marca}</span>
-            <span class="f-abono-s">${esc(AV.fechaNum(a.fecha))}${nombres[a.registrado_por] ? ' · ' + esc(nombres[a.registrado_por]) : ''}${pe && puedeConfirmar ? ' · <span class="ver">Toca para confirmar</span>' : a.comprobante ? ' · <span class="ver">Ver comprobante</span>' : ''}</span>
+            <span class="f-abono-s">${esc(AV.fechaNum(a.fecha))}${nombres[a.registrado_por] ? ' · ' + esc(nombres[a.registrado_por]) : ''}${pe && puedeConfirmar ? ' · <span class="ver">Confirmar en Finanzas</span>' : a.comprobante ? ' · <span class="ver">Ver comprobante</span>' : ''}</span>
             ${a.nota_confirmacion ? `<span class="f-abono-s" style="display:block;color:var(--ink)">Nota de ${esc(nombres[a.confirmado_por] || 'Ray')}: ${esc(a.nota_confirmacion)}</span>` : ''}</span>
           <span class="f-abono-m">${a.tipo === 'devolucion' ? '- ' : ''}${dinero(a.monto)}</span>
         </button>`; }).join('');
@@ -346,7 +346,7 @@
           <div class="barra" style="margin-top:12px"><i style="transform:scaleX(${Number(v.total) ? Math.max(0, Math.min(1, pag / v.total)) : 0})"></i></div>
           <div class="barra-txt"><span>Pagado <b>${dinero(pag)}</b></span><span>${r > 0 ? 'Resta <b>' + dinero(r) + '</b>' : '<b>Pagado completo</b>'}</span></div></div>
         ${lista ? `<div style="margin-top:6px">${lista}</div>` : ''}
-        ${pend && puedeConfirmar ? '<div class="f-nota">Toca un pago "Por confirmar" para revisar que el dinero llegó.</div>' : ''}
+        ${pend && puedeConfirmar ? '<div class="f-nota">Toca un pago "Por confirmar" para confirmarlo en Finanzas y decir dónde quedó el dinero.</div>' : ''}
         ${v.estado !== 'cancelada' && r > 0 ? `<button type="button" class="btn-guia sec" data-accion="abono" style="margin-top:12px">
           <span class="bg-t">Registrar pago</span><span class="bg-s">Cuando el cliente pague lo que resta o una parte. Queda por confirmar.</span></button>` : ''}`;
       html += acordeon('pagos', 'Pagos', `${r > 0 ? 'Resta ' + dinero(r) : 'Pagado completo'}${pend ? ' · ' + pend + ' por confirmar' : ''}`, cuerpo, true);
@@ -556,7 +556,7 @@
     const retro = e.target.closest('[data-retro]');
     if(retro){ cambiarEstado(retro.dataset.retro, true); return; }
     const conf = e.target.closest('[data-confirmar]');
-    if(conf){ abrirAccion('confirmar', +conf.dataset.confirmar); return; }
+    if(conf){ location.href = 'finanzas.html?confirmar=' + Number(conf.dataset.confirmar); return; }
     const comp = e.target.closest('[data-comprobante]');
     if(comp){
       const { data, error } = await db.storage.from('comprobantes').createSignedUrl(comp.dataset.comprobante, 600);
