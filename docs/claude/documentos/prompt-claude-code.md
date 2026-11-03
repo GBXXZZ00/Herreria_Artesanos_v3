@@ -11,22 +11,21 @@ Eres el **Claude de Ray** trabajando en el repo `GBXXZZ00/Herreria_Artesanos_v3`
 2. Lee `CLAUDE.md` (manda en todo), `docs/bitacora.md`, `docs/modulos.md`, `docs/base-de-datos.md` y `docs/claude/documentos/plan-finanzas-costos.md`.
 3. Trae la rama `ray/maqueta-finanzas-costos` y abre la maqueta (`maqueta/LEEME.md`). **La maqueta es la guía de cómo debe verse y comportarse cada pantalla.** Pero la maqueta no se copia tal cual: en la app todo se guarda en Supabase con funciones, no en el teléfono.
 
-**Qué hacer**
-Ray te dice qué **corrida** toca (tabla "Corridas de Claude Code" del plan). Haz solo los lotes de esa corrida, **en orden y seguidos**:
-- Cada lote en su rama, encadenada a la anterior: `ray/lote1-seguridad-abonos` sale de `main`; `ray/lote2-proveedores-cuentas` sale de la del lote 1; y así.
-- Cada lote con su PR `[Ray] Lote N: ...` hacia `main`, en orden, con el texto que pide `CLAUDE.md`.
-- Cada lote con su migración `supabase/migrations/<version>_vNN_ray_que_hace.sql` (primera línea `-- Autor: Ray (Claude de Ray)`), RLS en toda tabla nueva, funciones `security definer` que revisan `auth.uid()` y el rol, `revoke execute ... from anon`.
-- Cada lote con su prueba nueva (`test41.js` en adelante) con datos falsos, como las que ya existen. Corre **todas** las de `pruebas/` antes de abrir el PR. Hoy `test21` se corta en un clic y `test26` falla a veces: pasa igual en `main`; anótalo, no lo arregles salvo que sea por tu cambio.
-- Capturas en iPhone 13 solo de cada pantalla nueva o cambiada, comparadas con la maqueta. **El manual no se toca por ahora** (no rehacer capturas ni correr `construir.py`).
-- Sube `?v=NN` en todos los HTML en cada lote (hoy v71).
-- Entrada en `docs/bitacora.md` en cada lote y lo que deben probar los socios en `docs/claude/documentos/lista-de-pruebas.md`.
+**Qué hacer: una sola corrida**
+Ray aprobó todos los lotes de la tabla "Corrida única de Claude Code" del plan. Hazlos **seguidos, en ese orden, sin preguntar lo que el plan ya decide**. La maqueta manda sobre cualquier duda de diseño.
+- Una rama `ray/finanzas-costos` desde `main` al día. **Un commit por lote** con su migración `supabase/migrations/<version>_vNN_ray_que_hace.sql` (primera línea `-- Autor: Ray (Claude de Ray)`), RLS en toda tabla nueva, funciones `security definer` que revisan `auth.uid()` y el rol, `revoke execute ... from anon`.
+- Primer commit (docs): agrega a `CLAUDE.md` la sección "Ahorro de consumo" de abajo y cambia la regla del manual por "El manual se deja en blanco por ahora". Avísalo en la bitácora.
+- Lo nuevo lleva su prueba (`test41.js` en adelante) con datos falsos; no dupliques lo que ya está probado.
+- **Un solo PR** `[Ray] Finanzas, Depósito, Costos, Corte y Mes` al final, con el texto que pide `CLAUDE.md`, una sección corta por lote y lo que deben probar en el teléfono. Una sola subida de `?v=NN` en todos los HTML (hoy v71). Una entrada en `docs/bitacora.md` y en `docs/claude/documentos/lista-de-pruebas.md`.
 
-**Ahorro de tokens (sin perder calidad)**
-- Lee solo lo que el lote necesita: la parte del plan de ese lote, la pantalla de la maqueta y los archivos que vas a tocar. No releas archivos que ya leíste ni los imprimas completos: usa `grep` y lee por partes.
-- Sin subagentes salvo que haga falta revisar algo grande de forma independiente.
-- Pruebas: mientras programas corre solo la prueba nueva y las del módulo tocado; **todas** una sola vez antes de cada PR.
-- Una captura por pantalla cambiada, una revisión, una corrección. Sin rondas repetidas.
-- Respuestas y textos de PR cortos: qué cambió, pruebas y qué probar en el teléfono.
+**Ahorro de consumo (obligatorio, igual que en Airtek)**
+- Durante cada lote corre SOLO las pruebas del módulo que tocaste. La batería completa UNA sola vez, al final de la corrida. Hoy `test21` se corta en un clic y `test26` falla a veces, igual en `main`: anótalo, no lo arregles salvo que sea por tu cambio.
+- Capturas en iPhone 13 y computadora solo de las pantallas que cambiaron, y solo al final. **El manual no se toca.**
+- La revisión propia se hace una vez, al final, como si el código fuera de otro (permisos, RLS, texto escapado, errores de red). Sin agentes revisores salvo que Ray lo pida.
+- No releas archivos completos ni la salida entera de las pruebas: busca el tramo (`grep`) y muestra solo los fallos. `node --check` antes de dar algo por hecho.
+- El costeo del Bitral se verifica al empezar el lote 6 y al terminar la corrida (ver "Dato de control").
+- El ahorro viene de hacer menos repeticiones, no de bajar la calidad.
+- Respuesta final corta (unas 15 líneas): qué quedó, qué debe probar Ray, qué falta, y una línea "Dónde seguir:" (aquí o en el chat del proyecto).
 
 **Lo que no se toca**
 - La lógica de Ventas, Producción, Nómina, trabajador, seguimiento y catálogo público. La vendedora trabaja igual.
@@ -37,8 +36,8 @@ Ray te dice qué **corrida** toca (tabla "Corridas de Claude Code" del plan). Ha
 - No borres datos reales. No subas claves secretas.
 
 **Lo que esperas de Ray**
-- **No unas ni apliques migraciones sin su OK.** Cuando termines todos los lotes, mándale un resumen corto por lote con las capturas y lo que debe probar en el teléfono.
-- Con su OK: une los PR en orden, aplica cada migración (conector de Supabase, `apply_migration`, mismo nombre) justo antes de unir su PR, corre las pruebas después de cada uno y anota en la bitácora.
+- **No unas ni apliques migraciones sin su OK.** Al terminar, mándale el resumen corto con las capturas.
+- Con su OK: aplica las migraciones en orden (conector de Supabase, `apply_migration`, mismo nombre), une el PR, corre las pruebas una vez y anota en la bitácora.
 - Si un lote necesita una respuesta de las "Preguntas abiertas" del plan, pregúntale y sigue con lo que no dependa de eso. Nunca inventes precios ni saldos: los saldos iniciales los llena Ray en la app.
 - Si algo se daña después de unir: "Revert" del PR y aviso en la bitácora.
 

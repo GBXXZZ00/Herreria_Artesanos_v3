@@ -39,15 +39,10 @@ Finanzas › Mes, en dos columnas: lo que ganaste (vendido con costeo − costo 
 7. **Datos de prueba y devoluciones viejas se borran** antes de empezar (lo hacen los socios).
 8. **La vendedora no puede borrar ni cambiar pagos.**
 
-## Corridas de Claude Code (cada corrida es una sesión; cada lote su PR y el OK de Ray)
-| Corrida | Lotes | Qué queda funcionando |
-|---|---|---|
-| A · Dinero | 1, 2, 3, 4 | Seguridad de pagos; cuentas y proveedores; libreta con transferencias, traspasos con comisión, gastos, Bs con tasa; confirmar pagos solo en Finanzas; nómina y vales con cuenta |
-| B · Depósito | 5 | Fabricación por tubo, retazos, conteo; Compras a mano con saldo del proveedor |
-| C · Costos | 6, 7 | Modelos, Precios, Ganancia (gastos fijos y promedio real), atajo del Catálogo, extras en la venta |
-| D · Corte | 9 | Plan semanal desde Producción, hoja del herrero en Mi trabajo, PDF de hoja y compra |
-| E · Mes | 10 | Cierre del mes y reporte PDF |
-| Después | 8, 11 y nuevos | OCR, 3D, aluminio, madera, reportes por proveedor y cuenta |
+## Corrida única de Claude Code (como en Airtek)
+Todos los lotes **seguidos en una sola corrida**, en este orden: 1, 2, 3, 4 (Dinero) · 5 (Depósito) · 6, 7 (Costos) · 9 (Corte) · 10 (Mes). Después, aparte: 8 (OCR), 11 (3D), aluminio, madera y reportes por proveedor y cuenta.
+- Una rama `ray/finanzas-costos` desde `main`, **un commit por lote** (con su migración) y **un solo PR** al final.
+- Ray da el OK al PR; se aplican las migraciones en orden y se une.
 
 ## Lotes (cada uno con su rama, PR, pruebas, capturas y OK de Ray)
 | Lote | Qué | Migración |
@@ -70,7 +65,7 @@ IVA × 1,16 · perfiles por metro usado (precio de la barra ÷ largo) · barra c
 Semáforo (ganancia sobre el costo, con el precio del catálogo): verde 30 % o más · amarillo 15 a 30 % · rojo 0 a 15 % · negro pierde · gris faltan datos.
 
 ## Decisiones del 3 nov (cuentas y dinero)
-10. **Cuentas libres:** Ray crea las que hagan falta (varios Zelle, efectivo por sede, Binance, banco, bolívares). Cada proveedor puede tener su **cuenta habitual de pago**, que sale marcada al pagarle (se puede cambiar).
+10. **Lo que importa es a quién, no a qué cuenta.** Los proveedores se registran con sus datos de pago (Zelle, pago móvil, banco y titular), como dato. Al **confirmar un pago de cliente** se elige dónde llegó: una cuenta nuestra o **un proveedor** (se busca por nombre o por su Zelle); si es de un proveedor, suma a nuestro favor con él. Al **transferir** a un proveedor se elige a quién y de cuál cuenta nuestra salió; la cuenta destino queda solo como dato. Nuestras cuentas se crean libres (varios Zelle, efectivo por sede, Binance, banco, bolívares).
 11. **Lo que sale de la cuenta puede ser mayor que lo que se paga.** Ejemplo: para pagar $700 de nómina se sacan $770 de Zelle y se reciben $700 en efectivo. Toda salida y todo "Mover entre cuentas" tiene dos montos: **salió de la cuenta** y **llegó o se pagó**. La diferencia queda sola como gasto "Comisión y cambio". Vale para nómina, vales, proveedores, gastos y cambios entre cuentas.
 12. **Ray y Gualfredo registran pagos a proveedores.** Cada movimiento guarda quién lo hizo.
 13. **Bolívares con varias tasas:** cada movimiento en Bs guarda su monto en Bs, su tasa y de dónde es la tasa (BCV, Binance u otra). No hay una tasa general.
