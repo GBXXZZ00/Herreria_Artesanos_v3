@@ -2,6 +2,11 @@
 
 Autor: Ray (Claude de Ray), 2 nov 2026. Lo aprobaron Ray y Gualfredo después de ver la maqueta viva (`maqueta/` en la rama `ray/maqueta-finanzas-costos`). La maqueta es la guía de cómo se ve y se comporta cada pantalla; este documento dice cómo se hace de verdad.
 
+## Un lugar para cada cosa
+- **Depósito = lo que hay:** Consumibles (igual que hoy), Fabricación (barras y hojas en el depósito, retazos, conteo del sábado; si faltan barras, lleva a Costos › Corte) y Compras.
+- **Costos = cuánto cuesta:** Modelos, Corte (plan de corte de la semana y hoja de corte), Precios y Reglas. El plan de corte vive solo aquí.
+- **Finanzas = el dinero:** Dinero, Proveedores y Gastos.
+
 ## Lo que no se toca
 - La lógica actual de Ventas, Producción, Nómina, trabajador, seguimiento y catálogo público. La vendedora trabaja igual que hoy.
 - `confirmar_abono` sigue con la misma regla (al 50 % pasa solo a producción). Lo nuevo va en funciones aparte.
@@ -29,7 +34,7 @@ Autor: Ray (Claude de Ray), 2 nov 2026. Lo aprobaron Ray y Gualfredo después de
 | 6 | Costos (pestañas Modelos · Corte · Precios · Reglas): `costeo_reglas`, `costeo_modelos` (del catálogo o en diseño), `costeo_piezas`, `costeo_hojas`, `costeo_insumos`, `costeo_extras`, `costeo_calcular`. Ficha con semáforo, barras, duplicar, pasar al catálogo. Precios = lista de precios sin IVA por proveedor (no es por pedido). Atajo "Costo" en Catálogo (solo admin). **Prueba obligatoria: Bitral = 223,22 · 290,19 · 326,79 · tubo completo 339,23** | `v77_ray_costos` |
 | 7 | Extras en la venta: protección y marco decorativo toman el precio de Costos (se puede cambiar) | si hace falta |
 | 8 | OCR de facturas: foto → propuesta llena para revisar (edge function). Antes, decidir con los socios qué servicio lee la foto y su costo | `v78_ray_ocr_compras` |
-| 9 | **Costos › Corte** (como el Costeador de Ray): junta las piezas de los pedidos en fabricación (y modelos que Ray agregue para probar), usa primero los retazos del depósito, acomoda en el menor número de barras (más largas primero, con grosor del corte), dice barras a comprar y su costo con IVA, el ahorro de cortar todo junto, el costo y la ganancia de cada pedido, lámina y vidrio en m² y hojas, y la **hoja de corte** en PDF para el herrero. Fabricación del Depósito muestra lo mismo para el stock. Resumen en PDF con ganancia por pedido | `v79_ray_plan_corte` si hace falta |
+| 9 | **Costos › Corte** (como el Costeador de Ray): junta las piezas de los pedidos en fabricación (y modelos que Ray agregue para probar), usa primero los retazos del depósito, acomoda en el menor número de barras (más largas primero, con grosor del corte), dice barras a comprar y su costo con IVA, el ahorro de cortar todo junto, el costo y la ganancia de cada pedido, lámina y vidrio en m² y hojas. **Hoja de corte y plan de compra descargables en PDF**, con el mismo diseño del Resumen en PDF y del PDF de la venta (jsPDF, `ventas-comun.js`). Depósito › Fabricación solo muestra el stock y "faltan X barras" con enlace a Corte. Resumen en PDF con ganancia por pedido | `v79_ray_plan_corte` si hace falta |
 | 10 | 3D: se prototipa primero en el proyecto de Ray | — |
 
 ## Reglas del costeo (no cambian)
