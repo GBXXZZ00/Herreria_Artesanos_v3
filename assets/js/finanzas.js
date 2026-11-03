@@ -68,7 +68,7 @@
       EXTRA.materiales = mats || [];
     }
     // Costo de cada modelo del catálogo, calculado en la base (Costos)
-    if(VENTAS_MES.length){ const rr = await db.rpc('costeo_resumen').catch(() => ({})); COSTOS = (rr && !rr.error && rr.data) || null; }
+    if(VENTAS_MES.length){ const rr = await Promise.resolve(db.rpc('costeo_resumen')).catch(() => ({})); COSTOS = (rr && !rr.error && rr.data) || null; }
   }
   async function recargar(){ try{ await cargar(); pintar(); pintarDetalle(); } catch(e){ toast(errTxt(e), 'error'); } }
 
@@ -339,7 +339,7 @@
           ${F.destino === 'cuenta' ? (cuentasActivas().length ? `<div class="field"><span class="field-label">¿En cuál cuenta?</span>${opts(ordenCuentas(a.metodo).map(c => [c.id, esc(c.nombre)]), F.cuenta, 'data-f-cuenta')}</div>` : sinCuentas) : ''}
           ${F.destino === 'prov' ? `<div class="field"><span class="field-label">¿A cuál proveedor?</span>${opts(D.proveedores.filter(p => p.activo).map(p => [p.id, esc(p.nombre)]), F.prov, 'data-f-prov', 1)}<div class="field-hint">Queda a tu favor con ese proveedor.</div></div>` : ''}
           ${F.destino === 'luego' ? '<div class="field-hint" style="margin:-6px 2px 10px">Queda en "Pagos por ubicar" con su aviso en Inicio.</div>' : ''}
-          ${llega50 ? '<div class="caja-ok" style="margin-top:4px">Con este pago llega al 50 %: el pedido pasa solo a producción.</div>' : ''}` : ''}
+          ${llega50 ? '<div class="caja-ok" style="margin-top:4px">Con este pago llega al 50 %: el pedido pasa solo a fabricación.</div>' : ''}` : ''}
         ${F.llego === 'no' ? `<div class="field" id="campoMotivo"><label class="field-label" for="fMotivo">¿Qué pasó?</label><input class="input" id="fMotivo" value="${esc(F.motivo || '')}"><div class="field-error">Escribe qué pasó</div><div class="field-hint">La vendedora recibe el aviso "Pago no llegó".</div></div>` : ''}`;
       boton = F.llego === 'no' ? 'Marcar que no llegó' : 'Confirmar pago';
     }
@@ -456,7 +456,7 @@
         if(F.destino === 'cuenta' && !F.cuenta) return err('Elige la cuenta');
         if(F.destino === 'prov' && !F.prov) return err('Elige el proveedor');
         const p = F.destino === 'cuenta' ? { cuenta_id:+F.cuenta } : F.destino === 'prov' ? { proveedor_id:+F.prov } : {};
-        accion = async () => { const r = await rpc('pago_confirmar_y_ubicar', { aid:F.abono, llego:true, nota:null, p }); return 'Pago confirmado' + (r && r.produccion ? '. El pedido pasó a producción.' : '.') + (F.destino === 'luego' ? ' Queda por ubicar.' : ''); };
+        accion = async () => { const r = await rpc('pago_confirmar_y_ubicar', { aid:F.abono, llego:true, nota:null, p }); return 'Pago confirmado' + (r && r.produccion ? '. Pasó a fabricación: asígnalo en Producción.' : '.') + (F.destino === 'luego' ? ' Queda por ubicar.' : ''); };
       }
     }
     if(F.t === 'ubicar'){

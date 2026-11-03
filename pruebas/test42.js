@@ -75,7 +75,7 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   // Confirmar y ubicar en un paso
   await p.click('[data-confirmar="7"]');await p.waitForSelector('#sheetForm.open');await w();
   await p.click('#formBody [data-f-llego="si"]');await w(200);
-  ok('Confirmar: dice que con este pago pasa a producción',(await p.textContent('#formBody')).includes('pasa solo a producción'));
+  ok('Confirmar: dice que con este pago pasa a fabricación',(await p.textContent('#formBody')).includes('pasa solo a fabricación'));
   await p.click('#btnForm');await w(200);
   ok('Sin decir dónde quedó no guarda',!ultimo(rpcs,'pago_confirmar_y_ubicar'));
   await p.click('#formBody [data-f-destino="cuenta"]');await w(200);
@@ -140,8 +140,8 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   ok('Estado de cuenta en PDF',sh&&sh[0].startsWith('Estado-de-cuenta-'),sh);
   await p.keyboard.press('Escape');
   // Ventas: el pago por confirmar lleva a Finanzas
-  await p.goto(H+'ventas.html?abrir=1100&confirmar=7');await w(1500);
-  ok('Ventas con ?confirmar lleva a Finanzas (o se queda si no hay venta)',p.url().includes('finanzas.html')||p.url().includes('ventas.html'));
+  await p.goto(H+'ventas.html?abrir=1100&confirmar=7').catch(()=>{});await w(2500);
+  ok('Ventas con ?confirmar lleva a Finanzas',p.url().includes('finanzas.html'),p.url());
   // ---------- Vendedora ----------
   const v=await abrir(b,'yuli',err);
   await v.p.waitForSelector('#modulos .ini-tile');await v.p.waitForTimeout(600);

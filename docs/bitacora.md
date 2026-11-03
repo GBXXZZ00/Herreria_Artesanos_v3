@@ -13,10 +13,17 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 ---
 
 ## 2026-11-03 · Claude de Ray (2)
-- Qué hizo: empezó la corrida única de Finanzas y Costos (plan `docs/claude/documentos/plan-finanzas-costos.md`, lotes 1 a 10b). Primer commit de docs: **`CLAUDE.md` cambió** (sección "Ahorro de consumo" y "El manual se deja en blanco por ahora"); lo usa también Gualfredo.
-- Rama o PR: `ray/finanzas-costos` (un commit por lote, un solo PR al final, sin unir hasta el OK de Ray).
-- Está tocando: abonos y `cancelar_venta` (seguridad), Finanzas (nueva), Depósito, Costos (nueva), Nómina (cuenta de pago), Inicio (avisos), Catálogo (atajo Costo), Mi trabajo (hoja de corte), venta (extras). Migraciones v73 a v82. `?v=73`.
-- Pendientes: todos los lotes; aplicar migraciones solo con el OK de Ray.
+- Qué hizo: corrida única de Finanzas y Costos (lotes 1, 2, 3, 4, 5, 6, 7, 9, 10 y 10b del plan `docs/claude/documentos/plan-finanzas-costos.md`), `?v=73`.
+  - **`CLAUDE.md` cambió** (sección "Ahorro de consumo" y "El manual se deja en blanco por ahora"). Lo usa también Gualfredo.
+  - **Con cuidado (dinero y permisos):** v73 la vendedora ya no cambia ni borra pagos (RLS), `registrar_abono` y `cancelar_venta` pasan a `security definer`, borrar una venta no borra sus pagos. v75 libreta de dinero, nómina y vales con cuenta. v76 confirmar pagos ahora es en Finanzas (en Ventas queda el atajo "Confirmar en Finanzas"; la regla de `confirmar_abono` no cambió).
+  - Todo lo que el plan decía "solo Ray" lo hacen Ray y Gualfredo (`_es_ray()` = quien confirma pagos). La vendedora no ve dinero ni costos.
+  - El material de fabricación va en una tabla nueva `materiales_fab`, aparte de los consumibles, para no tocar entregas ni revisión del Depósito.
+  - Datos reales cargados en v78b: proveedores, precios de Colores y Ambiente y Torniplemaca, insumos, gastos fijos $915, costeo del Bitral y la nota 00-2884 de Torniplemaca (Le debes $1.674,50, material por registrar). No se cargaron saldos ni existencias.
+  - Dato de control: Bitral = $223,22 · $290,19 · $326,79 · barra completa $339,23 (base local con el mismo esquema y prueba test44).
+- Rama o PR: `ray/finanzas-costos`, un PR sin unir. Migraciones v73 a v80 (y v78b) **sin aplicar**: esperan el OK de Ray.
+- Pruebas: test14 a test45 en verde. Nuevas: test42 (Finanzas), test43 (Depósito), test44 (Costos y corte), test45 (Mes y reportes). Ajustadas por el cambio de confirmar en Finanzas: test17, test19, test28, test33.
+- Está tocando: Finanzas, Costos, Depósito, Nómina (cuenta de pago), Inicio (avisos), Ventas (atajo), Catálogo (fila Costo), venta (extras), Mi trabajo (hoja de corte), Producción (enlace al plan).
+- Pendientes: OK de Ray para aplicar migraciones y unir. Después: lote 8 (leer facturas con foto), 11 (3D), aluminio y madera en Costos. El Bitral no tiene categoría de pago en el Catálogo (Costos usa Puerta Estándar como la maqueta).
 
 ## 2026-11-03 · Claude de Ray
 - Qué hizo (v72, todo lo de `docs/tareas/2026-11-02-ray-pendiente-para-code.md`):

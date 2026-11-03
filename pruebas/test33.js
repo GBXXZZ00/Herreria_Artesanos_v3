@@ -94,7 +94,7 @@ async function pagina(b,uid){
  ok('Entrega: manda material, trabajador, nota y clave',en&&en[1].mid===1&&en[1].tid==='t2'&&en[1].nota==='Para el portón'&&/^[0-9a-f-]{36}$/.test(en[1].clave),en&&en[1]);
  ok('Se cierra, avisa y baja el stock',!(await p.isVisible('#sheetEntregar'))&&(await p.textContent('#toast')).includes('Queda por revisar')&&(await p.textContent('.mat[data-mat="1"] .mat-n b'))==='1');
  // Entregas
- await p.click('[data-tab="entregas"]');await w(400);
+ await p.click('#subCons [data-sub="entregas"]');await w(400);
  const sems=await p.$$eval('#cont .sem',x=>x.map(s=>[s.open,s.querySelector('.sem-t').textContent]));
  ok('Entregas por semana: esta abierta, las viejas cerradas',sems.length===2&&sems[0][0]===true&&sems[0][1]==='Esta semana'&&sems[1][0]===false,sems);
  ok('Mostrar: Todas, Por revisar con número y por trabajador',(await p.$$eval('#filtros .fx',x=>x.map(c=>c.textContent))).join('|')==='Todas|Por revisar · 2|Luis|Pedro',await p.$$eval('#filtros .fx',x=>x.map(c=>c.textContent)));
@@ -116,7 +116,7 @@ ok('Entrega: arriba lo que hizo con el anterior, su promedio no (solo 1 cerrada)
  await p.click('[data-trabajo="0"]');await w(500);
  ok('Detalle del trabajo sin el pago (vendedora)',await p.isVisible('#sheetItem')&&(await p.textContent('#itemBody')).includes('Ver la venta N° 12')&&!(await p.textContent('#itemBody')).includes('Pago por esta parte'));
  await p.click('#sheetItem [data-cerrar="sheetItem"]');await w(400);await p.click('#sheetEntrega [data-cerrar="sheetEntrega"]');await w(400);
- await p.click('[data-tab="materiales"]');await w(300);
+ await p.click('#subCons [data-sub="materiales"]');await w(300);
  ok('La vendedora no agrega materiales',!(await p.$('[data-nuevo-mat]')));
  ok('Errores JS (vendedora)',!st.err.length,st.err);
  await p.context().close();
@@ -138,7 +138,7 @@ ok('Entrega: arriba lo que hizo con el anterior, su promedio no (solo 1 cerrada)
  await r.click('[data-trabajo="0"]');await wr(500);
  ok('Ray sí ve el pago del trabajo',(await r.textContent('#itemBody')).includes('Pago por esta parte'));
  await r.click('#sheetItem [data-cerrar="sheetItem"]');await wr(400);await r.click('#sheetEntrega [data-cerrar="sheetEntrega"]');await wr(400);
- await r.click('[data-tab="materiales"]');await wr(300);
+ await r.click('#subCons [data-sub="materiales"]');await wr(300);
  await r.click('.mat[data-mat="1"]');await wr(500);
  ok('Admin ve costo y compras',(await r.textContent('#matBody')).includes('Última compra: $5')&&(await r.textContent('#matBody')).includes('Compra · Ferretería'));
  await r.click('[data-comprar]');await wr(400);

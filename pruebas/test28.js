@@ -72,7 +72,8 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
       if(conf) DB.abonos.push({id:++DB.sec.a,venta_id:vid,tipo:'abono',monto:p.abono.monto,metodo:p.abono.metodo,comprobante:p.abono.comprobante,estado:'por_confirmar',registrado_por:user,fecha:iso()});
       return j({id:vid,estado:conf?'confirmada':'cotizacion',total,cliente_id:cli.id});
     }
-    if(name==='confirmar_abono'){
+    if(name==='finanzas_datos'){ return j({hoy:iso().slice(0,10),cuentas:[],proveedores:[],movs:[],gastosFijos:[],porUbicar:[],porCobrar:[],porConfirmar:DB.abonos.filter(x=>x.estado==='por_confirmar'&&x.tipo==='abono').map(x=>{const v=DB.ventas.find(y=>y.id===x.venta_id);return Object.assign({},x,{cliente:'Cliente',total:v.total,estadoVenta:v.estado,pagado:0,registro:'Yulimar'});})}); }
+    if(name==='confirmar_abono'||name==='pago_confirmar_y_ubicar'){
       if(!P.confirma_abonos)return j({message:'Solo Ray confirma los pagos'},400);
       const ab=DB.abonos.find(x=>x.id===a.aid);if(ab.estado!=='por_confirmar')return j({message:'Este pago ya fue revisado'},400);
       ab.estado=a.llego?'confirmado':'rechazado';ab.confirmado_por=user;ab.confirmado_en=iso();ab.nota_confirmacion=a.nota;
@@ -250,11 +251,11 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  const r=await entrar(b,'u2','222222');pags.push(r);
  ok('3. Ray ve en Inicio "1 pago por confirmar" en rojo',(await texto(r,'.pend-fila.rojo')).includes('1 pago por confirmar'));
  await r.screenshot({path:'shots5/e7-ray-inicio.png'});
- await r.click('.pend-fila.rojo');await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(1200);
- ok('   Al tocarlo abre esa venta y le dice "Falta que confirmes el pago"',(await texto(r,'#fichaBody .btn-guia.espera')).includes('Falta que confirmes el pago'));
- await r.click('#fichaBody [data-confirmar]');await r.waitForSelector('#sheetAccion.open');
+ await r.click('.pend-fila.rojo');await r.waitForURL(/finanzas\.html/,{timeout:15000}).catch(()=>{});await r.waitForTimeout(1200);
+ ok('   Al tocarlo abre Finanzas con "¿Llegó este pago?" (confirmar y ubicar en un paso)',(await r.waitForSelector('#sheetForm.open',{timeout:15000}).then(()=>true).catch(()=>false))&&r.url().includes('finanzas.html'));
+ await r.click('#formBody [data-f-llego="si"]');await r.waitForTimeout(200);await r.click('#formBody [data-f-destino="luego"]');await r.waitForTimeout(200);
  await r.screenshot({path:'shots5/e8-confirmar.png'});
- await r.click('#btnAccion');
+ await r.click('#btnForm');
  const t1=await r.waitForSelector('#toast.show',{timeout:5000}).then(e=>e.textContent()).catch(()=>'');
  ok('   Al confirmar dice que pasó a fabricación',/pasó a fabricación/i.test(t1),t1);
  await r.waitForTimeout(1300);

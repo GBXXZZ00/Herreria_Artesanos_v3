@@ -30,7 +30,7 @@ create table if not exists public.costeo_insumos (
 
 create table if not exists public.costeo_modelos (
   id bigint generated always as identity primary key,
-  catalogo_id bigint unique references public.catalogo(id),
+  catalogo_id bigint unique references public.catalogo(id) on delete cascade,
   nombre text,
   tipo text,
   codigo text,
