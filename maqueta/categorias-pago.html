@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Categorías de pago · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=71">
+<style>
+  .page{padding-bottom:calc(var(--safe-b) + 110px)}
+  .c-vlista{display:flex;flex-direction:column;gap:10px;padding:14px 18px 0}
+  .c-card{display:flex;gap:13px;width:100%;text-align:left;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-sm);transition:transform 140ms var(--ease-out);opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 35ms)}
+  .c-card:active{transform:scale(0.98)}
+  .c-ico{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .c-body{flex:1;min-width:0}
+  .c-nom{font-size:15.5px;font-weight:800}
+  .c-tarifas{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .c-tarifa{font-size:12px;font-weight:700;color:var(--ink-soft);background:var(--surface-2);border-radius:999px;padding:5px 11px}
+  .c-tarifa b{color:var(--ink)}
+  .c-usado{font-size:12px;color:var(--ink-faint);margin-top:8px}
+  .c-vacio{text-align:center;padding:60px 20px;color:var(--ink-soft);font-size:15px}
+
+  .cat-fila{display:flex;align-items:center;gap:10px;padding:12px 2px}
+  #filasTarifa > .cat-fila + .cat-fila{border-top:1px solid var(--line)}
+  .c-prot{font-weight:700;color:var(--accent)}
+  .c-tarifa.vieja{opacity:.7}
+  .cat-esp{flex:1;min-width:0;font-size:14.5px;font-weight:700}
+  .cat-esp small{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-top:2px;line-height:1.3}
+  .cat-fila.invalid input{border-color:var(--danger);background:#FDECEA}
+  .cat-elige{margin:4px 0 0;padding:16px;border-radius:14px;background:var(--surface-2);color:var(--ink-soft);font-size:14px;text-align:center}
+  .cat-extra{margin-top:14px;padding:12px 12px 2px;border-radius:16px;background:var(--accent-soft)}
+  .cat-extra-h{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:800;color:var(--accent)}
+  .cat-extra-s{margin:3px 0 2px;font-size:12.5px;color:var(--ink-soft)}
+  .cat-extra .cat-fila + .cat-fila{border-top:1px solid rgba(23,85,92,0.14)}
+  #optsProducto .opt{padding-left:4px;padding-right:4px;white-space:nowrap}
+  #optsProducto .opt[disabled]{opacity:.45}
+  .c-prod{display:inline-block;vertical-align:2px;margin-left:6px;font-size:11.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 9px}
+  .c-falta{color:var(--danger)!important}
+  .cat-monto{width:78px;flex-shrink:0}
+  .cat-monto input{width:100%;height:40px;border:1px solid var(--line-strong);border-radius:10px;text-align:right;padding:0 10px;font-size:14.5px;font-weight:700;font-family:inherit;color:var(--ink);background:var(--surface)}
+  .cat-modo{display:flex;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;flex-shrink:0}
+  .cat-modo button{padding:9px 10px;font-size:12px;font-weight:700;color:var(--ink-soft);background:var(--surface);transition:background-color 140ms var(--ease-out),color 140ms var(--ease-out)}
+  .cat-modo button.on{background:var(--accent);color:#fff}
+  .btn-peligro{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:16px;border:1px solid #F4C7C3;border-radius:14px;background:none;color:var(--danger);font-size:15px;font-weight:700;transition:transform 130ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .btn-peligro:active{transform:scale(0.98);background:#FDECEA}
+  .field.invalid .field-error{display:block}
+
+  /* Aviso de modelos sin categoría */
+  .c-aviso{display:flex;align-items:center;gap:12px;margin:14px 18px 0;padding:12px 14px;border-radius:16px;background:#F1F7F7;border:1px solid #BCD6D8;color:#123F44;font-size:13.5px;line-height:1.4;box-shadow:0 6px 18px rgba(23,85,92,0.10)}
+  .c-aviso b{font-weight:800}
+  .c-aviso .c-ico{width:36px;height:36px;border-radius:11px}
+
+  /* Botón "Asignar a modelos" en la ficha */
+  .asig-btn{display:flex;align-items:center;gap:12px;width:100%;margin:18px 0 0;padding:13px 14px;border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);text-align:left;transition:transform 130ms var(--ease-out)}
+  .asig-btn:active{transform:scale(0.98)}
+  .asig-btn .t{display:block;font-size:15px;font-weight:800;color:var(--accent)}
+  .asig-btn .s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .asig-btn svg.chev{margin-left:auto;color:var(--ink-faint);flex-shrink:0}
+
+  /* Hoja: elegir modelos */
+  #sheetModelos .sheet-body{padding-top:0}
+  .m-cab{position:sticky;top:0;z-index:2;background:var(--surface);padding:4px 0 8px}
+  .m-cab .chips{padding:0}
+  .m-todos{display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-size:13px;color:var(--ink-soft)}
+  .m-todos button{font-size:13.5px;font-weight:800;color:var(--accent);padding:6px 0}
+  .m-fila{display:flex;align-items:center;gap:12px;width:100%;padding:10px 2px;text-align:left;transition:transform 130ms var(--ease-out)}
+  .m-fila + .m-fila{border-top:1px solid var(--line)}
+  .m-fila:active{transform:scale(0.99)}
+  .m-fila[disabled]{opacity:.55}
+  .m-foto{width:48px;height:48px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .m-foto img{width:100%;height:100%;object-fit:cover}
+  .m-txt{flex:1;min-width:0}
+  .m-nom{display:block;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .m-tag{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--surface-2);color:var(--ink-soft);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .m-tag.otra{background:#EEF2F2;color:#123F44}
+  .m-tag.misma{background:var(--accent-soft);color:var(--accent)}
+  .m-tag.cambia{background:#FFE7C2;color:#8A5A00}
+  .m-check{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line-strong);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;transition:background-color 140ms var(--ease-out),border-color 140ms var(--ease-out)}
+  .m-check svg{opacity:0;transition:opacity 140ms var(--ease-out)}
+  .m-fila.sel .m-check,.m-fila[disabled] .m-check{background:var(--accent);border-color:var(--accent)}
+  .m-fila.sel .m-check svg,.m-fila[disabled] .m-check svg{opacity:1}
+  .m-vacio{text-align:center;padding:36px 10px;color:var(--ink-soft);font-size:14.5px}
+  .solo-fijo .cat-modo{display:none}
+</style>
+</head>
+<body data-requiere-sesion="si">
+
+<header class="topbar" id="topbar">
+  <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+  <div class="topbar-text">
+    <div class="topbar-title">Categorías de pago</div>
+    <div class="topbar-sub" id="subtitulo">Cargando</div>
+  </div>
+</header>
+
+<main class="page">
+  <div id="avisoSin"></div>
+  <section class="c-vlista" id="lista" aria-live="polite">
+    <div class="sk-vcard"></div><div class="sk-vcard"></div>
+  </section>
+</main>
+
+<div class="bottom-nav-wrap" id="menuModulos" data-activo="categorias-pago"></div>
+
+<button class="fab" id="btnNuevo" aria-label="Nueva categoría">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<!-- Ficha: crear/editar categoría -->
+<div class="sheet-scrim" id="scrimFicha" data-cerrar="sheetFicha"></div>
+<section class="sheet sheet-auto" id="sheetFicha" role="dialog" aria-modal="true" aria-labelledby="fichaTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="fichaTitulo">Nueva categoría</h2>
+    <button class="icon-btn" data-cerrar="sheetFicha" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field" id="campoNombre">
+      <label class="field-label" for="fNombre">Nombre de la categoría</label>
+      <input class="input" id="fNombre" type="text" autocomplete="off">
+      <p class="field-error" id="eNombre"></p>
+    </div>
+    <div class="field" id="campoProducto">
+      <span class="field-label">¿Para qué producto?</span>
+      <div class="opts" style="--cols:3" id="optsProducto"></div>
+      <p class="field-hint" id="hintProducto"></p>
+      <p class="field-error">Elige el producto</p>
+    </div>
+    <span class="field-label hidden" id="tarifasTit" style="margin-top:6px;display:block">Cuánto se paga por cada trabajo</span>
+    <div id="filasTarifa"></div>
+    <p class="field-hint" id="tarifasPie" style="margin:10px 0 0"></p>
+    <button class="asig-btn hidden" type="button" id="btnAsignarModelos">
+      <span class="c-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/></svg></span>
+      <span><span class="t">Asignar a modelos</span><span class="s" id="asigSub"></span></span>
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="btn-peligro hidden" type="button" id="btnEliminar">Eliminar categoría</button>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardar">Guardar categoría</button></div>
+</section>
+
+<!-- Asignar esta categoría a modelos del catálogo -->
+<div class="sheet-scrim scrim-top" id="scrimModelos" data-cerrar="sheetModelos"></div>
+<section class="sheet sheet-top" id="sheetModelos" role="dialog" aria-modal="true" aria-labelledby="modelosTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="modelosTitulo">Asignar a modelos</h2>
+    <button class="icon-btn" data-cerrar="sheetModelos" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="m-cab">
+      <div class="chips" id="chipsModelos" role="tablist"></div>
+      <div class="m-todos"><span id="mCuenta"></span><button type="button" id="btnMarcarTodos">Marcar todos</button></div>
+    </div>
+    <div id="listaModelos"></div>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnAsignar" disabled>Elige los modelos</button></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/falso.js?v=71"></script>
+<script src="assets/vendor/supabase.js?v=71"></script>
+<script src="assets/js/supabase-client.js?v=71"></script>
+<script src="assets/js/comun.js?v=71"></script>
+<script src="assets/js/sesion.js?v=71"></script>
+<script src="assets/js/ayuda.js?v=71"></script>
+<script src="assets/js/categorias-pago.js?v=71"></script>
+</body>
+</html>

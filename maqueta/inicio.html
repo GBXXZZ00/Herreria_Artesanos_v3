@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Herrería Artesanos</title>
+<link rel="prefetch" href="venta.html">
+<link rel="prefetch" href="catalogo.html">
+<link rel="stylesheet" href="assets/css/base.css?v=71">
+<style>
+  .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
+  .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
+  .vista.entra{opacity:1;transform:none}
+  .topbar .avatar{border:0;width:40px;height:40px;font-size:15px;transition:transform 140ms var(--ease-out)}
+  .topbar .avatar:active{transform:scale(0.94)}
+  .ini-fecha{font-size:15px;color:var(--ink-soft);margin:0 0 18px}
+  .acceso-marca img{display:block;margin:0 auto}
+  .ini-tile.ancho{grid-column:1 / -1;flex-direction:row;align-items:center}
+  .ini-tile.ancho .flecha{margin-left:auto;color:var(--accent)}
+  .ini-tile.pronto{gap:10px}
+  .ini-tile.pronto .ini-ico{width:44px;height:44px;border-radius:13px}
+  .ini-tile.pronto .ini-nombre{font-size:16.5px}
+  .ini-grid .ini-tile .pill-pronto{position:absolute;top:14px;right:14px;font-size:11.5px;font-weight:700;color:var(--ink-soft);background:#fff;border-radius:999px;padding:3px 9px}
+  .ini-cuenta .num{color:var(--accent);font-weight:800}
+  .sk-linea{height:14px;border-radius:7px;background:var(--surface-2);animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .quien .sk-quien{height:76px;border-radius:var(--radius);background:var(--surface-2);animation:pulse 1.2s ease-in-out infinite}
+  .acceso-err{text-align:center;padding:20px 8px;color:var(--ink-soft);font-size:15px;line-height:1.5}
+  .acceso-err .btn-secundario{margin-top:12px}
+  .btn-secundario{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:15.5px;color:var(--ink);transition:transform 140ms var(--ease-out)}
+  .btn-secundario:active{transform:scale(0.97)}
+  .pin-paso{display:flex;flex-direction:column}
+  .pin-cargando .teclado{opacity:.45;pointer-events:none}
+  .cuenta-cab{display:flex;align-items:center;gap:14px;padding:6px 0 18px}
+  .cuenta-cab .avatar{width:54px;height:54px;font-size:21px}
+  .cuenta-op{display:flex;align-items:center;gap:14px;width:100%;padding:16px 4px;font-size:16.5px;font-weight:700;color:var(--ink);text-align:left;text-decoration:none;transition:transform 140ms var(--ease-out)}
+  .cuenta-op:active{transform:scale(0.98)}
+  .cuenta-op .op-ico{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0}
+  .cuenta-grupo{border-top:1px solid var(--line);margin-top:8px;padding-top:14px;display:flex;flex-direction:column;gap:8px}
+  .cuenta-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.3px;color:var(--ink-faint);text-transform:uppercase;margin:0 0 2px;padding:0 4px}
+  .cuenta-op.cuenta-modulo{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:14px}
+  .cuenta-op.cuenta-modulo:active{background:var(--surface-2)}
+  .cuenta-op .flecha{margin-left:auto;color:var(--ink-faint);flex-shrink:0}
+  .cuenta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:20px}
+  .cuenta-box{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;height:78px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:700;text-align:center;transition:transform 130ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .cuenta-box:active{transform:scale(0.96);background:var(--surface-2)}
+  .cuenta-box.salir{color:var(--danger)}
+  .cuenta-box .check{position:absolute;top:9px;right:9px;width:16px;height:16px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center}
+  .cuenta-box .check svg{width:10px;height:10px}
+  .aviso-card{display:flex;align-items:center;gap:14px;width:100%;padding:14px;margin-bottom:12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);text-align:left;text-decoration:none;color:var(--ink);transition:transform 140ms var(--ease-out)}
+  .aviso-card:active{transform:scale(0.98)}
+  .aviso-card .ini-ico{width:46px;height:46px;border-radius:14px;flex-shrink:0}
+  .aviso-t{display:block;font-size:16px;font-weight:800}
+  .aviso-s{display:block;font-size:13.5px;color:var(--ink-soft);margin-top:2px;line-height:1.35}
+  .aviso-card.urgente{border-color:#F2C99A;background:#FFF8EC}
+  .aviso-card.urgente .ini-ico{background:#FFE7C2;color:#8A5A00}
+  .aviso-btn{margin-left:auto;flex-shrink:0;height:38px;padding:0 14px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800}
+  #sheetPin .sheet-body{padding-bottom:calc(24px + var(--safe-b))}
+  #sheetPin .pin-cab{margin-top:4px}
+  /* Pendientes: una tarjeta de color por cosa, en una sola línea */
+  .pend-cab{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;margin:0 0 6px;padding:0 4px;font-size:13px;font-weight:800;color:var(--ink-soft);text-align:left;transition:transform 140ms var(--ease-out)}
+  .pend-cab:active{transform:scale(0.98)}
+  .pend-accion{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--ink-faint)}
+  .pend-chev{color:var(--ink-faint);flex-shrink:0;transition:transform 220ms var(--ease-out)}
+  .pend.cerrado .pend-chev{transform:rotate(-90deg)}
+  .pend-puntos{display:none;gap:4px;min-width:0;overflow:hidden}
+  .pend.cerrado .pend-puntos{display:flex}
+  .pend-puntos i{width:8px;height:8px;border-radius:50%}
+  .pend-puntos .rojo{background:#D9483B}.pend-puntos .naranja{background:#E0932B}.pend-puntos .verde{background:#2E9A5B}
+  .pend-puntos .azul{background:#3F68C9}.pend-puntos .teal{background:var(--accent)}.pend-puntos .amarillo{background:#D4B21F}
+  .pend.cerrado .pend-lista{display:none}
+  .pend-n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#C2410C;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+  .pend-lista{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .pend.cerrado{margin-bottom:8px}
+  .pend-fila{display:flex;align-items:center;gap:10px;width:100%;padding:7px 12px 7px 8px;border-radius:14px;border:1px solid;text-align:left;text-decoration:none;opacity:0;transform:translateY(8px);animation:tileIn 360ms var(--ease-out) forwards;animation-delay:calc(var(--i,0) * 40ms);transition:transform 140ms var(--ease-out)}
+  .pend-fila:active{transform:scale(0.98)}
+  .pend-ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .pend-t{flex:1;min-width:0;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pend-t span{font-weight:600;opacity:.75}
+  .pend-fila .chev{flex-shrink:0;opacity:.6}
+  .pend-fila.rojo{background:#FFF5F4;border-color:#F4C7C3;color:#7A1A12;box-shadow:0 6px 18px rgba(180,35,24,0.12)}
+  .pend-fila.rojo .pend-ico{background:#FDE3E1;color:#B42318}
+  .pend-fila.naranja{background:#FFF8EC;border-color:#F2C99A;color:#5C3D00;box-shadow:0 6px 18px rgba(194,120,0,0.14)}
+  .pend-fila.naranja .pend-ico{background:#FFE7C2;color:#8A5A00}
+  .pend-fila.verde{background:#F2FAF5;border-color:#B7E0C6;color:#14532D;box-shadow:0 6px 18px rgba(27,107,58,0.12)}
+  .pend-fila.verde .pend-ico{background:#DDF2E6;color:#1B6B3A}
+  .pend-fila.azul{background:#F3F6FD;border-color:#C3D2F0;color:#1E3A7A;box-shadow:0 6px 18px rgba(37,78,160,0.10)}
+  .pend-fila.azul .pend-ico{background:#E1E9FA;color:#2F55B5}
+  .pend-fila.teal{background:#F1F7F7;border-color:#BCD6D8;color:#123F44;box-shadow:0 6px 18px rgba(23,85,92,0.12)}
+  .pend-fila.teal .pend-ico{background:var(--accent-soft);color:var(--accent)}
+
+  /* Avisos del teléfono: una línea delgada y en gris */
+  .notif-fila{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 8px 6px 12px;margin-bottom:16px;border-radius:14px;background:var(--surface-2);color:var(--ink-soft);text-align:left;font-size:13.5px;font-weight:700;transition:transform 140ms var(--ease-out)}
+  .notif-fila:active{transform:scale(0.98)}
+  .notif-fila svg{flex-shrink:0}
+  .notif-fila .nt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .notif-fila .aviso-btn{height:34px;padding:0 13px;font-size:13px;border-radius:10px}
+
+  /* Módulos en dos columnas */
+  .ini-grid .ini-tile{gap:12px;padding:14px}
+  .ini-grid .ini-tile .ini-ico{width:46px;height:46px;border-radius:14px}
+  .ini-grid .ini-tile .ini-nombre{font-size:16.5px}
+  .ini-grid .ini-tile .ini-cuenta{font-size:13px}
+  .ini-grid .ini-tile.pronto{gap:12px}
+  .ini-grid .ini-tile.pronto .ini-ico{width:46px;height:46px}
+
+  /* Inicio del trabajador */
+  .es-trabajador #btnNuevaVenta, .es-trabajador #modulos, .es-trabajador #menuModulos,
+  .sin-perfil #btnNuevaVenta, .sin-perfil #modulos, .sin-perfil #menuModulos{display:none}
+  .es-trabajador .page{padding-bottom:calc(var(--safe-b) + 32px)}
+  /* "Hoy": lo que hace ahora o lo que le toca */
+  .hoy{border-radius:22px;background:var(--surface);border:1px solid var(--line);box-shadow:0 12px 30px rgba(23,85,92,0.12);overflow:hidden;margin-bottom:16px;opacity:0;transform:translateY(8px);animation:tileIn 380ms var(--ease-out) forwards}
+  .hoy-foto{display:block;width:100%;aspect-ratio:4/3;background:var(--surface-2);position:relative;overflow:hidden;color:var(--ink-faint);transition:opacity 140ms var(--ease-out)}
+  .hoy-foto:active{opacity:.85}
+  .hoy-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+  .hoy-foto .sin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .hoy-foto .ver{position:absolute;right:10px;bottom:10px;height:30px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,0.94);box-shadow:var(--shadow-sm);font-size:12.5px;font-weight:800;color:var(--ink);display:flex;align-items:center}
+  .hoy-txt{padding:14px 16px 0}
+  .hoy-etapa{font-size:13px;font-weight:800;color:var(--accent)}
+  .hoy-nom{font-size:20px;font-weight:800;letter-spacing:-0.3px;line-height:1.2;margin-top:2px}
+  .hoy-sub{font-size:13.5px;color:var(--ink-soft);margin-top:3px}
+  .hoy .spec-chips{margin-top:10px;gap:6px}
+  .hoy .spec-chip{height:28px;padding:0 10px;font-size:12.5px}
+  .hoy-acc{padding:14px 16px 16px}
+  .hoy-acc .btn-primary{width:100%}
+  .hoy-lead{font-size:16px;font-weight:700;color:var(--ink);margin:2px 2px 12px}
+  .hoy-lead .tarde{color:var(--danger);font-weight:700}
+  .hoy-badge{position:absolute;z-index:2;left:10px;top:10px;max-width:calc(100% - 20px);padding:6px 11px;border-radius:999px;background:rgba(28,26,23,0.78);color:#fff;font-size:12.5px;font-weight:800;line-height:1.25;text-align:left}
+  .hoy-tope{font-weight:700}
+  .hoy-tope.tarde{color:var(--danger)}
+  .hoy-acc .btn-primary{white-space:nowrap}
+  /* "Después": los demás trabajos, se deslizan a la derecha */
+  .despues-tit{font-size:14px;font-weight:800;color:var(--ink-soft);margin:0}
+  .despues-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 2px 8px}
+  .btn-orden{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13.5px;font-weight:800;white-space:nowrap;transition:transform 130ms var(--ease-out)}
+  .btn-orden:active{transform:scale(0.97)}
+  .en-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#1F9D55;box-shadow:0 0 0 3px rgba(31,157,85,0.18);flex-shrink:0}
+  .hoy-etapa.haciendo{display:flex;align-items:center;gap:7px}
+  /* ¿Con cuál empiezas? */
+  .hoy.elegir{padding:16px 0 16px}
+  #vistaTrabajo.sin-entrada .hoy,#vistaTrabajo.sin-entrada .pend-fila{animation:none;opacity:1;transform:none}
+  .el-tit{font-size:22px;font-weight:800;letter-spacing:-0.3px;line-height:1.2;padding:0 16px}
+  .el-sub{font-size:14px;color:var(--ink-soft);padding:2px 16px 10px}
+  .el-op{display:flex;align-items:center;gap:12px;width:calc(100% - 16px);margin:0 8px;padding:9px 10px;border-radius:14px;text-align:left;border:2px solid transparent;transition:transform 130ms var(--ease-out)}
+  .el-op + .el-op{margin-top:2px}
+  .el-op:active{transform:scale(0.98)}
+  .el-op.sel{background:var(--accent-soft);border-color:var(--accent)}
+  .el-op.gris{opacity:.5}
+  .el-op.gris:active{transform:none}
+  .el-foto{width:54px;height:54px;border-radius:10px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .el-foto img{width:100%;height:100%;object-fit:cover}
+  .el-etapa{display:block;font-size:12px;font-weight:800;color:var(--accent);line-height:1.25}
+  .el-nom{display:block;font-size:15.5px;font-weight:800;line-height:1.25}
+  .el-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px;line-height:1.3}
+  .el-s.tarde{color:var(--danger);font-weight:700}
+  .el-sigue{display:inline-block;font-size:11px;font-weight:800;background:var(--accent);color:#fff;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+  .el-radio{margin-left:auto;width:22px;height:22px;border-radius:50%;border:2px solid var(--line-strong);flex-shrink:0}
+  .el-op.sel .el-radio{border:7px solid var(--accent)}
+  .el-ver{display:inline-block;height:28px;font-size:12.5px;font-weight:800;color:var(--accent);margin-top:1px;text-decoration:underline;text-underline-offset:2px}
+  .el-pie{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px 12px}
+  .el-link{height:36px;font-size:14px;font-weight:800;color:var(--accent);white-space:nowrap}
+  .hoy.elegir .el-btn{background:var(--accent);display:block;width:calc(100% - 32px);margin:0 16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .despues{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:18px;margin:0 -18px 16px;padding:2px 18px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .despues::after{content:'';flex:0 0 8px}
+  .despues::-webkit-scrollbar{display:none}
+  .dp{flex:0 0 128px;scroll-snap-align:start;text-align:left;transition:transform 130ms var(--ease-out)}
+  .dp:active{transform:scale(0.97)}
+  .dp-foto{display:flex;align-items:center;justify-content:center;width:128px;height:100px;border-radius:14px;background:var(--surface-2);overflow:hidden;color:var(--ink-faint)}
+  .dp-foto img{width:100%;height:100%;object-fit:cover}
+  .dp-etapa{display:block;font-size:12px;font-weight:800;color:var(--accent);margin-top:6px;line-height:1.25}
+  .dp-nom{display:block;font-size:13.5px;font-weight:800;line-height:1.25}
+  .dp-s{display:block;font-size:12px;color:var(--ink-soft);margin-top:1px;line-height:1.25}
+  .dp-s.tarde{color:var(--danger);font-weight:700}
+  .dp.gris .dp-foto{opacity:.5}
+  .dp.gris .dp-etapa,.dp.gris .dp-nom{color:var(--ink-faint)}
+  .dp-mas .dp-foto{background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:800;flex-direction:column;gap:2px}
+  .hoy-vacio{padding:22px 18px;text-align:center}
+  .hoy-vacio b{display:block;font-size:17px;font-weight:800}
+  .hoy-vacio span{display:block;font-size:14px;color:var(--ink-soft);margin-top:4px}
+  .pend-fila.amarillo{background:#FFFBEA;border-color:#F0DB8C;color:#5C4700;box-shadow:0 6px 18px rgba(176,140,0,0.12)}
+  .pend-fila.amarillo .pend-ico{background:#FCEFB4;color:#8A6D00}
+  div.pend-fila{cursor:default}
+  div.pend-fila:active{transform:none}
+  /* "¿Lo terminaste?" puede abrirse encima del detalle del trabajo */
+  #sheetTerminarT{z-index:53}
+  #scrimTerminarT{z-index:52}
+  .sk-hoy{height:360px;border-radius:22px;background:var(--surface-2);animation:pulse 1.2s ease-in-out infinite;margin-bottom:16px}
+
+  /* Lista de trabajos */
+  .tr-lista{display:flex;flex-direction:column;gap:8px}
+  .tr{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:1px solid var(--line);border-radius:16px;background:var(--surface);text-align:left;transition:transform 140ms var(--ease-out)}
+  .tr:active{transform:scale(0.98)}
+  .tr.gris{background:var(--surface-2);border-color:transparent}
+  .tr.gris .tr-foto{opacity:.5}
+  .tr.gris .tr-etapa,.tr.gris .tr-nom{color:var(--ink-faint)}
+  .tr-foto{width:68px;height:68px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .tr-foto img{width:100%;height:100%;object-fit:cover}
+  .tr-etapa{font-size:12px;font-weight:800;color:var(--accent)}
+  .tr-nom{font-size:15.5px;font-weight:800;line-height:1.25}
+  .tr-det{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+  .tr-estado{display:flex;align-items:flex-start;gap:5px;line-height:1.3;font-size:12px;font-weight:800;margin-top:4px;color:var(--ink-soft)}
+  .tr-estado svg{flex-shrink:0;margin-top:1px}
+  .tr-estado.bloq{color:var(--ink-faint)}
+  .tr .chev{flex-shrink:0;margin-left:auto;color:var(--ink-faint)}
+  .tr-vacio{text-align:center;padding:36px 12px;color:var(--ink-soft);font-size:15px}
+
+  /* Detalle del trabajo */
+  .tj-parte{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:800;margin-top:12px}
+  .tj-datos{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:14px;color:var(--ink-soft)}
+  .tj-datos b{color:var(--ink)}
+  .tj-color{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--ink);color:#fff;font-size:16px;font-weight:800}
+  .tj-color .sw{width:22px;height:22px;border-radius:50%;border:2px solid #fff;flex-shrink:0}
+  .tj-specs{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:14px}
+  /* Detalle partido en dos: la puerta y sus protecciones, cada una con lo suyo */
+  .tj-gem{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;align-items:start}
+  .tj-gem.uno{grid-template-columns:1fr}
+  .tj-gem-c{border:1.5px solid var(--line);border-radius:18px;padding:10px 10px 2px;min-width:0}
+  .tj-gem-c.b{border-color:#BCD6D8;background:#F6FAFA}
+  .tj-gem-ico{height:64px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .tj-gem-c.b .tj-gem-ico{background:#E9F1F1}
+  .tj-gem-t{font-size:15px;font-weight:800;margin-top:9px}
+  .tj-gem-n{font-size:12px;color:var(--ink-soft);margin-bottom:6px}
+  .tj-gem-f{padding:7px 0;border-top:1px solid var(--line)}
+  .tj-gem-f span{display:block;font-size:11.5px;color:var(--ink-soft)}
+  .tj-gem-f b{font-size:14px;overflow-wrap:anywhere}
+  .tj-specs div{font-size:15px;font-weight:700;line-height:1.25;min-width:0}
+  .tj-specs span{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:1px}
+  .tj-specs .ancho{grid-column:1 / -1}
+  .tj-nota{margin-top:14px;padding:11px 13px;border-radius:12px;background:#FFF4DB;color:#5C4700;font-size:14px;line-height:1.4}
+  .tj-nota b{font-weight:800}
+  .tj-tope{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:#FFF4DB;color:#8A5A00;font-size:13px;font-weight:800;margin:12px 0 0 6px}
+  .tj-tope.tarde{background:#FDECEA;color:var(--danger)}
+  .tj-bloq{display:flex;align-items:center;gap:8px;justify-content:center;height:54px;border-radius:16px;background:var(--surface-2);color:var(--ink-soft);font-size:14.5px;font-weight:700;width:100%}
+
+  /* Mis pagos */
+  .chips.pg-tabs{margin:0 0 14px;padding:2px 0}
+  .pg-tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:16px 2px 4px}
+  .pg-tit:first-child{margin-top:2px}
+  .pg-mov{display:flex;align-items:center;gap:12px;padding:10px 2px}
+  .pg-mov + .pg-mov{border-top:1px solid var(--line)}
+  .pg-mov-t{display:block;font-size:14.5px;font-weight:700}
+  .pg-mov-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .pg-mov-m{margin-left:auto;font-size:15px;font-weight:800;white-space:nowrap;text-align:right}
+  .pg-mov-m.rojo,.pg-cuenta .rojo{color:#B42318}
+  .pg-mov-m.gris{color:var(--ink-faint);font-weight:700;font-size:13px}
+  .pg-mov.vale .pg-mov-t{color:#B42318}
+  .pg-pill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;background:#FCEFB4;color:#6B5500;vertical-align:1px}
+  .pg-cuenta{margin-top:16px;padding:14px 16px;border-radius:18px;background:var(--surface-2)}
+  .pg-cuenta-fila{display:flex;justify-content:space-between;font-size:14.5px;color:var(--ink-soft);padding:3px 0}
+  .pg-cuenta-fila b{color:var(--ink)}
+  .pg-cuenta-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line-strong);margin-top:8px;padding-top:10px}
+  .pg-cuenta-total span{font-size:15px;font-weight:800}
+  .pg-cuenta-total b{font-size:30px;font-weight:800;letter-spacing:-0.6px;color:var(--accent)}
+  .pg-aviso{font-size:12.5px;color:#8A5A00;margin-top:8px}
+  .pg-sem{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+  .pg-sem + .pg-sem{margin-top:8px}
+  .pg-sem summary{list-style:none;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+  .pg-sem summary::-webkit-details-marker{display:none}
+  .pg-sem-t{display:block;font-size:15px;font-weight:800}
+  .pg-sem-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .pg-sem-m{margin-left:auto;text-align:right;flex-shrink:0}
+  .pg-sem-m b{display:block;font-size:16px;font-weight:800}
+  .pg-est{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-top:3px}
+  .pg-est.pagado{background:#DDF2E6;color:#1B6B3A}
+  .pg-est.debe{background:#FCEFB4;color:#6B5500}
+  .pg-sem .ac-chev{color:var(--ink-faint);flex-shrink:0;transition:transform 200ms var(--ease-out)}
+  .pg-sem[open] .ac-chev{transform:rotate(180deg)}
+  .pg-sem-body{padding:0 14px 8px;border-top:1px solid var(--line)}
+
+  .foto-opc{display:flex;align-items:center;gap:12px;margin-top:4px}
+  .foto-prev{width:56px;height:56px;border-radius:12px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .foto-prev img{width:100%;height:100%;object-fit:cover}
+  .foto-btn{flex:1;height:44px;border:1px solid var(--line-strong);border-radius:12px;background:none;font-size:13.5px;font-weight:700;color:var(--ink-soft)}
+  /* Terminar: la foto es obligatoria */
+  .t-cap{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:190px;border:2px dashed var(--line-strong);border-radius:16px;background:var(--surface);color:var(--ink-soft);font-size:15px;font-weight:800;overflow:hidden;transition:transform 130ms var(--ease-out)}
+  .t-cap:active{transform:scale(0.98)}
+  .t-cap.lista{border-style:solid;border-color:transparent;background:var(--surface-2)}
+  .t-cap img{width:100%;height:100%;object-fit:cover}
+  .t-ayuda{font-size:13px;color:var(--ink-soft);text-align:center;margin:8px 0 0}
+  .t-ayuda.ok{color:#1B6B3A;font-weight:700}
+  /* Ordena el trabajo */
+  .ord-f{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border-radius:14px;text-align:left;transition:transform 130ms var(--ease-out)}
+  .ord-f + .ord-f{margin-top:2px}
+  .ord-f:active{transform:scale(0.98)}
+  .ord-n{width:34px;height:34px;border-radius:50%;border:2px dashed var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;color:#fff;transition:transform 160ms var(--ease-out)}
+  .ord-f.on .ord-n{border:0;background:var(--accent);transform:scale(1.04)}
+  .ord-t{min-width:0}
+  .ord-t b{display:block;font-size:15.5px;font-weight:800;line-height:1.25}
+  .ord-t span{display:block;font-size:13px;color:var(--ink-soft);line-height:1.3}
+  .ord-t span.tarde{color:var(--danger);font-weight:700}
+  .ord-f.gris .ord-t b{color:var(--ink-faint)}
+  .ord-otra{display:block;margin:10px auto 0}
+  .ord-otra:disabled{opacity:.35}
+  /* Mis pagos: lo que cobra y cada trabajo con sus dos fotos */
+  .pg-cobra{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:16px;background:var(--surface-2);margin:2px 0 4px}
+  .pg-cobra span{font-size:14px;color:var(--ink-soft)}
+  .pg-cobra b{font-size:26px;font-weight:800;letter-spacing:-0.5px;white-space:nowrap}
+  .pg-cobra b.rojo{color:#B42318}
+  .pg-cobra.chico{margin-top:10px}
+  .pg-cobra.chico b{font-size:20px}
+  button.pg-mov{width:100%;text-align:left;transition:transform 130ms var(--ease-out)}
+  button.pg-mov:active{transform:scale(0.98)}
+  .pg-mov .chev{flex-shrink:0;color:var(--ink-faint);margin-left:-4px}
+  .duo{display:flex;flex-shrink:0}
+  .duo > span{width:44px;height:44px;border-radius:10px;overflow:hidden;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .duo > span + span{margin-left:-10px;border:2px solid var(--surface);box-sizing:content-box}
+  .duo img{width:100%;height:100%;object-fit:cover}
+  /* Detalle de lo que hizo: foto del catálogo y la suya */
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 0}
+  .cmp .hero{margin:0;aspect-ratio:auto;height:210px;border-radius:14px}
+  .cmp .hero.sin-foto{flex-direction:column;gap:6px;font-size:13px;font-weight:700}
+  .cmp-lb{position:absolute;left:8px;top:8px;z-index:2;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.94);color:var(--ink);font-size:12px;font-weight:800;pointer-events:none}
+  .cmp-nota{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+  .hecho-sub{font-size:13.5px;color:var(--ink-soft);margin:0}
+  /* Lo que incluye un trabajo: cada pieza con su medida */
+  .pz{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:baseline;background:var(--surface-2);border-radius:14px;padding:11px 12px;margin:10px 0 2px;font-size:14px;color:var(--ink-soft)}
+  .pz b{color:var(--ink);font-weight:800}
+  .pz-n{font-weight:800;color:var(--ink);min-width:14px;text-align:right}
+</style>
+</head>
+<body>
+
+<!-- ============ Acceso ============ -->
+<div class="vista hidden" id="vAcceso">
+  <div class="acceso">
+    <div class="acceso-marca">
+      <img src="assets/img/icon-192.png" alt="">
+      <h1>Herrería Artesanos</h1>
+      <div class="eslogan">Creando con distinción</div>
+    </div>
+
+    <div id="pasoQuien">
+      <h2 class="acceso-titulo">¿Quién eres?</h2>
+      <div class="quien" id="listaQuien">
+        <div class="sk-quien"></div><div class="sk-quien"></div><div class="sk-quien"></div>
+      </div>
+    </div>
+
+    <div class="pin-paso hidden" id="pasoPin">
+      <div class="pin-cab">
+        <div class="avatar" id="pinAvatar"></div>
+        <h2 id="pinNombre"></h2>
+        <p>Escribe tu PIN de 6 números</p>
+      </div>
+      <div class="pin-puntos" id="pinPuntos" aria-hidden="true"></div>
+      <div class="pin-msg" id="pinMsg" role="alert"></div>
+      <div class="teclado" id="pinTeclado"></div>
+      <button class="link-simple" id="btnNoSoyYo">No soy yo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Inicio ============ -->
+<div class="vista hidden" id="vInicio">
+  <header class="topbar" id="topbar">
+    <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+    <div class="topbar-text">
+      <div class="topbar-title">Artesanos</div>
+      <div class="topbar-sub eslogan" style="font-size:13.5px">Creando con distinción</div>
+    </div>
+    <button class="avatar" id="btnCuenta" aria-label="Mi cuenta"></button>
+  </header>
+
+  <main class="page">
+    <section class="ini">
+      <h1 class="ini-title" id="saludo">Hola</h1>
+      <p class="ini-fecha" id="fecha"></p>
+
+      <a class="ini-cta" id="btnNuevaVenta" href="venta.html" data-modulo>
+        <span class="ini-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span><span class="ini-nombre">Nueva venta</span><span class="ini-cuenta">Cotización o venta</span></span>
+      </a>
+
+      <div id="vistaTrabajo" class="hidden"></div>
+      <div id="avisosAdmin"></div>
+      <div class="ini-grid" id="modulos"></div>
+    </section>
+  </main>
+
+  <div class="bottom-nav-wrap" id="menuModulos" data-activo="inicio"></div>
+</div>
+
+<!-- Mi cuenta -->
+<div class="sheet-scrim" id="scrimCuenta" data-cerrar="sheetCuenta"></div>
+<section class="sheet sheet-auto" id="sheetCuenta" role="dialog" aria-modal="true" aria-label="Mi cuenta">
+  <div class="sheet-handle"></div>
+  <div class="sheet-body">
+    <div class="cuenta-cab">
+      <div class="avatar" id="cuentaAvatar"></div>
+      <div><div class="quien-nombre" id="cuentaNombre"></div><div class="quien-rol" id="cuentaRol"></div></div>
+    </div>
+    <div class="cuenta-grupo hidden" id="grupoModulosAdmin">
+      <p class="cuenta-eyebrow">Administración</p>
+      <a class="cuenta-op cuenta-modulo" id="btnUsuarios" href="usuarios.html" data-modulo>
+        <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Usuarios
+        <svg class="flecha" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <a class="cuenta-op cuenta-modulo" id="btnCategoriasPago" href="categorias-pago.html" data-modulo>
+        <span class="op-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v.01M18 15v.01"/></svg></span>
+        Categorías de pago
+        <svg class="flecha" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+    <div class="cuenta-grupo hidden" id="grupoCatPublico">
+      <p class="cuenta-eyebrow">Catálogo público</p>
+      <a class="cuenta-op cuenta-modulo" id="btnVerPublico" href="catalogo-publico.html" target="_blank" rel="noopener">
+        <span class="op-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+        Ver como lo ve el cliente
+        <svg class="flecha" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <button class="cuenta-op cuenta-modulo" type="button" id="btnCopiarPublico">
+        <span class="op-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+        Copiar enlace para mandar
+      </button>
+    </div>
+    <div class="cuenta-grupo" id="grupoManuales">
+      <a class="cuenta-op cuenta-modulo" id="btnManuales" href="ayuda.html">
+        <span class="op-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 11.5h5"/></svg></span>
+        Manuales de uso
+        <svg class="flecha" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+    <div class="cuenta-grid">
+      <button class="cuenta-box" id="btnCambiarPin">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        Cambiar PIN
+      </button>
+      <button class="cuenta-box hidden" id="btnNotif">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        Notificaciones
+        <span class="check hidden" id="notifCheck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+      </button>
+      <button class="cuenta-box hidden" id="btnPrueba">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+        Aviso de prueba
+      </button>
+      <button class="cuenta-box salir" id="btnSalir">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></svg>
+        Salir
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Cambiar PIN -->
+<div class="sheet-scrim scrim-top" id="scrimPin" data-cerrar="sheetPin"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetPin" role="dialog" aria-modal="true" aria-label="Cambiar PIN">
+  <div class="sheet-handle"></div>
+  <div class="sheet-body">
+    <div class="pin-cab">
+      <h2 id="nuevoTitulo">Nuevo PIN</h2>
+      <p id="nuevoSub">Escribe 6 números que recuerdes</p>
+    </div>
+    <div class="pin-puntos" id="nuevoPuntos" aria-hidden="true"></div>
+    <div class="pin-msg" id="nuevoMsg" role="alert"></div>
+    <div class="teclado" id="nuevoTeclado"></div>
+  </div>
+</section>
+
+<!-- Trabajador: sus trabajos -->
+<div class="sheet-scrim" id="scrimTrabajos" data-cerrar="sheetTrabajos"></div>
+<section class="sheet sheet-auto" id="sheetTrabajos" role="dialog" aria-modal="true" aria-labelledby="trabajosTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="trabajosTitulo">Mis trabajos</h2>
+    <button class="icon-btn" data-cerrar="sheetTrabajos" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="field-hint" id="trabajosAyuda" style="margin:0 0 12px">Toca uno para ver su foto y sus detalles.</p>
+    <div class="tr-lista" id="listaTrabajos"></div>
+  </div>
+</section>
+
+<!-- Trabajador: un trabajo (foto, modelo y especificaciones) -->
+<div class="sheet-scrim scrim-top" id="scrimTrabajo" data-cerrar="sheetTrabajo"></div>
+<section class="sheet sheet-hero sheet-top" id="sheetTrabajo" role="dialog" aria-modal="true" aria-label="Trabajo">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetTrabajo" aria-label="Cerrar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sheet-body" id="trabajoBody"></div>
+  <div class="sheet-foot" id="trabajoFoot"></div>
+</section>
+
+<!-- Trabajador: marcar terminado -->
+<div class="sheet-scrim scrim-top" id="scrimTerminarT" data-cerrar="sheetTerminarT"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetTerminarT" role="dialog" aria-modal="true" aria-labelledby="terminarTTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="terminarTTitulo">Terminar</h2>
+    <button class="icon-btn" data-cerrar="sheetTerminarT" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="field-hint" id="terminarTSub" style="margin:0 0 14px"></p>
+    <span class="field-label">Foto del trabajo terminado</span>
+    <button type="button" class="t-cap" id="btnTFoto"></button>
+    <input type="file" accept="image/*" capture="environment" id="tFotoInput" class="hidden">
+    <p class="t-ayuda" id="tFotoAyuda">La foto es obligatoria para terminar.</p>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnTConfirmar" style="width:100%;white-space:nowrap" disabled>Terminar</button></div>
+</section>
+
+<!-- Trabajador: ordena el trabajo -->
+<div class="sheet-scrim" id="scrimOrden" data-cerrar="sheetOrden"></div>
+<section class="sheet sheet-auto" id="sheetOrden" role="dialog" aria-modal="true" aria-labelledby="ordenTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="ordenTitulo">Ordena el trabajo</h2>
+    <button class="icon-btn" data-cerrar="sheetOrden" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="field-hint" style="margin:0 0 8px">Toca los trabajos en el orden en que los vas a hacer.</p>
+    <div id="listaOrden"></div>
+    <button class="el-link ord-otra" type="button" id="btnOrdenDeNuevo" disabled>Empezar de nuevo</button>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarOrden" style="width:100%;white-space:nowrap;background:var(--accent)" disabled>Guardar orden</button></div>
+</section>
+
+<!-- Trabajador: lo que hizo (foto del catálogo y la suya) -->
+<div class="sheet-scrim scrim-top" id="scrimHecho" data-cerrar="sheetHecho"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetHecho" role="dialog" aria-modal="true" aria-labelledby="hechoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="hechoTitulo">Trabajo</h2>
+    <button class="icon-btn" data-cerrar="sheetHecho" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="hechoBody"></div>
+</section>
+
+<!-- Trabajador: pagos -->
+<div class="sheet-scrim" id="scrimPagos" data-cerrar="sheetPagos"></div>
+<section class="sheet sheet-auto" id="sheetPagos" role="dialog" aria-modal="true" aria-labelledby="pagosTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="pagosTitulo">Mis pagos</h2>
+    <button class="icon-btn" data-cerrar="sheetPagos" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="chips pg-tabs" id="pagosTabs">
+      <button class="chip active" type="button" data-pg-tab="cobrar">Por cobrar</button>
+      <button class="chip" type="button" data-pg-tab="historial">Historial</button>
+    </div>
+    <div id="pagosBody"></div>
+  </div>
+</section>
+
+<!-- Trabajador: pedir vale -->
+<div class="sheet-scrim scrim-top" id="scrimVale" data-cerrar="sheetVale"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetVale" role="dialog" aria-modal="true" aria-labelledby="valeTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="valeTitulo">Pedir un vale</h2>
+    <button class="icon-btn" data-cerrar="sheetVale" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field" id="campoValeMonto">
+      <label class="field-label" for="valeMonto">Monto</label>
+      <div class="input-affix">
+        <span class="affix">$</span>
+        <input class="input" id="valeMonto" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+      <p class="field-error">Escribe un monto mayor a 0</p>
+    </div>
+    <div class="field">
+      <label class="field-label" for="valeNota">Para qué (opcional)</label>
+      <input class="input" id="valeNota" type="text" maxlength="120" autocomplete="off">
+    </div>
+    <p class="field-hint">Cuando el administrador lo apruebe, se descuenta de lo que tienes por cobrar.</p>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnPedirVale">Pedir vale</button></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/falso.js?v=71"></script>
+<script src="assets/vendor/supabase.js?v=71"></script>
+<script src="assets/js/supabase-client.js?v=71"></script>
+<script src="assets/js/img-compress.js?v=71"></script>
+<script src="assets/js/comun.js?v=71"></script>
+<script src="assets/js/avisos.js?v=71"></script>
+<script src="assets/js/sesion.js?v=71"></script>
+<script src="assets/js/ayuda.js?v=71"></script>
+<script src="assets/js/mi-trabajo.js?v=71"></script>
+<script>
+(function(){
+  'use strict';
+  const db = window.db;
+  const { esc, toast, abrirHoja, cerrarHoja } = window.AH;
+  const S = window.Sesion;
+  const $ = (id) => document.getElementById(id);
+  const LARGO = 6;
+
+  const inicial = (n) => (String(n || '?').trim()[0] || '?').toUpperCase();
+  const nombreRol = (r) => r === 'admin' ? 'Administrador' : r === 'trabajador' ? 'Trabajador' : 'Vendedor';
+
+  function mostrar(vista){
+    ['vAcceso', 'vInicio'].forEach(id => {
+      const el = $(id);
+      if(id === vista){
+        el.classList.remove('hidden');
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('entra')));
+      } else {
+        el.classList.add('hidden'); el.classList.remove('entra');
+      }
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Teclado numérico reutilizable (acceso y cambio de PIN)
+  // ---------------------------------------------------------------------------
+  const ICON_BORRAR = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M17 9l-6 6M11 9l6 6"/></svg>';
+  function crearTeclado(opc){
+    const puntos = $(opc.puntos), teclado = $(opc.teclado), msg = $(opc.msg);
+    let valor = '', bloqueado = false;
+    puntos.innerHTML = '<span></span>'.repeat(LARGO);
+    const teclas = ['1','2','3','4','5','6','7','8','9','', '0', 'x'];
+    teclado.innerHTML = teclas.map(t =>
+      t === '' ? '<span class="tecla vacia"></span>'
+      : t === 'x' ? `<button class="tecla borrar" data-t="x" aria-label="Borrar">${ICON_BORRAR}</button>`
+      : `<button class="tecla" data-t="${t}">${t}</button>`).join('');
+    function pintar(){
+      [...puntos.children].forEach((s, i) => s.classList.toggle('lleno', i < valor.length));
+    }
+    function tecla(t){
+      if(bloqueado) return;
+      if(t === 'x'){ valor = valor.slice(0, -1); pintar(); return; }
+      if(valor.length >= LARGO) return;
+      if(msg.textContent){ msg.textContent = ''; puntos.classList.remove('error'); }
+      valor += t; pintar();
+      if(valor.length === LARGO){
+        const v = valor;
+        setTimeout(() => opc.alCompletar(v), 120); // deja ver el último punto
+      }
+    }
+    teclado.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-t]');
+      if(b) tecla(b.dataset.t);
+    });
+    return {
+      tecla,
+      limpiar(){ valor = ''; this.bloquear(false); msg.textContent = ''; puntos.classList.remove('error'); pintar(); },
+      error(texto){
+        valor = ''; this.bloquear(false); pintar();
+        msg.textContent = texto;
+        puntos.classList.remove('error'); void puntos.offsetWidth; puntos.classList.add('error');
+        if(navigator.vibrate) navigator.vibrate(60);
+      },
+      bloquear(si){ bloqueado = si; teclado.parentElement.classList.toggle('pin-cargando', si); },
+      activo(){ return !teclado.closest('.hidden') && (!teclado.closest('.sheet') || teclado.closest('.sheet').classList.contains('open')); }
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Acceso
+  // ---------------------------------------------------------------------------
+  let perfiles = [];
+  let elegido = null;
+
+  async function cargarPerfiles(){
+    $('listaQuien').innerHTML = '<div class="sk-quien"></div><div class="sk-quien"></div><div class="sk-quien"></div>';
+    try{
+      if(!db) throw new Error('sin conexión');
+      const { data, error } = await db.from('perfiles').select('usuario,nombre,rol,orden').eq('activo', true).order('orden', { ascending:true });
+      if(error) throw error;
+      perfiles = data || [];
+      $('listaQuien').innerHTML = perfiles.length ? perfiles.map((p, i) => `
+        <button class="quien-btn" data-usuario="${esc(p.usuario)}" style="--i:${i}">
+          <span class="avatar">${esc(inicial(p.nombre))}</span>
+          <span><span class="quien-nombre" style="display:block">${esc(p.nombre)}</span><span class="quien-rol">${nombreRol(p.rol)}</span></span>
+        </button>`).join('')
+        : '<div class="acceso-err">No hay usuarios activos.</div>';
+    } catch(e){
+      $('listaQuien').innerHTML = `<div class="acceso-err">No se pudo conectar. Revisa tu internet.<br><button class="btn-secundario" id="btnReintentar">Reintentar</button></div>`;
+    }
+  }
+  $('listaQuien').addEventListener('click', (e) => {
+    if(e.target.closest('#btnReintentar')){ cargarPerfiles(); return; }
+    const b = e.target.closest('[data-usuario]');
+    if(!b) return;
+    elegido = perfiles.find(p => p.usuario === b.dataset.usuario);
+    if(!elegido) return;
+    $('pinAvatar').textContent = inicial(elegido.nombre);
+    $('pinNombre').textContent = 'Hola, ' + elegido.nombre;
+    tecladoAcceso.limpiar();
+    $('pasoQuien').classList.add('hidden');
+    $('pasoPin').classList.remove('hidden');
+  });
+  $('btnNoSoyYo').addEventListener('click', () => {
+    elegido = null;
+    $('pasoPin').classList.add('hidden');
+    $('pasoQuien').classList.remove('hidden');
+  });
+
+  const tecladoAcceso = crearTeclado({
+    puntos:'pinPuntos', teclado:'pinTeclado', msg:'pinMsg',
+    async alCompletar(pin){
+      if(!elegido) return;
+      tecladoAcceso.bloquear(true);
+      try{
+        await S.entrar(elegido.usuario, pin);
+        tecladoAcceso.bloquear(false);
+        await abrirInicio();
+      } catch(err){
+        const m = String((err && err.message) || '').toLowerCase();
+        tecladoAcceso.error(
+          m.includes('invalid') ? 'PIN incorrecto'
+          : m.includes('rate') || m.includes('too many') ? 'Muchos intentos. Espera un minuto'
+          : m.includes('fetch') || m.includes('network') ? 'Sin conexión. Intenta de nuevo'
+          : 'No se pudo entrar. Intenta de nuevo');
+      }
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Inicio
+  // ---------------------------------------------------------------------------
+  const ICON_DEPOSITO = '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>';
+  const ICON_FINANZAS = '<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 10v5M18 10v5"/>';
+  const ICON_COSTOS = '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h2M12 10h2M16 10h0M8 14h2M12 14h2M8 18h2M12 18h2M16 14v4"/>';
+  const ICON_NOMINA = '<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>';
+
+  function pintarModulos(p){
+    const mods = S.MODULOS.filter(m => m.id !== 'inicio');
+    if(p && p.rol === 'admin') mods.push({ id:'nomina', nombre:'Nómina', href:'nomina.html', listo:true, icon:ICON_NOMINA });
+    if(p && (p.rol === 'admin' || p.rol === 'vendedor')) mods.push({ id:'deposito', nombre:'Depósito', href:'deposito.html', listo:true, icon:ICON_DEPOSITO });
+    // MAQUETA: módulos nuevos, solo administradores
+    if(p && p.rol === 'admin') mods.push({ id:'finanzas', nombre:'Finanzas', href:'finanzas.html', listo:true, icon:ICON_FINANZAS }, { id:'costos', nombre:'Costos', href:'costos.html', listo:true, icon:ICON_COSTOS });
+    // Primero los módulos que ya funcionan, a lo ancho; luego los que vienen
+    const listos = mods.filter(m => m.listo), pronto = mods.filter(m => !m.listo);
+    let i = 0;
+    $('modulos').innerHTML = listos.map(m => `
+      <a class="ini-tile" href="${m.href}" data-modulo style="--i:${i++}">
+        <span class="ini-ico">${S.iconoModulo(m, 24)}</span>
+        <span><span class="ini-nombre">${m.nombre}</span><span class="ini-cuenta" id="cuenta-${m.id}"><span class="sk-linea" style="display:block;width:90px;margin-top:4px"></span></span></span>
+      </a>`).join('') + pronto.map(m => `
+      <div class="ini-tile pronto" style="--i:${i++}" aria-disabled="true">
+        <span class="pill-pronto">Pronto</span>
+        <span class="ini-ico">${S.iconoModulo(m, 22)}</span>
+        <span><span class="ini-nombre">${m.nombre}</span><span class="ini-cuenta">En construcción</span></span>
+      </div>`).join('');
+  }
+
+  async function contarCatalogo(){
+    const el = $('cuenta-catalogo');
+    if(!el) return;
+    try{
+      const [rc, rp] = await Promise.all([
+        db.from('catalogo').select('id', { count:'exact', head:true }),
+        db.from('disponibles').select('cantidad').eq('estado', 'disponible').gt('cantidad', 0)
+      ]);
+      if(rc.error || rp.error) throw (rc.error || rp.error);
+      const n = rc.count || 0;
+      const d = (rp.data || []).reduce((a, x) => a + (x.cantidad || 0), 0);
+      el.innerHTML = `${n} ${n === 1 ? 'modelo' : 'modelos'}` + (d ? ` · <span class="num">${d} listos</span>` : '');
+    } catch(e){
+      el.textContent = 'Modelos y entrega inmediata';
+    }
+  }
+
+  // Cotizaciones abiertas, ventas activas y por cobrar
+  async function contarVentas(){
+    const ec = $('cuenta-cotizaciones'), ev = $('cuenta-ventas');
+    if(!ec && !ev) return;
+    try{
+      const { data, error } = await db.from('ventas').select('estado,total,vence_en,confirmada_en,abonos(monto,tipo,estado)').eq('interna', false).in('estado', ['cotizacion', 'confirmada', 'en_produccion', 'lista', 'entregada']);
+      if(error) throw error;
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      const abiertas = data.filter(v => v.estado === 'cotizacion' && new Date(v.vence_en + 'T00:00') >= hoy).length;
+      const activas = data.filter(v => ['confirmada', 'en_produccion', 'lista'].includes(v.estado)).length;
+      const porCobrar = data.filter(v => v.estado !== 'cotizacion' && (Number(v.total) - (v.abonos || []).filter(x => x.estado !== 'rechazado').reduce((a, x) => a + (x.tipo === 'devolucion' ? -1 : 1) * Number(x.monto), 0)) > 0.009).length;
+      if(ec) ec.innerHTML = abiertas ? `<span class="num">${abiertas} ${abiertas === 1 ? 'abierta' : 'abiertas'}</span>` : 'Ninguna abierta';
+      if(ev) ev.innerHTML = activas || porCobrar ? `${activas} ${activas === 1 ? 'activa' : 'activas'}${porCobrar ? ` · <span class="num">${porCobrar} por cobrar</span>` : ''}` : 'Ninguna activa';
+    } catch(e){
+      if(ec) ec.textContent = 'Clientes que preguntaron';
+      if(ev) ev.textContent = 'Pedidos con pago';
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Administradores: pedidos esperando producción y notificaciones del teléfono
+  // ---------------------------------------------------------------------------
+  const ICON_CAMPANA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+  const svg = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const ICONOS = {
+    dinero: svg('<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/>'),
+    llave: svg('<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>'),
+    persona: svg('<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>'),
+    vale: svg('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'),
+    check: svg('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/>'),
+    enviar: svg('<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>'),
+    reloj: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    alerta: svg('<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/>'),
+    catalogo: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/>'),
+    caja: svg('<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>'),
+    etiqueta: svg('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>')
+  };
+  const CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+  const CHEV_ABAJO = '<svg class="pend-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+  const CLAVE_PEND = 'ah_pend_cerrados';
+  let pendCerradosMem = null;   // respaldo si el teléfono no deja guardar (modo privado)
+  function pendCerrados(){
+    if(pendCerradosMem !== null) return pendCerradosMem;
+    try{ return localStorage.getItem(CLAVE_PEND) === '1'; } catch(e){ return false; }
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pend-toggle]'); if(!b) return;
+    const sec = b.closest('.pend');
+    if(!sec) return;
+    const cerrar = !sec.classList.contains('cerrado');
+    pendCerradosMem = cerrar;
+    sec.classList.toggle('cerrado', cerrar);
+    b.setAttribute('aria-expanded', String(!cerrar));
+    b.querySelector('.pend-accion').textContent = cerrar ? 'Ver' : 'Ocultar';
+    try{ localStorage.setItem(CLAVE_PEND, cerrar ? '1' : '0'); } catch(err){}
+  });
+  const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
+
+  // Un pendiente = una línea: color según qué es, título corto y detalle
+  // p = { color:'rojo'|'naranja'|'verde'|'azul'|'amarillo'|'teal', icono, titulo, detalle, href }
+  function filaPendiente(p, i){
+    const dentro = `<span class="pend-ico">${ICONOS[p.icono]}</span>
+      <span class="pend-t">${esc(p.titulo)}${p.detalle ? ` <span>· ${esc(p.detalle)}</span>` : ''}</span>${CHEV}`;
+    return `<a class="pend-fila ${p.color}" href="${esc(p.href)}" style="--i:${i}" data-modulo>${dentro}</a>`;
+  }
+
+  let estadoNotif = null;
+  async function pintarAvisosAdmin(p){
+    const cont = $('avisosAdmin');
+    const admin = p && p.rol === 'admin';
+    $('btnNotif').classList.remove('hidden');
+    const pend = [];
+    // Ray: pagos por confirmar
+    if(p && p.confirma_abonos){
+      try{
+        const { data } = await db.from('abonos').select('id,venta_id,monto,metodo').eq('estado', 'por_confirmar').eq('tipo', 'abono').order('fecha', { ascending:true });
+        if(data && data.length){
+          const total = data.reduce((a, x) => a + Number(x.monto), 0);
+          pend.push({ color:'rojo', icono:'dinero', titulo: plural(data.length, '1 pago por confirmar', 'pagos por confirmar'), detalle: window.AH.dinero(total),
+            href: 'finanzas.html?confirmar=1' }); // MAQUETA: antes iba a Ventas; ahora confirma y ubica en un paso en Finanzas
+        }
+      } catch(e){}
+    }
+    if(p && (admin || p.rol === 'vendedor')) pend.push(...await pendientesDeposito(p));
+    if(admin) pend.push(...pendientesFinanzas(p));
+    if(admin) pend.push(...await pendientesTaller());
+    if(p && p.rol === 'vendedor') pend.push(...await pendientesVendedor(p));
+
+    // Se pueden minimizar (el teléfono recuerda cómo los dejaste); cerrados muestran un
+    // puntito del color de cada pendiente para que no se pierdan de vista
+    const cerrado = pendCerrados();
+    let html = pend.length ? `<section class="pend ${cerrado ? 'cerrado' : ''}" aria-label="Pendientes">
+      <button class="pend-cab" type="button" data-pend-toggle aria-controls="pendLista" aria-expanded="${!cerrado}">Pendientes <span class="pend-n">${pend.length}</span>
+        <span class="pend-puntos" aria-hidden="true">${pend.map(p => `<i class="${p.color}"></i>`).join('')}</span>
+        <span class="pend-accion">${cerrado ? 'Ver' : 'Ocultar'}</span>${CHEV_ABAJO}</button>
+      <div class="pend-lista" id="pendLista">${pend.map(filaPendiente).join('')}</div></section>` : '';
+
+    // Notificaciones del teléfono (aparte: no es un pendiente de trabajo)
+    try{ estadoNotif = window.Avisos ? await window.Avisos.estado() : 'no-soportado'; } catch(e){ estadoNotif = 'no-soportado'; }
+    $('notifCheck').classList.toggle('hidden', estadoNotif !== 'activo');
+    $('btnPrueba').classList.toggle('hidden', estadoNotif !== 'activo');
+    const campana = ICON_CAMPANA.replace('width="22" height="22"', 'width="18" height="18"');
+    if(estadoNotif === 'inactivo'){
+      html += `<div class="notif-fila">${campana}<span class="nt">Avisos en este teléfono</span><button class="aviso-btn" type="button" data-activar-notif>Activar</button></div>`;
+    } else if(estadoNotif === 'instalar'){
+      html += `<button class="notif-fila" type="button" data-notif-ayuda="instalar">${campana}<span class="nt">Avisos: cómo activarlos</span>${CHEV}</button>`;
+    } else if(estadoNotif === 'bloqueado'){
+      html += `<button class="notif-fila" type="button" data-notif-ayuda="bloqueado">${campana}<span class="nt">Avisos bloqueados: cómo activarlos</span>${CHEV}</button>`;
+    }
+    cont.innerHTML = html;
+  }
+
+  // Depósito: materiales por reponer (administrador y vendedora) y entregas por revisar (Ray)
+  async function pendientesDeposito(p){
+    const pend = [];
+    const [rm, re] = await Promise.all([
+      db.from('materiales').select('id,nombre,stock,minimo').eq('activo', true),
+      db.from('deposito_entregas').select('id', { count:'exact', head:true }).eq('estado', 'por_revisar')
+    ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
+    const mats = (rm && rm.data) || null;
+    const bajos = (mats || []).filter(m => m.stock < m.minimo);
+    const el = $('cuenta-deposito');
+    if(el) el.innerHTML = !mats ? 'Materiales y entregas' : !mats.length ? 'Agrega tus materiales' : bajos.length ? `<span class="num">${plural(bajos.length, '1 por reponer', 'por reponer')}</span>` : 'Todo al día';
+    const rev = re && typeof re.count === 'number' ? re.count : 0;
+    if(p.confirma_abonos && rev) pend.push({ color:'naranja', icono:'caja', titulo: plural(rev, '1 entrega por revisar', 'entregas por revisar'), detalle:'Depósito', href:'deposito.html?tab=entregas&filtro=revisar' });
+    if(bajos.length) pend.push({ color:'amarillo', icono:'caja', titulo: plural(bajos.length, '1 material por reponer', 'materiales por reponer'),
+      detalle: bajos.slice(0, 2).map(m => m.nombre).join(', ') + (bajos.length > 2 ? '…' : ''), href:'deposito.html' });
+    return pend;
+  }
+  // MAQUETA: Finanzas, Compras y Costos (solo administradores). En la app real salen de la base.
+  function pendientesFinanzas(p){
+    const X = window.MAQUETA; if(!X) return [];
+    const d = X.datos(), pend = [], din = window.AH.dinero;
+    const ub = X.porUbicar(), r = X.resumen();
+    const ef = $('cuenta-finanzas'); if(ef) ef.innerHTML = ub.length ? `<span class="num">${din(r.porUbicar)} por ubicar</span>` : 'Tienes ' + din(r.total);
+    if(p.confirma_abonos && ub.length) pend.push({ color:'naranja', icono:'dinero', titulo: plural(ub.length, '1 pago por ubicar', 'pagos por ubicar'), detalle: din(r.porUbicar) + ' · ¿dónde quedó?', href:'finanzas.html?ubicar=1' });
+    d.proveedores.forEach(pr => { const s = X.saldoProv(pr.id); if(s < -0.005) pend.push({ color:'rojo', icono:'dinero', titulo:'Le debes a ' + pr.nombre.replace('Inversiones ', ''), detalle: din(-s), href:'finanzas.html?prov=' + pr.id }); });
+    // Barras que faltan para lo que está en fabricación
+    let falta = 0; const por = {};
+    d.enFabricacion.forEach(ped => (d.cortes[ped.producto] || []).forEach(([mid, c, cm]) => { for(let i = 0; i < c * ped.cantidad; i++) (por[mid] ||= []).push({ cm }); }));
+    Object.entries(por).forEach(([mid, pz]) => { const f = d.fab.find(x => x.id === mid); falta += Math.max(0, X.empacar(pz, f.largo, 0).length - f.stock); });
+    if(falta) pend.push({ color:'amarillo', icono:'caja', titulo: plural(falta, 'Falta 1 barra para esta semana', 'barras faltan para esta semana'), detalle:'Comprar', href:'deposito.html?tab=fab' });
+    // Modelos vendidos que no tienen costo
+    const sin = [...new Set(d.ventas.filter(v => v.estado !== 'cancelada').flatMap(v => v.items).filter(it => !X.costear(it.catalogo_id)).map(it => it.catalogo_id))];
+    const ec = $('cuenta-costos'); const nCost = Object.keys(d.costeo).filter(k => d.catalogo.some(m => String(m.id) === k)).length;
+    if(ec) ec.innerHTML = `${nCost} de ${d.catalogo.length} costeados`;
+    if(sin.length) pend.push({ color:'azul', icono:'etiqueta', titulo: plural(sin.length, '1 modelo vendido sin costear', 'modelos vendidos sin costear'), detalle: sin.map(id => (d.catalogo.find(m => m.id === id) || {}).nombre).slice(0, 2).join(', '), href:'costos.html?modelo=' + sin[0] });
+    // Gastos fijos del mes sin cargar
+    const mes = new Date().toISOString().slice(0, 7);
+    const faltan = d.gastosFijos.filter(g => !d.movs.some(m => m.tipo === 'gasto' && !m.anulado && m.cat === g.cat && String(m.fecha).slice(0, 7) === mes));
+    if(faltan.length) pend.push({ color:'amarillo', icono:'reloj', titulo: plural(faltan.length, '1 gasto del mes sin cargar', 'gastos del mes sin cargar'), detalle: faltan.slice(0, 2).map(g => g.cat).join(', ') + (faltan.length > 2 ? '…' : ''), href:'finanzas.html?tab=gastos' });
+    return pend;
+  }
+  // Taller: vales por aprobar, trabajos sin asignar o atrasados, fotos que faltan y lo que falta para calcular pagos
+  async function pendientesTaller(){
+    const pend = [];
+    const [rVales, rProd, rCats, rMod, rNom, rFotos, rCombos] = await Promise.all([
+      window.Trabajo.cargarVales().then(d => ({ data:d }), () => ({ data:[] })),
+      db.from('ventas').select('id,items:venta_items(categoria_pago_id,etapas(rama,orden,estado,trabajador_id,para_el))').eq('estado', 'en_produccion'),
+      db.from('categorias_pago').select('id', { count:'exact', head:true }),
+      db.from('catalogo').select('id', { count:'exact', head:true }).is('categoria_pago_id', null),
+      db.rpc('nomina_semana'),
+      db.from('venta_items').select('catalogo_id,especificaciones,catalogo:catalogo(id,nombre,fotos),venta:ventas!inner(estado)')
+        .in('venta.estado', ['confirmada', 'en_produccion', 'lista']).not('catalogo_id', 'is', null).is('pieza_id', null),
+      db.from('catalogo').select('id,nombre,especificaciones_base').eq('tipo', 'Combo')
+    ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
+    let sinAsignar = 0, sinCat = 0, atrasados = 0;
+    const hoyIso = window.AH.sabados().hoy;
+    const enTaller = ((rProd && rProd.data) || []).length;
+    ((rProd && rProd.data) || []).forEach(v => (v.items || []).forEach(it => {
+      const et = it.etapas || [];
+      if(!et.length) return;
+      if(!it.categoria_pago_id) sinCat++;
+      const ramas = {};
+      et.forEach(e => (ramas[e.rama] = ramas[e.rama] || []).push(e));
+      atrasados += et.filter(e => e.estado === 'pendiente' && e.trabajador_id && e.para_el && e.para_el < hoyIso).length;
+      Object.values(ramas).forEach(l => {
+        const act = l.sort((a, b) => a.orden - b.orden).find(e => e.estado === 'pendiente');
+        if(act && !act.trabajador_id) sinAsignar++;
+      });
+    }));
+    const en = $('cuenta-nomina');
+    if(en){
+      const l = (rNom && rNom.data && rNom.data.trabajadores) || null;
+      const total = l ? l.reduce((a, t) => a + Math.max(0, Number(t.neto) || 0), 0) : 0;
+      en.innerHTML = !l ? 'Pagos de la semana' : total > 0 ? `<span class="num">${window.AH.dinero(total)} por pagar</span>` : 'Semana al día';
+    }
+    const ep = $('cuenta-produccion');
+    if(ep) ep.innerHTML = !(rProd && rProd.data) ? 'Pedidos en fabricación'
+      : sinAsignar ? `<span class="num">${sinAsignar} sin asignar</span>` : enTaller ? `${enTaller} en taller` : 'Taller libre';
+    if(sinAsignar) pend.push({ color:'naranja', icono:'persona', titulo: plural(sinAsignar, '1 trabajo sin asignar', 'trabajos sin asignar'), href:'produccion.html?filtro=asignar' });
+    if(atrasados) pend.push({ color:'amarillo', icono:'reloj', titulo: plural(atrasados, '1 trabajo pasó su sábado', 'trabajos pasaron su sábado'), href:'produccion.html?filtro=atrasados' });
+    // Vales: se aprueban en Nómina (Ray). Con uno solo, lleva directo a ese trabajador.
+    const vales = rVales.data || [];
+    if(vales.length){
+      const total = vales.reduce((a, v) => a + Number(v.monto), 0);
+      const uno = vales.length === 1 || vales.every(v => v.trabajador_id === vales[0].trabajador_id);
+      pend.push({ color:'verde', icono:'vale', titulo: plural(vales.length, '1 vale por aprobar', 'vales por aprobar'),
+        detalle: (uno ? ((vales[0].trabajador || {}).nombre || '') + ' ' : '') + window.AH.dinero(total),
+        href: 'nomina.html' + (uno ? '?t=' + encodeURIComponent(vales[0].trabajador_id) : '') });
+    }
+    // Modelos vendidos en un color que no tiene foto en el catálogo
+    const sinFoto = new Map();
+    ((rFotos && rFotos.data) || []).forEach(it => {
+      const m = it.catalogo, col = (it.especificaciones || {}).color;
+      if(!m || !col) return;
+      const f = m.fotos || {};
+      if(!f[col]) sinFoto.set(m.id, { m, col });
+    });
+    if(sinFoto.size){
+      const l = [...sinFoto.values()];
+      pend.push({ color:'teal', icono:'catalogo', titulo: plural(l.length, '1 modelo sin foto en un color', 'modelos sin foto en un color'),
+        detalle: l.length === 1 ? l[0].m.nombre + ' en ' + String(l[0].col).toLowerCase() : l.slice(0, 2).map(x => x.m.nombre).join(', ') + (l.length > 2 ? '…' : ''),
+        href: l.length === 1 ? 'catalogo.html?editar=' + l[0].m.id : 'catalogo.html' });
+    }
+    // Combos sin las medidas de sus 2 ventanas: no se pueden vender hasta completarlas
+    const combosSin = ((rCombos && rCombos.data) || []).filter(m => {
+      const e = m.especificaciones_base || {};
+      return !(Number(e.ventanas_alto) > 0 && Number(e.ventanas_ancho) > 0);
+    });
+    if(combosSin.length){
+      pend.push({ color:'teal', icono:'catalogo', titulo: plural(combosSin.length, '1 combo sin medidas de las ventanas', 'combos sin medidas de las ventanas'),
+        detalle: combosSin.length === 1 ? combosSin[0].nombre : 'no se pueden vender',
+        href: combosSin.length === 1 ? 'catalogo.html?editar=' + combosSin[0].id : 'catalogo.html' });
+    }
+    const nCats = rCats && typeof rCats.count === 'number' ? rCats.count : null;
+    if(nCats === 0){
+      pend.push({ color:'azul', icono:'etiqueta', titulo:'Crea las categorías de pago', detalle:'para calcular pagos', href:'categorias-pago.html?nueva=1' });
+    } else if(nCats){
+      if(sinCat) pend.push({ color:'azul', icono:'etiqueta', titulo: 'En fabricación: ' + plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'produccion.html?filtro=sincat' });
+      const nMod = rMod && typeof rMod.count === 'number' ? rMod.count : 0;
+      if(nMod) pend.push({ color:'teal', icono:'catalogo', titulo: 'En catálogo: ' + plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html?asignar=1' });
+    }
+    return pend;
+  }
+  // Vendedora: lo que le toca hacer con las ventas (todas: también gestiona las que crea
+  // el administrador) y cuántos pedidos hay en taller
+  const diaLocal = (iso) => { if(!iso) return null; const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
+  const diasHasta = (iso) => { const f = diaLocal(iso); if(!f) return null; const h = new Date(); h.setHours(0, 0, 0, 0); return Math.round((f - h) / 86400000); };
+  const ms = (x) => x ? new Date(x).getTime() : 0;
+  async function pendientesVendedor(p){
+    const pend = [];
+    const [rv, rp] = await Promise.all([
+      db.from('ventas').select('id,estado,vence_en,fecha_entrega,mensaje_en,mensaje_estado,cliente:clientes(nombre),abonos(tipo,estado,fecha,confirmado_en)')
+        .eq('interna', false).in('estado', ['cotizacion', 'confirmada', 'en_produccion', 'lista']),
+      db.rpc('produccion_lectura')
+    ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
+    const ep = $('cuenta-produccion');
+    if(ep){ const n = (rp && rp.data) ? rp.data.length : null; ep.textContent = n === null ? 'Avance de los pedidos' : n ? (n === 1 ? '1 pedido en taller' : n + ' pedidos en taller') : 'Taller libre'; }
+    if(!rv || rv.error || !rv.data) window.AH.toast('No se pudieron cargar tus pendientes. Revisa tu internet.', 'error');
+    const ventas = (rv && rv.data) || [];
+    const nombre = (v) => (v.cliente || {}).nombre || '';
+    const fila = (lista, color, icono, uno, varios, filtroVarios) => {
+      if(!lista.length) return;
+      pend.push({ color, icono, titulo: plural(lista.length, uno, varios),
+        detalle: lista.length === 1 ? nombre(lista[0]) : lista.slice(0, 3).map(v => 'N° ' + v.id).join(', ') + (lista.length > 3 ? '…' : ''),
+        href: lista.length === 1 ? (lista[0].estado === 'cotizacion' ? 'cotizaciones.html' : 'ventas.html') + '?abrir=' + lista[0].id : filtroVarios });
+    };
+    const activas = ventas.filter(v => v.estado !== 'cotizacion');
+    const abonos = (v) => (v.abonos || []).filter(a => a.tipo === 'abono');
+    // El último movimiento de pagos fue un "no llegó" (si ya registró otro pago, no sale)
+    const noLlego = activas.filter(v => {
+      const rech = abonos(v).filter(a => a.estado === 'rechazado');
+      if(!rech.length) return false;
+      const ultRech = Math.max(...rech.map(a => ms(a.confirmado_en || a.fecha)));
+      return !abonos(v).some(a => a.estado !== 'rechazado' && ms(a.fecha) > ultRech);
+    });
+    const ultimaConf = (v) => Math.max(0, ...abonos(v).filter(a => a.estado === 'confirmado').map(a => ms(a.confirmado_en)));
+    // Listo: falta el mensaje de "ya está listo". Pago confirmado: no le ha escrito desde que se confirmó.
+    const listos = activas.filter(v => v.estado === 'lista' && !(v.mensaje_en && v.mensaje_estado === 'lista' && ms(v.mensaje_en) >= ultimaConf(v)));
+    const seguimiento = activas.filter(v => (v.estado === 'confirmada' || v.estado === 'en_produccion') && ultimaConf(v) > 0 && !(v.mensaje_en && ms(v.mensaje_en) >= ultimaConf(v)));
+    const vencen = ventas.filter(v => v.estado === 'cotizacion' && (d => d !== null && d >= 0 && d <= 3)(diasHasta(v.vence_en)));
+    const atrasados = activas.filter(v => (v.estado === 'confirmada' || v.estado === 'en_produccion') && (d => d !== null && d < 0)(diasHasta(v.fecha_entrega)));
+    fila(noLlego, 'rojo', 'dinero', '1 pago no llegó', 'pagos no llegaron', 'ventas.html?filtro=cobrar');
+    fila(listos, 'verde', 'check', '1 pedido listo: avísale', 'pedidos listos: avísales', 'ventas.html?filtro=avisar');
+    fila(seguimiento, 'azul', 'enviar', '1 pago confirmado: avísale', 'pagos confirmados: avísales', 'ventas.html?filtro=avisar');
+    fila(vencen, 'amarillo', 'reloj', '1 cotización por vencer', 'cotizaciones por vencer', 'cotizaciones.html');
+    fila(atrasados, 'naranja', 'alerta', '1 pedido atrasado', 'pedidos atrasados', 'ventas.html?filtro=activas');
+    return pend;
+  }
+
+  async function activarNotif(){
+    if(!window.Avisos) return;
+    try{
+      const r = await window.Avisos.activar();
+      toast(r === 'activo' ? 'Listo, te llegarán los avisos' : r === 'bloqueado' ? 'Los avisos quedaron bloqueados' : 'No se activaron', r === 'activo' ? undefined : 'error');
+    } catch(e){ toast('No se pudieron activar: ' + (e.message || ''), 'error'); }
+    pintarAvisosAdmin(perfilActual);
+  }
+  document.addEventListener('click', (e) => { if(e.target.closest('[data-activar-notif]')) activarNotif(); });
+  document.addEventListener('click', (e) => { if(e.target.closest('[data-reintentar-perfil]')) abrirInicio(); });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-notif-ayuda]'); if(!b) return;
+    toast(b.dataset.notifAyuda === 'bloqueado' ? 'Actívalos en Ajustes › Notificaciones › Artesanos.' : 'Abre la app desde su ícono en la pantalla de inicio (no desde Safari) y vuelve aquí.');
+  });
+  $('btnPrueba').addEventListener('click', async () => {
+    const { error } = await db.rpc('aviso_prueba');
+    toast(error ? 'No se pudo mandar: ' + error.message : 'Listo. En unos segundos te llega el aviso', error ? 'error' : undefined);
+  });
+  $('btnNotif').addEventListener('click', async () => {
+    if(estadoNotif === 'activo'){
+      if(!confirm('¿Desactivar las notificaciones en este teléfono?')) return;
+      await window.Avisos.olvidar(true);
+      toast('Notificaciones desactivadas');
+      pintarAvisosAdmin(perfilActual);
+      return;
+    }
+    if(estadoNotif === 'inactivo') activarNotif();
+    else if(estadoNotif === 'instalar') toast('Abre la app desde su ícono en la pantalla de inicio');
+    else if(estadoNotif === 'bloqueado') toast('Actívalas en Ajustes › Notificaciones › Artesanos');
+  });
+
+  let perfilActual = null;
+  async function abrirInicio(){
+    const p = await S.perfil();
+    perfilActual = p;
+    const nombre = (p && p.nombre) || '';
+    $('saludo').textContent = nombre ? `Hola, ${nombre}` : 'Hola';
+    const f = new Date().toLocaleDateString('es-VE', { weekday:'long', day:'numeric', month:'long' });
+    $('fecha').textContent = f.charAt(0).toUpperCase() + f.slice(1);
+    $('btnCuenta').textContent = inicial(nombre);
+    $('cuentaAvatar').textContent = inicial(nombre);
+    $('cuentaNombre').textContent = nombre;
+    $('cuentaRol').textContent = nombreRol(p && p.rol);
+    $('grupoModulosAdmin').classList.toggle('hidden', !(p && p.rol === 'admin'));
+    $('grupoCatPublico').classList.toggle('hidden', !(p && (p.rol === 'admin' || p.rol === 'vendedor')));
+    // Las fotos que aún no tienen su copia chiquita se preparan solas, en segundo plano
+    if(p && p.rol === 'admin') setTimeout(() => window.AH.prepararMinis(), 2500);
+    // Sin señal en el primer ingreso: no se adivina qué eres, se pide reintentar
+    document.body.classList.toggle('sin-perfil', !(p && p.rol));
+    if(!(p && p.rol)){
+      window.Trabajo.salirTrabajador();
+      $('modulos').innerHTML = '';
+      $('avisosAdmin').innerHTML = `<div class="aviso-card"><span><span class="aviso-t">No se pudo cargar tu perfil</span>
+        <span class="aviso-s">Revisa tu señal e intenta de nuevo.</span></span><button class="aviso-btn" type="button" data-reintentar-perfil>Reintentar</button></div>`;
+      mostrar('vInicio');
+      return;
+    }
+    // El trabajador solo ve lo suyo: sus trabajos y sus pagos
+    if(p && p.rol === 'trabajador'){
+      $('modulos').innerHTML = '';
+      const listo = window.Trabajo.iniciarTrabajador(p);
+      pintarAvisosAdmin(p);
+      mostrar('vInicio');
+      await listo;
+      window.Trabajo.abrirSegunURL(p);
+      return;
+    }
+    window.Trabajo.salirTrabajador();
+    pintarModulos(p);
+    const avisos = pintarAvisosAdmin(p);
+    mostrar('vInicio');
+    contarCatalogo();
+    contarVentas();
+    await avisos;
+    window.Trabajo.abrirSegunURL(p);
+  }
+
+  $('btnCuenta').addEventListener('click', () => abrirHoja('sheetCuenta'));
+  // Catálogo público: copiar su enlace para mandarlo al cliente
+  $('btnCopiarPublico').addEventListener('click', async () => {
+    const url = new URL('catalogo-publico.html', location.href).href;
+    try{ await navigator.clipboard.writeText(url); window.AH.toast('Enlace copiado. Pégalo donde lo quieras mandar'); }
+    catch(e){ window.AH.toast('No se pudo copiar. El enlace es: ' + url, 'error'); }
+  });
+  $('btnSalir').addEventListener('click', async () => {
+    cerrarHoja('sheetCuenta', true);
+    await S.salir();
+    window.Trabajo.salirTrabajador();
+    elegido = null;
+    $('pasoPin').classList.add('hidden');
+    $('pasoQuien').classList.remove('hidden');
+    mostrar('vAcceso');
+    cargarPerfiles();
+  });
+
+  // Cambiar PIN: se escribe dos veces
+  let primerPin = null;
+  function reiniciarNuevo(){
+    primerPin = null;
+    $('nuevoTitulo').textContent = 'Nuevo PIN';
+    $('nuevoSub').textContent = 'Escribe 6 números que recuerdes';
+    tecladoNuevo.limpiar();
+  }
+  const tecladoNuevo = crearTeclado({
+    puntos:'nuevoPuntos', teclado:'nuevoTeclado', msg:'nuevoMsg',
+    async alCompletar(pin){
+      if(primerPin === null){
+        if(/^(\d)\1{5}$/.test(pin) || pin === '123456' || pin === '654321'){
+          tecladoNuevo.error('Muy fácil de adivinar. Usa otro');
+          return;
+        }
+        primerPin = pin;
+        $('nuevoTitulo').textContent = 'Repite tu nuevo PIN';
+        $('nuevoSub').textContent = 'Para confirmar';
+        tecladoNuevo.limpiar();
+        return;
+      }
+      if(pin !== primerPin){
+        primerPin = null;
+        $('nuevoTitulo').textContent = 'Nuevo PIN';
+        $('nuevoSub').textContent = 'Escribe 6 números que recuerdes';
+        tecladoNuevo.error('No coinciden. Empieza de nuevo');
+        return;
+      }
+      tecladoNuevo.bloquear(true);
+      try{
+        await S.cambiarPin(pin);
+        tecladoNuevo.bloquear(false);
+        cerrarHoja('sheetPin', true);
+        toast('Listo, tu PIN cambió');
+      } catch(err){
+        tecladoNuevo.bloquear(false);
+        primerPin = null;
+        $('nuevoTitulo').textContent = 'Nuevo PIN';
+        const m = String((err && err.message) || '').toLowerCase();
+        tecladoNuevo.error(m.includes('same') || m.includes('different') ? 'Ese ya es tu PIN actual' : 'No se pudo cambiar. Intenta de nuevo');
+      }
+    }
+  });
+  $('btnCambiarPin').addEventListener('click', () => {
+    cerrarHoja('sheetCuenta', true);
+    reiniciarNuevo();
+    abrirHoja('sheetPin');
+  });
+
+  // Teclado físico (computadora)
+  document.addEventListener('keydown', (e) => {
+    const t = /^\d$/.test(e.key) ? e.key : e.key === 'Backspace' ? 'x' : null;
+    if(!t) return;
+    if(tecladoNuevo.activo()) tecladoNuevo.tecla(t);
+    else if(tecladoAcceso.activo()) tecladoAcceso.tecla(t);
+  });
+
+  // Al volver a Inicio desde un módulo (página guardada por el navegador), refresca los números
+  window.addEventListener('pageshow', (e) => {
+    if(!e.persisted || $('vInicio').classList.contains('hidden')) return;
+    if(window.Trabajo.esTrabajador()){ window.Trabajo.refrescar(); pintarAvisosAdmin(perfilActual); return; }
+    contarCatalogo(); contarVentas(); pintarAvisosAdmin(perfilActual);
+  });
+  // Al volver a la app (desde el fondo), el trabajador ve lo último que le asignaron
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && window.Trabajo.esTrabajador()) window.Trabajo.refrescar();
+  });
+
+  window.addEventListener('scroll', () => $('topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
+
+  // Arranque: si ya hay sesión guardada, directo al inicio
+  (async function(){
+    let s = null;
+    try{ s = await S.sesionActual(); } catch(e){}
+    if(s){ await abrirInicio(); }
+    else { mostrar('vAcceso'); cargarPerfiles(); }
+  })();
+})();
+</script>
+</body>
+</html>
