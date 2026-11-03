@@ -16,7 +16,8 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 - Qué hizo: maqueta con el plan de corte semanal que sale de Producción (Costos › Semana: por herrero, Ray acepta o cambia, ya cortó, ¿qué alcanzo?, modelos sin cortes no frenan), Costos › Ganancia (gastos fijos, ¿alcanzamos este mes?, ganancia por producto), Depósito › Fabricación por tubo sin pedidos, Finanzas › Mes (cierre y reporte PDF), costo en el Catálogo, avisos de Inicio y PDF de hoja de corte, plan de compra y cierre. Plan actualizado (lotes 9 y 10).
 - Rama o PR: `ray/maqueta-finanzas-costos`, PR #3 en borrador (no se une). No toca la app ni la base.
 - Está tocando: solo `maqueta/` y docs.
-- Pendientes: OK de Ray a la maqueta; respuestas de los socios (Zelle, Torniplemaca, Colores y Ambiente, $915 y 25 puertas, nómina con cuenta); servicio de OCR; cargar cortes de los modelos del catálogo; aluminio y 3D después.
+- Después: decisiones de cuentas (lo que importa es a quién se paga; salidas con comisión; Bs con su tasa; pagos sin proveedor quedan por ubicar; nómina y vales con cuenta; confirmar pagos solo en Finanzas), reportes por proveedor y cuenta, corrida única con ahorro de consumo como en Airtek. Prompt listo en `docs/claude/documentos/prompt-claude-code.md`.
+- Pendientes: corrida única en Claude Code (Ray la aprobó); después OCR en corrida corta; cargar cortes reales de los modelos; aluminio, madera y 3D.
 
 ## 2026-11-02 · Claude de Ray
 - Qué hizo: maqueta viva de Finanzas, Proveedores, Compras (Depósito) y Costos, sobre una copia de la app con datos de ejemplo (`maqueta/`, con su `LEEME.md`). No toca la app, la base ni `main`. Plan por lotes en `docs/claude/documentos/plan-finanzas-costos.md`.

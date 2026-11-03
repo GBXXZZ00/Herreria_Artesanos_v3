@@ -96,13 +96,8 @@ Semáforo (ganancia sobre el costo, con el precio del catálogo): verde 30 % o m
 ## Avisos en Inicio (solo admin)
 Pagos por confirmar (Ray, a Finanzas) · pagos por ubicar (Ray) · le debes a un proveedor · faltan barras para esta semana · modelo vendido sin costear · gastos del mes sin cargar.
 
-## Preguntas abiertas (antes del lote 3)
-1. ¿Cuántos Zelle hay y de quién es cada uno?
-2. Torniplemaca, nota 00-2884 $1.674,50: ¿ya se pagó?
-3. ¿Saldo de hoy con Colores y Ambiente?
-4. ¿Quién registra transferencias a proveedores: solo Ray o también Gualfredo?
-5. ¿Los proveedores reciben Bs a tasa Binance?
-6. La nómina y los vales salen de una cuenta (casi siempre efectivo). ¿Nómina pide la cuenta al pagar (zona de Gualfredo) o Ray la descuenta con un gasto?
+## Preguntas abiertas
+Ninguna frena la corrida. Los saldos de cuentas y proveedores los pone Ray a mano poco a poco; los gastos fijos y las puertas al mes los ajusta él en Costos › Ganancia.
 
 ## Cómo trabaja cada lote
 1. Leer `CLAUDE.md`, `docs/bitacora.md`, este plan y la pantalla en `maqueta/`.
