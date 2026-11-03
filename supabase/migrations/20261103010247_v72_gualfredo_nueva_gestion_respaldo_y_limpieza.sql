@@ -1,6 +1,6 @@
 -- Autor: Gualfredo (Claude de Gualfredo)
 -- v72_gualfredo_nueva_gestion_respaldo_y_limpieza
--- PENDIENTE: NO está aplicada. Al aplicarla, renombrar este archivo a <version>_v72_gualfredo_nueva_gestion_respaldo_y_limpieza.sql
+-- APLICADA el 2 nov 2026 (version 20261103010247) por Ray (Claude de Ray) con OK de Ray. Ensayo previo con rollback: OK.
 --
 -- Qué hace (pedido por Gualfredo el 2 nov 2026: "mañana arranca una nueva gestión"):
 -- 1. Copia COMPLETA a la tabla respaldos (origen 'gestion-hasta-2026-11-02') de ventas, productos, pagos,
