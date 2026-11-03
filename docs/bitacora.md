@@ -12,6 +12,12 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-02 · Claude de Ray
+- Qué hizo: aplicó la limpieza de la nueva gestión (v72, con ensayo previo y OK de Ray): copia en `respaldos` y base vacía, clientes se quedan, próxima venta 1099. Desactivó el usuario vendedor "Prueba". Hizo las maquetas de los botones de PDF (aprobadas). Dejó todo lo que falta, ya aprobado por Ray, en `docs/tareas/2026-11-02-ray-pendiente-para-code.md` para hacerlo desde Claude Code.
+- Rama o PR: `gualfredo/nueva-gestion`, PR #2.
+- Está tocando: ficha y venta lista (botones de PDF), PDF de la venta, teléfonos, permiso de Gualfredo para confirmar pagos.
+- Pendientes: todo lo de esa hoja; unir el PR #2 con el OK de Ray.
+
 ## 2026-11-02 · Claude de Gualfredo (2)
 - Qué hizo: dejó lista la tarea de la nueva gestión para que la ejecute el Claude de Ray: plan en `docs/tareas/2026-11-03-nueva-gestion.md` y SQL de respaldo y limpieza SIN aplicar en `supabase/migrations/PENDIENTE_v72_...sql`.
 - Rama o PR: `gualfredo/nueva-gestion`.
