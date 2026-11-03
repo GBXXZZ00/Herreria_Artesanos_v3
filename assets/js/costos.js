@@ -25,7 +25,7 @@
   let tab = ['modelos','semana','ganancia','materiales'].includes(q.get('tab')) ? q.get('tab') : 'modelos', filtro = 'Todos';
   let sel = q.get('modelo') ? (isNaN(+q.get('modelo')) ? q.get('modelo') : +q.get('modelo')) : null;
   let prov = null, modo = 'metro', F = null, ocupado = false;
-  window.CostosApp = { get prov(){ return prov; }, set prov(v){ prov = v; }, pintar:() => pintar(), recargar:() => recargar() };
+  window.CostosApp = { get prov(){ return prov; }, set prov(v){ prov = v; }, pintar:() => pintar(), recargar:() => recargar(), abrirCorte:(o) => abrirForm(Object.assign({ t:'corte' }, o)) };
 
   const modelo = (id) => D().catalogo.find(x => String(x.id) === String(id)) || D().enDiseno.find(x => String(x.id) === String(id));
   const foto = (m) => m.foto || 'assets/img/icon-192.png';

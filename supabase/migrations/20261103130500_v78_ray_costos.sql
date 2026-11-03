@@ -293,7 +293,8 @@ begin
     'insumos', coalesce((select jsonb_agg(jsonb_build_object('id', i.id, 'codigo', i.codigo, 'nombre', i.nombre, 'grupo', i.grupo, 'p', i.precio, 'r', i.rendimiento) order by i.orden, i.id) from costeo_insumos i where i.activo), '[]'::jsonb),
     'fab', coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'codigo', m.codigo, 'nombre', m.nombre, 'tipo', m.tipo, 'pres', m.presentacion, 'largo', m.largo_cm,
         'hoja', case when m.presentacion = 'hoja' then jsonb_build_array(m.hoja_ancho_cm, m.hoja_alto_cm) end, 'fijo', m.precio_fijo, 'stock', m.stock, 'activo', m.activo,
-        'retazos', coalesce((select jsonb_agg(r.largo_cm order by r.largo_cm desc) from material_retazos r where r.material_id = m.id and r.usado_en is null and r.ancho_cm is null), '[]'::jsonb),
+        'retazos', coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'largo', r.largo_cm) order by r.largo_cm desc) from material_retazos r where r.material_id = m.id and r.usado_en is null and r.ancho_cm is null), '[]'::jsonb),
+        'sobrantes', coalesce((select jsonb_agg(jsonb_build_array(r.largo_cm, r.ancho_cm)) from material_retazos r where r.material_id = m.id and r.usado_en is null and r.ancho_cm is not null), '[]'::jsonb),
         'precios', coalesce((select jsonb_object_agg(pp.proveedor_id::text, jsonb_build_object('p', pp.precio, 'esp', pp.espesor, 'desde', pp.desde)) from material_precios pp where pp.material_id = m.id and pp.vigente), '{}'::jsonb))
         order by m.orden, m.id) from materiales_fab m), '[]'::jsonb),
     'categorias', coalesce((select jsonb_agg(jsonb_build_object('id', c.id, 'nombre', c.nombre, 'producto', c.producto, 'tarifas', c.tarifas) order by c.id) from categorias_pago c where c.activo), '[]'::jsonb),
