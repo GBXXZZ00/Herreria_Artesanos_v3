@@ -46,6 +46,8 @@
   // Precio sin IVA: el del proveedor elegido; si no lo vende, el del principal u otro. El fijo manda con el principal.
   function precioFab(f, prov){
     const usar = (k) => ({ p:(principal(k) && f.fijo) ? Number(f.fijo) : Number(f.precios[k].p), de:String(k), esp:f.precios[k].esp, fijo:principal(k) && !!f.fijo });
+    // "El más barato": de todos los proveedores, el menor precio (con el fijo si sale del principal)
+    if(prov === 'barato'){ const ks = Object.keys(f.precios || {}); if(!ks.length) return { p:null, de:null }; return ks.map(usar).sort((a, b) => a.p - b.p)[0]; }
     if(f.precios && f.precios[prov]) return usar(prov);
     const orden = D.proveedores.map(p => String(p.id)).concat(Object.keys(f.precios || {}));
     for(const k of orden) if(f.precios && f.precios[k]) return usar(k);
@@ -67,7 +69,7 @@
       const piezas = porMat[mid], f = D.fab.find(x => String(x.id) === mid); if(!f) continue;
       const pr = precioFab(f, prov);
       if(pr.p == null){ falta.push('precio de ' + f.nombre); continue; }
-      if(pr.de !== prov) avisos.add(provN(prov) + ' no vende ' + f.nombre + ': se usó el precio de ' + provN(pr.de));
+      if(prov !== 'barato' && pr.de !== prov) avisos.add(provN(prov) + ' no vende ' + f.nombre + ': se usó el precio de ' + provN(pr.de));
       const barra = pr.p * iva, porM = barra / (f.largo / 100);
       const cm = piezas.reduce((a, x) => a + x.cm, 0), barras = empacar(piezas, f.largo, R.corte);
       const v = modo === 'tubo' ? barras.length * barra : cm / 100 * porM;
@@ -78,7 +80,7 @@
       const f = D.fab.find(x => String(x.id) === String(mid)); if(!f) continue;
       const pr = precioFab(f, prov);
       if(pr.p == null){ falta.push('precio de ' + f.nombre); continue; }
-      if(pr.de !== prov && !/^Sin factura/i.test(provN(pr.de))) avisos.add(provN(prov) + ' no vende ' + f.nombre + ': se usó el precio de ' + provN(pr.de));
+      if(prov !== 'barato' && pr.de !== prov && !/^Sin factura/i.test(provN(pr.de))) avisos.add(provN(prov) + ' no vende ' + f.nombre + ': se usó el precio de ' + provN(pr.de));
       const m2 = cant * a * h / 10000, hm2 = f.hoja[0] * f.hoja[1] / 10000;
       add(f.tipo === 'vidrio' ? 'Vidrio' : 'Lámina', f.nombre, m2.toLocaleString('es-VE', { maximumFractionDigits:3 }) + ' m² (' + Math.round(m2 / hm2 * 100) + ' % de la hoja)' + (nota ? ' · ' + nota : ''), m2 * pr.p * iva / hm2);
     }

@@ -68,12 +68,14 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   ok('Inicio: avisos de pagos por ubicar, le debes a un proveedor y gasto sin cargar',pendTxt.includes('2 pagos por ubicar')&&pendTxt.includes('Le debes a Torniplemaca')&&pendTxt.includes('1 gasto del mes sin cargar'),pendTxt.slice(0,300));
   await p.goto(H+'finanzas.html');await p.waitForSelector('.rep');await w();
   const txt=await p.textContent('#cont');
-  ok('Dinero: pagos por confirmar arriba',txt.includes('Pagos por confirmar · 1')&&txt.includes('Ana Rincón'));
+  ok('Dinero: los pagos por confirmar van en una sola tarjeta arriba',txt.includes('1 pago por confirmar')&&(await p.$$('#cont [data-lista-confirmar]')).length===1&&!(await p.$('#cont [data-confirmar]')));
   ok('Tu dinero hoy en dos columnas: cuentas 2.450, por ubicar 240 − 80, debes 1.674,50',txt.includes('Tu dinero hoy')&&txt.includes('En tus cuentas')&&txt.includes('Le debes a proveedores'));
   ok('Pagos por ubicar: el pago del cliente y la nómina sin cuenta',txt.includes('Pagos por ubicar · 2')&&txt.includes('Nómina · Jesus'));
   await p.screenshot({path:'shots4/t42-1-dinero.png'});
   // Confirmar y ubicar en un paso
-  await p.click('[data-confirmar="7"]');await p.waitForSelector('#sheetForm.open');await w();
+  await p.click('[data-lista-confirmar]');await p.waitForSelector('#sheetDet.open');await w();
+  ok('La lista agrupa los pagos por venta',(await p.textContent('#detBody')).includes('N° 1100 · Ana Rincón'));
+  await p.click('#detBody [data-confirmar="7"]');await p.waitForSelector('#sheetForm.open');await w();
   await p.click('#formBody [data-f-llego="si"]');await w(200);
   ok('Confirmar: dice que con este pago pasa a fabricación',(await p.textContent('#formBody')).includes('pasa solo a fabricación'));
   await p.click('#btnForm');await w(200);
@@ -84,19 +86,23 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   await p.click('#btnForm');await w(700);
   const cf=ultimo(rpcs,'pago_confirmar_y_ubicar');
   ok('Confirma y ubica en un solo paso (cuenta 1)',cf&&cf.aid===7&&cf.llego===true&&cf.p.cuenta_id===1,cf);
+  // Confirmar en fila: si quedan pagos, se abre solo el siguiente
+  ok('Después de confirmar abre solo el siguiente pago',await p.isVisible('#sheetForm.open'));
   // No llegó: pide motivo
-  await p.click('[data-confirmar="7"]');await p.waitForSelector('#sheetForm.open');await w();
   await p.click('#formBody [data-f-llego="no"]');await w(200);await p.click('#btnForm');await w(200);
   ok('No llegó sin motivo marca el campo',await p.$eval('#campoMotivo',x=>x.classList.contains('invalid')));
   await p.fill('#fMotivo','No aparece en Zelle');await p.click('#btnForm');await w(600);
   const nl=ultimo(rpcs,'pago_confirmar_y_ubicar');
   ok('No llegó manda el motivo',nl.llego===false&&nl.nota==='No aparece en Zelle',nl);
   // Ubicar la nómina sin cuenta
+  await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.toggle('open',false));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.toggle('open',false));});
+  await p.click('details[data-acc="ubicar"] summary');await w(200);
   await p.click('[data-ubicar-mov="4"]');await p.waitForSelector('#sheetForm.open');await w();
   await p.click('#formBody [data-f-cuenta="1"]');await w(200);await p.click('#btnForm');await w(600);
   const um=ultimo(rpcs,'movimiento_ubicar');
   ok('Salida por ubicar: se elige la cuenta',um&&um.mid===4&&um.p.cuenta_id===1,um);
   // Cuenta nueva
+  if(!(await p.isVisible('[data-nueva-cuenta]'))){ await p.click('details[data-acc="cuentas"] summary');await w(200); }
   await p.click('[data-nueva-cuenta]');await p.waitForSelector('#sheetForm.open');await w();
   await p.click('#btnForm');await w(200);
   ok('Cuenta sin nombre marca el campo',await p.$eval('#campoNom',x=>x.classList.contains('invalid')));
@@ -104,6 +110,7 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   const cn=ultimo(rpcs,'cuenta_guardar');
   ok('Agregar cuenta con su tipo',cn&&cn.p.nombre==='Efectivo Cumbres'&&cn.p.tipo==='Efectivo',cn);
   // Mover entre cuentas con comisión
+  if(!(await p.isVisible('#cont [data-traspaso]'))){ await p.click('details[data-acc="cuentas"] summary');await w(200); }
   await p.click('#cont [data-traspaso]');await p.waitForSelector('#sheetForm.open');await w();
   await p.click('#formBody [data-f-de="1"]');await w(150);await p.click('#formBody [data-f-a="2"]');await w(150);
   await p.fill('#fMonto','770');await p.click('#formBody [data-f-menos]');await w(150);await p.fill('#fLlego','700');

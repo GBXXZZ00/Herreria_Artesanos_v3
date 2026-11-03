@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=73">
+<link rel="stylesheet" href="assets/css/base.css?v=74">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -327,6 +327,8 @@
   .pz-n{font-weight:800;color:var(--ink);min-width:14px;text-align:right}
   /* Hoja de corte del herrero (Costos › Semana) */
   .tj-corte{border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0}
+  .tj-corte-h{list-style:none;cursor:pointer;display:block}
+  .tj-corte-h::-webkit-details-marker{display:none}
   .tj-corte-h b{display:block;font-size:17px}
   .tj-corte-h span,.tj-corte-n{font-size:13px;color:var(--ink-soft)}
   .tj-corte-n{margin:6px 0 4px}
@@ -584,14 +586,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=73"></script>
-<script src="assets/js/supabase-client.js?v=73"></script>
-<script src="assets/js/img-compress.js?v=73"></script>
-<script src="assets/js/comun.js?v=73"></script>
-<script src="assets/js/avisos.js?v=73"></script>
-<script src="assets/js/sesion.js?v=73"></script>
-<script src="assets/js/ayuda.js?v=73"></script>
-<script src="assets/js/mi-trabajo.js?v=73"></script>
+<script src="assets/vendor/supabase.js?v=74"></script>
+<script src="assets/js/supabase-client.js?v=74"></script>
+<script src="assets/js/img-compress.js?v=74"></script>
+<script src="assets/js/comun.js?v=74"></script>
+<script src="assets/js/avisos.js?v=74"></script>
+<script src="assets/js/sesion.js?v=74"></script>
+<script src="assets/js/ayuda.js?v=74"></script>
+<script src="assets/js/pdf-reporte.js?v=74"></script>
+<script src="assets/js/mi-trabajo.js?v=74"></script>
 <script>
 (function(){
   'use strict';

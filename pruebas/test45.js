@@ -68,9 +68,12 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   const ant=(()=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');})();
   await p.goto(H+'finanzas.html?tab=mes&mes='+ant);await p.waitForSelector('[data-pdf-mes]');await w();
   const t=await p.textContent('#cont');
-  ok('Mes: lo que ganaste, entró y salió con nómina y comisión, compras, gastos fijos, productos, saldos',t.includes('Lo que ganaste')&&t.includes('Nómina')&&t.includes('Comisión y cambio')&&t.includes('Compras a proveedores')&&t.includes('Gastos fijos: previsto y pagado')&&t.includes('Modelo bitral × 1')&&t.includes('Así quedaron los proveedores'));
+  ok('Mes: lo que ganaste, entró y salió con nómina y comisión, compras, gastos fijos, productos, saldos',t.includes('Lo que ganaste')&&t.includes('Nómina')&&t.includes('Comisión y cambio')&&t.includes('Compras a proveedores')&&t.includes('Gastos fijos')&&t.includes('Pérdida')&&t.includes('Entró')&&!!(await p.$('[data-mes-mov]'))&&t.includes('Modelo bitral × 1')&&t.includes('Así quedaron los proveedores'));
   ok('Ganancia del mes: 320 − 223,22 − 950',t.includes('Pérdida del mes')&&t.includes('$853.22'));
   await p.screenshot({path:'shots4/t45-1-mes.png'});
+  await p.click('[data-mes-todos]');await w();
+  ok('Todos los meses en una hoja',(await p.$$('#detBody [data-mes]')).length>=1);
+  await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.toggle('open',false));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.toggle('open',false));});
   await p.click('[data-cerrar-mes]');await w(800);
   ok('Cerrar el mes llama a mes_cerrar con el primer día',JSON.stringify(ultimo(rpcs,'mes_cerrar'))===JSON.stringify({p_mes:ant+'-01'}));
   await p.click('[data-pdf-mes]');await w(2500);

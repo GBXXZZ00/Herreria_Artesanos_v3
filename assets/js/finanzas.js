@@ -114,11 +114,24 @@
     return `<div class="rep">${filas.map(([n, v, attr]) => `<${attr ? 'button' : 'div'} class="rep-f" ${attr ? 'type="button" ' + attr : ''}><span>${esc(n)}</span><b class="${v > 0.005 ? 's-favor' : v < -0.005 ? 's-debe' : ''}">${signo(v)}</b></${attr ? 'button' : 'div'}>`).join('')}
       <div class="rep-f total"><span>${esc(totalNombre)}</span><b class="${total < -0.005 ? 's-debe' : ''}">${total < -0.005 ? '−' : ''}${dinero(Math.abs(total))}</b></div></div>`;
   }
+  // Sección que se abre y se cierra: así la pantalla no crece hacia abajo
+  const abiertas = new Set(['movs']);
+  function acc(id, titulo, extra, cuerpo){
+    return `<details class="acc" data-acc="${id}" ${abiertas.has(id) ? 'open' : ''}><summary><span>${titulo}</span><span class="acc-x">${extra}</span></summary><div class="acc-b">${cuerpo}</div></details>`;
+  }
+  // Pagos por confirmar agrupados por venta
+  function gruposConfirmar(){
+    const g = {}; D.porConfirmar.forEach(a => { (g[a.venta_id] ||= { venta:a.venta_id, cliente:a.cliente, pagos:[] }).pagos.push(a); });
+    return Object.values(g);
+  }
   function secDinero(){
     const r = resumen(), ub = porUbicar(), sal = salidasPorUbicar(), pc = D.porCobrar || [], pc0 = D.porConfirmar;
-    let top = '';
-    if(pc0.length) top = `<div class="tit" style="margin-top:0">Pagos por confirmar · ${pc0.length}</div>` + pc0.map(a => `<button class="ub conf" type="button" data-confirmar="${a.id}"><span class="grow"><b>N° ${esc(a.venta_id)} · ${esc(a.cliente)}</b><small>${esc(a.metodo)} · lo registró ${esc(a.registro || 'la vendedora')} · ¿Llegó?</small></span><span class="m">${dinero(a.monto)}</span>${CHEV}</button>`).join('') + '<div style="height:14px"></div>';
-    let h = top + `<div class="tit" style="margin-top:4px">Tu dinero hoy</div>` + reporte([
+    let h = '';
+    if(pc0.length){
+      const tot = pc0.reduce((x, a) => x + Number(a.monto), 0), nv = gruposConfirmar().length;
+      h += `<button class="ub conf" type="button" data-lista-confirmar style="margin-bottom:14px"><span class="grow"><b>${pc0.length === 1 ? '1 pago por confirmar' : pc0.length + ' pagos por confirmar'}</b><small>${nv === 1 ? '1 venta' : nv + ' ventas'} · toca para revisarlos uno tras otro</small></span><span class="m">${dinero(tot)}</span>${CHEV}</button>`;
+    }
+    h += `<div class="tit" style="margin-top:4px">Tu dinero hoy</div>` + reporte([
       ['En tus cuentas', r.enCuentas, 'data-ir="cuentas"'],
       ['Pagos por ubicar', r.porUbicar, 'data-ir="ubicar"'],
       ['A tu favor con proveedores', r.aFavor, 'data-ir="prov"'],
@@ -126,23 +139,41 @@
       ['Le debes a proveedores', -r.debes, 'data-ir="prov"'],
     ], 'Todo lo tuyo', r.total);
     h += secGanancia();
-    // Por ubicar: pagos de clientes y salidas sin cuenta o sin proveedor
-    h += `<div class="tit" id="sec-ubicar">Pagos por ubicar · ${ub.length + sal.length}</div>`;
-    h += ub.map(a => `<button class="ub" type="button" data-ubicar="${a.id}"><span class="grow"><b>${a.tipo === 'devolucion' ? 'Devolución' : 'N°'} ${esc(a.venta_id)} · ${esc(a.cliente)}</b><small>${esc(a.metodo || '')} · ${a.tipo === 'devolucion' ? '¿De qué cuenta salió?' : 'confirmado el ' + fecha(a.confirmado_en) + ' · ¿Dónde quedó?'}</small></span><span class="m">${a.tipo === 'devolucion' ? '−' : ''}${dinero(a.monto)}</span>${CHEV}</button>`).join('');
-    h += sal.map(m => `<button class="ub" type="button" data-ubicar-mov="${m.id}"><span class="grow"><b>${esc(nomMov(m))}${m.ref ? ' · ' + esc(m.ref) : ''}</b><small>${fecha(m.fecha)} · ${m.cuenta ? '¿A cuál proveedor?' : '¿De qué cuenta salió?'}</small></span><span class="m">−${dinero(m.salio)}</span>${CHEV}</button>`).join('');
-    if(!ub.length && !sal.length) h += '<p class="mat-s" style="margin:0 2px">Todo ubicado. Cuando confirmas un pago y eliges "Después", aparece aquí para decir dónde quedó.</p>';
+    h += '<button class="btn-secondary" type="button" data-pdf-dinero style="width:100%;margin-top:12px">Reporte de hoy en PDF</button>';
+    // Por ubicar
+    h += '<div style="height:10px"></div>';
+    let ubH = '';
+    {
+      let h = '';
+      h += ub.map(a => `<button class="ub" type="button" data-ubicar="${a.id}"><span class="grow"><b>${a.tipo === 'devolucion' ? 'Devolución' : 'N°'} ${esc(a.venta_id)} · ${esc(a.cliente)}</b><small>${esc(a.metodo || '')} · ${a.tipo === 'devolucion' ? '¿De qué cuenta salió?' : 'confirmado el ' + fecha(a.confirmado_en) + ' · ¿Dónde quedó?'}</small></span><span class="m">${a.tipo === 'devolucion' ? '−' : ''}${dinero(a.monto)}</span>${CHEV}</button>`).join('');
+      h += sal.map(m => `<button class="ub" type="button" data-ubicar-mov="${m.id}"><span class="grow"><b>${esc(nomMov(m))}${m.ref ? ' · ' + esc(m.ref) : ''}</b><small>${fecha(m.fecha)} · ${m.cuenta ? '¿A cuál proveedor?' : '¿De qué cuenta salió?'}</small></span><span class="m">−${dinero(m.salio)}</span>${CHEV}</button>`).join('');
+      if(!ub.length && !sal.length) h += '<p class="mat-s" style="margin:0 2px">Todo ubicado. Cuando confirmas un pago y eliges "Después", aparece aquí para decir dónde quedó.</p>';
+      ubH = h;
+    }
+    const totUb = ub.reduce((x, a) => x + montoUb(a), 0) - sal.reduce((x, m) => x + Number(m.salio || 0), 0);
+    h += `<div id="sec-ubicar"></div>` + acc('ubicar', 'Pagos por ubicar · ' + (ub.length + sal.length), ub.length + sal.length ? dinero(Math.abs(totUb)) : 'al día', ubH);
     // Cuentas
-    h += `<div class="tit" id="sec-cuentas" style="display:flex;justify-content:space-between;align-items:baseline">Cuentas <button type="button" class="link-btn" data-traspaso style="font-size:13px;font-weight:800;color:var(--accent)">Mover entre cuentas</button></div><div class="mat-lista ya">`;
-    h += D.cuentas.filter(c => c.activa || Math.abs(saldoCuenta(c.id)) > 0.005).map(c => { const s = saldoCuenta(c.id), bs = c.moneda === 'VES' ? saldoBs(c.id) : null;
+    let ctH = '';
+    {
+      let h = '<div class="mat-lista ya">';
+      h += D.cuentas.filter(c => c.activa || Math.abs(saldoCuenta(c.id)) > 0.005).map(c => { const s = saldoCuenta(c.id), bs = c.moneda === 'VES' ? saldoBs(c.id) : null;
       return `<button class="mat" type="button" data-cuenta="${c.id}"><span class="mat-ico">${esc(ini(c.nombre))}</span>
         <span style="min-width:0"><span class="mat-t">${esc(c.nombre)}</span><span class="mat-s">${esc(c.tipo)}${bs != null ? ' · ' + esc(bsTxt(bs)) : ''}${c.activa ? '' : ' · apagada'}</span></span>
         <span class="mat-n"><b style="font-size:19px">${dinero(s)}</b><span>${bs != null ? 'en dólares' : 'saldo'}</span></span></button>`; }).join('') + '</div>';
-    if(!D.cuentas.length) h += '<p class="mat-s" style="margin:0 2px 8px">Todavía no hay cuentas. Agrega las tuyas: Zelle, efectivo de cada sede, Binance, banco o bolívares.</p>';
-    h += '<button class="btn-nuevo" type="button" data-nueva-cuenta>+ Agregar cuenta</button>';
-    // Por cobrar
-    h += `<div class="tit" id="sec-cobrar">Te deben los clientes</div>`;
+      if(!D.cuentas.length) h += '<p class="mat-s" style="margin:0 2px 8px">Todavía no hay cuentas. Agrega las tuyas: Zelle, efectivo de cada sede, Binance, banco o bolívares.</p>';
+      h += '<div class="pie-dos" style="margin-top:8px"><button class="btn-secondary" type="button" data-nueva-cuenta>Agregar cuenta</button><button class="btn-secondary" type="button" data-traspaso>Mover entre cuentas</button></div>';
+      ctH = h;
+    }
+    h += `<div id="sec-cuentas"></div>` + acc('cuentas', 'Cuentas · ' + D.cuentas.filter(c => c.activa).length, dinero(r.enCuentas), ctH);
+    // Te deben
+    let pcH = '';
+    {
+      let h = '';
     h += pc.length ? pc.map(v => `<a class="cg-fila" href="ventas.html?abrir=${v.id}"><div class="cg-nom">N° ${v.id} · ${esc(v.cliente)}<span>${v.estado === 'confirmada' ? 'Confirmada' : v.estado === 'en_produccion' ? 'En fabricación' : 'Lista'} · total ${dinero(v.total)} · pagado ${dinero(v.pagado)}</span></div><div style="text-align:right;font-weight:800">${dinero(v.resta)}</div></a>`).join('')
       : '<p class="mat-s" style="margin:0 2px">Nadie debe nada.</p>';
+      pcH = h;
+    }
+    h += `<div id="sec-cobrar"></div>` + acc('cobrar', 'Te deben los clientes · ' + pc.length, dinero(r.porCobrar), pcH);
     return h;
   }
 
@@ -198,6 +229,7 @@
     if(otros.length) h += '<div class="tit">Otros gastos</div>' + otros.map(m => `<button class="gasto" type="button" data-mov="${m.id}" style="width:100%;text-align:left"><div class="cg-nom">${esc(m.cat)}<span>${esc((cta(m.cuenta) || {}).nombre || '')} · ${fecha(m.fecha)}</span></div><div style="font-weight:800">${dinero(m.llego || m.salio)}</div><span></span></button>`).join('');
     h += '<div class="tit">Taller y comisiones del mes</div>' + reporte([['Nómina pagada', -nom], ['Vales (adelantos)', -vales], ['Comisión y cambio', -comis]], 'Total', -(nom + vales + comis));
     h += `<div class="caja-nota"><span>Conexión con Costos</span>Costos reparte los gastos fijos entre las puertas del mes. Con los gastos reales puedes ajustar esa regla en Costos › Ganancia.</div>`;
+    h += '<button class="btn-secondary" type="button" data-pdf-gastos style="width:100%;margin-top:12px">Gastos del mes en PDF</button>';
     if(ancho.matches) h += '<button class="btn-nuevo" type="button" data-nuevo-gasto>+ Registrar gasto</button>';
     return h;
   }
@@ -238,13 +270,10 @@
         ${p.cuadre ? `<div class="d-dato" style="grid-column:1/-1"><span>Último cuadre</span><b>${fecha(p.cuadre.fecha)} · saldo ${dinero(p.cuadre.saldo)}</b></div>` : ''}
       </div>
       <div class="pie-dos" style="margin-top:10px"><button class="btn-secondary" type="button" data-ajustar-prov="${p.id}">Cambiar saldo</button><button class="btn-secondary" type="button" data-editar-prov="${p.id}">Editar</button></div>
-      <div class="tit">Movimientos (el más nuevo arriba)</div>${libretaHtml(movs, 'ep')}
-      <div class="tit">Facturas y notas</div>
-      ${facturas.length ? facturas.map(f => `<a class="cg-fila" href="deposito.html?tab=compras&compra=${f.id}"><div class="cg-nom">${f.documento === 'factura' ? 'Factura' : 'Nota de entrega'} ${esc(f.numero || '')}<span>${fecha(f.fecha)} · ${Number(f.iva) ? 'con IVA ' + dinero(f.iva) : 'sin IVA'}${f.foto ? ' · con foto' : ''}${f.material_pendiente ? ' · material por registrar' : ''}</span></div><div style="text-align:right;font-weight:800">${dinero(f.total)}</div></a>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin compras registradas.</p>'}
-      <div class="tit">Lo que te vende (precio sin IVA)</div>
-      ${precios.length ? precios.map(x => `<div class="cg-fila"><div class="cg-nom">${esc(mat(x.material_id).nombre || 'Material')}<span>${esc(TIPO[mat(x.material_id).tipo] || '')}${x.espesor ? ' · ' + esc(x.espesor) : ''} · desde ${fecha(x.desde)}</span></div><div style="text-align:right;font-weight:800">${dinero(x.precio)}</div></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Todavía no hay precios de este proveedor.</p>'}
-      <div class="tit">Historial de saldos cambiados</div>
-      ${ajustes.length ? ajustes.map(m => `<div class="cg-fila"><div class="cg-nom">Ajuste de saldo · ${fecha(m.fecha)}<span>${esc(m.nota || '')} · ${esc(m.por)}${m.anulado ? ' · anulado' : ''}</span></div><div style="text-align:right;font-weight:800">${Number(m.ep) >= 0 ? '+' : '−'}${dinero(Math.abs(m.ep))}</div></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin cambios de saldo.</p>'}
+      ${acc('movs', 'Movimientos · ' + movs.length, 'el más nuevo arriba', libretaHtml(movs, 'ep'))}
+      ${acc('facturas', 'Facturas y notas · ' + facturas.length, dinero(facturas.reduce((a, f) => a + Number(f.total), 0)), facturas.length ? facturas.map(f => `<a class="cg-fila" href="deposito.html?tab=compras&compra=${f.id}"><div class="cg-nom">${f.documento === 'factura' ? 'Factura' : 'Nota de entrega'} ${esc(f.numero || '')}<span>${fecha(f.fecha)} · ${Number(f.iva) ? 'con IVA ' + dinero(f.iva) : 'sin IVA'}${f.foto ? ' · con foto' : ''}${f.material_pendiente ? ' · material por registrar' : ''}</span></div><div style="text-align:right;font-weight:800">${dinero(f.total)}</div></a>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin compras registradas.</p>')}
+      ${acc('vende', 'Lo que te vende · ' + precios.length, 'sin IVA', precios.length ? precios.map(x => `<div class="cg-fila"><div class="cg-nom">${esc(mat(x.material_id).nombre || 'Material')}<span>${esc(TIPO[mat(x.material_id).tipo] || '')}${x.espesor ? ' · ' + esc(x.espesor) : ''} · desde ${fecha(x.desde)}</span></div><div style="text-align:right;font-weight:800">${dinero(x.precio)}</div></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Todavía no hay precios de este proveedor.</p>')}
+      ${acc('ajustes', 'Saldos cambiados · ' + ajustes.length, '', ajustes.length ? ajustes.map(m => `<div class="cg-fila"><div class="cg-nom">Ajuste de saldo · ${fecha(m.fecha)}<span>${esc(m.nota || '')} · ${esc(m.por)}${m.anulado ? ' · anulado' : ''}</span></div><div style="text-align:right;font-weight:800">${Number(m.ep) >= 0 ? '+' : '−'}${dinero(Math.abs(m.ep))}</div></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin cambios de saldo.</p>')}
       <button class="btn-nuevo" type="button" data-cuadrar="${p.id}">Cuadrar con el proveedor</button>`;
     const foot = `<button class="btn-secondary" type="button" data-pdf="${p.id}" style="height:54px">Estado de cuenta</button><button class="btn-primary" type="button" data-transferir="${p.id}">Le transferí</button>`;
     return { titulo:p.nombre, body, foot };
@@ -253,7 +282,7 @@
     const c = cta(id), s = saldoCuenta(id), movs = movsCuenta(id);
     const body = `<div class="grande"><span>${esc(c.tipo)}${c.activa ? '' : ' · apagada'}</span><b>${dinero(s)}</b>${c.moneda === 'VES' ? `<p>${esc(bsTxt(saldoBs(id)))}</p>` : ''}</div>
       <div class="pie-dos" style="margin:0 0 4px"><button class="btn-secondary" type="button" data-salida="${c.id}">Pagué a un proveedor</button><button class="btn-secondary" type="button" data-editar-cuenta="${c.id}">Editar</button></div>
-      <div class="tit">Movimientos (el más nuevo arriba)</div>${libretaHtml(movs, 'ec')}
+      ${acc('movs', 'Movimientos · ' + movs.length, 'el más nuevo arriba', libretaHtml(movs, 'ec'))}
       <button class="btn-nuevo" type="button" data-pdf-cuenta="${c.id}">Estado de cuenta en PDF</button>`;
     const foot = `<button class="btn-secondary" type="button" data-ajustar-cuenta="${c.id}" style="height:54px">Cambiar saldo</button><button class="btn-primary" type="button" data-traspaso="${c.id}">Mover a otra cuenta</button>`;
     return { titulo:c.nombre, body, foot };
@@ -517,10 +546,15 @@
     try{
       ok = await accion();
       const nuevo = F.t === 'proveedor' ? F.nuevoId : null;
+      const enFila = F.t === 'confirmar' && F.enFila;
       cerrarHoja('sheetForm', true); F = null;
       toast(ok);
       await recargar();
       if(nuevo){ tab = 'prov'; pintar(); abrirDetalle('prov', nuevo); }
+      if(enFila){
+        if(D.porConfirmar.length){ pintarListaConfirmar(); abrirConfirmar(D.porConfirmar[0].id, true); }
+        else { cerrarHoja('sheetDet', true); toast(ok + ' No quedan pagos por confirmar.'); }
+      }
       return true;
     } catch(e){ toast(errTxt(e), 'error'); return false; }
     finally { if(F) F.guardando = false; btn.disabled = false; }
@@ -583,7 +617,11 @@
     if(!D) return;
     const t = e.target.closest('[data-tab]'); if(t && t.closest('#tabs')){ tab = t.dataset.tab; pintar(); window.scrollTo(0, 0); return; }
     const ir = e.target.closest('[data-ir]');
-    if(ir){ const k = ir.dataset.ir; if(k === 'prov'){ tab = 'prov'; pintar(); window.scrollTo(0, 0); } else { const el = $('sec-' + k); if(el) el.scrollIntoView({ block:'start', behavior:'smooth' }); } return; }
+    if(ir){ const k = ir.dataset.ir; if(k === 'prov'){ tab = 'prov'; pintar(); window.scrollTo(0, 0); } else { abiertas.add(k); pintar(); const el = $('sec-' + k); if(el) el.scrollIntoView({ block:'start', behavior:'smooth' }); } return; }
+    if(e.target.closest('[data-lista-confirmar]')) return abrirListaConfirmar();
+    if(e.target.closest('[data-confirmar-fila]')){ if(D.porConfirmar.length) abrirConfirmar(D.porConfirmar[0].id, true); return; }
+    if(e.target.closest('[data-pdf-dinero]')) return pdfDinero();
+    if(e.target.closest('[data-pdf-gastos]')) return pdfGastos();
     const pr = e.target.closest('[data-pdf-rango]'); if(pr && PDFSEL){ PDFSEL.rango = pr.dataset.pdfRango; pintarPdf(PDFSEL.t === 'prov' ? prov(PDFSEL.id) : cta(PDFSEL.id)); return; }
     if(F){
       const set = (attr, campo) => { const b = e.target.closest('[' + attr + ']'); if(b && b.closest('#formBody')){ leerCampos(); F[campo] = b.getAttribute(attr); pintarForm(); return true; } return false; };
@@ -599,7 +637,7 @@
     }
     const pv = e.target.closest('[data-prov]'); if(pv && !pv.closest('#formBody')) return abrirDetalle('prov', pv.dataset.prov);
     const cu = e.target.closest('[data-cuenta]'); if(cu) return abrirDetalle('cuenta', cu.dataset.cuenta);
-    const cf = e.target.closest('[data-confirmar]'); if(cf) return abrirConfirmar(+cf.dataset.confirmar);
+    const cf = e.target.closest('[data-confirmar]'); if(cf) return abrirConfirmar(+cf.dataset.confirmar, !!cf.closest('#detBody'));
     const ub = e.target.closest('[data-ubicar]'); if(ub) return abrirForm({ t:'ubicar', abono:+ub.dataset.ubicar, destino:null });
     const um = e.target.closest('[data-ubicar-mov]'); if(um) return abrirForm({ t:'ubicarMov', id:+um.dataset.ubicarMov });
     const tr = e.target.closest('[data-transferir]'); if(tr) return abrirForm({ t:'transferencia', prov:tr.dataset.transferir, cuenta:null });
@@ -618,19 +656,60 @@
     const pc = e.target.closest('[data-pdf-cuenta]'); if(pc) return abrirPdf('cuenta', pc.dataset.pdfCuenta);
     const cq = e.target.closest('[data-cuadrar]'); if(cq){ cuadrar(cq.dataset.cuadrar); return; }
   });
+
+  // Lista de pagos por confirmar en una hoja, agrupados por venta. Se confirman uno tras otro.
+  function pintarListaConfirmar(){
+    sel = null;
+    const G = gruposConfirmar();
+    $('detTitulo').textContent = D.porConfirmar.length === 1 ? '1 pago por confirmar' : D.porConfirmar.length + ' pagos por confirmar';
+    $('detBody').innerHTML = G.map(g => `<div class="grp-v"><div class="grp-vh"><b>N° ${esc(g.venta)} · ${esc(g.cliente)}</b><span>${g.pagos.length === 1 ? '1 pago' : g.pagos.length + ' pagos'}</span></div>
+      ${g.pagos.map(a => `<button class="ub conf" type="button" data-confirmar="${a.id}"><span class="grow"><b>${esc(a.metodo)} · ${fecha(a.fecha)}</b><small>lo registró ${esc(a.registro || 'la vendedora')} · ¿Llegó?</small></span><span class="m">${dinero(a.monto)}</span>${CHEV}</button>`).join('')}</div>`).join('');
+    $('detFoot').innerHTML = D.porConfirmar.length ? '<button class="btn-primary" type="button" data-confirmar-fila>Revisar uno tras otro</button>' : '';
+  }
+  function abrirListaConfirmar(){
+    if(!D.porConfirmar.length) return;
+    pintarListaConfirmar();
+    if(ancho.matches){ abrirHoja('sheetDet'); } else abrirHoja('sheetDet');
+  }
+  async function pdfDinero(){
+    const r = resumen(), f = (n, v) => ({ t:'fila', a:n, b:(v < -0.005 ? '- ' : v > 0.005 ? '+ ' : '') + dinero(Math.abs(v)), rojo:v < -0.005 });
+    const b = [{ t:'titulo', texto:'Tu dinero hoy', der:'Monto' }, f('En tus cuentas', r.enCuentas), f('Pagos por ubicar', r.porUbicar), f('A tu favor con proveedores', r.aFavor), f('Te deben los clientes', r.porCobrar), f('Le debes a proveedores', -r.debes),
+      { t:'total', a:'Todo lo tuyo', b:(r.total < 0 ? '- ' : '') + dinero(Math.abs(r.total)) }];
+    b.push({ t:'titulo', texto:'Cuentas' }); D.cuentas.filter(c => c.activa).forEach(c => b.push(f(c.nombre + (c.moneda === 'VES' ? ' (' + bsTxt(saldoBs(c.id)) + ')' : ''), saldoCuenta(c.id))));
+    b.push({ t:'titulo', texto:'Proveedores' }); D.proveedores.filter(p => p.activo).forEach(p => b.push(f(p.nombre, saldoProv(p.id))));
+    if((D.porCobrar || []).length){ b.push({ t:'titulo', texto:'Te deben los clientes' }); D.porCobrar.forEach(v => b.push(f('N° ' + v.id + ' · ' + v.cliente, Number(v.resta)))); }
+    b.push({ t:'nota', texto:'+ es tuyo o te deben · - lo debes. Proveedores: + a tu favor, - le debes.' });
+    try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear({ titulo:'Tu dinero hoy', derecha:fecha(hoy()), subtitulo:'Cuentas, proveedores y lo que te deben.', bloques:b });
+      const x = await window.PDFR.compartir(blob, 'Dinero-' + hoy() + '.pdf'); if(x === 'descargado') toast('PDF listo'); }
+    catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }
+  }
+  async function pdfGastos(){
+    const mes = mesActual(), vm = vivos().filter(m => String(m.fecha).slice(0, 7) === mes);
+    const f = (n, v) => ({ t:'fila', a:n, b:dinero(v) });
+    const b = [{ t:'titulo', texto:'Gastos fijos', der:'previsto / pagado' }];
+    D.gastosFijos.forEach(g => { const p = vm.filter(m => m.tipo === 'gasto' && m.cat === g.cat).reduce((a, m) => a + Number(m.llego || m.salio || 0), 0); b.push({ t:'fila', a:g.cat + ' (previsto ' + dinero(g.monto) + ')', b:p ? dinero(p) : 'Sin pagar', rojo:!p }); });
+    const otros = vm.filter(m => m.tipo === 'gasto' && !D.gastosFijos.some(g => g.cat === m.cat));
+    if(otros.length){ b.push({ t:'titulo', texto:'Otros gastos' }); otros.forEach(m => b.push(f(fecha(m.fecha) + ' · ' + m.cat, Number(m.llego || m.salio)))); }
+    const sum = (t) => vm.filter(m => m.tipo === t).reduce((a, m) => a + Number(m.llego || 0), 0);
+    b.push({ t:'titulo', texto:'Taller y comisiones' }, f('Nómina pagada', sum('nomina')), f('Vales (adelantos)', sum('vale')), f('Comisión y cambio', vm.reduce((a, m) => a + Number(m.comision || 0), 0)));
+    try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear({ titulo:'Gastos del mes', derecha:mes, subtitulo:'Lo pagado en Finanzas este mes.', bloques:b });
+      const x = await window.PDFR.compartir(blob, 'Gastos-' + mes + '.pdf'); if(x === 'descargado') toast('PDF listo'); }
+    catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }
+  }
   async function cuadrar(id){
     const p = prov(id); if(!p) return;
     try{ await rpc('proveedor_cuadrar', { pid:+id, p_saldo:saldoProv(id) }); toast('Marcado como cuadrado hoy con ' + p.nombre); await recargar(); }
     catch(e){ toast(errTxt(e), 'error'); }
   }
-  async function abrirConfirmar(aid){
+  async function abrirConfirmar(aid, enFila){
     const a = D.porConfirmar.find(x => x.id === aid); if(!a) return;
-    abrirForm({ t:'confirmar', abono:aid, llego:null, destino:null });
+    abrirForm({ t:'confirmar', abono:aid, llego:null, destino:null, enFila:!!enFila });
     if(a.comprobante){
       const { data } = await db.storage.from('comprobantes').createSignedUrl(a.comprobante, 600).catch(() => ({}));
       if(F && F.abono === aid && data && data.signedUrl){ F.compUrl = data.signedUrl; leerCampos(); pintarForm(); }
     }
   }
+  document.addEventListener('toggle', (e) => { const d = e.target; if(d && d.classList && d.classList.contains('acc')){ if(d.open) abiertas.add(d.dataset.acc); else abiertas.delete(d.dataset.acc); } }, true);
   document.addEventListener('input', (e) => {
     if(F && F.t === 'transferencia' && ['fMonto','fLlego','fBs','fTasa'].includes(e.target.id)){ leerCampos(); const caja = $('cajaSaldo'); if(caja) caja.innerHTML = cajaSaldo(); }
     if(PDFSEL && e.target.id === 'pDesde') PDFSEL.desde = e.target.value;

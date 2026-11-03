@@ -80,7 +80,14 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   // Precios
   await p.click('#tabs [data-tab="materiales"]');await w();
   const pr=await p.textContent('#cont');
-  ok('Precios sin IVA por proveedor (Colores y Ambiente $12.98, Torniplemaca $9.50)',pr.includes('$12.98')&&pr.includes('Torniplemaca $9.50'));
+  ok('Precios por material: el más barato y la comparación (Torniplemaca $9.50, Colores $9.69)',pr.includes('2 proveedores')&&pr.includes('$9.50')&&pr.includes('$9.69')&&pr.includes('más caro'));
+  await p.click('[data-vprecios="proveedor"]');await w();
+  const pp=await p.textContent('#cont');
+  ok('Precios por proveedor: lo que vende cada uno',pp.includes('Inversiones Torniplemaca')&&pp.includes('el más barato'));
+  await p.click('[data-tab="modelos"]');await w();await p.click('[data-modelo="7"]');await p.waitForSelector('#sheetDet.open');await w();
+  await p.click('#detBody [data-prov="barato"]');await w();
+  ok('Costear con "El más barato"',(await p.textContent('#detBody')).includes('El más barato de cada material'));
+  await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.toggle('open',false));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.toggle('open',false));});
   // Semana
   await p.click('#tabs [data-tab="semana"]');await w(600);
   const s=await p.textContent('#cont');

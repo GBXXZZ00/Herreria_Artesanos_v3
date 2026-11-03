@@ -29,6 +29,12 @@ Primero: Ray o Gualfredo agregan sus cuentas (Finanzas › Dinero › "+ Agregar
 - [ ] Costos › Ganancia: gastos fijos $915 ÷ 25 = $36,60 por puerta. Cambiar las puertas al mes.
 - [ ] Finanzas › Mes: números del mes pasado, "Cerrar el mes" y Reporte en PDF. Después del cierre, registrar algo con fecha de ese mes da error.
 - [ ] Finanzas › Mes › Reportes: por proveedor y por cuenta, con fechas y PDF.
+- [ ] (v74) Dinero: varios pagos por confirmar salen en una sola tarjeta; al tocarla, agrupados por venta; "Revisar uno tras otro" abre el siguiente solo.
+- [ ] (v74) Secciones que se abren y se cierran en Dinero, ficha del proveedor, Mes, Precios y Semana.
+- [ ] (v74) Costos › Precios: "Por material" y "Por proveedor". En la ficha del Bitral, "El más barato".
+- [ ] (v74) Mes: flechas ‹ › y "ver todos los meses".
+- [ ] (v74) Herrero: la hoja de corte se abre y se cierra y "Descargar PDF" funciona.
+- [ ] (v74) Descargar los PDF: tu dinero hoy, gastos, lista de precios, ganancia por producto, existencias y compras del mes.
 
 ## 1. Vendedora (Yulimar)
 - [ ] Inicio: pendientes de colores (pago no llegó, pedido listo, pago confirmado, cotización por vencer, atrasado). Al tocar cada uno lleva a su venta.

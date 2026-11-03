@@ -164,9 +164,10 @@
         <p class="mat-s" style="margin:0 2px 8px">Cada tubo junta piezas de varias puertas.${P.cerrado ? '' : ' Toca una barra para cambiar quién la corta o mover una pieza.'}</p>
         <div class="leg">${P.conPlan.map(u => `<span><i style="background:${u.color}"></i>${esc(u.etq)}</span>`).join('')}<span><i style="background:#F1E4D6"></i>Sobra</span></div>`;
       P.herreros.filter(hr => hr.barras.length).forEach(hr => {
-        h += `<div class="hr-h" style="margin-top:12px"><b>${esc(hr.nombre)}</b><button type="button" class="link-b" data-hoja-h="${esc(hr.tid)}">Ver su hoja</button></div>`;
         const porMat = {}; hr.barras.forEach(b => (porMat[b.mid] ||= []).push(b));
-        Object.entries(porMat).forEach(([mid, bs]) => { h += `<div class="mat-b"><div class="mat-b-h"><b>${esc(nomMat(mid))}</b></div>${bs.map(b => barraHtml(b, P.barras.indexOf(b), P)).join('')}</div>`; });
+        h += `<details class="acc"><summary><span>${esc(hr.nombre)}</span><span class="acc-x">${plural(hr.barras.length, '1 barra o retazo', 'barras y retazos')}</span></summary><div class="acc-b">
+          <div class="pie-dos" style="margin:0 0 8px"><button class="btn-secondary" type="button" data-hoja-h="${esc(hr.tid)}">Ver su hoja</button><button class="btn-secondary" type="button" data-pdf-hoja="${esc(hr.tid)}">PDF de su hoja</button></div>
+          ${Object.entries(porMat).map(([mid, bs]) => `<div class="mat-b"><div class="mat-b-h"><b>${esc(nomMat(mid))}</b></div>${bs.map(b => barraHtml(b, P.barras.indexOf(b), P)).join('')}</div>`).join('')}</div></details>`;
       });
       if(P.hj.length) h += `<div class="tit">Lámina y vidrio</div>` + P.hj.map(x => `<div class="cg-fila"><div class="cg-nom">${esc(x.f.nombre)}<span>Usa ${x.m2.toLocaleString('es-VE', { maximumFractionDigits:2 })} m² · hay ${plural(x.f.stock, '1 hoja', 'hojas')}${x.sobrante ? ' y ' + x.sobrante.toLocaleString('es-VE', { maximumFractionDigits:2 }) + ' m² de sobrantes' : ''}</span></div><div style="text-align:right;font-weight:800">${x.comprar ? 'Comprar ' + x.comprar : 'Alcanza'}</div></div>`).join('');
       if(!P.cerrado){

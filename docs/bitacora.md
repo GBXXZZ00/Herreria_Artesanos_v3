@@ -12,6 +12,16 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-03 · Claude de Ray (3)
+- Qué hizo (pedido de Ray después de ver el PR, `?v=74`, misma rama y mismo PR):
+  - Finanzas › Dinero: los pagos por confirmar van en **una sola tarjeta**; al tocarla salen en una hoja **agrupados por venta** y se confirman **uno tras otro** (al confirmar se abre solo el siguiente). Pagos por ubicar, Cuentas y Te deben son secciones que se abren y se cierran. Ficha del proveedor y de la cuenta también.
+  - Costos › Precios: **Por material** (el más barato arriba y al abrir la comparación con cuánto más caro sale cada uno) o **Por proveedor** (lo que vende cada uno). En la ficha del modelo se puede costear con **"El más barato"** de cada material.
+  - Finanzas › Mes: selector **‹ mes ›** con "ver todos los meses" (por año), tarjetas de resumen (ganancia, entró, salió, compras) y secciones plegables. Ya no se acumulan botones de meses.
+  - Hoja de corte: en Mi trabajo es una tarjeta que se abre y se cierra con **"Descargar PDF"**; en Costos › Semana cada herrero es plegable con su PDF.
+  - PDF en todos los informes: tu dinero hoy, gastos del mes, estado de cuenta, cierre del mes, reportes, lista de precios, ganancia por producto, existencias, compras del mes, plan de compra y hoja de corte.
+- Sin migraciones nuevas. Las de v73 a v80 siguen sin aplicar.
+- Pendientes: OK de Ray para aplicar migraciones y unir el PR.
+
 ## 2026-11-03 · Claude de Ray (2)
 - Qué hizo: corrida única de Finanzas y Costos (lotes 1, 2, 3, 4, 5, 6, 7, 9, 10 y 10b del plan `docs/claude/documentos/plan-finanzas-costos.md`), `?v=73`.
   - **`CLAUDE.md` cambió** (sección "Ahorro de consumo" y "El manual se deja en blanco por ahora"). Lo usa también Gualfredo.

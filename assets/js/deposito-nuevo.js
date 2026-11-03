@@ -67,6 +67,7 @@
     const apagados = D.fab.filter(f => !f.activo);
     if(apagados.length) h += `<p class="mat-s" style="margin:8px 2px">${plural(apagados.length, '1 material apagado', 'materiales apagados')}: ${apagados.map(f => `<button class="link-btn" type="button" data-fab="${f.id}">${esc(f.nombre)}</button>`).join(', ')}</p>`;
     h += `<button class="btn-nuevo" type="button" data-fab-nuevo>+ Agregar material de fabricación</button>
+      <button class="btn-secondary" type="button" data-pdf-existencias style="width:100%;margin-top:10px">Existencias en PDF</button>
       <p class="mat-s" style="margin:8px 2px 0">Las barras suben con cada compra y bajan cuando en Costos › Semana se marca que el herrero ya cortó. Los retazos de 50 cm o más quedan anotados con su medida y el plan siguiente los usa primero.</p>`;
     $('cont').innerHTML = h;
   }
@@ -171,6 +172,7 @@
         <span class="mat-n"><b style="font-size:18px">${dinero(f.total)}</b><span>${f.foto ? 'con foto' : 'a mano'}</span></span></button>`;
     }).join('') : '<p class="mat-s">Sin compras todavía.</p>';
     h += `</div>
+      <button class="btn-secondary" type="button" data-pdf-compras style="width:100%;margin-top:10px">Compras del mes en PDF</button>
       <div class="tit">Proveedores · toca para ver su cuenta</div><div class="mat-lista ya">
       ${D.proveedores.filter(p => p.activo).map(p => `<a class="mat" href="finanzas.html?prov=${p.id}" style="text-decoration:none;color:inherit"><span class="mat-ico">${esc(ini(p.nombre))}</span>
           <span style="min-width:0"><span class="mat-t">${esc(p.nombre)}</span><span class="mat-s">Vende: ${(p.tipos || []).map(t => esc(TIPO[t] || t)).join(', ')} · ${p.iva ? 'con IVA' : 'sin IVA'}</span></span>
@@ -324,8 +326,34 @@
     finally { if(F) F.guardando = false; btn.disabled = false; }
   }
 
+  async function sacarPDF(o, nombre){
+    if(!window.PDFR) return;
+    try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear(o); const r = await window.PDFR.compartir(blob, nombre); if(r === 'descargado') toast('PDF listo'); }
+    catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }
+  }
+  function pdfExistencias(){
+    const b = [];
+    [['hierro', 'Tubos, platinas y marcos'], ['laminas', 'Láminas'], ['vidrio', 'Vidrio'], ['aluminio', 'Aluminio']].forEach(([t, tit]) => {
+      const L = D.fab.filter(f => f.tipo === t && f.activo); if(!L.length) return;
+      b.push({ t:'titulo', texto:tit, der:'Hay' });
+      L.forEach(f => b.push({ t:'fila', a:f.nombre + ((f.retazos || []).length ? ' · retazos: ' + f.retazos.map(r => (r.ancho ? r.largo + '×' + r.ancho : r.largo) + ' cm').join(', ') : ''), b:f.stock + (f.pres === 'barra' ? (f.stock === 1 ? ' barra' : ' barras') : (f.stock === 1 ? ' hoja' : ' hojas')) }));
+    });
+    sacarPDF({ titulo:'Existencias de fabricación', derecha:fecha(hoyIso()), subtitulo:'Barras, hojas y retazos del depósito.', bloques:b }, 'Existencias-' + hoyIso() + '.pdf');
+  }
+  function pdfCompras(){
+    const mes = hoyIso().slice(0, 7), L = D.compras.filter(f => !f.anulada && String(f.fecha).slice(0, 7) === mes);
+    const b = [{ t:'titulo', texto:'Facturas y notas del mes', der:'Total' }];
+    L.forEach(f => b.push({ t:'fila', a:fecha(f.fecha) + ' · ' + ((prov(f.prov) || {}).nombre || '') + ' · ' + (f.doc === 'factura' ? 'Factura ' : 'Nota ') + (f.numero || 's/n') + (f.pendiente ? ' · material por registrar' : ''), b:dinero(f.total) }));
+    if(!L.length) b.push({ t:'nota', texto:'Sin compras este mes.' });
+    b.push({ t:'total', a:'Total comprado', b:dinero(L.reduce((a, f) => a + Number(f.total), 0)) });
+    b.push({ t:'titulo', texto:'Saldo con cada proveedor' });
+    D.proveedores.filter(p => p.activo).forEach(p => b.push({ t:'fila', a:p.nombre, b:saldoTxt(p.saldo), rojo:p.saldo < -0.005 }));
+    sacarPDF({ titulo:'Compras del mes', derecha:mes, subtitulo:'Facturas y notas de proveedores.', bloques:b }, 'Compras-' + mes + '.pdf');
+  }
   // ---------- Eventos ----------
   document.addEventListener('click', async (e) => {
+    if(e.target.closest('[data-pdf-existencias]') && D) return pdfExistencias();
+    if(e.target.closest('[data-pdf-compras]') && D) return pdfCompras();
     if(e.target.closest('[data-dn-reintentar]')){ const t = window.Deposito && window.Deposito.tab; return t === 'compras' ? pintarCompras() : pintarFab(); }
     const fb = e.target.closest('[data-fab]'); if(fb && D) return abrirFab(+fb.dataset.fab);
     if(e.target.closest('[data-fab-nuevo]')){ FM = { id:null, editar:true, form:{ tipo:'hierro', pres:'barra', largo:'600' } }; pintarFormMat(null); abrirHoja('sheetFab'); return; }
