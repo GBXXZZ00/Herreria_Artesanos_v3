@@ -21,8 +21,8 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
   - Textos: "Espera que confirmen el pago" y en el manual "Ray o Gualfredo" donde se habla de confirmar pagos.
   - Migraciones: `v72b_ray_telefono_internacional` (`normalizar_telefono` quita el 00) y `v72c_ray_gualfredo_confirma_pagos` (Gualfredo con `confirma_abonos = true`: también paga la nómina, revisa entregas del Depósito y recibe los avisos de pagos). **Ojo: reglas de dinero y permisos.**
   - Prueba nueva test41 y ajuste en test15.
-- Rama o PR: `gualfredo/nueva-gestion`, PR #2.
-- Está tocando: nada más después de unir.
+- Rama o PR: `gualfredo/nueva-gestion`, PR #2, unido con el OK de Ray. Migraciones v72b y v72c aplicadas en la base (revisado: Ray y Gualfredo con `confirma_abonos`).
+- Está tocando: nada.
   - Textos de Nómina, Depósito y el inicio del trabajador: "Solo Ray o Gualfredo…", "Lo decide Ray o Gualfredo", "Te avisamos cuando te asignen uno" (app y manual).
   - Producción: una etiqueta larga en la tarjeta ("En masilla y pintura y ensamblar") estiraba la pantalla hacia los lados; ahora baja de línea. Por eso fallaba test21 desde antes; ya pasa y revisa que no vuelva a pasar.
 - Pendientes: lo de Gualfredo en la app (usuario carpintero y categoría de pago de Madera para los 6 modelos), se resuelve después.
