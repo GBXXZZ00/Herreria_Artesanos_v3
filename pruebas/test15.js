@@ -46,7 +46,7 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  await p.fill('#cCedula','12.345.6789');await w(900);
  ok('Cédula distinta que no existe limpia lo llenado',(await p.inputValue('#cNombre'))===''&&(await p.inputValue('#cTel'))==='',[antes,await p.inputValue('#cNombre'),await p.inputValue('#cTel')]);
  await p.fill('#cCedula','12.345.678');await w(900);
- ok('Por cédula: cliente existente se llena solo',(await p.inputValue('#cNombre'))==='María González'&&(await p.inputValue('#cTel'))==='04141234567',[await p.inputValue('#cNombre'),await p.inputValue('#cTel')]);
+ ok('Por cédula: cliente existente se llena solo',(await p.inputValue('#cNombre'))==='María González'&&(await p.inputValue('#cTel'))==='0414 123 4567',[await p.inputValue('#cNombre'),await p.inputValue('#cTel')]);
  // Producto de catálogo: puerta con manillón y protección
  await p.click('#btnAgregar');await w();await p.click('[data-origen="catalogo"]');await w();
  await p.click('[data-modelo="4"]');await w(500);
@@ -191,6 +191,7 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
  ok('Items: pieza, a medida, specs',P&&P.items.length===4&&P.items[2].pieza_id===9&&P.items[3].a_medida===true&&P.items[0].especificaciones.manillon===true&&P.items[0].especificaciones.sentido==='Izquierda'&&P.items[0].especificaciones.proteccion_sentido==='Derecha'&&P.items[1].especificaciones.bloque==='10'&&P.items[0].especificaciones.monto_proteccion===80&&P.items[1].cantidad===2,P&&P.items.map(i=>[i.nombre,i.precio_unitario,i.cantidad]));
  ok('Borrador borrado al terminar',await p.evaluate(()=>localStorage.getItem('ah_borrador_venta'))===null);
  ok('Botones de mensaje y PDF presentes',!!(await p.$('#btnMsj'))&&!!(await p.$('#btnPdf')));
+ ok('Venta lista: orden de botones (Enviar PDF, 2. mensaje oculto, Descargar PDF, mensaje, otra venta, Inicio)',(await p.$$eval('.listo-btns > button',x=>x.map(b=>b.id))).join(',')==='btnPdf,btnPaso2,btnDesc,btnMsj,btnOtra,btnIrInicio'&&await p.$eval('#btnPaso2',x=>x.classList.contains('hidden'))&&(await p.textContent('#btnDesc')).includes('Descargar PDF'),await p.$$eval('.listo-btns > button',x=>x.map(b=>b.id)));
  await p.click('#btnIrInicio');await p.waitForSelector('#vInicio.entra');ok('Volver a Inicio',p.url().endsWith('index.html'));
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

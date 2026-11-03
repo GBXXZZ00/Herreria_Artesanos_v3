@@ -458,6 +458,21 @@ textarea.input{height:auto;min-height:88px;padding:12px 14px;resize:vertical}
 }
 .btn-wa:active{transform:scale(0.98)}
 
+/* Avisar al cliente: Enviar PDF y Descargar PDF siempre a la vista (ficha de la venta) */
+.av-pdf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.av-pdf button{height:52px;border-radius:14px;font-weight:800;font-size:15.5px;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:transform 140ms var(--ease-out)}
+.av-pdf button:active{transform:scale(0.97)}
+.av-pdf .av-env{background:#1FA855;color:#fff}
+.av-pdf .av-desc{background:var(--surface);color:var(--accent);border:1.5px solid var(--accent)}
+.av-pdf button[disabled]{opacity:.55}
+.av-pdf button[disabled]:active{transform:none}
+.av-pdf-ok{font-size:12.5px;color:var(--ink-soft);margin:7px 2px 2px}
+.av-pdf-ok b{color:var(--accent)}
+.av-pdf-nota{font-size:12.5px;color:var(--ink-soft);margin:8px 2px 0}
+.av-pdf.resaltar{position:relative;animation:paso3Pulso 700ms var(--ease-out) 2}
+#campoTel.invalid .field-hint{display:none}
+.btn-desc{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--accent)}
+
 /* Opciones de sede y cantidad en el formulario */
 .stepper{display:inline-flex;align-items:center;border:1px solid var(--line-strong);border-radius:var(--radius-sm);overflow:hidden}
 .stepper button{width:50px;height:48px;font-size:22px;font-weight:600;color:var(--accent)}
@@ -593,7 +608,9 @@ a.ini-cta{text-decoration:none}
 .plazo.tarde{background:#FDECEA;color:var(--danger)}
 .barra{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:10px}
 .barra i{display:block;height:100%;border-radius:3px;background:var(--accent);transform-origin:left;transition:transform 400ms var(--ease-out)}
-.barra-txt{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);margin-top:5px}
+.barra-txt{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;font-size:12.5px;color:var(--ink-soft);margin-top:5px}
+/* Una etiqueta larga ("En masilla y pintura y ensamblar") baja de línea y nunca estira la pantalla */
+.barra-txt .plazo{max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .barra-txt b{color:var(--ink)}
 .vlista{display:flex;flex-direction:column;gap:10px;padding:14px 18px 0}
 .vacio{padding:48px 24px;text-align:center;color:var(--ink-soft)}

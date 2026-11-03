@@ -7,7 +7,7 @@ Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue 
 ## 1. Vendedora (Yulimar)
 - [ ] Inicio: pendientes de colores (pago no llegó, pedido listo, pago confirmado, cotización por vencer, atrasado). Al tocar cada uno lleva a su venta.
 - [ ] Nueva venta: crear una cotización y convertirla en venta. Registrar un pago con comprobante.
-- [ ] Ventas: la ficha dice "Espera que Ray confirme el pago". No puede cancelar ventas.
+- [ ] Ventas: la ficha dice "Espera que confirmen el pago". No puede cancelar ventas.
 - [ ] Catálogo: puede crear y editar un modelo.
 - [ ] Producción: solo mira, sin montos ni botones.
 - [ ] Enviar el PDF y el enlace de seguimiento por WhatsApp.
@@ -35,6 +35,16 @@ Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue 
 - [ ] Yulimar vende y registra el pago; Ray confirma y asigna; cada trabajador termina su paso con foto; el pedido pasa solo a Lista; Yulimar avisa y marca Entregado; Ray paga en Nómina.
 
 ## Cambios recientes (agregar aquí lo nuevo de cada chat)
+- 3 nov (v72, Claude de Ray): **Nueva gestión: botones de PDF, PDF sin "por confirmar", teléfonos de otros países, Gualfredo confirma pagos.**
+  - [ ] La app abre vacía (sin ventas ni pagos), pero al escribir la cédula o el teléfono de un cliente de antes se llena solo. La primera venta es la N° 1099.
+  - [ ] Ficha de una venta: arriba siempre "Enviar PDF" (verde) y "Descargar PDF". Sin enviar dice "Primero envíale el PDF". Después dice "✓ PDF enviado hoy … · quién".
+  - [ ] En el Samsung: después de "Enviar PDF" siguen los dos botones y sale aparte "2. Enviar el mensaje". "Descargar PDF" también funciona ahí.
+  - [ ] Al terminar una venta: Enviar PDF al cliente, (Samsung) 2. Enviar el mensaje, Descargar PDF, Enviar mensaje con su seguimiento, Hacer otra venta.
+  - [ ] PDF con un pago sin confirmar: el pago sale normal, sin "(por confirmar)" ni la nota de pago pendiente. En la ficha sí dice "Por confirmar". La página de seguimiento sigue diciendo "En revisión".
+  - [ ] Teléfono de otro país pegado de WhatsApp (por ejemplo +1 305 555 1234): se guarda, se ve "+1 …" en la ficha y en el PDF, y "Escribirle" abre su chat. Uno de Venezuela sigue igual (0414…).
+  - [ ] Gualfredo confirma un pago y el pedido pasa solo a fabricación. A Gualfredo le llega el aviso de cada pago por confirmar.
+  - [ ] Gualfredo también puede pagar la nómina, aprobar vales y revisar entregas del Depósito.
+  - [ ] Producción en el teléfono: una tarjeta con varios pasos a la vez no corre la pantalla hacia los lados.
 - 29 y 30 sep (v47 a v65), resumen: combos con ventanas y protecciones, asignar con fecha, inicio del trabajador, vales, Cotización o Venta con detalles para fabricar, Depósito (entregar, revisar, compra grande), atajos en avisos rojos, PDF en Android, Solo protección y monto del marco, fotos rápidas, ficha de la venta en fabricación, Ayuda dentro de la app y Manuales de uso.
 - 30 sep (v66): **Categorías de pago por producto, Aluminio y detalles de ventana.**
   - [ ] Categorías de pago: una por producto; salen solo sus trabajos. Masilla y pintura es un solo monto. El extra de protección va en su recuadro.

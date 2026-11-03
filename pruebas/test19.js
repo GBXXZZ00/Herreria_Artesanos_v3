@@ -69,7 +69,7 @@ async function entrar(page){
 
  // Más opciones: cuadrícula de botones en vez de lista de texto
  await p3.click('#fichaBody details[data-sec="mas"] summary');await p3.waitForTimeout(300);
- ok('4 botones en la cuadrícula (venta editable)',(await p3.$$('#fichaBody .grid-acciones .btn-grid')).length===4);
+ ok('3 botones en la cuadrícula (venta editable, el PDF ya está arriba)',(await p3.$$('#fichaBody .grid-acciones .btn-grid')).length===3&&!(await p3.$('#fichaBody .grid-acciones [data-accion="descargar"]')));
  ok('Botón "Cancelar venta" separado abajo',(await p3.textContent('#fichaBody .btn-peligro')).includes('Cancelar venta'));
  ok('Sin "Devolver a…" (es el primer estado)',!(await p3.$('#fichaBody .f-link-chico')));
  await p3.screenshot({path:'shots4/s6-mas-opciones.png'});

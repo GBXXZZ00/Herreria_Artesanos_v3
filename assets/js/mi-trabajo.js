@@ -242,7 +242,7 @@
   // Tarjeta grande: lo que está haciendo; si no está haciendo nada, "¿Con cuál empiezas?"
   function ahoraHtml(){
     if(!trabajos.length){
-      return `<div class="hoy"><div class="hoy-vacio"><b>No tienes trabajos asignados</b><span>Te avisamos cuando Ray te asigne uno.</span></div></div>`;
+      return `<div class="hoy"><div class="hoy-vacio"><b>No tienes trabajos asignados</b><span>Te avisamos cuando te asignen uno.</span></div></div>`;
     }
     const t = enProceso();
     if(!t){
@@ -503,7 +503,7 @@
   // Historial: cada pago que le hizo Ray, por semana y siempre cerrado; al abrirlo, sus trabajos con fotos
   function pintarHistorial(){
     const pg = (pagos && pagos.pagos) || [];
-    if(!pg.length) return '<div class="tr-vacio">Todavía no tienes pagos. Cuando Ray te pague, aquí verás cada semana.</div>';
+    if(!pg.length) return '<div class="tr-vacio">Todavía no tienes pagos. Cuando te paguen, aquí verás cada semana.</div>';
     return pg.map((p) => {
       const tr = p.trabajos || [], va = p.vales || [];
       const sub = esc([p.semana ? rangoSemana(p.semana) : '', tr.length === 1 ? '1 trabajo' : tr.length + ' trabajos'].filter(Boolean).join(' · '))

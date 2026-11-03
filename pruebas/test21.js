@@ -100,6 +100,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Vendedora ve los 3 pedidos en taller',(await y.$$('.vcard')).length===3);
  ok('Solo chips Todos y Atrasados, sin botón +',(await y.$$eval('#chips .chip',x=>x.map(c=>c.dataset.f))).join()==='todos,atrasados' && !(await y.isVisible('#btnNuevaOrden')));
  ok('Cada pedido dice en qué va',(await y.textContent('.vcard >> nth=0')).includes('En masilla y pintura'));
+ ok('Una etiqueta larga ("En masilla y pintura y ensamblar") no estira la pantalla',await y.evaluate(()=>document.documentElement.scrollWidth<=390),await y.evaluate(()=>document.documentElement.scrollWidth));
  await y.screenshot({path:'shots5/s0-vendedora-lista.png'});
  await y.click('.vcard >> nth=0');await y.waitForSelector('#sheetFicha.open');
  const fv=await y.textContent('#fichaBody');

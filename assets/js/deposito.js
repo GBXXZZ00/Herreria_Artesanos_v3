@@ -207,7 +207,7 @@
     else if(filtro !== 'todos') l = l.filter(e => e.trabajador_id === filtro);
     if(!l.length){
       $('cont').innerHTML = filtro === 'revisar'
-        ? '<div class="vacio-d"><b>Nada por revisar</b>Ray ya revisó todas las entregas.</div>'
+        ? '<div class="vacio-d"><b>Nada por revisar</b>Ya se revisaron todas las entregas.</div>'
         : '<div class="vacio-d"><b>Todavía no hay entregas</b>Cuando un trabajador pida material, toca "Entregar material".</div>';
       return;
     }
@@ -309,7 +309,7 @@
       const { data, error } = await db.rpc('deposito_entregar', { mid: ent.mid, tid: ent.tid, nota: ent.nota.trim() || null, clave: ent.clave });
       if(error) throw error;
       cerrarHoja('sheetEntregar', true);
-      toast(data && data.rara ? (datos.es_ray ? `Entregado. Se ve rara: ${data.rara_motivo}` : `Entregado. Le avisamos a Ray: ${data.rara_motivo}`) : `Listo: 1 ${m ? m.nombre : ''} a ${t ? t.nombre : ''}. Queda por revisar.`);
+      toast(data && data.rara ? (datos.es_ray ? `Entregado. Se ve rara: ${data.rara_motivo}` : `Entregado. Les avisamos para que la revisen: ${data.rara_motivo}`) : `Listo: 1 ${m ? m.nombre : ''} a ${t ? t.nombre : ''}. Queda por revisar.`);
       ent = null;
       await cargar();
     } catch(err){
@@ -600,7 +600,7 @@
     $('entregaBody').innerHTML = html;
     $('entregaBody').scrollTop = sc;
     // Pie: solo Ray aprueba o cuestiona
-    if(!datos.es_ray){ $('entregaFoot').innerHTML = '<p class="solo-ray">Solo Ray la aprueba o la cuestiona.</p>'; return; }
+    if(!datos.es_ray){ $('entregaFoot').innerHTML = '<p class="solo-ray">Solo Ray o Gualfredo la aprueban o la cuestionan.</p>'; return; }
     const dis = rev.enviando ? 'disabled' : '';
     if(rev.cuestionando){
       $('entregaFoot').innerHTML = `<div class="pie-dos"><button class="btn-secondary" type="button" data-rev="cancelar" ${dis}>Cancelar</button><button class="btn-primary" type="button" data-rev="enviar" style="background:var(--danger)" ${dis}>Cuestionar</button></div>`;

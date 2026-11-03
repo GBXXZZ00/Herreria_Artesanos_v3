@@ -242,7 +242,7 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  ok('   El producto copia la categoría de pago de su modelo',v.items[0].categoria_pago_id===1);
  await y.screenshot({path:'shots5/e5-venta-lista.png'});
  await y.goto(H+'ventas.html?abrir='+v.id);await y.waitForSelector('#sheetFicha.open');await y.waitForTimeout(1200);
- ok('   Yulimar ve "Espera que Ray confirme el pago" y ningún botón de producción',(await texto(y,'#fichaBody .btn-guia.espera')).includes('Espera que Ray confirme el pago')&&!(await y.$('[data-estado="en_produccion"]'))&&!(await y.$('[data-accion="pedir-produccion"]')));
+ ok('   Yulimar ve "Espera que confirmen el pago" y ningún botón de producción',(await texto(y,'#fichaBody .btn-guia.espera')).includes('Espera que confirmen el pago')&&!(await y.$('[data-estado="en_produccion"]'))&&!(await y.$('[data-accion="pedir-produccion"]')));
  ok('   Yulimar no puede cancelar la venta',!(await y.$('#fichaBody [data-accion="cancelar"]')));
  await y.screenshot({path:'shots5/e6-ficha-espera.png'});
 
