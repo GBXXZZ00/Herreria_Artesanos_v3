@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Depósito · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=72">
+<link rel="stylesheet" href="assets/css/base.css?v=73">
 <style>
   .page{padding-bottom:calc(var(--safe-b) + var(--nav-h) + 96px)}
   /* Materiales | Entregas: dos botones largos */
@@ -23,6 +23,52 @@
   .seg-d button.on{color:var(--accent)}
   .seg-fondo{position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:44px;border-radius:11px;background:var(--surface);box-shadow:0 1px 3px rgba(20,40,40,.12);transition:transform 220ms var(--ease-out)}
   .seg-d.en-2 .seg-fondo{transform:translateX(100%)}
+  /* Tres pestañas: Consumibles, Fabricación y Compras */
+  .seg-d{grid-template-columns:1fr 1fr 1fr}
+  .seg-d button{font-size:14.5px}
+  .seg-fondo{width:calc(33.333% - 2.7px)}
+  .seg-d.en-3 .seg-fondo{transform:translateX(200%)}
+  .mat-ico.fab{background:var(--surface-2);color:var(--ink)}
+  #pieFab,#pieCompra{z-index:40}
+  .s-favor{color:var(--accent)} .s-debe{color:#B42318}
+  /* En computadora la lista queda a la izquierda y el detalle se abre al lado */
+  @media (min-width:1024px){
+    body{overflow:auto !important}
+    .page{max-width:none !important;padding-right:540px !important}
+    .seg-d,.mostrar{max-width:640px}
+    .d-cont{max-width:680px}
+    body::after{content:"Toca un material, una entrega o una factura para ver el detalle aquí.";position:fixed;top:84px;right:24px;width:500px;padding:20px;border:1px dashed var(--line-strong);border-radius:18px;color:var(--ink-soft);font-size:14px;box-sizing:border-box}
+    .sheet-scrim{display:none}
+    .sheet,.sheet.sheet-auto{left:auto;right:24px;top:84px;bottom:24px;width:500px;max-width:none;height:auto;max-height:none;margin:0;border-radius:18px;border:1px solid var(--line);box-shadow:0 10px 30px rgba(23,85,92,0.10);transform:translateX(calc(100% + 40px));z-index:45}
+    .sheet.open{transform:none}
+    .sheet-top{z-index:46}
+    .sheet-handle{display:none}
+    .pie-entregar{right:540px !important}
+  }
+  .barras{display:grid;gap:4px;margin-top:8px}
+  .barra{display:flex;height:22px;border-radius:6px;overflow:hidden;background:#F1E4D6;font-size:11px;font-weight:800}
+  .barra span{display:flex;align-items:center;justify-content:center;color:#fff;background:#6F7C7E;border-right:2px solid var(--surface);overflow:hidden;white-space:nowrap;min-width:0}
+  .barra span:nth-child(even){background:#566365}
+  .barra span.sob{background:transparent;color:#8A5A00;border:0}
+  .ped{display:flex;align-items:center;gap:12px;padding:10px 2px}
+  .ped + .ped{border-top:1px solid var(--line)}
+  .ped img{width:46px;height:46px;border-radius:10px;object-fit:cover;background:var(--surface-2);flex-shrink:0}
+  .lin{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:11px 0}
+  .lin + .lin{border-top:1px solid var(--line)}
+  .lin-leido{grid-column:1/-1;font-size:11.5px;font-weight:700;color:var(--ink-faint);letter-spacing:.3px}
+  .lin-t{font-size:15px;font-weight:800}
+  .lin-s{font-size:12.5px;color:var(--ink-soft)}
+  .lin-n{text-align:right;font-size:15px;font-weight:800;white-space:nowrap}
+  .lin .opts{grid-column:1/-1;margin-top:6px}
+  .caja-amar{grid-column:1/-1;margin-top:6px;padding:10px 12px;border-radius:12px;background:#FCEFB4;color:#6B5500;font-size:13px;font-weight:700;line-height:1.4}
+  .caja-ok{padding:12px 14px;border-radius:14px;background:#DDF2E6;color:#1B6B3A;font-size:14px;font-weight:700;line-height:1.4;margin-bottom:12px}
+  .escaneo{height:180px;border-radius:16px;background:var(--surface-2);position:relative;overflow:hidden}
+  .escaneo img{width:100%;height:100%;object-fit:cover;opacity:.5}
+  .escaneo::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--accent);animation:esc 1.1s linear infinite}
+  @keyframes esc{to{transform:translateY(177px)}}
+  .tot{border-radius:16px;background:var(--surface-2);padding:12px 14px;margin-top:6px}
+  .tot .fila{display:flex;justify-content:space-between;font-size:14px;padding:3px 0}
+  .tot .fila.fin{border-top:1px solid var(--line-strong);margin-top:6px;padding-top:9px;font-size:17px;font-weight:800}
   /* Filtro de entregas: más pequeño que las pestañas */
   .mostrar{display:flex;align-items:center;gap:8px;margin:12px 0 0;padding-left:18px}
   .mostrar-t{font-size:13px;font-weight:800;color:var(--ink-soft);flex-shrink:0}
@@ -169,6 +215,9 @@
   .d-suya img{width:100%;height:100%;object-fit:cover}
   .d-link{display:flex;align-items:center;justify-content:center;height:50px;margin-top:16px;border:1.5px solid var(--line-strong);border-radius:14px;font-weight:700;color:var(--accent);text-decoration:none;transition:transform 130ms var(--ease-out)}
   .d-link:active{transform:scale(0.98)}
+  /* Depósito › Fabricación: retazos con su medida */
+  .ret-l{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+  .ret-c{display:inline-block;font-size:11.5px;font-weight:800;padding:2px 7px;border-radius:7px;background:#FBF3E4;color:#8A5A00;border:1px dashed var(--amber)}
 </style>
 </head>
 <body data-requiere-sesion="si">
@@ -185,15 +234,19 @@
 <main class="page">
   <div class="seg-d" id="tabs" role="group" aria-label="Qué ver">
     <span class="seg-fondo" aria-hidden="true"></span>
-    <button class="on" type="button" data-tab="materiales" aria-pressed="true">Materiales</button>
-    <button type="button" data-tab="entregas" aria-pressed="false">Entregas</button>
+    <button class="on" type="button" data-tab="materiales" aria-pressed="true">Consumibles</button>
+    <button type="button" data-tab="fab" aria-pressed="false">Fabricación</button>
+    <button type="button" data-tab="compras" aria-pressed="false">Compras</button>
   </div>
+  <div class="mostrar" id="subCons"><span class="mostrar-t">Ver</span><div class="mostrar-l"><button class="fx on" type="button" data-sub="materiales">Materiales</button><button class="fx" type="button" data-sub="entregas">Entregas</button></div></div>
   <div class="mostrar hidden" id="filtrosWrap"><span class="mostrar-t">Mostrar</span><div class="mostrar-l" id="filtros" role="group" aria-label="Filtrar entregas"></div></div>
   <section class="d-cont" id="cont" aria-live="polite">
     <div class="sk-fila"></div><div class="sk-fila"></div><div class="sk-fila"></div>
   </section>
 </main>
 
+<div class="pie-entregar hidden" id="pieFab"><button class="btn-primary" type="button" id="btnContar">Contar barras</button></div>
+<div class="pie-entregar hidden" id="pieCompra"><button class="btn-primary" type="button" id="btnFoto">Cargar compra</button></div>
 <div class="pie-entregar hidden" id="pieEntregar"><button class="btn-primary" type="button" id="btnEntregar">Entregar material</button></div>
 
 <div class="bottom-nav-wrap" id="menuModulos" data-activo="deposito"></div>
@@ -299,13 +352,51 @@
   <div class="sheet-body" id="itemBody"></div>
 </section>
 
+
+<!-- material de fabricación -->
+<div class="sheet-scrim" id="scrimFab" data-cerrar="sheetFab"></div>
+<section class="sheet" id="sheetFab" role="dialog" aria-modal="true" aria-labelledby="fabTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="fabTitulo">Material</h2>
+    <button class="icon-btn" data-cerrar="sheetFab" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body" id="fabBody"></div>
+</section>
+<!-- conteo de barras -->
+<div class="sheet-scrim" id="scrimConteo" data-cerrar="sheetConteo"></div>
+<section class="sheet" id="sheetConteo" role="dialog" aria-modal="true" aria-labelledby="conteoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="conteoTitulo">Contar barras</h2>
+    <button class="icon-btn" data-cerrar="sheetConteo" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body" id="conteoBody"></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarConteo">Guardar conteo</button></div>
+</section>
+<!-- compra con foto -->
+<div class="sheet-scrim" id="scrimFoto" data-cerrar="sheetFoto"></div>
+<section class="sheet" id="sheetFoto" role="dialog" aria-modal="true" aria-labelledby="fotoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="fotoTitulo">Compra nueva</h2>
+    <button class="icon-btn" data-cerrar="sheetFoto" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body" id="fotoBody"></div>
+  <div class="sheet-foot hidden" id="fotoFoot"><button class="btn-primary" type="button" id="btnGuardarFoto">Guardar compra</button></div>
+</section>
+<!-- factura -->
+<div class="sheet-scrim" id="scrimFactura" data-cerrar="sheetFactura"></div>
+<section class="sheet sheet-auto" id="sheetFactura" role="dialog" aria-modal="true" aria-labelledby="facturaTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="facturaTitulo">Factura</h2>
+    <button class="icon-btn" data-cerrar="sheetFactura" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body" id="facturaBody"></div>
+  <div class="sheet-foot hidden" id="facturaFoot"></div>
+</section>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=72"></script>
-<script src="assets/js/supabase-client.js?v=72"></script>
-<script src="assets/js/comun.js?v=72"></script>
-<script src="assets/js/sesion.js?v=72"></script>
-<script src="assets/js/ayuda.js?v=72"></script>
-<script src="assets/js/deposito.js?v=72"></script>
+<script src="assets/vendor/supabase.js?v=73"></script>
+<script src="assets/js/supabase-client.js?v=73"></script>
+<script src="assets/js/comun.js?v=73"></script>
+<script src="assets/js/sesion.js?v=73"></script>
+<script src="assets/js/ayuda.js?v=73"></script>
+<script src="assets/js/deposito.js?v=73"></script>
+<script src="assets/js/img-compress.js?v=73"></script>
+<script src="assets/js/deposito-nuevo.js?v=73"></script>
 </body>
 </html>
