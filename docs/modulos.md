@@ -2,7 +2,7 @@
 
 Estado al 2 nov 2026 (v71). Cada pantalla es un `.html` en la raíz que carga sus `.js` de `assets/js/`. Todas cargan primero `supabase-client.js` (crea `window.db`) y `comun.js` (`window.AH`, piezas compartidas).
 
-Roles: **admin** (Gualfredo y Ray), **vendedor** (Yulimar; línea hierro o madera), **trabajador**, **cliente** (sin sesión). Ray es el admin con `confirma_abonos = true` ("Ray" en las reglas). Gualfredo tiene `lleva_madera = true`.
+Roles: **admin** (Gualfredo y Ray), **vendedor** (Yulimar; línea hierro o madera), **trabajador**, **cliente** (sin sesión). Ray y Gualfredo tienen `confirma_abonos = true` desde v72 (en las reglas `_es_ray()` = quien confirma pagos: también paga la nómina y revisa entregas del Depósito). Gualfredo tiene `lleva_madera = true`.
 
 Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones en `docs/base-de-datos.md`.
 
@@ -46,7 +46,7 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 - **Pendiente:** dar "Listo" sin cambiar nada marca el producto como tocado.
 
 ## Cotizaciones y Ventas (`cotizaciones.html`, `ventas.html` + `lista-ventas.js`)
-- **Para qué:** listas con filtros y la ficha de cada una: convertir en venta, registrar pagos, confirmar pagos, cambiar estado, cancelar con devolución, PDF, mensaje al cliente por WhatsApp con el enlace de seguimiento, avance de fabricación, "Cambios en el pedido".
+- **Para qué:** listas con filtros y la ficha de cada una: convertir en venta, registrar pagos, confirmar pagos, cambiar estado, cancelar con devolución, "Enviar PDF" y "Descargar PDF" siempre arriba en "Avisar al cliente", mensaje al cliente por WhatsApp con el enlace de seguimiento, avance de fabricación, "Cambios en el pedido".
 - **Roles:** admin y vendedora. Confirmar pagos solo Ray. Cancelar solo admin.
 - **Datos:** `ventas`, `venta_items`, `abonos`, `venta_cambios`; bucket `comprobantes`. RPC `convertir_en_venta`, `completar_detalles`, `registrar_abono`, `confirmar_abono`, `cambiar_estado_venta`, `cancelar_venta`, `marcar_paso`, `avance_venta`.
 - **Reglas:** estados Cotización, Confirmada, En fabricación (`en_produccion`), Lista, Entregada, Cancelada. Al confirmar Ray el pago pasa sola a fabricación y se crean los pasos. Al terminar el último paso pasa sola a Lista. No se entrega debiendo.

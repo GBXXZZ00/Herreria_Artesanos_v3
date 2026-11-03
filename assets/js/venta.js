@@ -38,18 +38,14 @@
   const ICON_DEL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg>';
   const ICON_CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
   const ICON_ALERTA = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
+  const ICON_DESCARGAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
   const ICON_WA = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z"/></svg>';
 
   // ---------------------------------------------------------------------------
-  // Teléfono: siempre se guarda como 58 + 10 números
+  // Teléfono: Venezuela se guarda como 58 + 10 números; de otro país, con su código (ventas-comun.js)
   // ---------------------------------------------------------------------------
-  function normTel(t){
-    const d = String(t || '').replace(/\D/g, '');
-    if(/^0\d{10}$/.test(d)) return '58' + d.slice(1);
-    if(/^4\d{9}$/.test(d)) return '58' + d;
-    return d;
-  }
-  const telValido = (t) => /^58\d{10}$/.test(normTel(t));
+  const normTel = (t) => window.AV.normTel(t);
+  const telValido = (t) => window.AV.telValido(t);
   // Cédula o RIF: sin puntos ni guiones; si son solo números es V
   function normCed(t){
     const d = String(t || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -450,7 +446,7 @@
     if(data){
       clienteExistente = data;
       if(!ced && data.cedula){ $('cCedula').value = data.cedula; auto.ced = true; }
-      if(data.telefono && (auto.tel || !$('cTel').value.trim() || ced)){ $('cTel').value = '0' + String(data.telefono).replace(/^58/, ''); auto.tel = true; }
+      if(data.telefono && (auto.tel || !$('cTel').value.trim() || ced)){ $('cTel').value = window.AV.telMostrar(data.telefono); auto.tel = true; }
       if(auto.nombre || !$('cNombre').value.trim() || ced){ $('cNombre').value = data.nombre || ''; auto.nombre = true; }
       ['campoCed', 'campoTel', 'campoNombreC'].forEach(id => $(id).classList.remove('invalid'));
       $('avisoCliente').innerHTML = `<div class="aviso-cliente">${ICON_CHECK}Ya es cliente. Sus datos se llenaron solos.</div>`;
@@ -852,6 +848,8 @@
       </div>
       <div class="listo-btns">
         <button class="btn-wa" type="button" id="btnPdf" disabled><span class="spinner"></span>Preparando PDF</button>
+        <button class="btn-guia hidden" type="button" id="btnPaso2" style="margin-top:0"><span class="bg-t">2. Enviar el mensaje</span><span class="bg-s">${esVenta ? 'Le manda el texto con su enlace de seguimiento' : 'Le manda el texto de la cotización'}</span></button>
+        <button class="btn-secondary btn-desc" type="button" id="btnDesc" style="height:54px" disabled>${ICON_DESCARGAR}Descargar PDF</button>
         <button class="btn-secondary" type="button" id="btnMsj" style="height:54px" disabled>Enviar mensaje con su seguimiento</button>
         <button class="btn-secondary" type="button" id="btnOtra" style="height:54px">Hacer otra venta</button>
         <button class="link-simple" type="button" id="btnIrInicio">Volver a Inicio</button>
@@ -869,6 +867,7 @@
         venta = await window.AV.cargarVenta(res.id);
         blob = await window.AV.crearPDF(venta);
         const m = $('btnMsj'); if(m) m.disabled = false;
+        const d = $('btnDesc'); if(d) d.disabled = false;
         const b = $('btnPdf'); if(!b) return;
         b.disabled = false; b.innerHTML = `${ICON_WA}Enviar PDF al cliente`;
       } catch(e){
@@ -882,14 +881,23 @@
       db.rpc('marcar_paso', { vid: venta.id, paso: 'mensaje' });
       $('btnMsj').innerHTML = '✓ Mensaje enviado';
     });
+    $('btnPaso2').addEventListener('click', () => {
+      if(!venta) return;
+      window.AV.abrirMensajePDF(venta);
+      $('btnPaso2').classList.add('hidden');
+    });
+    $('btnDesc').addEventListener('click', () => {
+      if(!blob) return;
+      window.AV.descargarPDF(blob, venta);
+      toast('PDF descargado');
+    });
     $('btnPdf').addEventListener('click', async () => {
       if(!blob) return;
-      const bp = $('btnPdf');
-      if(bp.dataset.paso2){ window.AV.abrirMensajePDF(venta); delete bp.dataset.paso2; bp.innerHTML = `${ICON_WA}Enviar PDF al cliente`; return; }
       const r = await window.AV.compartirPDF(blob, venta);
       if(r === 'paso2'){
         db.rpc('marcar_paso', { vid: venta.id, paso: 'pdf' });
-        bp.dataset.paso2 = '1'; bp.innerHTML = `${ICON_WA}2. Enviar el mensaje`;
+        // Android: el mensaje va aparte; "Enviar PDF al cliente" se queda igual por si hay que reenviarlo
+        $('btnPaso2').classList.remove('hidden');
         toast('PDF enviado. Ahora toca "2. Enviar el mensaje" para mandarle el texto');
         return;
       }
@@ -944,7 +952,7 @@
       $('optsSede').closest('.field').before(f);
     }
     $('cCedula').value = v.cliente.cedula || '';
-    $('cTel').value = v.cliente.telefono ? '0' + String(v.cliente.telefono).replace(/^58/, '') : '';
+    $('cTel').value = window.AV.telMostrar(v.cliente.telefono);
     $('cNombre').value = v.cliente.nombre || '';
     $('vNotas').value = v.notas || '';
     if(Number(v.descuento)) $('vDesc').value = Number(v.descuento);

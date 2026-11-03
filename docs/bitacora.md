@@ -12,6 +12,19 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-03 · Claude de Ray
+- Qué hizo (v72, todo lo de `docs/tareas/2026-11-02-ray-pendiente-para-code.md`):
+  - Ficha de la venta: "Enviar PDF" y "Descargar PDF" siempre arriba (menos en canceladas). Debajo: "Primero envíale el PDF…", "✓ PDF enviado hoy … · quién", en Android "2. Enviar el mensaje" aparte y luego el paso del día. Se quitó "PDF" de "Más opciones".
+  - Venta lista: se agregaron "2. Enviar el mensaje" (solo Android, después de enviar) y "Descargar PDF". No se quitó ningún botón y "Enviar PDF al cliente" ya no cambia de texto.
+  - PDF del cliente: el pago pendiente sale como un pago normal, sin "(por confirmar)" ni la nota. La página de seguimiento sigue con "En revisión" (Ray dijo que se queda).
+  - Teléfonos de cualquier país (`AV.normTel`, `AV.telValido`, `AV.telMostrar` en `ventas-comun.js`). Venezuela sigue como 58…; los de afuera se ven +código en la ficha, la venta y el PDF.
+  - Textos: "Espera que confirmen el pago" y en el manual "Ray o Gualfredo" donde se habla de confirmar pagos.
+  - Migraciones: `v72b_ray_telefono_internacional` (`normalizar_telefono` quita el 00) y `v72c_ray_gualfredo_confirma_pagos` (Gualfredo con `confirma_abonos = true`: también paga la nómina, revisa entregas del Depósito y recibe los avisos de pagos). **Ojo: reglas de dinero y permisos.**
+  - Prueba nueva test41 y ajuste en test15.
+- Rama o PR: `gualfredo/nueva-gestion`, PR #2.
+- Está tocando: nada más después de unir.
+- Pendientes: textos de Nómina y Depósito que dicen "Solo Ray" (ahora Gualfredo también puede). Lo de Gualfredo en la app: usuario carpintero y categoría de pago de Madera para los 6 modelos.
+
 ## 2026-11-02 · Claude de Ray
 - Qué hizo: aplicó la limpieza de la nueva gestión (v72, con ensayo previo y OK de Ray): copia en `respaldos` y base vacía, clientes se quedan, próxima venta 1099. Desactivó el usuario vendedor "Prueba". Hizo las maquetas de los botones de PDF (aprobadas). Dejó todo lo que falta, ya aprobado por Ray, en `docs/tareas/2026-11-02-ray-pendiente-para-code.md` para hacerlo desde Claude Code.
 - Rama o PR: `gualfredo/nueva-gestion`, PR #2.

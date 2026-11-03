@@ -78,7 +78,7 @@ Idea general: la pantalla casi nunca escribe directo. Las reglas importantes (mo
 
 **Usuarios:** `usuario_especialidades(uid, esp)`, `usuario_linea(uid, p_linea)`.
 
-**Otras:** `aviso_prueba()`, `normalizar_telefono(t)`, `normalizar_cedula(t)`.
+**Otras:** `aviso_prueba()`, `normalizar_telefono(t)` (Venezuela → 58 + 10 números; otros países con su código; quita el 00 del inicio desde v72b), `normalizar_cedula(t)`.
 
 Funciones internas importantes (empiezan con `_`): `_etapas_crear` / `_insertar_etapas_item` (crean los pasos según el producto), `_monto_etapa` / `_calcular_monto` / `_tarifa` (cuánto vale cada paso), `_etapa_espera` (si un paso espera a otro), `_a_produccion_si_pagada`, `_exhibicion_terminar`, `_stock_tomar` / `_stock_devolver` (piezas de entrega inmediata), `_avisar*` (crean notificaciones), `_semana_de`, `_sabado_actual`, `_corte_nomina`.
 

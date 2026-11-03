@@ -80,7 +80,7 @@ const rpcs=[];
  await p.waitForSelector('#fichaBody .avisar-wrap [data-accion="pdf"]:not([disabled])',{timeout:20000});
  ok('PDF listo en la ficha',true);
  await p.screenshot({path:'shots4/l2-ficha-cot.png'});
- ok('Avisar al cliente: cotización es un solo botón (PDF, sin enlace)',(await p.$$('#fichaBody .avisar-wrap [data-accion]')).length===1&&(await p.textContent('#fichaBody .avisar-wrap')).includes('Enviar cotización'));
+ ok('Avisar al cliente: cotización con Enviar PDF y Descargar PDF, sin otro paso',(await p.$$eval('#fichaBody .avisar-wrap [data-accion]',x=>x.map(b=>b.dataset.accion))).join(',')==='pdf,descargar'&&(await p.textContent('#fichaBody .avisar-wrap')).includes('Enviar PDF'));
  ok('Cotización: botón guía Convertir en venta',(await p.textContent('#fichaBody .btn-guia[data-accion="convertir"]')).includes('Cuando el cliente pague'));
  ok('Menús: Pagos/Precio abierto, Más opciones cerrado',await p.$eval('#fichaBody details[data-sec="precio"]',x=>x.open)&&!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open)));
  // Enviar PDF de la cotización (menú de compartir simulado)

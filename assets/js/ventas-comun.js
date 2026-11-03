@@ -176,8 +176,7 @@
     };
     par(M + 5, y + 6, 'Cliente', v.cliente.nombre);
     par(M + 5, y + 16, 'Cédula o RIF', v.cliente.cedula);
-    const telc = String(v.cliente.telefono || '');
-    par(M + 68, y + 6, 'Teléfono', /^\d+$/.test(telc) ? '+' + telc.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3 $4') : telc);
+    par(M + 68, y + 6, 'Teléfono', telMostrar(v.cliente.telefono, true));
     par(M + 68, y + 16, 'Sede', v.sede ? v.sede.nombre : '');
     par(M + 130, y + 6, 'Fecha de emisión', fechaNum(cot ? v.creado_en : (v.confirmada_en || v.creado_en)));
     par(M + 130, y + 16, cot ? 'Válida hasta' : 'Fecha de entrega', cot ? fechaNum(fechaLocal(v.vence_en)) : (v.fecha_entrega ? fechaNum(fechaLocal(v.fecha_entrega)) : '-'));
@@ -216,7 +215,6 @@
 
     // Totales y pagos
     const abonos = (v.abonos || []).filter(cuenta);
-    const pendientes = porConfirmar(abonos).length;
     const alto = 30 + (cot ? 0 : 12 + abonos.length * 5);
     if(y + alto > 262){ doc.addPage(); y = cabecera() + 8; }
     y += 2;
@@ -238,7 +236,7 @@
     doc.text('Monto total', X, y + 1.3); doc.text(dinero(v.total), D - 2, y + 1.3, { align:'right' });
     y += 11;
     if(!cot){
-      abonos.forEach(a => fila(`${a.tipo === 'devolucion' ? 'Devolución' : 'Pago'} ${fechaNum(a.fecha)} · ${a.metodo}${a.estado === 'por_confirmar' ? ' (por confirmar)' : ''}`, (a.tipo === 'devolucion' ? '- ' : '') + dinero(a.monto)));
+      abonos.forEach(a => fila(`${a.tipo === 'devolucion' ? 'Devolución' : 'Pago'} ${fechaNum(a.fecha)} · ${a.metodo}`, (a.tipo === 'devolucion' ? '- ' : '') + dinero(a.monto)));
       fila('Resta por pagar', dinero(resta(v)), true, resta(v) > 0 ? TEAL : TINTA);
     }
 
@@ -248,7 +246,6 @@
     const notas = ['Precios en dólares (USD).'];
     if(cot) notas.push(`Cotización válida hasta el ${fechaLarga(v.vence_en)}.`);
     if(!cot && abonos.length){ const ult = abonos.filter(a => a.tipo === 'abono').pop(); if(ult) notas.push(`Método de pago: ${ult.metodo}.`); }
-    if(!cot && pendientes) notas.push(pendientes === 1 ? 'Hay un pago pendiente por confirmar. Al confirmarlo se actualiza en tu seguimiento.' : 'Hay pagos pendientes por confirmar. Al confirmarlos se actualizan en tu seguimiento.');
     if(v.notas) notas.push('Nota: ' + v.notas);
     notas.forEach(t => { const ls = doc.splitTextToSize(t, X - M - 10); doc.text(ls, M, yn); yn += ls.length * 3.8 + 1.5; });
 
@@ -261,6 +258,42 @@
       if(paginas > 1){ doc.setFont('helvetica', 'normal'); color(GRIS); doc.text(`${p} / ${paginas}`, D, 272, { align:'right' }); }
     }
     return doc.output('blob');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Teléfonos de cualquier país. Se guardan solo con números y el código del país:
+  // Venezuela 58 + 10 números; los demás, tal cual se pegan de WhatsApp (11 a 15 números).
+  // ---------------------------------------------------------------------------
+  function normTel(t){
+    let d = String(t || '').replace(/\D/g, '');
+    if(/^00/.test(d)) d = d.slice(2);                  // 00 1 305… → 1305…
+    if(/^0\d{10}$/.test(d)) return '58' + d.slice(1);  // 0414 123 4567
+    if(/^4\d{9}$/.test(d)) return '58' + d;            // 414 123 4567
+    return d;
+  }
+  function telValido(t){
+    const d = normTel(t);
+    return /^58/.test(d) ? /^58\d{10}$/.test(d) : /^[1-9]\d{10,14}$/.test(d);
+  }
+  const esTelVE = (d) => /^58\d{10}$/.test(String(d || ''));
+  // Códigos de país de 2 números (los de 1 son 1 y 7; el resto, 3)
+  const COD2 = '20 27 30 31 32 33 34 36 39 40 41 43 44 45 46 47 48 49 51 52 53 54 55 56 57 58 60 61 62 63 64 65 66 81 82 84 86 90 91 92 93 94 95 98'.split(' ');
+  function codigoPais(d){
+    if(/^[17]/.test(d)) return d.slice(0, 1);
+    if(COD2.includes(d.slice(0, 2))) return d.slice(0, 2);
+    return d.slice(0, 3);
+  }
+  // Para mostrar: Venezuela 0414 123 4567 (o +58 414 123 4567 en el PDF); otro país +1 305 555 1234
+  function telMostrar(tel, internacional){
+    const d = String(tel || '').replace(/\D/g, '');
+    if(!d) return '';
+    if(esTelVE(d)){
+      const r = d.slice(2).replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3');
+      return internacional ? '+58 ' + r : '0' + r;
+    }
+    const c = codigoPais(d), resto = d.slice(c.length);
+    const grupos = c === '1' && resto.length === 10 ? resto.replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3') : resto.replace(/(\d{3})(?=\d{3,})/g, '$1 ');
+    return '+' + c + ' ' + grupos;
   }
 
   function nombrePDF(v){
@@ -285,9 +318,10 @@
     l.push('', 'Puedes seguir tu pedido aquí:', '', urlSeguimiento(v), '', 'Gracias por preferirnos.');
     return l.join('\n');
   }
-  // Teléfono para buscar en WhatsApp: los 10 números (414…), que coinciden como sea que esté guardado
-  const telBuscar = (v) => String(v.cliente.telefono || '').replace(/^58/, '');
-  const telBonito = (v) => telBuscar(v).replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3');
+  // Teléfono para buscar en WhatsApp. Venezuela: los 10 números (414…), que coinciden como sea
+  // que esté guardado. De otro país: +<código> y el número.
+  const telBuscar = (v) => { const d = String(v.cliente.telefono || ''); return esTelVE(d) ? d.slice(2) : (d ? '+' + d : ''); };
+  const telBonito = (v) => { const d = String(v.cliente.telefono || ''); return esTelVE(d) ? d.slice(2).replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3') : telMostrar(d, true); };
 
   // Compartir el PDF con el mensaje (en el iPhone se elige WhatsApp y el chat del cliente).
   // En el mismo toque se copia el teléfono del cliente para pegarlo en el buscador.
@@ -363,5 +397,5 @@
   const soloInmediata = (items) => !!(items && items.length && items.every(it => it.pieza_id || it.origen === 'pieza'));
 
   window.AV = { porConfirmar, COMPROBANTE, modoPagoHtml, comprobanteHtml, soloInmediata, ESTADOS, METODOS, pagado, resta, esCotizacion, diasHasta, diasDesde, fechaCorta, fechaLarga, fechaNum, hace, habiles, iso,
-    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, telBonito, linkWhatsApp, urlSeguimiento, mensajeSeguimiento, linkSeguimientoWA, crearPDF, compartirPDF, descargarPDF, esAndroid, linkMensajePDF, abrirMensajePDF, nombrePDF, SELECT_VENTA, esc };
+    detalleItem, resumenProductos, cargarVenta, perfiles, mensaje, mensajeCorto, telBonito, normTel, telValido, telMostrar, esTelVE, linkWhatsApp, urlSeguimiento, mensajeSeguimiento, linkSeguimientoWA, crearPDF, compartirPDF, descargarPDF, esAndroid, linkMensajePDF, abrirMensajePDF, nombrePDF, SELECT_VENTA, esc };
 })();

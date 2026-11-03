@@ -17,7 +17,6 @@
   const ICON_EDITAR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
   const ICON_SEGUIMIENTO = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
   const ICON_COPIAR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-  const ICON_PDF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>';
   const ICON_UNDO = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-6.7L3 9"/></svg>';
   const ICON_CANCELAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5l5 5m0-5l-5 5"/></svg>';
 
@@ -225,6 +224,7 @@
     const este = pdf;
     este.promesa = AV.crearPDF(v).then(b => { este.blob = b; if(pdf === este) pintarPie(); return b; })
       .catch(() => { if(pdf === este){ pdf = null; pintarPie(); } });
+    pintarPie();
   }
 
   let fichaSeq = 0;
@@ -262,7 +262,7 @@
   // termina de prepararse, justo después de abrir la ficha).
   let resaltarHasta = 0;
   function aplicarResaltado(){
-    const b = document.querySelector('#fichaBody .avisar-wrap [data-accion]');
+    const b = document.querySelector('#fichaBody .avisar-wrap .btn-guia[data-accion]') || document.querySelector('#fichaBody .avisar-wrap .av-pdf');
     if(!b) return;
     const restante = resaltarHasta - Date.now();
     if(restante <= 0) return;
@@ -298,7 +298,7 @@
     let html = `
       <div class="f-cab"><span class="f-num">${cot ? 'Cotización' : 'Pedido'} N° ${v.id}</span>${estadoHtml(v)}</div>
       <div class="f-nombre">${esc(v.cliente.nombre)}</div>
-      <div class="f-sub">${esc(v.cliente.cedula || '')}${tel ? ' · 0' + esc(tel.replace(/^58/, '')) : ''}</div>
+      <div class="f-sub">${esc(v.cliente.cedula || '')}${tel ? ' · ' + esc(AV.telMostrar(tel)) : ''}</div>
       <div class="f-contacto">
         <a href="https://wa.me/${esc(tel)}" target="_blank" rel="noopener">${ICON_WA}Escribirle</a>
         <a href="tel:+${esc(tel)}">${ICON_TEL}Llamar</a>
@@ -309,7 +309,7 @@
     else if(v.estado === 'cotizacion') html += `<button type="button" class="btn-guia" data-accion="convertir">
         <span class="bg-t">Convertir en venta</span><span class="bg-s">Cuando el cliente pague todo o una parte. Pasa a Ventas.</span></button>`;
 
-    // Avisar al cliente: un solo botón con la acción pendiente (ver avisarHtml)
+    // Avisar al cliente: Enviar PDF y Descargar PDF siempre arriba, y el paso pendiente (ver avisarHtml)
     if(v.estado !== 'cancelada') html += `<div class="f-tit" style="margin-top:20px">Avisar al cliente</div><div class="avisar-wrap">${avisarHtml(v)}</div>`;
 
     // Menús que se abren
@@ -374,7 +374,6 @@
     }
     grid.push(botonGrid(`<a href="${esc(AV.urlSeguimiento(v))}" target="_blank" rel="noopener">`, ICON_SEGUIMIENTO, 'Seguimiento', '</a>'));
     grid.push(botonGrid('<button type="button" data-accion="copiar-enlace">', ICON_COPIAR, 'Copiar enlace', '</button>'));
-    grid.push(botonGrid('<button type="button" data-accion="descargar">', ICON_PDF, 'PDF', '</button>'));
     const pv = pasosDe(v), k = pv.indexOf(v.estado);
     let masHtml = `<div class="grid-acciones">${grid.join('')}</div>`;
     if(!editable(v) && v.estado !== 'cancelada' && v.estado !== 'entregada') masHtml += `<div class="f-nota">No se puede editar: ya está ${esc(AV.ESTADOS[v.estado].t.toLowerCase())}.</div>`;
@@ -384,7 +383,7 @@
     // Descartar una cotización lo hace quien vende; cancelar una venta, solo un administrador
     const puedeCancelar = v.estado !== 'cancelada' && v.estado !== 'entregada' && (cot || esAdmin);
     if(puedeCancelar) masHtml += `<button type="button" class="btn-peligro" data-accion="cancelar">${ICON_CANCELAR}${cot ? 'Descartar cotización' : 'Cancelar venta'}</button>`;
-    html += acordeon('mas', 'Más opciones', puedeCancelar ? 'Editar, PDF, seguimiento, cancelar' : 'Editar, PDF y seguimiento', masHtml);
+    html += acordeon('mas', 'Más opciones', puedeCancelar ? 'Editar, seguimiento, cancelar' : 'Editar y seguimiento', masHtml);
 
     $('fichaBody').innerHTML = html;
     if(v.estado === 'en_produccion') cargarAvance(v.id);
@@ -455,10 +454,10 @@
         <span class="est-dot">${i < k || (i === k && v.estado === 'entregada') ? ICON_OK : ''}</span><span class="est-l">${esc(AV.ESTADOS[p].t)}</span></div>`).join('')}</div>`;
     const sig = PV[k + 1];
     if(!sig) return html + '<div class="f-nota" style="text-align:center">Pedido entregado. ¡Listo!</div>';
-    // Pasa solo a producción cuando Ray confirma el pago: aquí no hay botón, solo se explica
+    // Pasa solo a producción cuando quien confirma pagos (Ray o Gualfredo) lo confirma: aquí no hay botón, solo se explica
     if(sig === 'en_produccion'){
       const espera = AV.porConfirmar(v.abonos).length > 0;
-      html += `<div class="btn-guia espera"><span class="bg-t">${espera ? (puedeConfirmar ? 'Falta que confirmes el pago' : 'Espera que Ray confirme el pago') : 'Falta un pago confirmado'}</span><span class="bg-s">${espera ? 'Al confirmarlo pasa solo a fabricación' : 'Registra un pago: cuando Ray lo confirme pasa a fabricación'}</span></div>`;
+      html += `<div class="btn-guia espera"><span class="bg-t">${espera ? (puedeConfirmar ? 'Falta que confirmes el pago' : 'Espera que confirmen el pago') : 'Falta un pago confirmado'}</span><span class="bg-s">${espera ? 'Al confirmarlo pasa solo a fabricación' : 'Registra un pago: cuando lo confirmen pasa a fabricación'}</span></div>`;
       return html;
     }
     // En producción no hay botón: queda Lista sola cuando el taller termina el último paso
@@ -487,25 +486,34 @@
     return (v.abonos || []).filter(a => a.tipo === 'abono' && a.estado === 'confirmado' && a.confirmado_en)
       .reduce((max, a) => Math.max(max, new Date(a.confirmado_en).getTime()), 0);
   }
-  // Un solo paso pendiente a la vez, nunca dos compitiendo: cotización siempre es PDF;
-  // en venta, primero la nota de pedido en PDF (con su enlace de seguimiento) y, una vez
-  // enviada, los avisos que siguen (pago confirmado, listo) van por Mensaje.
+  // Arriba, siempre, Enviar PDF y Descargar PDF (menos en canceladas). Debajo, un solo paso
+  // pendiente a la vez: en venta, primero la nota de pedido en PDF (lleva su enlace de
+  // seguimiento) y, una vez enviada, los avisos que siguen (pago confirmado, listo) por Mensaje.
   let paso2Id = null;
+  const ICON_DESCARGAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
   function avisarHtml(v){
     const cot = AV.esCotizacion(v);
     const ultimaConf = ultimaConfirmacionMs(v);
     const msjHecho = !!(v.mensaje_en && v.mensaje_estado === v.estado && (!ultimaConf || new Date(v.mensaje_en).getTime() >= ultimaConf));
-    const pdfListo = !!(pdf && pdf.blob && pdf.clave && pdf.clave.startsWith(v.id + '|'));
+    // Preparando: mientras el PDF de esta venta se arma (o el que hay es de otra venta).
+    // Si falló, los botones quedan activos y al tocarlos se intenta de nuevo.
+    const preparando = !!(pdf && (!pdf.blob || !pdf.clave.startsWith(v.id + '|')));
     const pdfHecho = !!(v.pdf_en && new Date(v.pdf_en) >= new Date(v.actualizado_en));
-    const btn = (accion, t, s) => `<button type="button" class="btn-guia sec" data-accion="${accion}" ${accion === 'pdf' && !pdfListo ? 'disabled' : ''}><span class="bg-t">${esc(t)}</span><span class="bg-s">${esc(s)}</span></button>`;
-    // Android: después del PDF, el mensaje va aparte (WhatsApp bota el texto junto al archivo)
-    if(paso2Id === v.id) return btn('pdf2', '2. Enviar el mensaje', cot ? 'Le manda el texto de la cotización' : 'Le manda el texto con su enlace de seguimiento');
+    const dis = preparando ? 'disabled' : '';
+    let html = `<div class="av-pdf">
+      <button type="button" class="av-env" data-accion="pdf" ${dis}>${ICON_WA}${preparando ? 'Preparando…' : 'Enviar PDF'}</button>
+      <button type="button" class="av-desc" data-accion="descargar" ${dis}>${ICON_DESCARGAR}${preparando ? 'Preparando…' : 'Descargar PDF'}</button></div>`;
+    const btn = (accion, t, s, cl) => `<button type="button" class="btn-guia ${cl || 'sec'}" data-accion="${accion}"><span class="bg-t">${esc(t)}</span><span class="bg-s">${esc(s)}</span></button>`;
     const hecho = (t, s) => `<div class="btn-guia hecho"><span class="bg-t">${esc(t)}</span><span class="bg-s">${esc(s)}</span></div>`;
-    if(cot) return pdfHecho ? hecho('Cliente avisado ✓', 'Cotización enviada ' + cuando(v.pdf_en, v.pdf_por))
-      : btn('pdf', 'Enviar cotización', pdfListo ? 'Le manda el PDF por WhatsApp' : 'Preparando…');
-    if(!pdfHecho) return btn('pdf', 'Enviar nota de pedido', pdfListo ? 'Le manda el PDF con su enlace de seguimiento' : 'Preparando…');
-    if(!msjHecho) return btn('mensaje', 'Avisar por WhatsApp', 'Le cuenta lo nuevo de su pedido');
-    return hecho('Cliente avisado ✓', cuando(v.mensaje_en, v.mensaje_por));
+    const minus = (t) => t.charAt(0).toLowerCase() + t.slice(1);
+    if(pdfHecho) html += `<div class="av-pdf-ok"><b>✓</b> ${esc((cot ? 'Cotización enviada ' : 'PDF enviado ') + minus(cuando(v.pdf_en, v.pdf_por)))}</div>`;
+    else if(!cot) html += '<div class="av-pdf-nota">Primero envíale el PDF: lleva su enlace de seguimiento.</div>';
+    // Android: después del PDF, el mensaje va aparte (WhatsApp bota el texto junto al archivo)
+    if(paso2Id === v.id) return html + btn('pdf2', '2. Enviar el mensaje', cot ? 'Le manda el texto de la cotización' : 'Le manda el texto con su enlace de seguimiento');
+    if(!pdfHecho) return html;
+    if(cot) return html + hecho('Cliente avisado ✓', 'Cotización enviada ' + minus(cuando(v.pdf_en, v.pdf_por)));
+    if(!msjHecho) return html + btn('mensaje', 'Avisar por WhatsApp', 'Le cuenta lo nuevo de su pedido');
+    return html + hecho('Cliente avisado ✓', cuando(v.mensaje_en, v.mensaje_por));
   }
   function pintarPie(){
     const v = actual;
@@ -571,8 +579,12 @@
       return;
     }
     if(a === 'pdf2'){ AV.abrirMensajePDF(actual); paso2Id = null; pintarPie(); return; }
+    if(a === 'pdf' || a === 'descargar'){
+      // Si el PDF no se pudo preparar, se intenta de nuevo
+      if(!pdf){ prepararPDF(actual); toast('Preparando el PDF. Toca de nuevo en un momento'); return; }
+      if(!pdf.blob || !pdf.clave.startsWith(actual.id + '|')) return;
+    }
     if(a === 'pdf'){
-      if(!pdf || !pdf.blob) return;
       const v0 = actual;
       const r = await AV.compartirPDF(pdf.blob, v0);
       if(r === 'paso2'){
@@ -587,8 +599,7 @@
       else if(r !== 'cancelado') toast(`Teléfono copiado (${window.AV.telBonito(v0)}). Pégalo en el buscador de WhatsApp si no ves el chat`);
     }
     if(a === 'descargar'){
-      if(pdf && pdf.blob){ AV.descargarPDF(pdf.blob, actual); toast('PDF descargado'); }
-      else if(pdf && pdf.promesa){ toast('Preparando el PDF'); const bl = await pdf.promesa; if(bl) AV.descargarPDF(bl, actual); }
+      AV.descargarPDF(pdf.blob, actual); toast('PDF descargado');
     }
     if(a === 'convertir') abrirAccion('convertir');
     if(a === 'abono') abrirAccion('abono');
