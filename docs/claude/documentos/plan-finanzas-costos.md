@@ -39,12 +39,22 @@ Finanzas › Mes, en dos columnas: lo que ganaste (vendido con costeo − costo 
 7. **Datos de prueba y devoluciones viejas se borran** antes de empezar (lo hacen los socios).
 8. **La vendedora no puede borrar ni cambiar pagos.**
 
+## Corridas de Claude Code (cada corrida es una sesión; cada lote su PR y el OK de Ray)
+| Corrida | Lotes | Qué queda funcionando |
+|---|---|---|
+| A · Dinero | 1, 2, 3, 4 | Seguridad de pagos; cuentas y proveedores; libreta con transferencias, traspasos con comisión, gastos, Bs con tasa; confirmar pagos solo en Finanzas; nómina y vales con cuenta |
+| B · Depósito | 5 | Fabricación por tubo, retazos, conteo; Compras a mano con saldo del proveedor |
+| C · Costos | 6, 7 | Modelos, Precios, Ganancia (gastos fijos y promedio real), atajo del Catálogo, extras en la venta |
+| D · Corte | 9 | Plan semanal desde Producción, hoja del herrero en Mi trabajo, PDF de hoja y compra |
+| E · Mes | 10 | Cierre del mes y reporte PDF |
+| Después | 8, 11 y nuevos | OCR, 3D, aluminio, madera, reportes por proveedor y cuenta |
+
 ## Lotes (cada uno con su rama, PR, pruebas, capturas y OK de Ray)
 | Lote | Qué | Migración |
 |---|---|---|
 | 1 | Seguridad de abonos: quitar a la vendedora cambiar o borrar abonos directo (RLS), `registrar_abono` y `cancelar_venta` como `security definer`, sin `ON DELETE CASCADE` de ventas a abonos. **Con cuidado: avisar en bitácora y PR.** | `v72_ray_seguridad_abonos` |
 | 2 | Proveedores y Cuentas: tablas, RLS solo admin, funciones `proveedor_guardar`, `cuenta_guardar`. Finanzas › Proveedores (lista, ficha, editar con tipos e IVA) | `v73_ray_proveedores_cuentas` |
-| 3 | Libreta: `movimientos`, `transferencia_guardar`, `traspaso_guardar`, `saldo_cambiar`, `movimiento_anular`, `gasto_guardar`, `finanzas_resumen`, `proveedor_resumen`. Finanzas › Dinero con **reportes de dos columnas** (nombre y número con + o −): "Tu dinero hoy" y "Lo que ganas este mes"; cuentas y Gastos. Estado de cuenta en PDF de dos columnas (movimiento y monto con + o −) y saldo final, con el diseño del PDF de la venta | `v74_ray_libreta` |
+| 3 | Libreta: `movimientos` (con `monto_salio` y `monto_llego`; la diferencia es gasto "Comisión y cambio"; Bs con `tasa` y `tasa_origen`; `registrado_por`), `transferencia_guardar`, `traspaso_guardar`, pago de nómina y vales con cuenta, `saldo_cambiar`, `movimiento_anular`, `gasto_guardar`, `finanzas_resumen`, `proveedor_resumen`. Finanzas › Dinero con **reportes de dos columnas** (nombre y número con + o −): "Tu dinero hoy" y "Lo que ganas este mes"; cuentas y Gastos. Estado de cuenta en PDF de dos columnas (movimiento y monto con + o −) y saldo final, con el diseño del PDF de la venta | `v74_ray_libreta` |
 | 4 | Pagos por confirmar y por ubicar: `abonos` con marca de ubicado; `pago_confirmar_y_ubicar` (llama a la regla de `confirmar_abono`) y `pago_ubicar`. Aviso de Inicio a Finanzas | `v75_ray_ubicar_pagos` |
 | 5 | Depósito: materiales con clase (consumible o fabricación), tipo, presentación (barra con largo, hoja con medidas) y espesor; precios por proveedor con historial (`material_precios`). Pestañas Consumibles · Fabricación · Compras. Compras a mano con saldo del proveedor y "ya le transferí aparte" (`compra_guardar`). Conteo de barras | `v76_ray_deposito_fabricacion_compras` |
 | 6 | Costos (pestañas Modelos · Corte · Precios · Reglas): `costeo_reglas`, `costeo_modelos` (del catálogo o en diseño), `costeo_piezas`, `costeo_hojas`, `costeo_insumos`, `costeo_extras`, `costeo_calcular`. Ficha con semáforo, barras, duplicar, pasar al catálogo. Precios = lista de precios sin IVA por proveedor (no es por pedido). Atajo "Costo" en Catálogo (solo admin). **Prueba obligatoria: Bitral = 223,22 · 290,19 · 326,79 · tubo completo 339,23** | `v77_ray_costos` |
@@ -58,6 +68,15 @@ Finanzas › Mes, en dos columnas: lo que ganaste (vendido con costeo − costo 
 IVA × 1,16 · perfiles por metro usado (precio de la barra ÷ largo) · barra completa solo para comparar · lámina y vidrio por m² de hoja · proveedor elegido y, si no vende ese material, otro con aviso · rendimiento del modelo o el general · fondo, esmalte y masilla sin general ("falta") · accesorios × cantidad · mano de obra de la categoría de pago (hierro + masilla y pintura + detalles) · costo × 1,30 + gastos fijos ($915 ÷ 25 = $36,60) · extras × 1,30 sin gastos fijos · grosor del corte · redondear solo al final.
 
 Semáforo (ganancia sobre el costo, con el precio del catálogo): verde 30 % o más · amarillo 15 a 30 % · rojo 0 a 15 % · negro pierde · gris faltan datos.
+
+## Decisiones del 3 nov (cuentas y dinero)
+10. **Cuentas libres:** Ray crea las que hagan falta (varios Zelle, efectivo por sede, Binance, banco, bolívares). Cada proveedor puede tener su **cuenta habitual de pago**, que sale marcada al pagarle (se puede cambiar).
+11. **Lo que sale de la cuenta puede ser mayor que lo que se paga.** Ejemplo: para pagar $700 de nómina se sacan $770 de Zelle y se reciben $700 en efectivo. Toda salida y todo "Mover entre cuentas" tiene dos montos: **salió de la cuenta** y **llegó o se pagó**. La diferencia queda sola como gasto "Comisión y cambio". Vale para nómina, vales, proveedores, gastos y cambios entre cuentas.
+12. **Ray y Gualfredo registran pagos a proveedores.** Cada movimiento guarda quién lo hizo.
+13. **Bolívares con varias tasas:** cada movimiento en Bs guarda su monto en Bs, su tasa y de dónde es la tasa (BCV, Binance u otra). No hay una tasa general.
+14. **Saldos al día poco a poco:** Ray pone los saldos iniciales a mano cuando los recuerde ("Cambiar saldo" con motivo). Nada bloquea el trabajo mientras tanto.
+15. **Gastos fijos por puerta:** se calcula con la lista de gastos fijos que Ray llena (puede agregar o cambiar) ÷ puertas al mes. Costos › Ganancia muestra además el **promedio real de los últimos 3 meses**: gastos fijos pagados en Finanzas ÷ puertas terminadas en Producción (Hierro terminado). Si el real se aleja, avisa "Tu gasto real por puerta es $X; usas $Y" y Ray decide si lo cambia (nunca cambia solo, para que los precios no salten). Hasta tener 3 meses de datos se usa lo que Ray puso.
+16. **Para después:** evaluar madera, proveedores, gastos y cuentas (reportes por proveedor y por cuenta); facturas que mezclan hierro y madera.
 
 ## Atajos entre módulos
 | Desde | Hacia | Para qué |

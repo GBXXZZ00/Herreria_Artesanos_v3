@@ -12,7 +12,7 @@ Eres el **Claude de Ray** trabajando en el repo `GBXXZZ00/Herreria_Artesanos_v3`
 3. Trae la rama `ray/maqueta-finanzas-costos` y abre la maqueta (`maqueta/LEEME.md`). **La maqueta es la guía de cómo debe verse y comportarse cada pantalla.** Pero la maqueta no se copia tal cual: en la app todo se guarda en Supabase con funciones, no en el teléfono.
 
 **Qué hacer**
-Ray aprobó los lotes **1, 2, 3, 4, 5, 6, 7 y 9** del plan. Hazlos **en orden y seguidos**, sin pararte entre lotes:
+Ray te dice qué **corrida** toca (tabla "Corridas de Claude Code" del plan). Haz solo los lotes de esa corrida, **en orden y seguidos**:
 - Cada lote en su rama, encadenada a la anterior: `ray/lote1-seguridad-abonos` sale de `main`; `ray/lote2-proveedores-cuentas` sale de la del lote 1; y así.
 - Cada lote con su PR `[Ray] Lote N: ...` hacia `main`, en orden, con el texto que pide `CLAUDE.md`.
 - Cada lote con su migración `supabase/migrations/<version>_vNN_ray_que_hace.sql` (primera línea `-- Autor: Ray (Claude de Ray)`), RLS en toda tabla nueva, funciones `security definer` que revisan `auth.uid()` y el rol, `revoke execute ... from anon`.
