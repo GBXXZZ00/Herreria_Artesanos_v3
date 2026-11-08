@@ -12,6 +12,12 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-08 · Claude de Gualfredo (Code, lote 7 publicado)
+- Qué hizo: Gualfredo corrió `docs/tareas/2026-11-08-aplicar-v85.sql` en el SQL Editor (el "Allow once" del conector de Supabase se venció dos veces aunque lo tocó a tiempo). Revisado en la base real: funciones y columnas de v85 presentes y Bitral en $223,22. PR #8 unido: sale en vivo con `?v=79`. v85 no sale en la lista de migraciones de Supabase; el archivo está en `supabase/migrations`.
+- Rama o PR: PR #8 unido; esta nota y la del PR #7 van en `gualfredo/bitacora-extras-publicado`.
+- Está tocando: nada.
+- Pendientes: Ray carga los cortes de cada extra en sus modelos; probar en el teléfono la lista del 8 nov (v79).
+
 ## 2026-11-08 · Claude de Gualfredo (Code, lote 7)
 - Qué hizo: lote 7, extras de punta a punta (Gualfredo dijo "Dale"). Protección, marco decorativo, yeso, vitrales, farquilla, Ecobel, detalles de ventana y ventana con protección son extras con sus cortes **por modelo** ("Copiar de otro modelo") y su mano de obra; el manillón no lleva cortes, solo su costo. Si el Catálogo trae tildada la protección o el marco, va incluida en el costo del modelo. Un extra sin costear se vende igual (la vendedora escribe el monto) y avisa en la venta, el Plan de corte (Cargar cortes o Cortar a mano, y en la hoja del herrero "córtalo como siempre"), Costos ("Extras vendidos sin costear") e Inicio. El costo del extra queda fijo al vender (`venta_item_costos`). Bitral sigue en $223,22.
 - Rama o PR: `gualfredo/extras`. Migración `v85_gualfredo_extras` probada en Postgres local (no en la base real). test49 nueva. Batería completa en verde (test14 a test27 y test28 a test49, las 36 TODO OK). Revisión propia hecha (texto escapado, permisos: la nueva `_costeo` sin permiso para la app). PR #8. `?v=79`.
@@ -19,7 +25,14 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 - Ojo Ray: `_costeo`, `costos_datos`, `corte_datos`, `corte_plan_guardar`, `mi_hoja_corte` y `finanzas_avisos` quedan envueltas (las viejas con otro nombre, sin permiso para la app). El manillón en la venta toma el precio de Costos si el modelo lo tiene; si no, $20 como antes.
 - Pendientes: Gualfredo corre `docs/tareas/2026-11-08-aplicar-v85.sql` en el SQL Editor de Supabase antes de unir el PR. Ray: cargar los cortes de cada extra en sus modelos.
 
+## 2026-11-08 · Claude de Gualfredo (Code, 2)
+- Qué hizo: la reestructura quedó publicada. Gualfredo unió el PR #7 desde GitHub y corrió `docs/tareas/2026-11-08-aplicar-v81-a-v84.sql` en el SQL Editor de Supabase ("Success"), porque el "Permitir" del conector no le llegaba (Supabase tenía una falla ese día). Revisado en la base: las 12 funciones nuevas, las 3 tablas, `que_es`/V-H, despunte, el trigger de Hierro, disco 14" en 6 (Bitral en 3), Flete en $0, y el Bitral en $223,22 · $290,19 · $326,79 · $339,23.
+- Ojo: como se corrió en el SQL Editor, v81 a v84 **no salen** en la lista de migraciones de Supabase; los archivos están en `supabase/migrations`.
+- Rama o PR: PR #7 unido; esta nota va en `gualfredo/bitacora-reestructura-publicada`.
+- Está tocando: nada.
+- Pendientes: probar en el teléfono la lista de `docs/claude/documentos/lista-de-pruebas.md` (sección Reestructura). Lote 7 (extras) cuando Ray llene la tabla.
 
+## 2026-11-08 · Claude de Gualfredo (Code)
 - Qué hizo: empieza los lotes de `docs/tareas/2026-11-08-gualfredo-reestructura-costos.md` en orden (lote 1 primero). Base revisada: v73 a v80 aplicadas, test44 en verde.
 - Rama o PR: `gualfredo/reestructura-costos`.
 - Está tocando: Costos, Depósito, Finanzas, Mi trabajo, Catálogo y venta (extras).
