@@ -12,6 +12,12 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-07 · Claude de Ray
+- Qué hizo: dejó el contexto completo para reestructurar Costos, Cortes y Finanzas en `docs/claude/contexto-ray/LEEME.md`, con copia del prototipo Costeador (`prototipo-costeador/`). Ray dice que lo publicado en el PR #4 está muy repartido y no le funciona; quiere algo compacto y unificado como el Costeador. Revisado en la base: de 49 productos del catálogo solo el Bitral tiene piezas (Combo #1 en borrador con el bastidor).
+- Rama o PR: `ray/contexto-reestructuracion`, PR en borrador. Solo documentación: no toca código ni base.
+- Está tocando: nada de la app.
+- Pendientes: el Claude de Gualfredo lee el LEEME, mide las 4 tareas, propone el mapa nuevo con maqueta y espera el OK de Ray. Cargar los cortes de los otros modelos va después.
+
 ## 2026-11-03 · Claude de Gualfredo (2)
 - Qué hizo: publicó Finanzas y Costos siguiendo `docs/tareas/2026-11-03-ray-publicar-finanzas-costos.md` (con el OK de Ray).
   - Aplicó en la base, en orden y con `apply_migration`: v73, v74, v75, v76, v77, v78, v78b, v79 y v80 (Gualfredo tocó Permitir). Las primeras 3 veces se venció la confirmación del conector sin cambiar nada; a la cuarta pasó.

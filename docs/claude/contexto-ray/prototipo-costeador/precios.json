@@ -1,0 +1,466 @@
+{
+  "actualizado": "2026-11-02T17:46:38.051Z",
+  "bisagras": 3,
+  "corte": 0,
+  "ganancia": 30,
+  "gastos": [
+    {
+      "n": "Alquiler",
+      "v": 800
+    },
+    {
+      "n": "Electricidad",
+      "v": 60
+    },
+    {
+      "n": "Internet",
+      "v": 30
+    },
+    {
+      "n": "Teléfono",
+      "v": 5
+    },
+    {
+      "n": "Transporte",
+      "v": 20
+    }
+  ],
+  "insumos": [
+    {
+      "g": "Pintura",
+      "k": "fondo",
+      "n": "Fondo anticorrosivo (galón)",
+      "precios": {
+        "otro": 20
+      }
+    },
+    {
+      "g": "Pintura",
+      "k": "esmalte",
+      "n": "Esmalte (galón)",
+      "precios": {
+        "otro": 22
+      }
+    },
+    {
+      "g": "Pintura",
+      "k": "masilla",
+      "n": "Masilla (galón 3,5 kg)",
+      "precios": {
+        "otro": 25
+      }
+    },
+    {
+      "g": "Pintura",
+      "k": "thinner",
+      "n": "Thinner (galón)",
+      "precios": {
+        "otro": 10
+      },
+      "r": 2
+    },
+    {
+      "g": "Consumibles",
+      "k": "electrodo",
+      "n": "Electrodos (kg)",
+      "precios": {
+        "otro": 3
+      },
+      "r": 2
+    },
+    {
+      "g": "Consumibles",
+      "k": "disco14",
+      "n": "Disco de corte 14\"",
+      "precios": {
+        "otro": 6
+      },
+      "r": 3
+    },
+    {
+      "g": "Consumibles",
+      "k": "disco7",
+      "n": "Disco de corte 7\"",
+      "precios": {
+        "otro": 1
+      },
+      "r": 1
+    },
+    {
+      "g": "Consumibles",
+      "k": "flap",
+      "n": "Disco flap",
+      "precios": {
+        "otro": 1
+      },
+      "r": 4
+    },
+    {
+      "g": "Consumibles",
+      "k": "carton",
+      "n": "Disco de cartón",
+      "precios": {
+        "otro": 1
+      },
+      "r": 4
+    },
+    {
+      "g": "Consumibles",
+      "k": "lija40",
+      "n": "Lija 40",
+      "precios": {
+        "otro": 4
+      },
+      "r": 1
+    },
+    {
+      "g": "Consumibles",
+      "k": "lija80",
+      "n": "Lija 80",
+      "precios": {
+        "otro": 1
+      },
+      "r": 0.5
+    },
+    {
+      "g": "Consumibles",
+      "k": "lija100",
+      "n": "Lija 100",
+      "precios": {
+        "otro": 1
+      },
+      "r": 1
+    },
+    {
+      "g": "Consumibles",
+      "k": "lija120",
+      "n": "Lija 120",
+      "precios": {
+        "otro": 1
+      },
+      "r": 1
+    },
+    {
+      "g": "Accesorios",
+      "k": "bisagra",
+      "n": "Bisagra",
+      "precios": {
+        "otro": 1
+      }
+    },
+    {
+      "g": "Accesorios",
+      "k": "cerradura",
+      "n": "Cerradura multilock de embutir",
+      "precios": {
+        "otro": 15
+      }
+    },
+    {
+      "g": "Accesorios",
+      "k": "manillon",
+      "n": "Manillón acero inox. 30 cm",
+      "precios": {
+        "otro": 20
+      }
+    }
+  ],
+  "iva": 16,
+  "laminas": [
+    {
+      "a": 122,
+      "h": 244,
+      "k": "lam14",
+      "n": "Lámina pulida C/14 (1,90 mm)",
+      "precios": {
+        "cya": 61.05
+      }
+    },
+    {
+      "a": 122,
+      "h": 244,
+      "k": "lam16",
+      "n": "Lámina calibre 16",
+      "precios": {
+        "cya": 49.66,
+        "tor": 52
+      }
+    },
+    {
+      "a": 122,
+      "h": 244,
+      "k": "lam2",
+      "n": "Lámina 2 mm",
+      "precios": {
+        "tor": 73
+      }
+    }
+  ],
+  "mo": [
+    {
+      "n": "Simple",
+      "t": [
+        {
+          "n": "Soldador / herrero",
+          "v": 25
+        },
+        {
+          "n": "Masillador (masilla y pintura)",
+          "v": 25
+        },
+        {
+          "n": "Ayudante (acabados y vidrios)",
+          "v": 5
+        }
+      ]
+    },
+    {
+      "n": "Complicado",
+      "t": [
+        {
+          "n": "Soldador / herrero",
+          "v": 30
+        },
+        {
+          "n": "Masillador (masilla y pintura)",
+          "v": 30
+        },
+        {
+          "n": "Ayudante (acabados y vidrios)",
+          "v": 5
+        }
+      ]
+    }
+  ],
+  "perfiles": [
+    {
+      "k": "t3x1",
+      "l": 6,
+      "n": "Tubo rect. 1\" x 3\" – 0,90 mm",
+      "precios": {
+        "cya": 12.98
+      }
+    },
+    {
+      "k": "t3x15",
+      "l": 6,
+      "n": "Tubo rect. 1 1/2\" x 3\" – 1,4 mm",
+      "precios": {
+        "tor": 26
+      }
+    },
+    {
+      "k": "t2x1",
+      "l": 6,
+      "n": "Tubo rect. 1\" x 2\"",
+      "nota": "C y A 0,90 mm · Torniplemaca 0,80 mm",
+      "precios": {
+        "cya": 9.69,
+        "tor": 9.5
+      }
+    },
+    {
+      "k": "t15x15",
+      "l": 6,
+      "n": "Tubo cuad. 1 1/2\" x 1 1/2\"",
+      "precios": {
+        "otro": 10
+      }
+    },
+    {
+      "k": "t1x15",
+      "l": 6,
+      "n": "Tubo rect. 1\" x 1 1/2\" – 0,90 mm",
+      "precios": {
+        "cya": 6.7
+      }
+    },
+    {
+      "k": "t1x1",
+      "l": 6,
+      "n": "Tubo cuad. 1\" x 1\"",
+      "nota": "C y A 0,80 y 0,90 mm · Torniplemaca 0,80 mm",
+      "precios": {
+        "cya": 6.43,
+        "tor": 6.5
+      }
+    },
+    {
+      "k": "t12x15",
+      "l": 6,
+      "n": "Tubo rect. 1/2\" x 1 1/2\" – 0,90 mm",
+      "precios": {
+        "cya": 6.7
+      }
+    },
+    {
+      "k": "t12x1",
+      "l": 6,
+      "n": "Tubo rect. 1/2\" x 1\" – 0,80 mm",
+      "precios": {
+        "cya": 4.34
+      }
+    },
+    {
+      "k": "t12",
+      "l": 6,
+      "n": "Tubo cuad. 1/2\" x 1/2\" – 0,70 mm",
+      "precios": {
+        "cya": 2.66
+      }
+    },
+    {
+      "k": "t12b",
+      "l": 6,
+      "n": "Tubo cuad. 1/2\" x 1/2\" – 0,80 mm",
+      "precios": {
+        "cya": 3.06,
+        "tor": 4.5
+      }
+    },
+    {
+      "k": "pl12",
+      "l": 6,
+      "n": "Platina 1/2\" x 2 mm",
+      "precios": {
+        "cya": 2.19
+      }
+    },
+    {
+      "k": "pl12x18",
+      "l": 6,
+      "n": "Platina 1/2\" x 1/8\"",
+      "precios": {
+        "tor": 3
+      }
+    },
+    {
+      "k": "pl1x18",
+      "l": 6,
+      "n": "Platina 1\" x 1/8\" (25x3)",
+      "precios": {
+        "cya": 6.51,
+        "tor": 6.5
+      }
+    },
+    {
+      "k": "pl1x316",
+      "l": 6,
+      "n": "Platina 1\" x 3/16\" (25x4)",
+      "precios": {
+        "cya": 8.24
+      }
+    },
+    {
+      "k": "pl2x18",
+      "l": 6,
+      "n": "Platina 2\" x 1/8\" (50x3)",
+      "precios": {
+        "cya": 11.01
+      }
+    },
+    {
+      "k": "alpl1",
+      "l": 6,
+      "n": "Platina de aluminio 1\"",
+      "precios": {
+        "otro": 17
+      }
+    },
+    {
+      "k": "alpl15",
+      "l": 6,
+      "n": "Platina de aluminio 1 1/2\"",
+      "precios": {
+        "otro": 22
+      }
+    },
+    {
+      "k": "barra12",
+      "l": 6,
+      "n": "Barra redonda lisa 12 mm",
+      "precios": {
+        "cya": 8.08
+      }
+    },
+    {
+      "k": "red78",
+      "l": 6,
+      "n": "Tubo redondo 7/8\"",
+      "nota": "Largo por confirmar",
+      "precios": {
+        "tor": 9
+      }
+    },
+    {
+      "k": "alambron",
+      "l": 6,
+      "n": "Alambrón estriado 5,2 mm",
+      "precios": {
+        "cya": 1.63
+      }
+    },
+    {
+      "k": "marco10",
+      "l": 5.1,
+      "n": "Marco para puerta 10 – 0,70 mm",
+      "precios": {
+        "cya": 12.28,
+        "tor": 13
+      }
+    },
+    {
+      "k": "marco15",
+      "l": 5.1,
+      "n": "Marco para puerta 15 – 0,70 mm",
+      "precios": {
+        "cya": 15.07,
+        "tor": 15.5
+      }
+    },
+    {
+      "k": "mv10",
+      "l": 5.1,
+      "n": "Marco recto ventana 10 – 0,70 mm",
+      "precios": {
+        "cya": 11.4,
+        "tor": 12
+      }
+    },
+    {
+      "k": "mv15",
+      "l": 5.1,
+      "n": "Marco recto ventana 15 – 0,70 mm",
+      "precios": {
+        "cya": 13.5
+      }
+    }
+  ],
+  "provPrincipal": "cya",
+  "proveedores": [
+    {
+      "k": "cya",
+      "n": "Colores y Ambiente"
+    },
+    {
+      "k": "tor",
+      "n": "Torniplemaca"
+    },
+    {
+      "k": "otro",
+      "n": "Otro / sin factura"
+    }
+  ],
+  "puertasMes": 25,
+  "vidrios": [
+    {
+      "a": 330,
+      "h": 244,
+      "k": "vid5",
+      "n": "Vidrio 5 mm",
+      "precios": {
+        "otro": 100
+      }
+    }
+  ]
+}
