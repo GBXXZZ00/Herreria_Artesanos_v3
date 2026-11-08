@@ -134,6 +134,12 @@ Todo se lee solo por quien confirma pagos (`_es_ray()`: Ray y Gualfredo) salvo D
 - **Plan de corte (v79):** `cortes_planes` (por sábado) y `cortes_hechos` (marca de cortado por paso, fuera de `etapas`). `corte_datos`, `corte_plan_guardar`, `corte_manual`, `corte_plan_reiniciar`, `corte_ya_corto`, `mi_hoja_corte` (el herrero ve solo lo suyo).
 - **Mes (v80):** `cierres_mes` (números congelados). `mes_datos`, `mes_cerrar`. Trigger `movimientos_mes_cerrado`: en un mes cerrado solo entran ajustes.
 
+## Reestructura de Costos (v81 a v84, 8 nov 2026, Claude de Gualfredo)
+- **v81:** `costeo_piezas.que_es` y `orientacion` (V/H); `costeo_reglas.despunte_cm`. `costos_datos`, `costeo_guardar`, `costeo_duplicar` y `costeo_reglas_guardar` los usan. `_costeo` no cambia. **v81b:** disco 14" rinde 6 (general); el Bitral se queda en 3.
+- **v82:** retazos con `numero` (R-12) y `estado` (vivo, usado, no_sirve; sigue a `usado_en`), `plan_sab`. `_retazo_minimo` (un solo lugar). `_corte_barra` recalcula lo que sobra; `corte_plan_guardar` lo usa y rechaza retazos usados o repetidos. `_corte_aplicar` + trigger `corte_al_terminar_hierro` en `etapas` (bajan las barras al terminar el herrero todo su Hierro del sábado; si falla, `cortes_planes.aviso`). `corte_corregir` + tabla `cortes_ajustes`. `cortes_planes.no_usar` y `corregido`.
+- **v83:** `compras_pedidas` (grupo, lugares y gastos; estado pedida, confirmada, anulada). `compra_pedir`, `compra_confirmar` (usa compra_guardar, gasto_guardar, transferencia_guardar y saldo_cambiar en una transacción), `compra_no_llego`, `compras_en_camino`. Lo pedido no toca Depósito, deuda, dinero ni el cierre.
+- **v84:** `cierres_pasos`, `cierre_datos`, `cierre_paso` (saldo_cambiar o conteo_guardar), `_puertas_vendidas`; `mes_cerrar` no deja cerrar con compras en camino y pone `costeo_reglas.puertas_mes` con las puertas vendidas del mes (25 si no hubo). Gasto fijo "Flete" en 0.
+
 ## Pendientes de revisar (seguridad)
 - Estas funciones se pueden llamar sin sesión (`anon`). Revisar que cada una rechace si no hay usuario: `editar_venta_fabricacion`, `terminar_etapa_madera`, `usuario_linea`, `_puede_pagar_a`, `_puede_madera`, `_lleva_madera`, `_categoria_sirve`, `_item_firma`, `pagado_venta`. Lo más limpio sería quitarles `execute` a `anon`.
 - Ayudantes internos que puede llamar cualquiera con sesión y no deberían: `_avisar_usuario`, `_generar_etapas`, `_a_produccion_si_pagada`, `_stock_tomar`, `_stock_devolver`, `_cliente_guardar`, `_items_insertar`.

@@ -105,6 +105,13 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 - **Roles:** solo Ray y Gualfredo. El herrero ve su hoja de corte en Mi trabajo.
 - **Reglas:** `costeo.js` calcula igual que `_costeo` de la base para que la ficha responda al instante; el número que vale es el de la base.
 
+## Reestructura de Costos (8 nov 2026, Claude de Gualfredo, v75 a v78)
+- **Costos:** 3 pestañas (Modelos · Plan de corte · Precios). La ficha del modelo es una hoja de pantalla completa (`#sheetFicha`) con índice y el precio abajo; la hoja Precio y la hoja Pieza van encima (`#sheetForm`). Las piezas llevan qué es y V/H. Ganancia por modelo pasó a Finanzas › Mes; los gastos fijos se cambian solo en Finanzas › Gastos.
+- **Plan de corte (`corte.js`):** 3 pasos; por material: retazos usar o no usar, retazo encontrado, mover pieza, corregir corte; lámina dibujada en la hoja (guillotina simple), vidrio como lista de piezas.
+- **Compras (`compra.js`, window.COMPRA):** hoja propia (`#sheetCompra`) que se usa en Costos, Depósito y Finanzas: pedir (amarillo) y ¿Llegó? con el pago en una sola hoja.
+- **Finanzas › Mes:** lista del cierre (4 pasos; el primero es el arranque).
+- **Mi trabajo:** hoja de corte con un color por puerta y retazos numerados.
+
 ## Depósito (cambios v73)
 - Pestañas Consumibles (Materiales y Entregas, como antes) · Fabricación (barras, hojas, retazos, conteo, faltan para el sábado) · Compras (facturas y notas, solo el total, registrar el material, ya le transferí aparte). Fabricación y Compras solo el administrador (`deposito-nuevo.js`).
 

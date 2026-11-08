@@ -80,7 +80,7 @@
     if(listo(o)) der = `<b>${dinero(x.final)}</b><span style="margin-top:3px">${dis ? pill(['gris','En diseño']) : pill(s)}</span>`;
     else if(x) der = `<b style="font-size:14px;color:var(--amber)">${esc(x.falta.length ? 'falta ' + x.falta[0] : 'en borrador')}</b>`;
     else der = CHEV;
-    const sub = dis ? 'En diseño' + (x && x.c.codigo ? ' · ' + x.c.codigo : '') : esc(m.tipo || '') + (fab ? ' · <b style="color:var(--accent)">en fabricación</b>' : x ? '' : ' · catálogo ' + dinero(m.precio_base));
+    const sub = dis ? 'En diseño' + (x && x.c.codigo ? ' · ' + esc(x.c.codigo) : '') : esc(m.tipo || '') + (fab ? ' · <b style="color:var(--accent)">en fabricación</b>' : x ? '' : ' · catálogo ' + dinero(m.precio_base));
     return `<button class="mod" type="button" data-modelo="${esc(m.id)}"><img src="${esc(foto(m))}" alt="" loading="lazy">
       <span class="grow"><span class="mat-t">${esc(m.nombre)}</span><span class="mat-s">${sub}</span></span>
       <span class="mat-n">${der}</span></button>`;
