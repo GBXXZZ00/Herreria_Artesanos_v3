@@ -1,0 +1,460 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Propuesta para Ray: Costos, Depósito y Finanzas</title><style>
+:root{--ink:#1C1A17;--ink-soft:#6E6A64;--ink-faint:#A8A39B;--line:#E9E7E3;--line-strong:#D9D6D0;--accent:#17555C;--accent-soft:rgba(23,85,92,0.09);--surface-2:#F7F6F4;--danger:#B42318;--amber:#B7791F;--amber-soft:#FBF3E4;--amber-ink:#7A4F00}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;color:var(--ink);background:#E4E2DE;-webkit-font-smoothing:antialiased}
+.mesa{display:flex;gap:28px;padding:28px;align-items:flex-start}
+.cap{font-size:15px;font-weight:800;color:var(--ink-soft);margin:0 0 10px 4px}
+.tel{width:390px;height:844px;background:#fff;border-radius:44px;overflow:hidden;position:relative;box-shadow:0 18px 40px rgba(28,26,23,.16);display:flex;flex-direction:column}
+.status{height:44px;flex:none}
+.top{padding:4px 18px 8px;display:flex;align-items:center;gap:10px;flex:none}
+.atras{font-size:15px;color:var(--accent);font-weight:700}
+.tt{font-size:24px;font-weight:800;letter-spacing:-.3px}
+.ts{font-size:13px;color:var(--ink-soft);margin-top:1px}
+.seg{margin:4px 16px 10px;background:var(--surface-2);border-radius:14px;padding:4px;display:grid;grid-template-columns:repeat(3,1fr);flex:none}
+.seg b{font-size:14px;text-align:center;padding:9px 0;border-radius:11px;color:var(--ink-soft);font-weight:700}
+.seg b.on{background:#fff;color:var(--accent);box-shadow:0 1px 2px rgba(28,26,23,.06)}
+.scroll{flex:1;overflow:hidden;padding:0 16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.chip{font-size:13px;font-weight:700;padding:7px 12px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-soft);background:#fff;white-space:nowrap}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip.acc{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.perf{border-top:1px solid var(--line);padding:10px 0 12px}
+.perf:first-of-type{border-top:0}
+.ph{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.pn{font-size:15px;font-weight:800}
+.pm{font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pv{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
+.fila{display:grid;grid-template-columns:38px 12px 54px 1fr 18px;gap:6px;align-items:center;margin-top:6px}
+.in{height:34px;border:1px solid var(--line-strong);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;background:#fff}
+.in.n{justify-content:flex-start;padding:0 10px;font-weight:500;color:var(--ink)}
+.x{color:var(--ink-faint);font-size:13px;text-align:center}
+.mas{font-size:13px;font-weight:800;color:var(--accent);margin-top:8px;display:inline-block}
+.barra{display:flex;height:16px;border-radius:5px;overflow:hidden;margin-top:9px;gap:2px;background:#fff}
+.barra i{display:flex;align-items:center;justify-content:center;font-style:normal;font-size:10px;font-weight:800;color:#fff;background:#5E6E70}
+.barra i.s{background:repeating-linear-gradient(135deg,#F1EDE6 0 4px,#E8E2D8 4px 8px);color:var(--amber-ink)}
+.bl{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-faint);margin-top:3px}
+.acc{display:flex;justify-content:space-between;align-items:center;padding:12px 2px;border-top:1px solid var(--line);font-size:15px;font-weight:700}
+.acc small{display:block;font-size:12px;color:var(--ink-soft);font-weight:500;margin-top:1px}
+.acc .v{font-variant-numeric:tabular-nums;font-weight:800;display:flex;gap:10px;align-items:center}
+.acc .v:after{content:"›";color:var(--ink-faint);font-size:20px;font-weight:400}
+.sub{font-size:12px;font-weight:800;color:var(--ink-soft);text-transform:none;margin:14px 2px 2px;letter-spacing:.2px}
+/* barra de precio fija */
+.precio{flex:none;margin:0 10px 10px;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(28,26,23,.10);padding:10px 12px 12px}
+.pr-op{display:flex;gap:6px;margin-bottom:9px}
+.pr-op .chip{padding:5px 10px;font-size:12px}
+.pr-n{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:8px;align-items:end}
+.pr-n span{display:block;font-size:11px;color:var(--ink-soft);font-weight:700}
+.pr-n b{font-size:19px;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.pr-n .f{background:var(--accent);color:#fff;border-radius:12px;padding:6px 10px}
+.pr-n .f span{color:rgba(255,255,255,.8)}
+.pr-g{font-size:12px;color:var(--ink-soft);margin-top:8px;display:flex;justify-content:space-between}
+.pr-g b{color:var(--danger)}
+.nav{flex:none;height:62px;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;font-size:10px;color:var(--ink-faint);font-weight:700}
+.nav span{display:flex;flex-direction:column;align-items:center;gap:4px}
+.nav span:before{content:"";width:20px;height:18px;border-radius:5px;border:2px solid currentColor}
+.nav .on{color:var(--accent)}
+.bento{display:grid;grid-template-columns:1.1fr .9fr;grid-template-rows:auto auto;gap:8px;margin-bottom:10px}
+.bx{background:var(--surface-2);border-radius:16px;padding:10px 12px}
+.bx span{font-size:12px;color:var(--ink-soft);font-weight:700;display:block}
+.bx b{font-size:24px;font-variant-numeric:tabular-nums}
+.bx small{font-size:12px;color:var(--ink-soft)}
+.bx.r{background:#FBEDEB;grid-row:span 2;display:flex;flex-direction:column;justify-content:space-between}
+.bx.r b{color:var(--danger);font-size:28px}
+.herr{border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin-bottom:8px}
+.herr .h1{display:flex;justify-content:space-between;font-weight:800;font-size:15px}
+.herr .h2{font-size:12px;color:var(--ink-soft);margin-top:3px}
+.ped{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:7px}
+.ped i{width:9px;height:9px;border-radius:50%;flex:none}
+.compra .l{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px;align-items:baseline}
+.compra .l:first-child{border-top:0}
+.compra .l small{color:var(--ink-soft);font-size:12px}
+.compra .l b{font-variant-numeric:tabular-nums}
+.compra .t{display:flex;justify-content:space-between;font-weight:800;font-size:16px;border-top:1px solid var(--line-strong);padding-top:9px;margin-top:2px}
+.btn{height:50px;border-radius:14px;background:var(--ink);color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+.btn.s{background:#fff;color:var(--ink);border:1px solid var(--line-strong)}
+.pie{flex:none;padding:10px 16px 12px;display:flex;gap:10px;border-top:1px solid var(--line);background:#fff}
+.pie .btn{flex:1}
+/* hoja */
+.velo{position:absolute;inset:0;background:rgba(28,26,23,.32)}
+.hoja{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:8px 16px 18px}
+.asa{width:38px;height:5px;border-radius:3px;background:var(--line-strong);margin:0 auto 12px}
+.hh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.hh b{font-size:20px}
+.cerrar{width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-weight:800}
+.lab{font-size:13px;font-weight:700;color:var(--ink-soft);margin:10px 0 6px}
+.op2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.op{height:44px;border:1px solid var(--line-strong);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.op.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.campo{height:46px;border:1px solid var(--line-strong);border-radius:12px;display:flex;align-items:center;padding:0 12px;font-size:16px}
+.deuda{background:#FBEDEB;border-radius:14px;padding:10px 12px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink-soft)}
+.deuda b{color:var(--danger);font-size:20px}
+/* PC */
+.pc{width:1366px;height:860px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 18px 40px rgba(28,26,23,.16);display:flex;flex-direction:column}
+.pc-top{display:flex;align-items:center;gap:24px;padding:16px 24px;border-bottom:1px solid var(--line)}
+.pc-top .seg{margin:0;width:380px}
+.pc-cols{flex:1;display:grid;grid-template-columns:290px 1fr 330px;min-height:0}
+.lista{border-right:1px solid var(--line);padding:14px 14px;overflow:hidden}
+.mod{display:flex;gap:10px;align-items:center;padding:9px 8px;border-radius:12px}
+.mod.sel{background:var(--accent-soft)}
+.mod .im{width:38px;height:46px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);flex:none}
+.mod .g{flex:1;min-width:0}
+.mod b{font-size:14px;display:block}
+.mod small{font-size:12px;color:var(--ink-soft)}
+.mod .p{font-size:13px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.ed{padding:16px 26px;overflow:hidden}
+.edh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.ed .perfs{display:grid;grid-template-columns:1fr 1fr;gap:4px 28px}
+.lado{border-left:1px solid var(--line);padding:16px 18px;background:#FCFBFA}
+.pcp .r{display:flex;justify-content:space-between;padding:7px 0;font-size:14px;font-variant-numeric:tabular-nums}
+.pcp .r span{color:var(--ink-soft)}
+.pcp .big{background:var(--accent);color:#fff;border-radius:16px;padding:12px 14px;margin:8px 0}
+.pcp .big span{font-size:12px;opacity:.85;display:block;font-weight:700}
+.pcp .big b{font-size:32px;font-variant-numeric:tabular-nums}
+.gr{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-top:1px solid var(--line)}
+.gr b{font-variant-numeric:tabular-nums}
+.tag{font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:var(--amber-soft);color:var(--amber-ink);margin-left:6px;vertical-align:middle}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.qty{display:flex;align-items:center;gap:6px}
+.qty b{width:30px;height:30px;border-radius:9px;border:1px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--ink-soft)}
+.qty span{width:30px;text-align:center;font-size:17px;font-weight:800}
+.mrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.mrow:first-child{border-top:0}
+.mrow .g b{font-size:15px;display:block}.mrow .g small{font-size:12px;color:var(--ink-soft)}
+.mini .barra{height:13px;margin-top:4px}.mini .barra i{font-size:9px}
+.mini .ph{margin-top:8px}
+.stock{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+.stock:first-child{border-top:0}
+.stock b{font-size:15px}.stock small{font-size:12px;color:var(--ink-soft)}
+.stock .n{font-size:18px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.stock .n small{display:block;font-weight:600}
+.ret{display:flex;gap:5px;flex-wrap:wrap;grid-column:1 / -1;margin-top:4px}
+.ret i{font-style:normal;font-size:11px;font-weight:800;padding:3px 7px;border-radius:7px;background:var(--surface-2);color:var(--ink-soft)}
+.mov{font-size:13px;display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line)}
+.mov b{font-variant-numeric:tabular-nums}
+.vs{display:grid;grid-template-columns:1fr auto auto;gap:4px 14px;font-size:13px;align-items:baseline}
+.vs .h{font-size:11px;color:var(--ink-soft);font-weight:800}
+.vs b{font-variant-numeric:tabular-nums;text-align:right}
+.mad{border:1px dashed var(--line-strong);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--ink-soft);margin:10px 0}
+.mad b{color:var(--ink)}
+.seg4{grid-template-columns:repeat(4,1fr)}
+.seg4 b{font-size:13px}
+.cat{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.cat:first-child{border-top:0}
+.cat .im,.decat .im{width:46px;height:58px;border-radius:9px;background:linear-gradient(#EFEDE9,#E4E1DB);flex:none;position:relative}
+.cat .im:after,.decat .im:after{content:"";position:absolute;inset:8px 10px;border:2px solid #B9B3A9;border-radius:3px}
+.cat .g{flex:1;min-width:0}.cat b{font-size:15px;display:block}.cat small{font-size:12px;color:var(--ink-soft)}
+.cat .p{text-align:right;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.pill{font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;display:inline-block;margin-top:3px}
+.pill.g{background:var(--surface-2);color:var(--ink-soft)}.pill.a{background:var(--amber-soft);color:var(--amber-ink)}.pill.v{background:#E6F2EA;color:#1E6B3A}.pill.r{background:#FBEDEB;color:var(--danger)}
+.grp{font-size:12px;font-weight:800;color:var(--ink-soft);margin:12px 0 2px;display:flex;justify-content:space-between}
+.decat{background:var(--surface-2);border-radius:16px;padding:10px 12px;display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.decat b{font-size:14px}.decat small{font-size:12px;color:var(--ink-soft);display:block;line-height:1.35}
+.esp{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.esp i{font-style:normal;font-size:11px;font-weight:700;background:#fff;border-radius:7px;padding:2px 7px;color:var(--ink-soft)}
+.opt-g{border:1px solid var(--line-strong);border-radius:16px;padding:12px 14px;margin-bottom:8px}
+.opt-g b{font-size:15px;display:block}.opt-g small{font-size:13px;color:var(--ink-soft)}
+.opt-g.on{border-color:var(--accent);background:var(--accent-soft)}
+.parte{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 2px}
+.parte b{font-size:16px}.parte span{font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.ext{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px}
+.ext .h1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ext b{font-size:15px}.ext small{font-size:12px;color:var(--ink-soft);display:block;margin-top:2px}
+.tog{width:40px;height:24px;border-radius:12px;background:var(--line-strong);position:relative;flex:none}
+.tog:after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:2px;left:2px}
+.tog.on{background:var(--accent)}.tog.on:after{left:18px}
+.nota{font-size:12px;color:var(--ink-soft);margin-top:6px;line-height:1.4}
+.indice{display:flex;gap:6px;overflow:hidden;padding:0 16px 8px;flex:none;border-bottom:1px solid var(--line)}
+.indice span{font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft);white-space:nowrap}
+.indice span.on{background:var(--ink);color:#fff}
+.pz2{display:grid;grid-template-columns:30px 50px 1fr 26px;gap:6px;align-items:center;margin-top:6px}
+.pz2 .q{font-variant-numeric:tabular-nums}
+.que{height:34px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;gap:6px;padding:0 9px;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden}
+.que em{font-style:normal;font-size:10px;font-weight:800;color:var(--accent);background:#fff;border-radius:5px;padding:1px 5px}
+.precio.min{padding:8px 12px}
+.precio.min .pr-n b{font-size:17px}
+.fila-h{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.fila-h:first-child{border-top:0}
+.fila-h b{font-variant-numeric:tabular-nums}
+.fila-h small{display:block;font-size:12px;color:var(--ink-soft)}
+.sec-t{font-size:13px;font-weight:800;margin:12px 0 4px}
+.campo.s{height:40px;font-size:15px}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tres{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.hoja .scroll2{max-height:none}
+.vc{font-size:11px;font-weight:800;color:var(--ink-soft);display:flex;gap:4px}
+.vc i{font-style:normal;padding:3px 7px;border-radius:7px;border:1px solid var(--line-strong)}
+.vc i.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.badge-cat{font-size:11px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 6px}
+
+body{background:#F3F2EF}
+.wrap{max-width:1760px;margin:0 auto;padding:24px 20px 60px}
+section{background:#fff;border-radius:28px;padding:26px 26px 30px;margin:0 0 26px;box-shadow:0 1px 2px rgba(28,26,23,.05)}
+.sh{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.sh h2{font-size:28px;letter-spacing:-.4px}
+.mod{width:40px;height:40px;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;font-size:19px;display:flex;align-items:center;justify-content:center;flex:none}
+.tri{display:grid;grid-template-columns:1.2fr 1.4fr 1fr;gap:12px;margin-bottom:18px}
+.tri>div{background:var(--surface-2);border-radius:18px;padding:14px 16px}
+.tri b{font-size:13px;color:var(--accent);display:block;margin-bottom:4px}
+.tri p{font-size:15px;line-height:1.45}
+.fila{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start}
+.pant{width:390px}
+.pt{font-size:16px;font-weight:800;margin:0 0 10px 2px;display:flex;align-items:center;gap:8px}
+.num{min-width:30px;height:30px;padding:0 6px;border-radius:9px;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.notas{margin:14px 4px 0 22px;font-size:14.5px;line-height:1.45;color:var(--ink)}
+.notas li{margin-bottom:6px;padding-left:2px}
+.portada h1{font-size:40px;letter-spacing:-.8px;line-height:1.1;margin:6px 0 10px;max-width:900px}
+.eyebrow{font-size:13px;font-weight:800;color:var(--accent)}
+.lead{font-size:18px;line-height:1.45;max-width:900px;color:var(--ink-soft)}
+.lead b{color:var(--ink)}
+.mt{font-size:15px;font-weight:800;margin:0 0 10px}
+.medida,.mapa,.lotes,.pregunta{margin-top:20px;background:var(--surface-2);border-radius:20px;padding:16px 18px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--ink-soft);padding:6px 8px;font-weight:800}
+td{padding:9px 8px;border-top:1px solid var(--line);vertical-align:top}
+td small{color:var(--ink-soft);font-size:13px}
+.mm{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:15px}
+.mm:first-of-type{border-top:0}
+.mm b{color:var(--accent)}
+.flujo{margin-top:16px;font-size:15px;background:var(--accent-soft);border-radius:16px;padding:12px 16px;line-height:1.6}
+.nota-g{margin-top:12px;font-size:14px;color:var(--ink-soft)}
+.pregunta{background:var(--amber-soft);margin-top:24px}
+.pregunta p{font-size:14px;margin-bottom:8px}
+.chk td.ck{text-align:center;font-size:22px}
+.chk th{text-align:center}.chk th:first-child{text-align:left}
+.mini-q,.qs,.lotes ol{margin:12px 0 0 22px;font-size:15px;line-height:1.5}
+.mini-q li,.qs li,.lotes li{margin-bottom:6px}
+@media (max-width:820px){.tri{grid-template-columns:1fr}.wrap{padding:10px}section{padding:18px 14px;border-radius:22px}.mm{grid-template-columns:1fr;gap:2px}.portada h1{font-size:30px}}
+@media (max-width:430px){.pant{width:100%}.pant .tel{zoom:.86}}
+.tel .nav span:before{display:block}
+</style></head><body><div class="wrap"><section id="inicio"><div class="portada">
+<div class="eyebrow">Propuesta para Ray · 7 nov 2026 · nada programado todavía</div>
+<h1>Costos, Depósito y Finanzas en un solo camino</h1>
+<p class="lead">Tu Costeador dentro de la app: misma forma de trabajar, con los datos reales de Supabase y la misma fórmula. El Bitral sigue dando <b>$223.22 · $290.19 · $326.79 · $339.23</b>.</p>
+<div class="medida"><div class="mt">Lo medimos en un iPhone 13 con la app de hoy</div>
+<table><tr><th>Tarea</th><th>Hoy</th><th>Con la propuesta</th></tr>
+<tr><td>Costear un modelo copiando el Bitral</td><td>8 toques · 4 hojas</td><td>unos 4 toques · 1 pantalla</td></tr>
+<tr><td>Cambiar el precio de un tubo y ver el Bitral</td><td>7 toques · 4 pantallas</td><td>unos 3 toques · el Bitral se ve en la misma hoja</td></tr>
+<tr><td>Armar el corte del sábado</td><td>2 toques, pero 2 pantallas de alto y hay que asignar antes en Producción</td><td>sale solo de los pedidos: necesitas · hay · comprar</td></tr>
+<tr><td>Registrar la compra y ver cuánto se debe</td><td>11 toques · 5 pantallas · 3 módulos</td><td>unos 3 toques · 1 hoja</td></tr></table></div>
+<div class="mapa"><div class="mt">Qué hace cada módulo</div>
+<div class="mm"><b>Costos</b><span>Cuánto cuesta cada modelo, qué cortar y qué comprar. Tres pestañas como tu Costeador: Modelos · Plan de corte · Precios.</span></div>
+<div class="mm"><b>Depósito</b><span>Qué hay en el taller: barras, hojas, retazos y consumibles. Recibe las compras solo y descuenta lo cortado.</span></div>
+<div class="mm"><b>Finanzas</b><span>El dinero: confirmar pagos (igual que hoy), proveedores y lo que se les debe, gastos, la ganancia y el <b>cierre del mes</b> para emparejar la app con lo real.</span></div>
+<div class="mm"><b>Catálogo y Ventas</b><span>Los extras que se crean en Costos aparecen aquí para vender. La vendedora no ve costos.</span></div>
+<div class="mm"><b>Mi trabajo</b><span>El herrero recibe su hoja de corte. Al terminar su paso de Hierro (como hoy), la app descuenta las barras y guarda los retazos sola.</span></div>
+<div class="mm"><b>No cambian</b><span>Producción, nómina, seguimiento del cliente y catálogo público.</span></div></div>
+<div class="flujo">Venta → Producción → <b>Plan de corte</b> → <b>Compra</b> → <b>Depósito</b> → Hoja del herrero → al terminar Hierro, retazos al <b>Depósito</b> → <b>Finanzas</b> (deuda, gasto real, ganancia)</div>
+<p class="nota-g">Solo teléfono por ahora. La madera (y su dinero) va en una etapa aparte, después.</p>
+</div></section><section id="modelos"><div class="sh"><span class="mod">1</span><h2>Costos › Modelos</h2></div>
+<div class="tri"><div><b>Qué hace</b><p>Cada modelo del Catálogo con sus cortes, su lámina y vidrio, sus extras, su acabado y su mano de obra. El precio queda siempre abajo.</p></div><div><b>Qué cambia respecto a hoy</b><p>Hoy cada pieza se edita en una hoja aparte y el precio se pierde al bajar. Ahora la ficha es una sola pantalla con una sola lista de cortes (como tu Costeador), y abajo lámina, consumibles, herrajes, mano de obra y extras, todo a la vista.</p></div><div><b>Por qué</b><p>Es lo que más te frena: 47 de 49 modelos no tienen cortes. Duplicar y cargar tiene que ser rápido.</p></div></div>
+<div class="fila"><div class="pant"><div class="pt"><span class="num">1</span>La lista es el Catálogo</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Costos</div><div class="ts">1 de 49 modelos listos</div></div></div><div class="seg " style="grid-template-columns:repeat(3,1fr)"><b class="on">Modelos</b><b class="">Plan de corte</b><b class="">Precios</b></div><div class="scroll">
+<div class="campo s" style="color:var(--ink-faint);margin-bottom:8px">Buscar modelo</div><div class="chips" style="flex-wrap:nowrap;overflow:hidden"><span class="chip ">Todos</span><span class="chip ">Puertas</span><span class="chip ">Combos</span><span class="chip ">Ventanas</span><span class="chip ">Madera</span><span class="chip ">En diseño</span></div>
+<div class="grp"><span>Listos</span><span>1</span></div>
+<div class="cat"><span class="im"></span><span class="g"><b>Modelo bitral</b><small>Puerta · en fabricación</small></span><span class="p">$326.79<br><span class="pill a">gana 27 %</span></span></div>
+<div class="grp"><span>Borrador</span><span>1</span></div>
+<div class="cat"><span class="im"></span><span class="g"><b>Combo #1</b><small>Combo · solo estructura</small></span><span class="p" style="color:var(--ink-soft)">falta diseño</span></div>
+<div class="grp"><span>Faltan por costear</span><span>47</span></div>
+<div class="cat"><span class="im"></span><span class="g"><b>Lineal Economico</b><small>Puerta · catálogo $200</small></span><span class="p" style="color:var(--accent)">›</span></div>
+<div class="cat"><span class="im"></span><span class="g"><b>Modelo Taco</b><small>Puerta</small></span><span class="p" style="color:var(--accent)">›</span></div>
+<div class="cat"><span class="im"></span><span class="g"><b>Estrambótica Con Yeso</b><small>Puerta</small></span><span class="p" style="color:var(--accent)">›</span></div>
+</div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div></div><ol class="notas"><li>Los mismos 49 productos del Catálogo, con su foto y tipo.</li><li>Separados: <b>Listos</b>, <b>Borrador</b> y <b>Faltan por costear</b>. Los que están en fabricación van primero.</li><li>Cada listo dice su precio sugerido y cuánto gana (verde, amarillo o rojo).</li><li>"En diseño" guarda modelos que todavía no están en el Catálogo; desde su ficha se pasan al Catálogo.</li></ol></div><div class="pant"><div class="pt"><span class="num">2</span>Empezar un modelo</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Modelos</div><div class="tt">Lineal Economico</div><div class="ts">Faltan sus cortes</div></div></div><div class="scroll" style="padding-top:4px">
+<div class="decat"><span class="im"></span><span><b>Del Catálogo</b><small>Puerta Multilock · 200 × 100 cm · $200 · pago: Puerta Estándar</small><span class="esp"><i>Sin protección</i><i>Sin marco decorativo</i><i>Manillón</i></span></span></div>
+<div class="nota" style="margin:-2px 2px 12px">Foto, medida, precio y lo que trae se cambian en el Catálogo.</div>
+<div class="opt-g on"><b>Copiar de otro modelo</b><small>Trae todo y cambias solo lo distinto.</small><div class="chips" style="margin:8px 0 0"><span class="chip acc">Modelo bitral</span><span class="chip">Combo #1</span><span class="chip">Buscar…</span></div></div>
+<div class="opt-g"><b>Estructura estándar</b><small>Bastidor 3" x 1" (2 × 200, 2 × 88), marco, 3 bisagras y cerradura.</small></div>
+<div class="opt-g"><b>En blanco</b><small>Para portones, ventanas o madera.</small></div>
+</div><div class="pie"><div class="btn">Copiar del Modelo bitral</div></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div></div><ol class="notas"><li>Arriba, lo que ya viene del Catálogo: tipo, medida, precio, categoría de pago y lo que trae. Eso se cambia en el Catálogo.</li><li><b>Copiar de otro modelo</b> (el Bitral, por ejemplo) y cambiar solo lo distinto.</li><li><b>Estructura estándar</b>: bastidor 3" x 1" (2 × 200 y 2 × 88), marco, 3 bisagras y cerradura.</li><li><b>En blanco</b> para portones y ventanas.</li></ol></div><div class="pant"><div class="pt"><span class="num">3</span>La ficha: cortes</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Modelos</div><div class="tt">Modelo bitral</div><div class="ts">M-01 · 200 × 100 · Listo</div></div><span class="chip">Duplicar</span></div><div class="indice"><span class="on">Cortes $39.68</span><span class="">Lámina $30.28</span><span class="">Consumibles $44.19</span><span class="">Herrajes $44.08</span><span class="">Obra $65</span><span class="">Extras</span></div><div class="scroll" style="padding-top:6px"><div class="sec-t">Tubo 1" x 3" <span class="pm" style="font-weight:600">· 5,76 m · 1 barra · $14.45</span></div><div class="pz2"><span class="in q">2</span><span class="in q">200</span><span class="que">Bastidor <em>V</em></span><span class="x">›</span></div><div class="pz2"><span class="in q">2</span><span class="in q">88</span><span class="que">Bastidor <em>H</em></span><span class="x">›</span></div><div class="barra"><i style="flex:200">200</i><i style="flex:200">200</i><i style="flex:88">88</i><i style="flex:88">88</i><i class="s" style="flex:24"></i></div><div class="sec-t">Tubo 1" x 2" <span class="pm" style="font-weight:600">· 1,94 m · $3.63</span></div><div class="pz2"><span class="in q">1</span><span class="in q">194</span><span class="que">Divisor <em>V</em></span><span class="x">›</span></div><div class="sec-t">Tubo 1/2" x 1/2" 0,70 <span class="pm" style="font-weight:600">· 9,90 m · 2 barras · $5.09</span></div><div class="pz2"><span class="in q">1</span><span class="in q">600</span><span class="que">Ranuras atrás <em>H</em></span><span class="x">›</span></div><div class="pz2"><span class="in q">1</span><span class="in q">390</span><span class="que">Vitral <em>V</em></span><span class="x">›</span></div><div class="sec-t">Platina 1/2" x 2 mm <span class="pm" style="font-weight:600">· 6,00 m · $2.54</span></div><div class="pz2"><span class="in q">1</span><span class="in q">600</span><span class="que">Ranuras frente <em>H</em></span><span class="x">›</span></div><div class="sec-t">Marco de puerta 10 <span class="pm" style="font-weight:600">· 5,00 m · $13.97</span></div><div class="pz2"><span class="in q">1</span><span class="in q">500</span><span class="que">Marco <em></em></span><span class="x">›</span></div><span class="mas">+ Pieza</span></div><div class="precio min"><div style="display:flex;justify-content:space-between;align-items:center"><span><span style="font-size:11px;color:var(--ink-soft);font-weight:700;display:block">Sugerido · cuesta $223.22</span><b style="font-size:22px">$326.79</b></span><span style="text-align:right;font-size:12px"><span class="pill r">$6.79 abajo del catálogo</span><br><span style="color:var(--ink-soft)">Colores y Ambiente · por metro ›</span></span></div></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div></div><ol class="notas"><li>Una sola lista de cortes, como tu Costeador, agrupada por material.</li><li>Cada pieza: cantidad × cm × qué es, y si va vertical (V) u horizontal (H).</li><li>La barra dibujada con lo que sobra, y metros, barras y costo de cada material.</li><li>Índice arriba con el subtotal de cada parte: al tocar uno, baja a esa parte.</li><li>Abajo, siempre: precio sugerido, lo que cuesta y si está por debajo del Catálogo.</li></ol></div><div class="pant"><div class="pt"><span class="num">4</span>La ficha: bajando</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Modelos</div><div class="tt">Modelo bitral</div><div class="ts">M-01 · 200 × 100 · Listo</div></div><span class="chip">Duplicar</span></div><div class="indice"><span class="">Cortes $39.68</span><span class="">Lámina $30.28</span><span class="on">Consumibles $44.19</span><span class="">Herrajes $44.08</span><span class="">Obra $65</span><span class="">Extras</span></div><div class="scroll" style="padding-top:2px">
+<div class="parte" style="margin-top:6px"><b>Lámina y vidrio</b><span>$30.28</span></div>
+<div class="fila-h"><span>Lámina pulida C/14 · 61,5 × 179<small>37 % de la hoja</small></span><b>$26.19</b></div><div class="fila-h"><span>Vidrio 5 mm · 184 × 10 y 5 de 50 × 4<small>0,28 m²</small></span><b>$4.09</b></div>
+<div class="parte"><b>Pintura y consumibles</b><span>$44.19 · toca para cambiar lo que rinde</span></div>
+<div class="fila-h"><span>Fondo anticorrosivo<small>el galón rinde 3 puertas</small></span><b>$7.73</b></div><div class="fila-h"><span>Esmalte<small>rinde 3 puertas</small></span><b>$8.51</b></div><div class="fila-h"><span>Masilla<small>rinde 3 puertas</small></span><b>$9.67</b></div><div class="fila-h"><span>Thinner<small>rinde 3 puertas</small></span><b>$3.87</b></div><div class="fila-h"><span>Discos, lijas y electrodos<small>9 consumibles · toca para ver</small></span><b>$14.41</b></div>
+<div class="parte"><b>Herrajes</b><span>$44.08</span></div>
+<div class="fila-h"><span>3 bisagras · cerradura multilock · manillón inox<small>3 × $1.16 · $17.40 · $23.20</small></span><b>$44.08</b></div>
+<div class="parte"><b>Mano de obra</b><span>$65 · categoría Puerta Estándar</span></div>
+<div class="fila-h"><span>Hierro<small>herrero</small></span><b>$30.00</b></div><div class="fila-h"><span>Masilla y pintura<small></small></span><b>$30.00</b></div><div class="fila-h"><span>Detalles<small></small></span><b>$5.00</b></div>
+<div class="parte"><b>Extras</b><span>los que el cliente puede pedir</span></div>
+<div class="fila-h"><span>Protección<small>sin costear · su pago al trabajador se suma aparte</small></span><b>›</b></div><div class="fila-h"><span>Marco decorativo<small>sin costear</small></span><b>›</b></div></div><div class="precio min"><div style="display:flex;justify-content:space-between;align-items:center"><span><span style="font-size:11px;color:var(--ink-soft);font-weight:700;display:block">Sugerido · cuesta $223.22</span><b style="font-size:22px">$326.79</b></span><span style="text-align:right;font-size:12px"><span class="pill r">$6.79 abajo del catálogo</span><br><span style="color:var(--ink-soft)">Colores y Ambiente · por metro ›</span></span></div></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div></div><ol class="notas"><li><b>Lámina y vidrio</b> en m² y % de la hoja.</li><li><b>Pintura y consumibles</b> a la vista: fondo, esmalte, masilla, thinner, discos, lijas y electrodos, con cuántas puertas rinde cada uno (se toca para cambiarlo).</li><li><b>Herrajes</b>: bisagras, cerradura y manillón.</li><li><b>Mano de obra</b> de su categoría de pago: hierro $30, masilla y pintura $30, detalles $5.</li><li><b>Extras</b> con su propio pago al trabajador.</li></ol></div><div class="pant"><div class="pt"><span class="num">5</span>Hoja de una pieza</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Modelos</div><div class="tt">Modelo bitral</div><div class="ts"></div></div></div><div class="scroll"></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div><div class="velo"></div><div class="hoja"><div class="asa"></div><div class="hh"><b>Pieza</b><span class="cerrar">✕</span></div>
+<div class="lab" style="margin-top:0">Material</div><div class="campo s">Tubo 1" x 3" <span style="margin-left:auto;color:var(--accent);font-weight:800;font-size:13px">Cambiar</span></div>
+<div class="dos"><div><div class="lab">Cantidad</div><div class="campo s">2</div></div><div><div class="lab">Medida (cm)</div><div class="campo s">200</div></div></div>
+<div class="lab">Qué es</div><div class="chips" style="flex-wrap:nowrap;overflow:hidden"><span class="chip on">Bastidor</span><span class="chip ">Marco</span><span class="chip ">Divisor</span><span class="chip ">Travesaño</span></div><div class="chips" style="flex-wrap:nowrap;overflow:hidden"><span class="chip ">Ranura</span><span class="chip ">Vitral</span><span class="chip ">Otra…</span></div>
+<div class="lab">Va</div><div class="op2"><span class="op on">Vertical</span><span class="op">Horizontal</span></div>
+<div class="nota">"Qué es" y "Va" sirven después para dibujar la puerta en 3D.</div>
+<div class="dos" style="margin-top:14px"><div class="btn s">Quitar</div><div class="btn">Guardar</div></div></div></div><ol class="notas"><li>Material con buscador (sin listas desplegables).</li><li>Cantidad y medida en cm.</li><li><b>Qué es</b>, de una lista: bastidor, marco, divisor, travesaño, ranura, vitral u otra.</li><li><b>Va</b> vertical u horizontal: deja todo listo para el 3D más adelante.</li></ol></div></div></section><section id="extras"><div class="sh"><span class="mod">2</span><h2>Extras de punta a punta</h2></div>
+<div class="tri"><div><b>Qué hace</b><p>Cada modelo tiene sus extras con sus propios cortes. Se crean en Costos, aparecen en el Catálogo y la vendedora los marca en la venta.</p></div><div><b>Qué cambia respecto a hoy</b><p>Hoy un extra es un monto que la vendedora escribe a mano y nadie sabe cuánto cuesta. Ahora el extra tiene costo, precio sugerido y cortes, y entra solo al Plan de corte.</p></div><div><b>Por qué</b><p>Que lo que se vende, lo que se corta y lo que se cobra salgan del mismo lugar.</p></div></div>
+<div class="fila"><div class="pant"><div class="pt"><span class="num">6</span>Pantalla de un extra</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Modelo bitral</div><div class="tt">Protección</div><div class="ts">Extra del Modelo bitral</div></div></div><div class="scroll" style="padding-top:6px">
+<div class="caja-ama" style="background:var(--amber-soft);color:var(--amber-ink);border-radius:14px;padding:10px 12px;font-size:13px;margin-bottom:10px"><b>Sin costear.</b> Carga sus cortes o cópialos de otro modelo.</div>
+<div class="lab" style="margin-top:0">Se ofrece en</div>
+<div class="op2"><span class="op on">Catálogo y venta</span><span class="op">Oculto</span></div>
+<div class="sec-t">Cortes</div>
+<div class="mad" style="margin-top:4px">Sin piezas. Toca "+ Pieza" para agregar los tubos de la protección de este modelo.</div>
+<span class="mas">+ Pieza</span> <span class="mas" style="margin-left:14px">Copiar de otro modelo</span>
+<div class="sec-t" style="margin-top:16px">Mano de obra del extra</div>
+<div class="fila-h"><span>Hierro · protección<small>de la categoría de pago</small></span><b>se toma de Categorías</b></div>
+<div class="sec-t">Precio del extra</div>
+<div class="fila-h"><span>Costo<small>sale de sus cortes</small></span><b>·</b></div>
+<div class="fila-h"><span>Sugerido al cliente</span><b>·</b></div>
+<div class="nota">Cuando tenga cortes, la vendedora verá el precio solo al marcar "Protección" en la venta.</div>
+</div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div></div><ol class="notas"><li>Cada extra tiene su pantalla (no se mete dentro de la ficha para que no crezca sin fin).</li><li><b>Se ofrece en Catálogo y venta</b> u oculto.</li><li>Sus cortes, como los del modelo, o copiados de otro modelo.</li><li>Mano de obra: la tarifa de protección de la categoría de pago (la que ya existe).</li><li>Costo y precio sugerido salen solos de sus cortes.</li></ol></div><div class="pant"><div class="pt"><span class="num">7</span>En el Catálogo</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Catálogo</div><div class="tt">Modelo bitral</div><div class="ts">Puerta Multilock · 200 × 100</div></div></div><div class="scroll" style="padding-top:6px">
+<div style="height:200px;border-radius:16px;background:linear-gradient(#EFEDE9,#E4E1DB);position:relative;margin-bottom:10px"><span style="position:absolute;inset:26px 110px;border:3px solid #B9B3A9;border-radius:6px"></span></div>
+<div class="fila-h" style="border-top:0"><span><b style="font-size:20px">$320</b><small>precio de venta</small></span><span class="pill v">Listo para vender</span></div>
+<div class="sec-t">Extras que el cliente puede pedir <span class="badge-cat">de Costos</span></div>
+<div class="fila-h"><span>Protección<small>sin costear: la vendedora escribe el monto</small></span><b>·</b></div>
+<div class="fila-h"><span>Marco decorativo<small>sin costear</small></span><b>·</b></div>
+<div class="sec-t">Costo (solo Ray o Gualfredo)</div>
+<div class="acc" style="border-top:0"><span>Cuesta $223.22 · gana $60.18 (27 %)<small>Sugerido $326.79 · ver en Costos</small></span><span class="v"></span></div>
+</div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Catálogo</span></div></div><ol class="notas"><li>La ficha del modelo muestra los extras que el cliente puede pedir, con la marca "de Costos".</li><li>Si un extra no está costeado, lo dice.</li><li>La fila "Costo" (solo para ti y Gualfredo) lleva a Costos.</li></ol></div><div class="pant"><div class="pt"><span class="num">8</span>En la venta</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Ventas</div><div class="tt">Nueva venta</div><div class="ts">Yulimar · Ana Rincón</div></div></div><div class="scroll" style="padding-top:6px">
+<div class="decat"><span class="im"></span><span><b>Modelo bitral</b><small>Puerta Multilock · 200 × 100 · $320</small></span></div>
+<div class="lab" style="margin-top:0">Extras</div>
+<div class="ext" style="margin-top:0"><div class="h1"><span><b>Protección</b><small>+ precio del extra (sale solo cuando esté costeada)</small></span><span class="tog on"></span></div></div>
+<div class="lab">Monto de la protección (mientras no esté costeada)</div><div class="campo s">$·</div>
+<div class="ext"><div class="h1"><span><b>Marco decorativo</b></span><span class="tog"></span></div></div>
+<div class="nota">La vendedora no ve costos. Al confirmar, los cortes de la protección entran al Plan de corte.</div>
+<div class="fila-h" style="margin-top:10px"><span><b>Total</b></span><b style="font-size:20px">$320 + protección</b></div>
+</div><div class="pie"><div class="btn">Guardar venta</div></div><div class="nav"><span class="">Inicio</span><span class="on">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="">Costos</span></div></div><ol class="notas"><li>La vendedora marca el extra con un toque.</li><li>Si está costeado, su precio sale solo. Si no, escribe el monto como hoy.</li><li>No ve costos.</li><li>Al confirmar, los cortes del extra entran al Plan de corte del sábado.</li><li>El costo queda fijo al vender: si después sube un tubo, lo vendido no cambia.</li></ol></div></div><div class="pregunta" id="extras-pregunta"><div class="mt">Pregunta para Ray: ¿cuáles son extras?</div>
+<p>Marca para cada uno. Estos salen de la app y de tu Costeador; si falta alguno, agrégalo abajo.</p>
+<table class="chk"><tr><th>Extra</th><th>¿Es extra que el cliente pide?</th><th>¿Lleva cortes propios?</th><th>¿Cambia el pago del trabajador?</th></tr><tr><td><b>Protección (puerta y combo)</b><br><small>Hoy la vendedora escribe el monto aparte. Hay productos "Puerta Protección" en el Catálogo.</small></td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr><tr><td><b>Marco decorativo</b><br><small>Hoy se cobra aparte si el modelo no lo trae.</small></td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr><tr><td><b>Yeso (sobremarco)</b><br><small>Estaba en tu Costeador. Hay modelos "con yeso" en el Catálogo.</small></td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr><tr><td><b>Vitrales</b><br><small>Estaba en tu Costeador como adicional.</small></td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr><tr><td><b>Farquilla</b><br><small>Aparece en el Catálogo ("3L con yeso y farquilla", "farquilla").</small></td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr><tr><td><b>Manillón</b><br><small>Hoy suma $20 en la venta si el modelo no lo trae.</small></td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr><tr><td><b>Ecobel en el combo</b><br><small>Hoy suma $80 al combo (trae Panorámica).</small></td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr><tr><td><b>Detalles en las ventanas del combo / ventana con detalles</b><br><small>Hoy cambia el pago del trabajador.</small></td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr><tr><td><b>Ventana con protección / solo la protección</b><br><small>Hoy se vende con su precio aparte.</small></td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr>
+<tr><td><b>Otro:</b> ______________</td><td class="ck">☐</td><td class="ck">☐</td><td class="ck">☐</td></tr></table>
+<ul class="mini-q"><li>¿"Puerta Protección" y "Protección Rombo / B / lineal" son productos aparte, o el extra Protección de cada puerta?</li>
+<li>Los cortes de un extra, ¿son <b>por modelo</b> (la protección del Bitral) o <b>uno para todas</b> las puertas de 200 × 100?</li>
+<li>Si un extra todavía no está costeado, ¿se puede vender escribiendo el monto como hoy? (propuesta: sí)</li></ul></div></section><section id="precios"><div class="sh"><span class="mod">3</span><h2>Costos › Precios</h2></div>
+<div class="tri"><div><b>Qué hace</b><p>Todos los materiales con su precio sin IVA por proveedor, y las reglas generales. Cambias un precio y se recalculan todos los modelos.</p></div><div><b>Qué cambia respecto a hoy</b><p>Hoy los precios están en Costos y también en Finanzas, y un material nuevo se agrega en Depósito. Ahora todo está aquí, y el precio por dentro de cada modelo se ve en una hoja.</p></div><div><b>Por qué</b><p>Un precio vive en un solo lugar.</p></div></div>
+<div class="fila"><div class="pant"><div class="pt"><span class="num">9</span>Lista de precios</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Costos</div><div class="ts">Precios sin IVA por proveedor</div></div></div><div class="seg " style="grid-template-columns:repeat(3,1fr)"><b class="">Modelos</b><b class="">Plan de corte</b><b class="on">Precios</b></div><div class="scroll"><div class="chips" style="flex-wrap:nowrap;overflow:hidden"><span class="chip on">Hierro</span><span class="chip ">Lámina y vidrio</span><span class="chip ">Madera</span><span class="chip ">Pintura</span><span class="chip ">Accesorios</span></div>
+<div class="op2" style="margin-bottom:6px"><span class="op on">Por material</span><span class="op">Por proveedor</span></div>
+<div class="fila-h"><span>Tubo 1" x 3"<small>Colores y Ambiente · barra 600 cm</small></span><b>$12.98</b></div>
+<div class="fila-h"><span>Tubo 1" x 2"<small>Torniplemaca el más barato · 2 proveedores</small></span><b>$9.50</b></div>
+<div class="fila-h"><span>Tubo 1/2" x 1/2" 0,70<small>Colores y Ambiente</small></span><b>$2.66</b></div>
+<div class="fila-h"><span>Platina 1/2" x 2 mm<small>Colores y Ambiente</small></span><b>$2.19</b></div>
+<div class="fila-h"><span>Marco de puerta 10<small>Colores el más barato · 2 proveedores</small></span><b>$12.28</b></div>
+<span class="mas">+ Material nuevo</span>
+<div class="acc" style="margin-top:8px"><span>Reglas<small>IVA 16 % · ganancia 30 % · gastos $915 ÷ 25 puertas</small></span><span class="v"></span></div>
+</div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div></div><ol class="notas"><li>Filtros por tipo: Hierro, Lámina y vidrio, Pintura, Accesorios.</li><li><b>Por material</b> (el más barato y quién lo vende) o <b>Por proveedor</b>.</li><li>"+ Material nuevo" se hace aquí.</li><li><b>Reglas</b>: IVA 16 %, ganancia 30 %, gastos fijos $915 ÷ 25 puertas, grosor del corte y redondeo.</li></ol></div><div class="pant"><div class="pt"><span class="num">10</span>Hoja de un material</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Costos</div><div class="ts"></div></div></div><div class="scroll"></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div><div class="velo"></div><div class="hoja"><div class="asa"></div><div class="hh"><b>Tubo 1" x 2"</b><span class="cerrar">✕</span></div>
+<div class="nota" style="margin:-4px 0 8px">Barra de 600 cm · hierro</div>
+<div class="sec-t" style="margin-top:0">Precio sin IVA</div>
+<div class="dos"><div><div class="lab">Colores y Ambiente</div><div class="campo s">9.69</div></div><div><div class="lab">Espesor</div><div class="campo s">0,90 mm</div></div></div>
+<div class="dos"><div><div class="lab">Torniplemaca</div><div class="campo s">9.50</div></div><div><div class="lab">Espesor</div><div class="campo s">0,80 mm</div></div></div>
+<div class="fila-h" style="margin-top:8px"><span>Si cambias el precio<small>se recalcula el Bitral y los demás</small></span><b>2 modelos</b></div>
+<div class="fila-h"><span>En el Depósito</span><b>0 barras · 2 retazos ›</b></div>
+<div class="btn" style="margin-top:12px">Guardar precios</div></div></div><ol class="notas"><li>Precio sin IVA y espesor con cada proveedor.</li><li>Antes de guardar dice cuántos modelos cambian de precio.</li><li>Muestra lo que hay en el Depósito (barras y retazos).</li></ol></div><div class="pant"><div class="pt"><span class="num">11</span>El precio por dentro (desde la ficha)</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Modelos</div><div class="tt">Modelo bitral</div><div class="ts"></div></div></div><div class="scroll"></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div><div class="velo"></div><div class="hoja"><div class="asa"></div><div class="hh"><b>Precio del Modelo bitral</b><span class="cerrar">✕</span></div>
+<div class="lab" style="margin-top:0">Precios de</div><div class="chips" style="flex-wrap:nowrap;overflow:hidden"><span class="chip on">Colores y Ambiente</span><span class="chip ">Torniplemaca</span><span class="chip ">Más barato</span></div>
+<div class="op2" style="margin-bottom:8px"><span class="op on">Por metro usado</span><span class="op">Barra completa</span></div>
+<div class="fila-h"><span>Costo de la puerta</span><b>$223.22</b></div>
+<div class="fila-h"><span>Con ganancia (+30 %)</span><b>$290.19</b></div>
+<div class="fila-h"><span>Gastos fijos ($915 ÷ 25)</span><b>$36.60</b></div>
+<div class="fila-h"><span><b>Precio sugerido</b><small>con barra completa: $339.23</small></span><b style="font-size:18px">$326.79</b></div>
+<div class="fila-h"><span>Hoy en catálogo $320<small>ganas $60.18 por puerta (27 %)</small></span><span class="pill a">gana 27 %</span></div>
+<div class="sec-t">Con cada proveedor</div>
+<div class="vs"><span>Colores y Ambiente</span><span></span><b>$326.79</b><span>Torniplemaca</span><span></span><b>$327.76</b><span>El más barato</span><span></span><b>$326.70</b></div>
+<div class="btn" style="margin-top:12px">Usar $326.79 en el catálogo</div></div></div><ol class="notas"><li>Precios de Colores, Torniplemaca o el más barato de cada material.</li><li>Por metro usado o barra completa ($339.23).</li><li>Desglose: costo $223.22, con ganancia $290.19, gastos fijos $36.60, sugerido $326.79.</li><li>Cuánto ganas con el precio de hoy ($60.18, 27 %).</li><li>Botón para usar el sugerido en el Catálogo.</li></ol></div></div></section><section id="plan"><div class="sh"><span class="mod">4</span><h2>Costos › Plan de corte y compra</h2></div>
+<div class="tri"><div><b>Qué hace</b><p>Toma los pedidos del sábado que vienen de Producción, suma todas sus piezas, mira lo que hay en el Depósito y te dice qué comprar. Tú no sumas nada.</p></div><div><b>Qué cambia respecto a hoy</b><p>Hoy la pantalla mide dos de alto, la compra está en Depósito y la deuda en Finanzas. Ahora son 3 pasos en una pantalla y la compra se hace ahí mismo, dividida por proveedor.</p></div><div><b>Por qué</b><p>Planear, saber qué falta y comprar en un solo lugar.</p></div></div>
+<div class="fila"><div class="pant"><div class="pt"><span class="num">12</span>El plan en 3 pasos <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Costos</div><div class="ts">Sábado 14 nov</div></div></div><div class="seg " style="grid-template-columns:repeat(3,1fr)"><b class="">Modelos</b><b class="on">Plan de corte</b><b class="">Precios</b></div><div class="scroll"><div class="chips" style="flex-wrap:nowrap;overflow:hidden"><span class="chip on">Sáb 14 nov</span><span class="chip ">Sáb 21 nov</span></div><div class="parte" style="margin-top:12px"><b><span class="num" style="min-width:24px;height:24px;font-size:12px;margin-right:6px">1</span>Pedidos del sábado</b><span>vienen de Producción</span></div><div class="fila-h" style="border-top:0"><span>N° 1200 · Modelo bitral × 2<small>Ana Rincón · corta Jesus</small></span><b>2 puertas</b></div><div class="caja-ama" style="background:var(--amber-soft);color:var(--amber-ink);border-radius:12px;padding:8px 12px;font-size:12.5px;margin:4px 0">N° 1201 Lineal Economico no tiene cortes: no entra. <b>Cargar cortes ›</b></div><div class="parte" style="margin-top:12px"><b><span class="num" style="min-width:24px;height:24px;font-size:12px;margin-right:6px">2</span>Material</b><span>necesitas · hay · comprar</span></div><div class="vs" style="grid-template-columns:1fr 64px 64px 60px"><span class="h"></span><span class="h">Necesitas</span><span class="h">Hay</span><span class="h">Comprar</span></div><div class="vs" style="grid-template-columns:1fr 64px 64px 60px;padding:7px 0;border-top:1px solid var(--line)"><span><b style="font-size:14px">Tubo 1" x 3"</b></span><span>2 barras</span><span>1 + retazo</span><b style="color:var(--danger)">1</b></div><div class="vs" style="grid-template-columns:1fr 64px 64px 60px;padding:7px 0;border-top:1px solid var(--line)"><span><b style="font-size:14px">Tubo 1" x 2"</b></span><span>1 barra</span><span>retazo 406</span><b style="color:var(--accent)">0</b></div><div class="vs" style="grid-template-columns:1fr 64px 64px 60px;padding:7px 0;border-top:1px solid var(--line)"><span><b style="font-size:14px">Tubo 1/2" 0,70</b></span><span>4 barras</span><span>0</span><b style="color:var(--danger)">4</b></div><div class="vs" style="grid-template-columns:1fr 64px 64px 60px;padding:7px 0;border-top:1px solid var(--line)"><span><b style="font-size:14px">Platina 1/2"</b></span><span>2 barras</span><span>0</span><b style="color:var(--danger)">2</b></div><div class="vs" style="grid-template-columns:1fr 64px 64px 60px;padding:7px 0;border-top:1px solid var(--line)"><span><b style="font-size:14px">Marco 10</b></span><span>2 barras</span><span>0</span><b style="color:var(--danger)">2</b></div><div class="vs" style="grid-template-columns:1fr 64px 64px 60px;padding:7px 0;border-top:1px solid var(--line)"><span><b style="font-size:14px">Lámina C/14</b></span><span>0,74 hoja</span><span>0</span><b style="color:var(--danger)">1 hoja</b></div><div class="nota">Toca un material para ver cómo se cortan sus barras.</div><div class="parte" style="margin-top:12px"><b><span class="num" style="min-width:24px;height:24px;font-size:12px;margin-right:6px">3</span>Comprar lo que falta</b><span>9 barras y 1 hoja</span></div><span class="mas" style="margin-top:4px">+ Agregar exhibición o simular</span></div><div class="pie"><div class="btn">Comprar lo que falta</div></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div></div><ol class="notas"><li><b>1 Pedidos del sábado</b>: salen solos de Producción (lo asignado a Hierro para ese sábado). Si un modelo no tiene cortes, avisa.</li><li><b>2 Material</b>: una línea por material con lo que <b>necesitas</b>, lo que <b>hay</b> en el Depósito (barras y retazos) y lo que hay que <b>comprar</b>.</li><li>Tocar un material muestra cómo se cortan sus barras.</li><li><b>3 Comprar lo que falta</b>.</li><li>Abajo, pequeño: agregar una puerta de exhibición o simular.</li></ol></div><div class="pant"><div class="pt"><span class="num">13</span>Cómo se cortan las barras <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Costos</div><div class="ts">Sábado 14 nov</div></div></div><div class="scroll"></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div><div class="velo"></div><div class="hoja"><div class="asa"></div><div class="hh"><b>Tubo 1" x 3" · cómo se corta</b><span class="cerrar">✕</span></div><div class="mini">
+<div class="nota" style="margin:-4px 0 8px">2 puertas Modelo bitral · usa primero lo del Depósito</div>
+<div class="barra"><i style="flex:200">200</i><i style="flex:200">200</i><i style="flex:200">200</i></div><div class="bl"><span>Barra 1 <span class="tag ok">del Depósito</span></span><span>sobra 0</span></div>
+<div class="barra"><i style="flex:88">88</i><i class="s" style="flex:32"></i></div><div class="bl"><span>Retazo 120 cm <span class="tag ok">del Depósito</span></span><span>sobra 32</span></div>
+<div class="barra"><i style="flex:200">200</i><i style="flex:88">88</i><i style="flex:88">88</i><i style="flex:88">88</i><i class="s" style="flex:136"></i></div><div class="bl"><span>Barra 2 · comprar</span><span>retazo 136 cm</span></div></div>
+<div class="nota">Toca una pieza para moverla a otra barra o cortarla a mano.</div>
+<div class="fila-h" style="margin-top:8px"><span>Hoja de corte de Jesus<small>la ve en Mi trabajo</small></span><b style="color:var(--accent)">PDF</b></div></div></div><ol class="notas"><li>Las barras de ese material dibujadas, una debajo de otra.</li><li>Primero usa lo del Depósito (barra y retazo marcados).</li><li>Mover una pieza a otra barra o cortarla a mano.</li><li>La hoja de corte del herrero y su PDF.</li></ol></div><div class="pant"><div class="pt"><span class="num">14</span>Comprar lo que falta <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Costos</div><div class="ts">Sábado 14 nov</div></div></div><div class="scroll"></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Costos</span></div><div class="velo"></div><div class="hoja"><div class="asa"></div><div class="hh"><b>Comprar lo que falta</b><span class="cerrar">✕</span></div><div class="lab" style="margin-top:0">Comprar en</div><div class="tres"><span class="op on">Más barato</span><span class="op">Colores</span><span class="op">Torniplemaca</span></div>
+<div class="sec-t" style="display:flex;justify-content:space-between"><span>Colores y Ambiente · 5 materiales</span><span style="color:var(--ink-soft);font-weight:600">últimos precios 3 nov</span></div>
+<div class="vs" style="grid-template-columns:1fr 38px 60px"><span class="h">Material</span><span class="h">Cant.</span><span class="h">s/IVA</span>
+<span>Tubo 1" x 3"</span><span class="in" style="height:28px">1</span><span class="in" style="height:28px">12.98</span>
+<span>Tubo 1/2" x 1/2" 0,70</span><span class="in" style="height:28px">4</span><span class="in" style="height:28px">2.66</span>
+<span>Platina 1/2" x 2 mm</span><span class="in" style="height:28px">2</span><span class="in" style="height:28px">2.19</span>
+<span>Marco de puerta 10<br><small style="color:var(--ink-soft)">Torniplemaca $13.00</small></span><span class="in" style="height:28px">2</span><span class="in" style="height:28px">12.28</span>
+<span>Lámina pulida C/14</span><span class="in" style="height:28px">1</span><span class="in" style="height:28px">61.05</span></div>
+<div class="fila-h" style="margin-top:4px"><span><b>Total con IVA</b><small>Torniplemaca no vende 3 de estos</small></span><b>$131.79</b></div>
+<div class="dos"><div><div class="lab">N° factura</div><div class="campo s" style="color:var(--ink-faint)">A-77</div></div><div><div class="lab">Foto</div><div class="campo s" style="color:var(--accent);font-weight:800">Tomar foto</div></div></div>
+<div class="op2" style="margin-top:8px"><span class="op">Pagué desde una cuenta</span><span class="op on">Queda debiendo</span></div>
+<div class="btn" style="margin-top:10px">Guardar compra · le deberás $131.79</div></div></div><ol class="notas"><li><b>Comprar en</b>: Más barato (divide por proveedor), Todo en Colores o Todo en Torniplemaca.</li><li>Cada proveedor es su propia compra, con sus materiales.</li><li>Sale con los <b>últimos precios</b> pagados a ese proveedor. Al guardar la factura, su precio queda como el último y Costos lo usa.</li><li>Cantidad y precio se cambian por lo que diga la factura. Foto y número.</li><li>Al guardar: el material entra al Depósito y la deuda a Finanzas con el monto real.</li></ol></div><div class="pant"><div class="pt"><span class="num">15</span>El herrero (Mi trabajo) <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Mi trabajo</div><div class="ts">Jesus · sábado 14 nov</div></div></div><div class="scroll">
+<div class="herr"><div class="h1"><span>Tu hoja de corte</span><span style="color:var(--accent);font-size:13px">PDF</span></div><div class="h2">2 Modelo bitral · N° 1200</div>
+<div class="mini"><div class="ph"><span class="pn" style="font-size:13px">Tubo 1" x 3" · barra 1</span><span class="pm">sobra 0</span></div>
+<div class="barra"><i style="flex:200;background:#2E6F77">200</i><i style="flex:200;background:#2E6F77">200</i><i style="flex:200;background:#B7791F">200</i></div>
+<div class="ph"><span class="pn" style="font-size:13px">Retazo 120 cm</span><span class="pm">guarda 32 cm</span></div>
+<div class="barra"><i style="flex:88;background:#2E6F77">88</i><i class="s" style="flex:32"></i></div>
+<div class="ph"><span class="pn" style="font-size:13px">Tubo 1" x 3" · barra 2</span><span class="pm">guarda 136 cm</span></div>
+<div class="barra"><i style="flex:200;background:#B7791F">200</i><i style="flex:88;background:#2E6F77">88</i><i style="flex:88;background:#B7791F">88</i><i style="flex:88;background:#B7791F">88</i><i class="s" style="flex:136"></i></div></div></div>
+<div class="nota">Colores: azul puerta 1, ámbar puerta 2. Al terminar tu paso de Hierro (con su foto, como hoy), la app descuenta las barras y guarda los retazos sola.</div>
+<div class="sub">Tus trabajos</div>
+<div class="fila-h"><span>N° 1200 · Hierro · puerta 1 de 2<small>en proceso</small></span><b style="color:var(--accent)">Terminar ›</b></div>
+</div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Mi trabajo</span></div></div><ol class="notas"><li>Su hoja de corte con un color por puerta y PDF.</li><li>Sin paso extra: al terminar su paso de Hierro con la foto (como hoy), la app descuenta las barras y guarda los retazos.</li><li>Si un retazo salió distinto, se corrige en el Depósito.</li></ol></div></div></section><section id="deposito"><div class="sh"><span class="mod">5</span><h2>Depósito</h2></div>
+<div class="tri"><div><b>Qué hace</b><p>Lo que hay en el taller: barras, hojas, retazos con su medida y consumibles. Entregas a los trabajadores y el conteo.</p></div><div><b>Qué cambia respecto a hoy</b><p>Pierde la pestaña Compras (pasa a Costos y Finanzas). Las existencias se mueven solas con las compras y cuando el herrero termina su paso de Hierro. Las entregas de consumibles son lo que se gastó de verdad.</p></div><div><b>Por qué</b><p>Que el Depósito diga la verdad sin anotar dos veces.</p></div></div>
+<div class="fila"><div class="pant"><div class="pt"><span class="num">16</span>Existencias <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Depósito</div><div class="ts">Lo que hay en el taller</div></div><span class="chip">Contar</span></div><div class="seg " style="grid-template-columns:repeat(3,1fr)"><b class="on">Existencias</b><b class="">Entregas</b><b class="">Movimientos</b></div><div class="scroll"><div class="chips" style="flex-wrap:nowrap;overflow:hidden"><span class="chip on">Hierro</span><span class="chip ">Lámina y vidrio</span><span class="chip ">Consumibles</span></div>
+<div class="caja-ama" style="background:var(--amber-soft);color:var(--amber-ink);border-radius:14px;padding:9px 12px;font-size:13px;margin-bottom:6px"><b>Para el sábado faltan 9 barras y 1 hoja.</b> Se compran en Costos › Plan de corte ›</div>
+<div class="stock"><span><b>Tubo 1" x 3"</b><br><small>Barra de 600 cm</small></span><span class="n">1<small>barra</small></span><span class="ret"><i>Retazo 120 cm</i></span></div>
+<div class="stock"><span><b>Tubo 1" x 2"</b><br><small>Barra de 600 cm</small></span><span class="n" style="color:var(--danger)">0<small>barras</small></span><span class="ret"><i>Retazo 406 cm</i></span></div>
+<div class="stock"><span><b>Tubo 1/2" x 1/2" 0,70</b><br><small>Barra de 600 cm</small></span><span class="n" style="color:var(--danger)">0<small>barras</small></span></div>
+<div class="stock"><span><b>Marco de puerta 10</b><br><small>Barra de 510 cm</small></span><span class="n" style="color:var(--danger)">0<small>barras</small></span></div>
+<div class="sub">Hoy</div>
+<div class="mov"><span>Compra Colores · A-77</span><b style="color:var(--accent)">+9 barras · +1 hoja</b></div>
+<div class="mov"><span>Jesus terminó Hierro · N° 1188</span><b>−2 barras · +1 retazo</b></div>
+</div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="on">Depósito</span><span class="">Costos</span></div></div><ol class="notas"><li>Por tipo: Hierro, Lámina y vidrio, Consumibles.</li><li>Cada material con sus barras y sus retazos.</li><li>Aviso de lo que falta para el sábado, que lleva a comprar en Costos.</li><li>Contar y PDF de existencias.</li></ol></div><div class="pant"><div class="pt"><span class="num">17</span>Hoja de un material <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Depósito</div><div class="ts"></div></div></div><div class="scroll"></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="on">Depósito</span><span class="">Costos</span></div><div class="velo"></div><div class="hoja"><div class="asa"></div><div class="hh"><b>Tubo 1" x 2"</b><span class="cerrar">✕</span></div>
+<div class="bento" style="grid-template-columns:1fr 1fr;grid-template-rows:auto"><div class="bx"><span>Barras</span><b>0</b></div><div class="bx"><span>Retazos</span><b>1</b> <small>406 cm</small></div></div>
+<div class="sec-t">Retazos</div>
+<div class="fila-h"><span>406 cm<small>de la venta N° 1188</small></span><b style="color:var(--danger);font-size:13px">Quitar</b></div>
+<span class="mas">+ Anotar retazo</span>
+<div class="sec-t">Últimos movimientos</div>
+<div class="mov"><span>Jesus cortó · sáb 7 nov</span><b>−2 · +1 retazo</b></div>
+<div class="mov"><span>Compra Colores · A-71</span><b style="color:var(--accent)">+2</b></div>
+<div class="sec-t">Datos</div>
+<div class="fila-h"><span>Largo de la barra · tipo</span><b>600 cm · hierro ›</b></div>
+<div class="fila-h"><span>Precios</span><b style="color:var(--accent)">en Costos › Precios ›</b></div></div></div><ol class="notas"><li>Barras y retazos.</li><li>Anotar o quitar un retazo.</li><li>Movimientos: compras, cortes, entregas.</li><li>Datos del material; los precios llevan a Costos.</li></ol></div><div class="pant"><div class="pt"><span class="num">18</span>Entregas <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Depósito</div><div class="ts">Consumibles a los trabajadores</div></div></div><div class="seg " style="grid-template-columns:repeat(3,1fr)"><b class="">Existencias</b><b class="on">Entregas</b><b class="">Movimientos</b></div><div class="scroll">
+<div class="caja-ama" style="background:var(--accent-soft);color:var(--accent);border-radius:14px;padding:9px 12px;font-size:13px;margin-bottom:6px"><b>2 entregas por revisar</b> (Ray)</div>
+<div class="fila-h"><span>Luis · 2 discos de corte<small>hoy · entregó Yulimar</small></span><span><span class="pill g">Aprobar</span> <span class="pill r">Cuestionar</span></span></div>
+<div class="fila-h"><span>Jesus · 1 kg de electrodos<small>hoy · entregó Gualfredo</small></span><span><span class="pill g">Aprobar</span> <span class="pill r">Cuestionar</span></span></div>
+<div class="sub">Por reponer</div>
+<div class="fila-h"><span>Disco de corte<small>hay 2 · mínimo 3</small></span><b style="color:var(--danger)">reponer</b></div>
+</div><div class="pie"><div class="btn">Entregar material</div></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="on">Depósito</span><span class="">Costos</span></div></div><ol class="notas"><li>Consumibles entregados a cada trabajador: <b>esto es lo que se gasta de verdad</b> en pintura, discos y lijas.</li><li>Tú apruebas o cuestionas cada entrega.</li><li>Lo que hay que reponer.</li><li>Botón para entregar material.</li></ol></div></div></section><section id="finanzas"><div class="sh"><span class="mod">6</span><h2>Finanzas</h2></div>
+<div class="tri"><div><b>Qué hace</b><p>El dinero: confirmar los pagos de los clientes, las cuentas, los proveedores, los gastos y el cierre del mes.</p></div><div><b>Qué cambia respecto a hoy</b><p>Confirmar pagos queda igual que hoy. Recibe la Ganancia (que sale de Costos) y las compras que estaban en Depósito. Suma dos cosas nuevas: material que debía gastarse contra el que salió, y avisos de precio.</p></div><div><b>Por qué</b><p>Todo lo que es dinero en un solo módulo.</p></div></div>
+<div class="fila"><div class="pant"><div class="pt"><span class="num">19</span>Dinero: pagos por confirmar <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Finanzas</div><div class="ts">1 pago por confirmar</div></div></div><div class="seg " style="grid-template-columns:repeat(4,1fr)"><b class="on">Dinero</b><b class="">Proveedores</b><b class="">Gastos</b><b class="">Mes</b></div><div class="scroll">
+<div class="ext" style="margin-top:0;background:var(--accent-soft);border-color:transparent"><div class="h1"><span><b>1 pago por confirmar</b><small>N° 1100 · Ana Rincón · $400 Zelle</small></span><b style="color:var(--accent)">Revisar ›</b></div></div>
+<div class="bento" style="margin-top:10px"><div class="bx"><span>Zelle de Ray</span><b style="font-size:19px">$2,450</b></div><div class="bx r" style="background:var(--surface-2)"><span>Tu dinero hoy</span><b style="color:var(--ink)">$2,450</b><small>en 2 cuentas</small></div><div class="bx"><span>Bolívares</span><b style="font-size:19px">Bs ·</b></div></div>
+<div class="acc"><span>Pagos por ubicar<small>1 pago de $240 sin cuenta</small></span><span class="v">1</span></div>
+<div class="acc"><span>Te deben<small>Ana Rincón resta $400</small></span><span class="v">$400</span></div>
+<div class="acc"><span>Cuentas<small>Zelle de Ray · Bolívares</small></span><span class="v">2</span></div>
+</div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Finanzas</span></div></div><ol class="notas"><li>La tarjeta "pagos por confirmar" arriba, agrupados por venta.</li><li>Tu dinero hoy por cuenta.</li><li>Pagos por ubicar, lo que te deben y las cuentas.</li></ol></div><div class="pant"><div class="pt"><span class="num">20</span>¿Llegó este pago? (como hoy) <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Finanzas</div><div class="ts"></div></div></div><div class="scroll"></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Finanzas</span></div><div class="velo"></div><div class="hoja"><div class="asa"></div><div class="hh"><b>¿Llegó este pago?</b><span class="cerrar">✕</span></div>
+<div class="fila-h" style="border-top:0;padding-top:0"><span>N° 1100 · Ana Rincón · Zelle<small>registró Yulimar · total $800, pagado $0</small></span><b style="font-size:20px">$400</b></div>
+<div style="height:110px;border-radius:14px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:13px;margin:6px 0">Comprobante (tocar para ver grande)</div>
+<div class="lab">¿Llegó a tu cuenta?</div><div class="op2"><span class="op on">Sí llegó</span><span class="op">No llegó</span></div>
+<div class="lab">¿Dónde quedó?</div><div class="tres"><span class="op on">Mi cuenta</span><span class="op">Proveedor</span><span class="op">Después</span></div>
+<div class="caja-ok" style="background:#E6F2EA;color:#1E6B3A;border-radius:12px;padding:9px 12px;font-size:13px;margin-top:10px">Con este pago llega al 50 %: pasa solo a fabricación.</div>
+<div class="btn" style="margin-top:12px">Confirmar pago</div>
+<div class="nota" style="text-align:center">Al confirmar se abre solo el siguiente.</div></div></div><ol class="notas"><li>El comprobante que subió la vendedora.</li><li>Sí llegó o no llegó (con motivo).</li><li>Dónde quedó: tu cuenta, un proveedor o después.</li><li>Si llega al 50 %, el pedido pasa solo a fabricación.</li><li>Al confirmar se abre el siguiente.</li></ol></div><div class="pant"><div class="pt"><span class="num">21</span>Un proveedor</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Proveedores</div><div class="tt">Torniplemaca</div><div class="ts">Inversiones Torniplemaca</div></div></div><div class="scroll" style="padding-top:6px">
+<div class="deuda" style="margin-top:0"><span>Le debes</span><b style="font-size:26px">$1,674.50</b></div>
+<div class="sec-t">Compras</div>
+<div class="fila-h"><span>Nota 00-2884 · 31 oct<small><span class="pill a">material por registrar</span></small></span><b>$1,674.50</b></div>
+<div class="nota">Toca una compra para ver la foto, registrar su material o anularla con motivo.</div>
+<div class="sec-t">Pagos</div>
+<div class="fila-h"><span style="color:var(--ink-soft)">Sin pagos todavía</span></div>
+<div class="acc"><span>Estado de cuenta<small>por fechas · PDF</small></span><span class="v"></span></div>
+<div class="acc"><span>Cuadrar o cambiar saldo<small>con motivo</small></span><span class="v"></span></div>
+</div><div class="pie"><div class="btn s" style="flex:.8">Compra aparte</div><div class="btn">Le transferí</div></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Finanzas</span></div></div><ol class="notas"><li>Cuánto le debes (Torniplemaca: $1,674.50, real).</li><li>Sus compras: foto, registrar el material de una nota, anular con motivo.</li><li>Pagos, estado de cuenta en PDF y cuadrar el saldo con motivo.</li><li>"Le transferí" y "Compra aparte".</li></ol></div><div class="pant"><div class="pt"><span class="num">22</span>El mes <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="tt">Finanzas</div><div class="ts">‹ noviembre 2026 ›</div></div></div><div class="seg " style="grid-template-columns:repeat(4,1fr)"><b class="">Dinero</b><b class="">Proveedores</b><b class="">Gastos</b><b class="on">Mes</b></div><div class="scroll">
+<div class="bento"><div class="bx"><span>Entró</span><b style="font-size:19px">$3,200</b></div><div class="bx r" style="background:var(--accent-soft)"><span>Te queda</span><b style="color:var(--accent)">$610</b><small>después de gastos fijos $915</small></div><div class="bx"><span>Salió</span><b style="font-size:19px">$2,590</b></div></div>
+<div class="acc" style="border-top:0"><span>Ganancia por modelo<small>Bitral gana $60.18 c/u · 1 sin costear</small></span><span class="v"></span></div>
+<div class="acc"><span>Consumibles: debía y salió<small>Según lo entregado en el Depósito</small></span><span class="v" style="color:var(--danger)">+$12</span></div>
+<div class="acc"><span>Hierro: debía y salió<small>Según lo cortado y lo contado</small></span><span class="v" style="color:var(--danger)">+$23</span></div>
+<div class="acc"><span>Avisos de precio<small>Marco 10 subió: 3 modelos abajo</small></span><span class="v">1</span></div>
+<div class="acc"><span>Reportes<small>por proveedor, por cuenta, PDF</small></span><span class="v"></span></div>
+</div><div class="pie"><div class="btn">Cierre del mes ›</div></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Finanzas</span></div></div><ol class="notas"><li>Entró, salió y lo que te queda después de los gastos fijos.</li><li><b>Ganancia por modelo</b> (antes en Costos).</li><li><b>Consumibles: debía y salió</b>: lo que dice Costos contra lo entregado en el Depósito.</li><li><b>Hierro: debía y salió</b>: lo cortado contra lo contado.</li><li>Avisos de precio, reportes y el botón <b>Cierre del mes</b>.</li></ol></div></div></section><section id="arranque"><div class="sh"><span class="mod">7</span><h2>Finanzas › Cierre del mes</h2></div>
+<div class="tri"><div><b>Qué hace</b><p>Cada mes, una lista de pasos para emparejar la app con lo real: cuentas, Depósito y proveedores. El primer cierre es el arranque.</p></div><div><b>Qué cambia respecto a hoy</b><p>Nuevo como lista. Contar, cambiar saldo con motivo y cerrar el mes ya existen; ahora van en orden y con lo que no cuadra a la vista.</p></div><div><b>Por qué</b><p>Para que los números se puedan creer.</p></div></div>
+<div class="fila"><div class="pant"><div class="pt"><span class="num">23</span>La lista del cierre</div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Mes</div><div class="tt">Cierre de noviembre</div><div class="ts">Emparejar la app con lo real</div></div></div><div class="scroll" style="padding-top:6px">
+<div class="caja-ama" style="background:var(--accent-soft);color:var(--accent);border-radius:14px;padding:10px 12px;font-size:13px;margin-bottom:6px"><b>Primer cierre: es el arranque.</b> Además se crean las cuentas y se pone el saldo inicial de cada proveedor.</div><div class="ext"><div class="h1"><span><b>1 · Cuentas y su saldo</b><small>Zelle de Ray, Bolívares… lo que dice el banco hoy</small></span><span class="pill a">Falta</span></div></div><div class="ext"><div class="h1"><span><b>2 · Contar el Depósito</b><small>Barras, hojas, retazos y consumibles</small></span><span class="pill a">Falta</span></div></div><div class="ext"><div class="h1"><span><b>3 · Cuadrar proveedores</b><small>Torniplemaca listo · Colores falta</small></span><span class="pill a">1 de 2</span></div></div><div class="ext"><div class="h1"><span><b>4 · Revisar el mes</b><small>Ganancia, material debía y salió</small></span><span class="pill v">Listo</span></div></div><div class="nota" style="margin-top:10px">Cada diferencia se corrige con motivo y queda guardada. Nada se borra. Los meses siguientes son los mismos pasos, sin crear cuentas.</div></div><div class="pie"><div class="btn">Cerrar noviembre</div></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Finanzas</span></div></div><ol class="notas"><li><b>Primer cierre = arranque</b>: crear las cuentas (las de Ray incluidas) y poner el saldo inicial de cada proveedor.</li><li><b>1 Cuentas</b>: el saldo que dice el banco.</li><li><b>2 Contar el Depósito</b>: la app dice qué no cuadra.</li><li><b>3 Cuadrar proveedores</b>: contra lo que dice cada uno.</li><li><b>4 Revisar el mes</b> y cerrar.</li></ol></div><div class="pant"><div class="pt"><span class="num">24</span>Cuadrar un proveedor <span class="tag">datos de ejemplo</span></div><div class="tel"><div class="status"></div><div class="top"><div style="flex:1;min-width:0"><div class="atras">‹ Mes</div><div class="tt">Cierre de noviembre</div><div class="ts"></div></div></div><div class="scroll"></div><div class="nav"><span class="">Inicio</span><span class="">Ventas</span><span class="">Producción</span><span class="">Depósito</span><span class="on">Finanzas</span></div><div class="velo"></div><div class="hoja"><div class="asa"></div><div class="hh"><b>3 · Cuadrar Torniplemaca</b><span class="cerrar">✕</span></div>
+<div class="vs" style="grid-template-columns:1fr auto">
+<span>Saldo al empezar el mes</span><b>$1,674.50</b>
+<span>+ Compras del mes</span><b>$0.00</b>
+<span>− Pagos del mes</span><b>$0.00</b>
+<span><b>La app dice que le debes</b></span><b>$1,674.50</b></div>
+<div class="lab">¿Cuánto dice Torniplemaca?</div><div class="campo s">1,700.00</div>
+<div class="deuda"><span>Diferencia</span><b>$25.50</b></div>
+<div class="lab" style="margin-top:0">Motivo</div><div class="campo s" style="color:var(--ink-faint)">Ejemplo: nota 00-2901 sin cargar</div>
+<div class="dos" style="margin-top:12px"><div class="btn s">Revisar compras</div><div class="btn">Cuadrar</div></div></div></div><ol class="notas"><li>Saldo al empezar + compras − pagos = lo que dice la app.</li><li>Escribes lo que dice el proveedor.</li><li>Sale la diferencia; se revisan las compras o se cuadra con motivo.</li><li>Nada se borra: queda guardado quién, cuándo y por qué.</li></ol></div></div></section><section id="cierre"><div class="sh"><span class="mod">8</span><h2>Qué se toca, en qué orden y qué te preguntamos</h2></div>
+<div class="tri"><div><b>No se toca</b><p>La fórmula del costo, las tablas de costos, cortes, compras y pagos que ya existen. Producción, nómina y seguimiento. Confirmar pagos.</p></div>
+<div><b>Cambios en la base (se avisan antes)</b><p>Cada pieza guarda qué es, cómo va y a qué parte pertenece. Los extras tienen sus piezas y aparecen en el Catálogo y la venta. Al terminar el paso de Hierro se descuentan barras y entran retazos. La compra guarda el último precio por proveedor. El cierre del mes guarda saldos y conteos con su fecha.</p></div>
+<div><b>Después</b><p>Madera y su dinero. Cargar los cortes de los 47 modelos. 3D y cotizar puertas a la medida.</p></div></div>
+<div class="lotes"><div class="mt">Orden de trabajo (cada lote se prueba en el teléfono antes de seguir)</div>
+<ol><li><b>Modelos y Precios</b> como tu Costeador; la Ganancia pasa a Finanzas.</li><li><b>Extras</b> de punta a punta: Costos, Catálogo, venta y plan.</li><li><b>Plan de corte</b> con el Depósito y la compra por proveedor; las compras salen de Depósito.</li><li><b>Cierre del mes</b> (el primero es el arranque).</li><li><b>Debía y salió</b> (consumibles y hierro) y avisos de precio.</li></ol></div>
+<div class="pregunta"><div class="mt">Preguntas para Ray</div><ol class="qs">
+<li>¿Te sirve esta forma, o cambiarías algo de alguna pantalla? (di el número)</li>
+<li>Extras: llena la tabla de la sección 2.</li>
+
+<li>Plan de corte: ¿basta con lo de Producción, con exhibición o simular como opción pequeña?</li>
+<li>¿Quién registra las compras en el día a día: tú, Gualfredo o los dos?</li>
+<li>¿En qué mes hacemos el primer cierre (el arranque)?</li>
+<li>¿Qué modelos cargamos primero, después de este lote?</li></ol></div></section></div></body></html>
