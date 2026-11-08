@@ -347,6 +347,7 @@ create trigger item_costo_extras after insert on public.venta_items for each row
 revoke execute on function public._extra_costo(bigint, bigint) from anon, public, authenticated;
 revoke execute on function public._extra_de(bigint, text) from anon, public, authenticated;
 revoke execute on function public._costeo_base(bigint, bigint, text) from anon, public, authenticated;
+revoke execute on function public._costeo(bigint, bigint, text) from anon, public, authenticated;
 revoke execute on function public._extras_sin_costear() from anon, public, authenticated;
 revoke execute on function public._finanzas_avisos_v80() from anon, public, authenticated;
 revoke execute on function public._costos_datos_v82(bigint) from anon, public, authenticated;
