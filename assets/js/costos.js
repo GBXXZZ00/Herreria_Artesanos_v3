@@ -30,7 +30,7 @@
   let tab = TABS.includes(q.get('tab')) ? q.get('tab') : 'modelos', filtro = 'Todos', busca = '';
   let sel = null, prov = null, modo = 'metro', F = null, ocupado = false, ini = null;
   let filPrecios = 'hierro', vistaPrecios = 'material';
-  window.CostosApp = { get prov(){ return prov; }, set prov(v){ prov = v; }, pintar:() => pintar(), recargar:() => recargar(), abrirCorte:(o) => abrirForm(Object.assign({ t:'corte' }, o)) };
+  window.CostosApp = { get prov(){ return prov; }, set prov(v){ prov = v; }, pintar:() => pintar(), recargar:() => recargar(), abrirCorte:(o) => abrirForm(Object.assign({ t:'corte' }, o)), repintarForm:() => { if(F && F.t === 'corte') pintarForm(); } };
 
   const modelo = (id) => D().catalogo.find(x => String(x.id) === String(id)) || D().enDiseno.find(x => String(x.id) === String(id));
   const foto = (m) => m.foto || 'assets/img/icon-192.png';
@@ -54,7 +54,7 @@
     $('filtros').classList.toggle('hidden', tab === 'semana');
     if(tab === 'modelos'){ pintarFiltrosModelos(); $('cont').innerHTML = secModelos(); }
     else if(tab === 'materiales'){ pintarFiltrosPrecios(); $('cont').innerHTML = secPrecios(); }
-    else { $('cont').innerHTML = window.CORTE ? window.CORTE.html() : ''; window.CORTE && window.CORTE.despues(); $('subtitulo').textContent = 'Qué cortar y qué comprar'; }
+    else { $('cont').innerHTML = window.CORTE ? window.CORTE.html() : ''; window.CORTE && window.CORTE.despues(); }
   }
 
   // ================= Modelos: los productos del Catálogo por grupos =================

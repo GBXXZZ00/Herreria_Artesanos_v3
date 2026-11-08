@@ -12,6 +12,7 @@ const res=[];let fallas=0;const ok=(n,c,x)=>{res.push((c?'OK   ':'FALLA')+' '+n+
 const DATOS=JSON.parse(fs.readFileSync(__dirname+'/datos-costos-bitral.json','utf8'));
 DATOS.categorias=[{id:3,nombre:'Puerta Estándar',producto:'Puerta Multilock',tarifas:{hierro:{modo:'fijo',monto:30},detalles:{modo:'fijo',monto:5},masilla_pintura:{modo:'fijo',monto:30}}}];
 DATOS.enFabricacion=[7];
+DATOS.fab.forEach(f=>(f.retazos||[]).forEach(r=>{r.num=r.num||12;}));
 const isoL=(d)=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const sab=(()=>{const d=new Date();d.setHours(12,0,0,0);const w=d.getDay();d.setDate(d.getDate()+(w===0?6:6-w));return isoL(d);})();
 const PERF={u2:{id:'u2',usuario:'ray',nombre:'Ray',rol:'admin',activo:true,confirma_abonos:true},u3:{id:'u3',usuario:'yulimar',nombre:'Yulimar',rol:'vendedor',activo:true,confirma_abonos:false},t1:{id:'t1',usuario:'jesus',nombre:'Jesus',rol:'trabajador',activo:true,especialidades:['herrero']}};
@@ -91,14 +92,18 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   // Semana
   await p.click('#tabs [data-tab="semana"]');await w(600);
   const s=await p.textContent('#cont');
-  ok('Semana: 2 puertas de Jesus del sábado, la sin asignar aparte',s.includes('Jesus')&&s.includes('Puertas para cortar')&&s.includes('Sin asignar en Producción')&&s.includes('N° 1201'));
-  ok('Usa primero el retazo de 120 cm del depósito',s.includes('Retazo de 120 cm del depósito'));
-  ok('Dice qué comprar con IVA',s.includes('Qué comprar')&&s.includes('hay que comprarla'));
+  ok('Plan paso 1: pedidos del sábado (N° 1200 · Modelo bitral × 2, corta Jesus) y la sin asignar aparte',s.includes('Pedidos del sábado')&&s.includes('N° 1200 · Modelo bitral × 2')&&s.includes('corta Jesus')&&s.includes('sin asignar en Producción'));
+  ok('Plan paso 2: material en metros (necesitas · hay · comprar)',s.includes('Necesitas')&&s.includes('Tubo 1" x 3"')&&/\d,\d\d m/.test(s));
+  ok('Plan paso 3: comprar lo que falta',s.includes('Comprar lo que falta')&&!!(await p.$('[data-comprar]')));
+  await p.click('[data-cmat="1"]');await p.waitForSelector('#sheetForm.open');await w();
+  const fm=await p.textContent('#formBody');
+  ok('Tocar un material: usa primero el retazo R-12 de 1,20 m del Depósito',fm.includes('R-12 · 1,20 m')&&fm.includes('del Depósito')&&fm.includes('Retazos del Depósito'));
+  await p.click('#sheetForm [data-cerrar="sheetForm"]');await w(500);
   await p.screenshot({path:'shots4/t44-2-semana.png',fullPage:false});
   await p.click('[data-aceptar]');await w(800);
   const ac=ultimo(rpcs,'corte_plan_guardar');
   ok('Aceptar plan guarda las barras con quién corta',ac&&ac.p.aceptado===true&&ac.p.barras.length>0&&ac.p.barras.every(x=>x.tid==='t1'),ac&&ac.p.barras.length);
-  ok('Después de aceptar: "Jesus ya cortó"',!!(await p.$('[data-ya-corto="t1"]')));
+  ok('Después de aceptar: se puede marcar a mano que Jesus ya cortó',!!(await p.$('[data-ya-corto="t1"]')));
   await p.click('[data-ya-corto="t1"]');await w(600);
   ok('Ya cortó llama a corte_ya_corto',JSON.stringify(ultimo(rpcs,'corte_ya_corto'))===JSON.stringify({p_sab:sab,tid:'t1'}));
   await p.click('[data-pdf-compra]');await w(2500);
@@ -107,7 +112,7 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   const h=await pagina(b,'t1',err);
   await h.p.waitForSelector('.tj-corte',{timeout:8000}).catch(()=>{});
   const th=await h.p.textContent('#vistaTrabajo').catch(()=>'');
-  ok('Mi trabajo: el herrero ve su hoja de corte con el retazo a guardar',th.includes('Tu hoja de corte')&&th.includes('Guarda el retazo de 112'));
+  ok('Mi trabajo: el herrero ve su hoja de corte con el retazo a guardar',th.includes('Tu hoja de corte')&&th.includes('Guarda el retazo de 1,12 m'));
   await h.p.screenshot({path:'shots4/t44-3-hoja-herrero.png'});
   console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas||err.length?fallas+' FALLAS':'TODO OK');
 }catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

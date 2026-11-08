@@ -9,8 +9,8 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Costos · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=75">
-<link rel="stylesheet" href="assets/css/modulo.css?v=75">
+<link rel="stylesheet" href="assets/css/base.css?v=76">
+<link rel="stylesheet" href="assets/css/modulo.css?v=76">
 <style>
   /* Costos: lista de modelos con semáforo y ficha de costeo (al lado en computadora) */
   .sem-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
@@ -55,6 +55,33 @@
   #tabs.seg-d{grid-template-columns:repeat(3,1fr)}
   #tabs .seg-fondo{width:calc(33.333% - 2px)}
   #tabs button{font-size:14px}
+  /* Plan de corte en 3 pasos */
+  .pc-paso{display:flex;align-items:center;gap:8px;margin:18px 0 6px}
+  .pc-paso b{font-size:17px}
+  .pc-n{width:24px;height:24px;border-radius:7px;background:var(--ink);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .pc-der{margin-left:auto;font-size:12.5px;color:var(--ink-soft);text-align:right}
+  .pc-tabla{border-top:1px solid var(--line)}
+  .pc-fila{display:grid;grid-template-columns:1.25fr 0.9fr 1.1fr 0.7fr;gap:6px;align-items:center;width:100%;padding:10px 2px;border-bottom:1px solid var(--line);text-align:left;font-size:13.5px}
+  .pc-fila:active{transform:scale(0.98)}
+  .pc-fila b{font-size:14px;line-height:1.25}
+  .pc-fila > span:last-child{text-align:right;font-weight:800;font-size:15px}
+  .pc-fila .rojo{color:var(--danger)}
+  .pc-fila .ok{color:var(--accent)}
+  .pc-cab{font-size:11.5px;font-weight:800;color:var(--ink-soft);padding:6px 2px}
+  .pc-cab:active{transform:none}
+  .pc-cab > span:last-child{font-size:11.5px;font-weight:800}
+  .pc-hr{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid var(--line)}
+  .pc-hr > span{flex:1;min-width:0}
+  .pc-hr b{display:block;font-size:15px}
+  .pc-hr small{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .btn-mini.sec2{background:var(--surface);color:var(--accent);border:1px solid var(--line-strong)}
+  .tag-dep{font-style:normal;font-size:10.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 6px;margin-left:4px}
+  .pc-ret{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line)}
+  .pc-ret b{display:block;font-size:14.5px}
+  .pc-ret small{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .pc-q{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .pc-hoja{position:relative;width:100%;border-radius:8px;background:#F1E4D6;overflow:hidden;margin:4px 0 10px}
+  .pc-hoja span{position:absolute;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;outline:2px solid var(--surface);outline-offset:-1px;overflow:hidden;white-space:nowrap}
   /* Lista por grupos */
   .grp-t{display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:var(--ink-soft);padding:14px 2px 4px;border-bottom:1px solid var(--line)}
   /* Ficha del modelo: pantalla completa que entra por la derecha */
@@ -237,13 +264,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=75"></script>
-<script src="assets/js/supabase-client.js?v=75"></script>
-<script src="assets/js/comun.js?v=75"></script>
-<script src="assets/js/sesion.js?v=75"></script>
-<script src="assets/js/pdf-reporte.js?v=75"></script>
-<script src="assets/js/costeo.js?v=75"></script>
-<script src="assets/js/corte.js?v=75"></script>
-<script src="assets/js/costos.js?v=75"></script>
+<script src="assets/vendor/supabase.js?v=76"></script>
+<script src="assets/js/supabase-client.js?v=76"></script>
+<script src="assets/js/comun.js?v=76"></script>
+<script src="assets/js/sesion.js?v=76"></script>
+<script src="assets/js/pdf-reporte.js?v=76"></script>
+<script src="assets/js/costeo.js?v=76"></script>
+<script src="assets/js/corte.js?v=76"></script>
+<script src="assets/js/costos.js?v=76"></script>
 </body>
 </html>
