@@ -12,6 +12,13 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-08 · Claude de Gualfredo (Code, 2)
+- Qué hizo: la reestructura quedó publicada. Gualfredo unió el PR #7 desde GitHub y corrió `docs/tareas/2026-11-08-aplicar-v81-a-v84.sql` en el SQL Editor de Supabase ("Success"), porque el "Permitir" del conector no le llegaba (Supabase tenía una falla ese día). Revisado en la base: las 12 funciones nuevas, las 3 tablas, `que_es`/V-H, despunte, el trigger de Hierro, disco 14" en 6 (Bitral en 3), Flete en $0, y el Bitral en $223,22 · $290,19 · $326,79 · $339,23.
+- Ojo: como se corrió en el SQL Editor, v81 a v84 **no salen** en la lista de migraciones de Supabase; los archivos están en `supabase/migrations`.
+- Rama o PR: PR #7 unido; esta nota va en `gualfredo/bitacora-reestructura-publicada`.
+- Está tocando: nada.
+- Pendientes: probar en el teléfono la lista de `docs/claude/documentos/lista-de-pruebas.md` (sección Reestructura). Lote 7 (extras) cuando Ray llene la tabla.
+
 ## 2026-11-08 · Claude de Gualfredo (Code)
 - Qué hizo: empieza los lotes de `docs/tareas/2026-11-08-gualfredo-reestructura-costos.md` en orden (lote 1 primero). Base revisada: v73 a v80 aplicadas, test44 en verde.
 - Rama o PR: `gualfredo/reestructura-costos`.
