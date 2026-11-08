@@ -12,6 +12,12 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-08 · Claude de Gualfredo (Code)
+- Qué hizo: empieza los lotes de `docs/tareas/2026-11-08-gualfredo-reestructura-costos.md` en orden (lote 1 primero). Base revisada: v73 a v80 aplicadas, test44 en verde.
+- Rama o PR: `gualfredo/reestructura-costos`.
+- Está tocando: Costos, Depósito, Finanzas, Mi trabajo, Catálogo y venta (extras).
+- Pendientes: lotes 1 a 7. Gualfredo autorizó publicar al final si toda la batería pasa.
+
 ## 2026-11-08 · Claude de Gualfredo
 - Qué hizo: con Gualfredo (y lo que dijo Ray) definió la reestructura de Costos, Depósito y Finanzas a partir del contexto de Ray (PR #6, rama `ray/contexto-reestructuracion`): midió las 4 tareas en iPhone 13, armó maquetas y una presentación para Ray, y dejó la tarea completa para Code en `docs/tareas/2026-11-08-gualfredo-reestructura-costos.md` con sus maquetas en `docs/tareas/maquetas-2026-11-08-reestructura/`.
 - Rama o PR: `gualfredo/reestructura-costos` (solo documentos por ahora).

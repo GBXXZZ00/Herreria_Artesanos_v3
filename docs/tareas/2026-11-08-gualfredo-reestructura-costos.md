@@ -13,6 +13,7 @@ Rama: `gualfredo/reestructura-costos` (sale de `main`). Maquetas: `docs/tareas/m
 - ✅ Probar cada migración contra la base real con `execute_sql` **dentro de `begin … rollback`** (no queda nada guardado).
 - ✅ Programar una tarea que retome el trabajo si se acaban los tokens (scheduled task que lea este archivo y la bitácora y siga desde el último lote terminado).
 - ❌ **No** aplicar migraciones a la base real (`apply_migration`), **no** unir el PR, **no** publicar. Eso se hace con Gualfredo presente.
+- ✅ **Cambio del 8 nov (Gualfredo, en el chat con Code):** al terminar **todos** los lotes y **solo si toda la batería pasa**, Code aplica las migraciones en orden con `apply_migration`, une el PR y publica, para que Gualfredo pruebe en el teléfono al día siguiente. Lo que quede a medias o con pruebas en rojo no se publica. En las decisiones abiertas Code toma la opción recomendada y la anota en el mensaje final.
 - Todo lo demás de `CLAUDE.md` sigue: marca de autor en commits, pruebas, `?v=` (hoy **v74**; este trabajo usa **v75** en adelante, un número por lote), bitácora al empezar y al terminar.
 
 ## 1. El problema (medido el 7 nov en iPhone 13 con Supabase simulado)
