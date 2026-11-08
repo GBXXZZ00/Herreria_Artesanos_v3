@@ -12,6 +12,12 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-08 · Claude de Gualfredo
+- Qué hizo: con Gualfredo (y lo que dijo Ray) definió la reestructura de Costos, Depósito y Finanzas a partir del contexto de Ray (PR #6, rama `ray/contexto-reestructuracion`): midió las 4 tareas en iPhone 13, armó maquetas y una presentación para Ray, y dejó la tarea completa para Code en `docs/tareas/2026-11-08-gualfredo-reestructura-costos.md` con sus maquetas en `docs/tareas/maquetas-2026-11-08-reestructura/`.
+- Rama o PR: `gualfredo/reestructura-costos` (solo documentos por ahora).
+- Está tocando: Costos, Depósito, Finanzas, Mi trabajo y, en el lote 7, Catálogo y venta (extras). Ray: si vas a tocar algo de esto, avisa en la bitácora.
+- Pendientes: Code programa los lotes 1 a 6 (7 si Ray llena la tabla de extras) sin aplicar migraciones ni unir. Ray: OK a la presentación, grosor del corte, despunte, rendimientos y tabla de extras.
+
 ## 2026-11-03 · Claude de Gualfredo (2)
 - Qué hizo: publicó Finanzas y Costos siguiendo `docs/tareas/2026-11-03-ray-publicar-finanzas-costos.md` (con el OK de Ray).
   - Aplicó en la base, en orden y con `apply_migration`: v73, v74, v75, v76, v77, v78, v78b, v79 y v80 (Gualfredo tocó Permitir). Las primeras 3 veces se venció la confirmación del conector sin cambiar nada; a la cuarta pasó.
