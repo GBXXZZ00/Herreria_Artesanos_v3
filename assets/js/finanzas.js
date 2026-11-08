@@ -223,12 +223,13 @@
     const pagado = pagos.reduce((a, m) => a + Number(m.llego || m.salio || 0), 0);
     let h = `<div class="res"><div class="res-c"><span>Gastos pagados este mes</span><b>${dinero(pagado)}</b></div><div class="res-c"><span>Gastos fijos previstos</span><b>${dinero(fijos)}</b></div></div>`;
     h += D.gastosFijos.map(g => { const p = porCat(g.cat);
-      return `<div class="gasto"><div class="cg-nom">${esc(g.cat)}<span>Previsto ${dinero(g.monto)}</span></div><div style="font-weight:800">${p ? dinero(p) : ''}</div>${p >= Number(g.monto) - 0.005 ? '<span class="pill verde">Pagado</span>' : `<button class="pill amar" type="button" data-gasto-cat="${esc(g.cat)}">Falta</button>`}</div>`; }).join('');
-    if(!D.gastosFijos.length) h += '<p class="mat-s" style="margin:4px 2px">Los gastos fijos (alquiler, luz, internet…) se ponen en Costos › Ganancia.</p>';
+      return `<div class="gasto"><button type="button" class="cg-nom" data-gfijo="${g.id}" style="text-align:left">${esc(g.cat)}<span>Previsto ${dinero(g.monto)} · cambiar</span></button><div style="font-weight:800">${p ? dinero(p) : ''}</div>${p >= Number(g.monto) - 0.005 ? '<span class="pill verde">Pagado</span>' : `<button class="pill amar" type="button" data-gasto-cat="${esc(g.cat)}">Falta</button>`}</div>`; }).join('');
+    if(!D.gastosFijos.length) h += '<p class="mat-s" style="margin:4px 2px">Todavía no hay gastos fijos (alquiler, luz, internet, flete…).</p>';
+    h += '<button class="btn-nuevo" type="button" data-gfijo="nuevo">+ Gasto fijo</button>';
     const otros = pagos.filter(m => !D.gastosFijos.some(g => g.cat === m.cat));
     if(otros.length) h += '<div class="tit">Otros gastos</div>' + otros.map(m => `<button class="gasto" type="button" data-mov="${m.id}" style="width:100%;text-align:left"><div class="cg-nom">${esc(m.cat)}<span>${esc((cta(m.cuenta) || {}).nombre || '')} · ${fecha(m.fecha)}</span></div><div style="font-weight:800">${dinero(m.llego || m.salio)}</div><span></span></button>`).join('');
     h += '<div class="tit">Taller y comisiones del mes</div>' + reporte([['Nómina pagada', -nom], ['Vales (adelantos)', -vales], ['Comisión y cambio', -comis]], 'Total', -(nom + vales + comis));
-    h += `<div class="caja-nota"><span>Conexión con Costos</span>Costos reparte los gastos fijos entre las puertas del mes. Con los gastos reales puedes ajustar esa regla en Costos › Ganancia.</div>`;
+    h += `<div class="caja-nota"><span>Conexión con Costos</span>Los gastos fijos solo se cambian aquí. Costos los lee y los reparte entre las puertas del mes (regla en Costos › Precios › Reglas).</div>`;
     h += '<button class="btn-secondary" type="button" data-pdf-gastos style="width:100%;margin-top:12px">Gastos del mes en PDF</button>';
     if(ancho.matches) h += '<button class="btn-nuevo" type="button" data-nuevo-gasto>+ Registrar gasto</button>';
     return h;
@@ -325,6 +326,13 @@
   function abrirForm(f){ F = f; pintarForm(); abrirHoja('sheetForm'); }
   function pintarForm(){
     let h = '', boton = 'Guardar';
+    if(F.t === 'gfijo'){
+      const g = D.gastosFijos.find(x => String(x.id) === String(F.id));
+      $('formTitulo').textContent = g ? g.cat : 'Gasto fijo nuevo';
+      h = `<div class="field" id="campoGfNom"><label class="field-label" for="gfNom">Qué gasto es</label><input class="input" id="gfNom" value="${esc(F.nom != null ? F.nom : g ? g.cat : '')}"><div class="field-error">Escribe el nombre</div><div class="field-hint">Ejemplo: alquiler, luz, flete.</div></div>
+        <div class="field" id="campoGfMonto"><label class="field-label" for="gfMonto">Cuánto es al mes ($)</label><input class="input" id="gfMonto" inputmode="decimal" value="${esc(F.monto != null ? F.monto : g ? g.monto : '')}"><div class="field-error">Escribe el monto (puede ser 0)</div><div class="field-hint">Cambia el precio sugerido de todos los modelos en Costos.</div></div>
+        ${g ? `<div class="field"><span class="field-label">¿Se sigue pagando?</span>${opts([['si', 'Sí'], ['no', 'Ya no se paga']], F.gfact || 'si', 'data-f-gfact')}</div>` : ''}`;
+    }
     if(F.t === 'transferencia'){
       const p = F.prov ? prov(F.prov) : null, antes = p ? saldoProv(F.prov) : 0;
       $('formTitulo').textContent = p && !F.elegirProv ? 'Transferencia a ' + p.nombre.replace('Inversiones ', '') : 'Pago a un proveedor';
@@ -523,6 +531,13 @@
       if(!F.tipo){ $('campoTipoCta').classList.add('invalid'); return false; }
       accion = async () => { await rpc('cuenta_guardar', { p:{ id:F.id || null, nombre:F.nombre.trim(), tipo:F.tipo, activa:F.activa !== false } }); return F.id ? 'Cuenta guardada' : 'Cuenta agregada. Ponle su saldo con "Cambiar saldo".'; };
     }
+    if(F.t === 'gfijo'){
+      const nom = String($('gfNom').value || '').trim(), raw = String($('gfMonto').value || '').trim(), monto = Number(raw.replace(',', '.'));
+      if(!nom){ $('campoGfNom').classList.add('invalid'); return false; }
+      if(!raw || !isFinite(monto) || monto < 0){ $('campoGfMonto').classList.add('invalid'); return false; }
+      const g = D.gastosFijos.find(x => String(x.id) === String(F.id));
+      accion = async () => { await rpc('gasto_fijo_guardar', { p:{ id:g ? g.id : null, categoria:nom, monto:Math.round(monto * 100) / 100, activo:F.gfact === 'no' ? false : true } }); return F.gfact === 'no' ? 'Quitado de los gastos fijos' : 'Gasto fijo guardado. Costos ya lo usa.'; };
+    }
     if(F.t === 'gasto'){
       const cat = F.cat === 'Otro' ? (F.catOtro || '').trim() : F.cat;
       if(!cat) return err('Elige qué gasto es'); if(!F.cuenta) return err('Elige la cuenta');
@@ -626,6 +641,7 @@
     if(F){
       const set = (attr, campo) => { const b = e.target.closest('[' + attr + ']'); if(b && b.closest('#formBody')){ leerCampos(); F[campo] = b.getAttribute(attr); pintarForm(); return true; } return false; };
       const fp = e.target.closest('[data-f-prov]'); if(fp && fp.closest('#formBody')){ leerCampos(); if(fp.dataset.fProv === 'luego'){ F.prov = null; F.luego = true; } else { F.prov = fp.dataset.fProv; F.luego = false; } pintarForm(); return; }
+      if(e.target.closest('[data-f-gfact]') && $('gfNom')){ F.nom = $('gfNom').value; F.monto = $('gfMonto').value; F.gfact = e.target.closest('[data-f-gfact]').dataset.fGfact; pintarForm(); return; }
       if(set('data-f-llego', 'llego')) return;
       if(set('data-f-cuenta', 'cuenta') || set('data-f-destino', 'destino') || set('data-f-signo', 'signo') || set('data-f-cat', 'cat') || set('data-f-de', 'de') || set('data-f-a', 'a') || set('data-f-origen', 'origen') || set('data-f-tipocta', 'tipo')) return;
       const mn = e.target.closest('[data-f-menos]'); if(mn){ leerCampos(); F.menos = !F.menos; pintarForm(); return; }
@@ -650,6 +666,7 @@
     if(e.target.closest('[data-nueva-cuenta]')) return abrirForm({ t:'cuenta', nombre:'', tipo:null });
     if(e.target.closest('[data-nuevo-prov]') || e.target.closest('#btnNuevoProv')) return abrirForm({ t:'proveedor', nombre:'', tipos:[], iva:true });
     const gc = e.target.closest('[data-gasto-cat]'); if(gc) return abrirForm({ t:'gasto', cat:gc.dataset.gastoCat, monto:(D.gastosFijos.find(g => g.cat === gc.dataset.gastoCat) || {}).monto });
+    const gfx = e.target.closest('[data-gfijo]'); if(gfx) return abrirForm({ t:'gfijo', id:gfx.dataset.gfijo === 'nuevo' ? null : gfx.dataset.gfijo });
     if(e.target.closest('[data-nuevo-gasto]') || e.target.closest('#btnNuevoGasto')) return abrirForm({ t:'gasto', cat:null });
     const mv = e.target.closest('[data-mov]'); if(mv) return abrirForm({ t:'mov', id:+mv.dataset.mov });
     const pd = e.target.closest('[data-pdf]'); if(pd) return abrirPdf('prov', pd.dataset.pdf);

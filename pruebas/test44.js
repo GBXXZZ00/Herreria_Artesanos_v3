@@ -54,29 +54,33 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   // ===== Ray =====
   const {p,rpcs,C}=await pagina(b,'u2',err); const w=ms=>p.waitForTimeout(ms||400);
   await p.goto(H+'costos.html');await p.waitForSelector('[data-modelo="7"]');await w();
-  ok('Modelos: el Bitral en fabricación, listo, cuesta $223.22',(await p.textContent('#cont')).includes('cuesta $223.22'));
-  await p.click('[data-modelo="7"]');await p.waitForSelector('#sheetDet.open');await w();
-  const t=await p.textContent('#detBody');
+  const l0=await p.textContent('#cont');
+  ok('Modelos: el Bitral en fabricación, en Listos, sugerido $326.79',l0.includes('Listos')&&l0.includes('$326.79')&&l0.includes('en fabricación'));
+  await p.click('[data-modelo="7"]');await p.waitForSelector('#sheetFicha.open');await w();
+  const fp=await p.textContent('#fichaFoot');
+  ok('Ficha: precio siempre abajo (cuesta $223.22 · sugerido $326.79)',fp.includes('$223.22')&&fp.includes('$326.79'),fp);
+  await p.click('[data-precio]');await p.waitForSelector('#sheetForm.open');await w();
+  const t=await p.textContent('#formBody');
   ok('DATO DE CONTROL: costo $223.22 · con ganancia $290.19 · sugerido $326.79',t.includes('$223.22')&&t.includes('$290.19')&&t.includes('$326.79'),t.match(/\$[\d,.]+/g).slice(0,8));
+  ok('Gastos fijos: $915 ÷ 25 puertas = $36.60 por puerta',t.includes('$915')&&t.includes('$36.60'));
   ok('Con cada proveedor: Colores y Torniplemaca lado a lado',t.includes('Con cada proveedor')&&t.includes('Torniplemaca'));
   await p.screenshot({path:'shots4/t44-1-ficha.png'});
-  await p.click('#detBody [data-modo="tubo"]');await w();
-  ok('DATO DE CONTROL: barra completa $339.23',(await p.textContent('#detBody')).includes('$339.23'));
-  await p.click('#detBody [data-modo="metro"]');await w();
-  await p.click('#detBody [data-prov="2"]');await w();
-  ok('Precios de Torniplemaca: avisa lo que no vende',(await p.textContent('#detBody')).includes('no vende'));
-  await p.click('#detBody [data-prov="1"]');await w();
-  await p.click('#detBody [data-pieza="nueva"]');await p.waitForSelector('#sheetForm.open');await w();
+  await p.click('#formBody [data-modo="tubo"]');await w();
+  ok('DATO DE CONTROL: barra completa $339.23',(await p.textContent('#formBody')).includes('$339.23'));
+  await p.click('#formBody [data-modo="metro"]');await w();
+  await p.click('#formBody [data-prov="2"]');await w();
+  ok('Precios de Torniplemaca: avisa lo que no vende',(await p.textContent('#formBody')).includes('no vende'));
+  await p.click('#formBody [data-prov="barato"]');await w();
+  ok('Costear con "El más barato"',(await p.textContent('#formBody')).includes('El más barato de cada material'));
+  await p.click('#formBody [data-prov="1"]');await w();
+  await p.click('#sheetForm [data-cerrar="sheetForm"]');await w(500);
+  await p.click('#fichaBody [data-pieza="nueva"]');await p.waitForSelector('#sheetForm.open');await w();
   await p.click('#btnForm');await w(200);
   ok('Pieza sin medida marca el campo',await p.$eval('#c_fCm',x=>x.classList.contains('invalid')));
-  await p.fill('#fCm','150');await p.fill('#fNota','Travesaño');await p.click('#btnForm');await w(800);
+  await p.fill('#fCm','150');await p.click('#formBody [data-f-que="Travesaño"]');await w(200);await p.click('#formBody [data-f-ori="H"]');await w(200);await p.click('#btnForm');await w(800);
   const cg=ultimo(rpcs,'costeo_guardar');
-  ok('Agregar pieza guarda el costeo completo',cg&&cg.p.catalogo_id===7&&cg.p.piezas.length===8&&cg.p.piezas[7][2]===150,cg&&cg.p.piezas.length);
+  ok('Agregar pieza guarda el costeo completo con qué es y H',cg&&cg.p.catalogo_id===7&&cg.p.piezas.length===8&&cg.p.piezas[7][2]===150&&cg.p.piezas[7][4]==='Travesaño'&&cg.p.piezas[7][5]==='H',cg&&cg.p.piezas[7]);
   await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.remove('open'));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.remove('open'));});
-  // Ganancia
-  await p.click('#tabs [data-tab="ganancia"]');await w();
-  const g=await p.textContent('#cont');
-  ok('Ganancia: $915 ÷ 25 puertas = $36.60 por puerta',g.includes('$915')&&g.includes('$36.60'));
   // Precios
   await p.click('#tabs [data-tab="materiales"]');await w();
   const pr=await p.textContent('#cont');
@@ -84,10 +88,6 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   await p.click('[data-vprecios="proveedor"]');await w();
   const pp=await p.textContent('#cont');
   ok('Precios por proveedor: lo que vende cada uno',pp.includes('Inversiones Torniplemaca')&&pp.includes('el más barato'));
-  await p.click('[data-tab="modelos"]');await w();await p.click('[data-modelo="7"]');await p.waitForSelector('#sheetDet.open');await w();
-  await p.click('#detBody [data-prov="barato"]');await w();
-  ok('Costear con "El más barato"',(await p.textContent('#detBody')).includes('El más barato de cada material'));
-  await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.toggle('open',false));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.toggle('open',false));});
   // Semana
   await p.click('#tabs [data-tab="semana"]');await w(600);
   const s=await p.textContent('#cont');

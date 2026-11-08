@@ -1,37 +1,43 @@
-// Costos (solo quien confirma pagos: Ray o Gualfredo). Misma fórmula del Costeador de Ray:
-// materiales con IVA, consumibles por rendimiento, accesorios, mano de obra por categoría de pago,
+// Costos (solo quien confirma pagos: Ray o Gualfredo). Misma fórmula del Costeador de Ray (costeo.js = _costeo de la base):
+// materiales con IVA, consumibles por rendimiento, herrajes, mano de obra por categoría de pago,
 // costo × (1 + ganancia) + gastos fijos por puerta. Los extras se cobran aparte (× ganancia, sin gastos fijos).
-// Pestañas: Modelos · Semana (plan de corte, corte.js) · Ganancia · Precios. Todo se guarda en la base.
+// Pestañas: Modelos · Plan de corte (corte.js) · Precios. La Ganancia por modelo vive en Finanzas › Mes y los
+// gastos fijos en Finanzas › Gastos. La ficha de cada modelo ocupa toda la pantalla (una sola lista de cortes).
 (function(){
   'use strict';
   const { esc, toast, abrirHoja, cerrarHoja, dinero } = window.AH;
   const $ = (id) => document.getElementById(id);
   const X = window.COSTEO;
   const D = () => X.datos();
-  const ancho = window.matchMedia('(min-width:1024px)');
   const CHEV = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-faint);flex-shrink:0"><path d="M9 6l6 6-6 6"/></svg>';
   const TIPO = { hierro:'Hierro', aluminio:'Aluminio', laminas:'Láminas', vidrio:'Vidrio' };
   const COLOR = { verde:'#1B6B3A', amar:'var(--amber)', rojo:'var(--danger)', negro:'var(--ink)', gris:'var(--ink-faint)' };
+  const QUE = ['Bastidor','Marco','Divisor','Travesaño','Ranura','Vitral','Otra'];
   const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
   const numLibre = (v) => { const s = String(v == null ? '' : v).trim(); if(!s) return NaN; if(/,\d{1,3}$/.test(s) && !/\./.test(s)) return parseFloat(s.replace(',', '.')); const n = parseFloat(s.replace(/,/g, '')); return isFinite(n) ? n : NaN; };
-  const r2 = X.r2;
+  const num = (n, d) => Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits:d || 0, maximumFractionDigits:d == null ? 2 : d });
+  const metros = (cm) => num(cm / 100, 2) + ' m';
   const errTxt = (e) => { const m = (e && e.message) || ''; return /fetch|network|Failed/i.test(m) ? 'Sin señal. Revisa el internet y vuelve a intentar.' : (m || 'No se pudo guardar'); };
   const q = new URLSearchParams(location.search);
   const idDe = (codigo) => (D().fab.find(f => f.codigo === codigo) || {}).id;
-  // Bastidor estándar de todas las puertas (Memoria central): tubo 3" x 1", 2 de 200 cm + 2 de 88 cm
-  const bastidor = () => { const t = idDe('t1x3') || (D().fab.find(f => f.pres === 'barra') || {}).id; return t ? [[t, 2, 200, 'Bastidor largo'], [t, 2, 88, 'Bastidor ancho']] : []; };
+  const fabDe = (id) => D().fab.find(f => String(f.id) === String(id));
+  // Estructura estándar de todas las puertas (Memoria central): tubo 3" x 1", 2 de 200 cm (V) + 2 de 88 cm (H)
+  const bastidor = () => { const t = idDe('t1x3') || (D().fab.find(f => f.pres === 'barra') || {}).id; return t ? [[t, 2, 200, '', 'Bastidor', 'V'], [t, 2, 88, '', 'Bastidor', 'H']] : []; };
   const insumoDe = (codigo) => D().insumos.find(i => i.codigo === codigo);
+  const provNom = (id) => id === 'barato' ? 'El más barato' : ((D().proveedores.find(p => String(p.id) === String(id)) || {}).nombre || 'Proveedor').replace('Inversiones ', '').replace(' (ferretería y otros)', '');
 
-  let tab = ['modelos','semana','ganancia','materiales'].includes(q.get('tab')) ? q.get('tab') : 'modelos', filtro = 'Todos';
-  let sel = q.get('modelo') ? (isNaN(+q.get('modelo')) ? q.get('modelo') : +q.get('modelo')) : null;
-  let prov = null, modo = 'metro', F = null, ocupado = false;
+  const TABS = ['modelos','semana','materiales'];
+  let tab = TABS.includes(q.get('tab')) ? q.get('tab') : 'modelos', filtro = 'Todos', busca = '';
+  let sel = null, prov = null, modo = 'metro', F = null, ocupado = false, ini = null;
+  let filPrecios = 'hierro', vistaPrecios = 'material';
   window.CostosApp = { get prov(){ return prov; }, set prov(v){ prov = v; }, pintar:() => pintar(), recargar:() => recargar(), abrirCorte:(o) => abrirForm(Object.assign({ t:'corte' }, o)) };
 
   const modelo = (id) => D().catalogo.find(x => String(x.id) === String(id)) || D().enDiseno.find(x => String(x.id) === String(id));
   const foto = (m) => m.foto || 'assets/img/icon-192.png';
   const pill = (s) => `<span class="pill ${s[0]}">${esc(s[1])}</span>`;
+  const fichaAbierta = () => $('sheetFicha').classList.contains('open');
 
-  async function recargar(){ await X.cargar(); if(prov == null) prov = D().prov; if(window.CORTE) await window.CORTE.cargar().catch(() => {}); pintar(); if(sel != null && !ancho.matches && $('sheetDet').classList.contains('open')) pintarFicha(); }
+  async function recargar(){ await X.cargar(); if(prov == null) prov = D().prov; if(window.CORTE) await window.CORTE.cargar().catch(() => {}); pintar(); if(sel != null && fichaAbierta()) pintarFicha(); }
   // Guarda y vuelve a cargar todo; avisa si falla (sin señal o regla de la base)
   async function hacer(fn, ok){
     if(ocupado) return false; ocupado = true;
@@ -44,328 +50,347 @@
   function pintar(){
     if(!D()) return;
     document.querySelectorAll('#tabs [data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-    const idx = ['modelos','semana','ganancia','materiales'].indexOf(tab); $('tabs').querySelector('.seg-fondo').style.transform = `translateX(${idx * 100}%)`;
-    $('filtros').classList.toggle('hidden', tab !== 'modelos');
-    $('pieMat').classList.toggle('hidden', ancho.matches || tab !== 'materiales');
-    const html = tab === 'modelos' ? secModelos() : tab === 'semana' ? (window.CORTE ? window.CORTE.html() : '') : tab === 'materiales' ? secMateriales() : secGanancia();
-    $('cont').innerHTML = `<div class="cos-grid"><div style="min-width:0">${html}</div><div id="panel"></div></div>`;
-    if(tab === 'semana' && window.CORTE) window.CORTE.despues();
-    if(ancho.matches && sel != null && tab === 'modelos') pintarFicha();
+    $('tabs').querySelector('.seg-fondo').style.transform = `translateX(${TABS.indexOf(tab) * 100}%)`;
+    $('filtros').classList.toggle('hidden', tab === 'semana');
+    if(tab === 'modelos'){ pintarFiltrosModelos(); $('cont').innerHTML = secModelos(); }
+    else if(tab === 'materiales'){ pintarFiltrosPrecios(); $('cont').innerHTML = secPrecios(); }
+    else { $('cont').innerHTML = window.CORTE ? window.CORTE.html() : ''; window.CORTE && window.CORTE.despues(); $('subtitulo').textContent = 'Qué cortar y qué comprar'; }
   }
 
-  // Modelos en fabricación primero
+  // ================= Modelos: los productos del Catálogo por grupos =================
   const enFab = () => { const n = {}; (D().enFabricacion || []).forEach(id => { n[id] = 1; }); return n; };
-  const ESTADO = { listo:['verde','Listo'], borrador:['amar','Borrador'], diseno:['amar','En diseño'] };
+  const FIL = {
+    'Todos':(o) => !o.dis, 'Puertas':(o) => !o.dis && /^Puerta/.test(o.m.tipo || '') && o.m.tipo !== 'Puerta de Madera', 'Combos':(o) => !o.dis && o.m.tipo === 'Combo',
+    'Ventanas':(o) => !o.dis && /ventana/i.test(o.m.tipo || ''), 'Madera':(o) => !o.dis && o.m.tipo === 'Puerta de Madera', 'En diseño':(o) => o.dis,
+  };
+  const listo = (o) => o.x && o.x.c.estado === 'listo' && !o.x.falta.length;
   function lista(){
     const d = D(), nf = enFab();
-    const peso = (o) => (nf[o.m.id] ? 0 : 2) + (o.x ? 0 : 1);
-    return d.enDiseno.map(m => ({ m, x:X.costear(m.id, { prov }), dis:true, fab:0 })).concat(d.catalogo.map(m => ({ m, x:X.costear(m.id, { prov }), dis:false, fab:nf[m.id] || 0 })).sort((a, b) => peso(a) - peso(b)));
+    return d.enDiseno.map(m => ({ m, x:X.costear(m.id, { prov }), dis:true, fab:0 }))
+      .concat(d.catalogo.map(m => ({ m, x:X.costear(m.id, { prov }), dis:false, fab:nf[m.id] || 0 })))
+      .sort((a, b) => (b.fab - a.fab));
+  }
+  function pintarFiltrosModelos(){
+    $('filtros').querySelector('.mostrar-t').textContent = 'Ver';
+    $('filtrosL').innerHTML = Object.keys(FIL).map(k => `<button type="button" class="fx ${k === filtro ? 'on' : ''}" data-filtro="${esc(k)}">${esc(k)}</button>`).join('');
+  }
+  function filaModelo(o){
+    const { m, x, dis, fab } = o, s = X.semaforo(x);
+    let der;
+    if(listo(o)) der = `<b>${dinero(x.final)}</b><span style="margin-top:3px">${dis ? pill(['gris','En diseño']) : pill(s)}</span>`;
+    else if(x) der = `<b style="font-size:14px;color:var(--amber)">${esc(x.falta.length ? 'falta ' + x.falta[0] : 'en borrador')}</b>`;
+    else der = CHEV;
+    const sub = dis ? 'En diseño' + (x && x.c.codigo ? ' · ' + x.c.codigo : '') : esc(m.tipo || '') + (fab ? ' · <b style="color:var(--accent)">en fabricación</b>' : x ? '' : ' · catálogo ' + dinero(m.precio_base));
+    return `<button class="mod" type="button" data-modelo="${esc(m.id)}"><img src="${esc(foto(m))}" alt="" loading="lazy">
+      <span class="grow"><span class="mat-t">${esc(m.nombre)}</span><span class="mat-s">${sub}</span></span>
+      <span class="mat-n">${der}</span></button>`;
   }
   function secModelos(){
-    const todos = lista();
-    const FIL = { 'Todos':() => true, 'En fabricación':(o) => o.fab, 'Sin costear':(o) => !o.x && !o.dis, 'Borrador':(o) => o.x && o.x.c.estado !== 'listo', 'Puertas':(o) => o.m.tipo === 'Puerta Multilock', 'Combos':(o) => o.m.tipo === 'Combo', 'Madera':(o) => o.m.tipo === 'Puerta de Madera' };
-    const nSin = todos.filter(o => !o.x && !o.dis).length, nFabSin = todos.filter(o => o.fab && !(o.x && o.x.c.piezas.length)).length;
-    $('filtrosL').innerHTML = Object.keys(FIL).map(k => `<button type="button" class="fx ${k === filtro ? 'on' : ''} ${k === 'Sin costear' && nSin ? 'rev' : ''}" data-filtro="${esc(k)}">${esc(k)}${k === 'Sin costear' ? ' · ' + nSin : ''}${k === 'En fabricación' ? ' · ' + todos.filter(o => o.fab).length : ''}</button>`).join('');
-    const ver = todos.filter(FIL[filtro] || FIL.Todos);
-    const cat = todos.filter(o => !o.dis), listos = cat.filter(o => o.x && o.x.c.estado === 'listo' && !o.x.falta.length);
-    const cost = cat.filter(o => o.x && !o.x.falta.length);
-    const prom = cost.length ? cost.reduce((a, o) => a + o.x.pct, 0) / cost.length : 0;
-    $('subtitulo').textContent = `${listos.length} de ${cat.length} modelos listos`;
-    let h = `<div class="meta"><div class="meta-b"><span style="width:${cat.length ? Math.round(listos.length / cat.length * 100) : 0}%"></span></div><div class="meta-t"><b>${listos.length} de ${cat.length} listos</b><span>${cost.length ? 'Ganancia promedio ' + Math.round(prom) + ' %' : 'Sin datos de ganancia'}</span></div></div>`;
-    if(nFabSin) h += `<div class="caja-amar" style="margin:0 0 10px">${plural(nFabSin, '1 modelo en fabricación no tiene', 'modelos en fabricación no tienen')} cortes. Están arriba: empieza por ellos.</div>`;
-    h += '<div class="leyenda" style="margin:0 2px 10px">' + [['gris','Sin costear'],['amar','Borrador'],['verde','Listo']].map(([c, t]) => `<span><span class="sem-dot" style="background:${COLOR[c]}"></span>${t}</span>`).join('') + '</div>';
-    h += ver.length ? ver.map(({ m, x, dis, fab }) => { const st = !x ? ['gris','Sin costear'] : ESTADO[x.c.estado] || ESTADO.borrador, s = X.semaforo(x);
-      return `<button class="mod ${String(sel) === String(m.id) && ancho.matches ? 'sel' : ''}" type="button" data-modelo="${esc(m.id)}"><img src="${esc(foto(m))}" alt="" loading="lazy">
-        <span class="grow"><span class="mat-t">${esc(m.nombre)}</span><span class="mat-s">${dis ? 'En diseño · ' + esc(x.c.codigo || '') : esc(m.tipo) + (x ? ' · ' + esc(x.c.codigo || '') : '')}${x && !x.falta.length ? ' · cuesta ' + dinero(x.costo) : ''}</span>
-        ${fab ? `<span class="mat-s" style="color:var(--accent);font-weight:800">En fabricación</span>` : ''}</span>
-        <span class="mat-n"><b>${dis ? dinero(x.final) : dinero(m.precio_base)}</b><span>${dis ? 'sugerido' : 'precio hoy'}</span><span style="margin-top:3px">${pill(st)}${x && !x.falta.length && !dis ? ' ' + pill(s) : ''}</span></span></button>`; }).join('')
-      : '<div class="vacio-d"><b>No hay modelos aquí</b>Cambia el filtro de arriba.</div>';
+    const todos = lista(), cat = todos.filter(o => !o.dis);
+    $('subtitulo').textContent = `${cat.filter(listo).length} de ${cat.length} modelos listos`;
+    const t = (window.AH.normalizar ? window.AH.normalizar : (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''));
+    const ver = todos.filter(FIL[filtro] || FIL.Todos).filter(o => !busca || t(o.m.nombre).includes(t(busca)));
+    let h = `<label class="search-box" style="margin:0 0 6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="buscaModelo" type="search" placeholder="Buscar modelo" aria-label="Buscar modelo" value="${esc(busca)}" autocomplete="off"></label><div id="modLista">`;
+    h += listaModelos(ver) + '</div>';
     return h;
   }
+  function listaModelos(ver){
+    if(!ver.length) return `<div class="vacio-d"><b>No hay modelos aquí</b>${busca ? 'Prueba con otro nombre.' : filtro === 'En diseño' ? 'Los modelos nuevos se hacen duplicando uno que ya esté costeado.' : 'Cambia el filtro de arriba.'}</div>`;
+    if(filtro === 'En diseño') return `<div class="grp-t"><span>En diseño</span><span>${ver.length}</span></div>` + ver.map(filaModelo).join('');
+    const G = [['Listos', ver.filter(listo)], ['Borrador', ver.filter(o => o.x && !listo(o))], ['Faltan por costear', ver.filter(o => !o.x)]];
+    return G.filter(([, l]) => l.length).map(([n, l]) => `<div class="grp-t"><span>${n}</span><span>${l.length}</span></div>${l.map(filaModelo).join('')}`).join('');
+  }
 
-  // ================= Ficha del modelo =================
-  function abrirFicha(id){ sel = id; if(ancho.matches){ pintar(); return; } pintarFicha(); abrirHoja('sheetDet'); }
+  // ================= Ficha del modelo (pantalla completa) =================
+  function abrirFicha(id){
+    sel = id; ini = null;
+    const m = modelo(id); if(!m) return;
+    if(!D().costeo[id]){ const b = bases()[0]; ini = b ? { modo:'copiar', de:b.id } : { modo:'estandar' }; }
+    pintarFicha(); abrirHoja('sheetFicha'); $('fichaBody').scrollTop = 0;
+  }
+  // Modelos que ya tienen cortes: sirven para copiar
+  const bases = () => D().catalogo.concat(D().enDiseno).filter(c => D().costeo[c.id] && D().costeo[c.id].piezas.length && String(c.id) !== String(sel));
+  const medida = (m) => { const e = m.especificaciones_base || {}; return e.alto && e.ancho ? Math.round(e.alto * 100) + ' × ' + Math.round(e.ancho * 100) : ''; };
+  function trae(m){
+    const e = m.especificaciones_base || {}, l = [];
+    if(e.proteccion === false) l.push('Sin protección'); if(e.proteccion === true) l.push('Con protección');
+    if(e.marco_decorativo === false) l.push('Sin marco decorativo'); if(e.marco_decorativo === true) l.push('Marco decorativo');
+    if(e.manillon === true) l.push('Manillón' + (e.manillon_tipo ? ' ' + e.manillon_tipo : ''));
+    if(e.vidrio_o_farquilla) l.push(e.vidrio_o_farquilla + (e.color_vidrio ? ' ' + e.color_vidrio : ''));
+    return l;
+  }
   function pintarFicha(){
     const m = modelo(sel); if(!m) return;
-    const x = X.costear(m.id, { prov, modo });
-    const R = D().reglas;
-    let body, foot;
-    if(!x){
-      const base = D().catalogo.find(c => D().costeo[c.id] && D().costeo[c.id].piezas.length);
-      body = `<div class="mod" style="padding-top:0"><img src="${esc(foto(m))}" alt=""><span class="grow"><span class="mat-t">${esc(m.nombre)}</span><span class="mat-s">${esc(m.tipo)} · precio hoy ${dinero(m.precio_base)}</span></span></div>
-        <div class="vacio-d" style="padding:28px 8px"><b>Este modelo no tiene costeo ni cortes</b>Se cargan sus cortes (tubos con medida), hojas (lámina y vidrio), pintura y accesorios. Así sale su costo, su precio sugerido y entra al plan de corte.</div>
-        <button class="opt-grande" type="button" data-bastidor><b>Empezar con el bastidor estándar</b><span>Tubo 3" x 1": 2 de 200 cm y 2 de 88 cm, ${R.bisagras} bisagras y cerradura. Después agregas lo propio del modelo.</span></button>`;
-      foot = base ? `<button class="btn-primary" type="button" data-copiar-de="${esc(base.id)}">Copiar todo del ${esc(base.nombre)}</button>` : '';
-    } else {
-      const s = X.semaforo(x), c = x.c, dis = !!m.en_diseno;
-      const sub = (g) => x.lineas.filter(l => l.g === g);
-      const grupos = ['Hierro','Lámina','Vidrio','Pintura y masilla','Consumibles','Accesorios','Mano de obra'].filter(g => sub(g).length);
-      const provsHierro = D().proveedores.filter(p => (p.tipos || []).includes('hierro'));
-      // Cuánto saldría la puerta con los precios de cada proveedor (lado a lado)
-      const compara = provsHierro.length > 1 ? provsHierro.map(p => ({ p, y:X.costear(m.id, { prov:p.id, modo }) })).concat([{ p:{ id:'barato', nombre:'El más barato de cada material' }, y:X.costear(m.id, { prov:'barato', modo }) }]) : [];
-      body = `<div class="mod" style="padding-top:0"><img src="${esc(foto(m))}" alt=""><span class="grow"><span class="mat-t">${esc(m.nombre)}</span><span class="mat-s">${esc(c.codigo || '')} · ${dis ? 'En diseño (no está en el catálogo)' : c.estado === 'borrador' ? 'Borrador' : 'En el catálogo'} · ${esc(x.cat ? x.cat.nombre : 'sin categoría de pago')}</span></span>${dis ? '' : pill(s)}</div>
-        <div class="field-label" style="margin-top:6px">Precios de</div>
-        <div class="opts" style="--cols:${provsHierro.length + 1 > 3 ? 2 : provsHierro.length + 1}">${provsHierro.map(p => `<button class="opt ${String(p.id) === String(prov) ? 'selected' : ''}" type="button" data-prov="${p.id}">${esc(p.nombre.replace('Inversiones ', ''))}</button>`).join('')}<button class="opt ${prov === 'barato' ? 'selected' : ''}" type="button" data-prov="barato">El más barato</button></div>
-        <div class="field-label" style="margin-top:10px">Cobrar el hierro</div>
-        <div class="opts" style="--cols:2"><button class="opt ${modo === 'metro' ? 'selected' : ''}" type="button" data-modo="metro">Por metro usado</button><button class="opt ${modo === 'tubo' ? 'selected' : ''}" type="button" data-modo="tubo">Barra completa</button></div>
-        ${x.avisos.map(a => `<div class="caja-amar">${esc(a)}</div>`).join('')}
-        ${x.falta.length ? `<div class="caja-rara">Faltan datos: ${esc(x.falta.join(', '))}. Sin esto no se puede saber si gana.</div>` : ''}
-        <div class="precio-caja" style="margin-top:12px">
-          <div class="res-c"><span>Costo</span><b>${dinero(x.costo)}</b></div>
-          <div class="res-c"><span>${dis ? 'Precio hoy' : 'Precio en catálogo'}</span><b>${dis ? 'Sin precio' : dinero(x.hoy)}</b></div>
-          <div class="res-c final"><span>Precio sugerido (costo + ${R.ganancia} % + gastos fijos)</span><b>${dinero(x.final)}</b></div>
-        </div>
-        ${compara.length ? `<div class="tit">Con cada proveedor</div><div class="rep">${compara.map(({ p, y }) => `<button class="rep-f" type="button" data-prov="${p.id}"><span>${esc(p.nombre.replace('Inversiones ', ''))}<small class="mat-s" style="display:block;font-weight:600">cuesta ${dinero(y.costo)}${y.avisos.length ? ' · usa precios de otro en ' + y.avisos.length : ''}</small></span><b>${dinero(y.final)}</b></button>`).join('')}</div><p class="mat-s" style="margin:6px 2px 0">Precio sugerido de la puerta comprando el material a cada uno.</p>` : ''}
-        ${!dis ? `<div class="tot"><div class="fila"><span>Precio en catálogo</span><b>${dinero(x.hoy)}</b></div><div class="fila"><span>Menos costo</span><b>− ${dinero(x.costo)}</b></div><div class="fila"><span>Menos gastos fijos por puerta</span><b>− ${dinero(x.fijos)}</b></div><div class="fila fin"><span>Ganas por puerta</span><span style="color:${COLOR[s[0]]}">${x.ganancia < 0 ? '− ' : ''}${dinero(Math.abs(x.ganancia))} · ${Math.round(x.pct)} %</span></div></div>` : ''}
-        <div class="tit">Cómo sale el precio</div>
-        <div class="formula">Costo ${dinero(x.costo)} × ${String(1 + R.ganancia / 100).replace('.', ',')} = ${dinero(x.venta)}<br>+ gastos fijos ${dinero(R.gastosMes)} ÷ ${R.puertasMes} puertas = ${dinero(x.fijos)}<br><b>Precio sugerido ${dinero(x.final)}</b></div>
-        ${grupos.map(g => `<div class="grp"><div class="grp-h"><span>${g}</span><span>${dinero(sub(g).reduce((a, l) => a + l.v, 0))}</span></div>
-          ${sub(g).map(l => `<${g === 'Pintura y masilla' || g === 'Consumibles' ? `button type="button" data-rend="${esc(l.n)}"` : 'div'} class="ln"><span class="ln-t">${esc(l.n)}</span><span class="ln-v">${dinero(l.v)}</span><span class="ln-s">${esc(l.det)}${g === 'Pintura y masilla' || g === 'Consumibles' ? ' · tocar para cambiar' : ''}</span></${g === 'Pintura y masilla' || g === 'Consumibles' ? 'button' : 'div'}>`).join('')}</div>`).join('')}
-        ${x.falta.filter(f => D().insumos.some(i => i.nombre === f)).map(f => `<button type="button" class="ln" data-rend="${esc(f)}"><span class="ln-t">${esc(f)}</span><span class="ln-v" style="color:var(--danger)">Falta</span><span class="ln-s">¿Cuántas puertas rinde? Tocar para ponerlo</span></button>`).join('')}
-        <div class="tit">Cortes de hierro (entran al plan de corte de la semana)</div>
-        ${c.piezas.map((p, i) => { const f = D().fab.find(y => String(y.id) === String(p[0])) || { nombre:'Material' }; return `<button class="pz" type="button" data-pieza="${i}"><span class="pz-n">${p[1]}×</span><span><span class="pz-t">${esc(f.nombre)}</span><span class="pz-s">${esc(p[3] || '')}</span></span><span class="pz-m">${p[2]} cm</span></button>`; }).join('')}
-        <button class="btn-nuevo" type="button" data-pieza="nueva">+ Agregar pieza</button>
-        ${x.grupos.length ? '<div class="tit">Cómo se cortan las barras</div>' : ''}
-        ${x.grupos.map(g => `<div class="barra-t">${esc(g.nombre)} · ${g.barras.length} ${g.barras.length === 1 ? 'barra' : 'barras'} de ${String(g.largo / 100).replace('.', ',')} m${g.fijo ? ' · precio fijo para costear' : ''}</div>
-          <div class="barras">${g.barras.map(b => `<div class="barra">${b.piezas.map(p => `<span style="flex:${p.cm}" title="${esc(p.nota || '')}">${p.cm}</span>`).join('')}${b.libre > 0 ? `<span class="sob" style="flex:${b.libre}">${b.libre >= 40 ? 'sobra ' + Math.round(b.libre) : ''}</span>` : ''}</div>`).join('')}</div>`).join('')}
-        <div class="tit">Hojas (lámina y vidrio)</div>
-        ${c.hojas.map((p, i) => { const f = D().fab.find(y => String(y.id) === String(p[0])) || { nombre:'Material' }; return `<button class="pz" type="button" data-hoja="${i}"><span class="pz-n">${p[1]}×</span><span><span class="pz-t">${esc(f.nombre)}</span><span class="pz-s">${esc(p[4] || '')}</span></span><span class="pz-m">${p[2]} × ${p[3]} cm</span></button>`; }).join('')}
-        <button class="btn-nuevo" type="button" data-hoja="nueva">+ Agregar hoja</button>
-        <div class="tit">Accesorios</div>
-        ${Object.entries(c.acc || {}).map(([k, n]) => { const it = D().insumos.find(y => String(y.id) === String(k)); if(!it) return ''; return `<button class="pz" type="button" data-acc="${esc(k)}"><span class="pz-n">${n}×</span><span class="pz-t">${esc(it.nombre)}</span><span class="pz-m">${dinero(it.p)}</span></button>`; }).join('')}
-        <button class="btn-nuevo" type="button" data-acc="nuevo">+ Agregar accesorio</button>
-        <div class="tit">Extras (se cobran aparte, sin gastos fijos)</div>
-        ${x.extras.length ? x.extras.map((e, i) => `<button class="ln" type="button" data-extra="${i}"><span class="ln-t">${esc(e.n)}</span><span class="ln-v">${dinero(e.venta)}</span><span class="ln-s">Cuesta ${dinero(e.costo)} · se suma a la venta si el cliente lo pide</span></button>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin extras. Ejemplo: protección, marco decorativo.</p>'}
-        <button class="btn-nuevo" type="button" data-extra="nuevo">+ Agregar extra</button>
-        <div class="tit">Mano de obra</div>
-        <div class="opts" style="--cols:2">${D().categorias.filter(k => !m.tipo || k.producto === m.tipo || (m.tipo === 'Puerta Multilock' && k.producto === 'Puerta Multilock')).map(k => `<button class="opt ${x.cat && String(x.cat.id) === String(k.id) ? 'selected' : ''}" type="button" data-cat="${k.id}">${esc(k.nombre)}</button>`).join('')}</div>
-        <p class="mat-s" style="margin:6px 2px 0">${c.categoria_pago_id ? 'Costos usa esta categoría para costear.' : 'Sale de la categoría de pago del modelo en el Catálogo.'} Las tarifas se cambian en <a href="categorias-pago.html" style="color:var(--accent);font-weight:800">Categorías de pago</a>.</p>
-        <div class="field" style="margin-top:14px"><label class="field-label" for="fNotas">Notas</label><textarea class="input" id="fNotas" rows="2">${esc(c.notas || '')}</textarea><div class="field-hint">Se guardan al salir del campo.</div></div>`;
-      foot = `<div class="pie-dos2" style="display:flex;gap:10px;margin:0"><button class="btn-secondary" type="button" data-duplicar style="flex:1;height:54px">Duplicar</button><button class="btn-primary" type="button" data-usar style="flex:1.4" ${x.falta.length ? 'disabled' : ''}>${dis ? 'Pasar al catálogo' : 'Usar este precio'}</button></div>`;
-    }
-    if(q.get('volver') === 'semana') body = `<a class="caja-ok" style="display:block;text-decoration:none" href="costos.html?tab=semana&para=${esc(q.get('para') || '')}">${x && x.c.piezas.length ? 'Cortes cargados. Volver al plan de corte' : 'Cuando cargues sus cortes, vuelve al plan de corte'} →</a>` + body;
-    if(ancho.matches){ const pn = $('panel'); if(pn) pn.innerHTML = `<h2 style="margin:0 0 12px;font-size:20px">${esc(m.nombre)}</h2>${body}<div style="margin-top:16px">${foot}</div>`; }
-    else { $('detTitulo').textContent = m.nombre; $('detBody').innerHTML = body; $('detFoot').innerHTML = foot; }
+    const x = X.costear(m.id, { prov, modo:'metro' });
+    const dis = !!m.en_diseno, md = medida(m);
+    const est = !x ? 'Faltan sus cortes' : dis ? 'En diseño' : x.c.estado === 'listo' && !x.falta.length ? 'Listo' : 'Borrador';
+    $('fichaHead').innerHTML = `<button class="fi-volver" type="button" data-cerrar="sheetFicha">‹ Modelos</button>
+      <div class="fi-tit"><div style="min-width:0"><h2 class="sheet-title" id="fichaTitulo">${esc(m.nombre)}</h2><span class="mat-s">${esc([x && x.c.codigo, md, est].filter(Boolean).join(' · '))}</span></div>
+      ${x ? '<button class="fi-dup" type="button" data-duplicar>Duplicar</button>' : ''}</div>`;
+    if(!x) return pintarInicio(m);
+    const R = D().reglas, c = x.c, suma = (gs) => x.lineas.filter(l => gs.includes(l.g)).reduce((a, l) => a + l.v, 0);
+    const S = [['s-cortes','Cortes',suma(['Hierro'])],['s-hojas','Lámina',suma(['Lámina','Vidrio'])],['s-cons','Consumibles',suma(['Pintura y masilla','Consumibles'])],['s-herr','Herrajes',suma(['Accesorios'])],['s-obra','Obra',suma(['Mano de obra'])],['s-extras','Extras',null]];
+    let h = `<div class="fi-idx">${S.map(([id, t, v]) => `<button class="fx" type="button" data-ir="${id}">${t}${v != null ? ' ' + dinero(v) : ''}</button>`).join('')}</div>`;
+    if(x.falta.length) h += `<div class="caja-rara">Faltan datos: ${esc(x.falta.join(', '))}. Sin esto no se sabe cuánto cuesta.</div>`;
+    // ---- Cortes: una sola lista, agrupada por material, con su barra dibujada
+    h += `<section class="fi-sec" id="s-cortes"><div class="fi-sh"><h3>Cortes</h3><span>${dinero(S[0][2])}</span></div>`;
+    const orden = []; c.piezas.forEach((p, i) => { let g = orden.find(o => String(o.mid) === String(p[0])); if(!g){ g = { mid:p[0], idx:[] }; orden.push(g); } g.idx.push(i); });
+    if(!orden.length) h += '<p class="mat-s" style="margin:4px 2px">Todavía no tiene cortes. Toca "+ Pieza" para agregar el primero.</p>';
+    orden.forEach(o => {
+      const f = fabDe(o.mid) || { nombre:'Material' }, g = x.grupos.find(y => String(y.id) === String(o.mid));
+      h += `<div class="fi-mat"><b>${esc(f.nombre)}</b><span>${g ? metros(g.cm) + ' · ' + plural(g.barras.length, '1 barra', 'barras') + ' · ' + dinero(g.v) : 'sin precio'}</span></div>`;
+      h += o.idx.map(i => { const p = c.piezas[i], et = p[4] ? (p[4] === 'Otra' ? (p[3] || 'Otra') : p[4]) : (p[3] || 'Sin decir qué es');
+        return `<button class="pzr" type="button" data-pieza="${i}"><span class="pzr-n">${p[1]}</span><span class="pzr-n pzr-cm">${num(p[2], p[2] % 1 ? 1 : 0)}</span><span class="pzr-t${p[4] ? '' : ' gris'}">${esc(et)}${p[5] ? `<i>${p[5]}</i>` : ''}</span>${CHEV}</button>`; }).join('');
+      if(g) h += `<div class="barras">${g.barras.map(b => `<div class="barra">${b.piezas.map(p => `<span style="flex:${p.cm}">${num(p.cm, p.cm % 1 ? 1 : 0)}</span>`).join('')}${b.libre > 0 ? `<span class="sob" style="flex:${b.libre}">${b.libre >= 60 ? 'sobra ' + metros(b.libre) : ''}</span>` : ''}</div>`).join('')}</div>`;
+    });
+    h += '<button class="btn-nuevo" type="button" data-pieza="nueva">+ Pieza</button></section>';
+    // ---- Lámina y vidrio
+    h += `<section class="fi-sec" id="s-hojas"><div class="fi-sh"><h3>Lámina y vidrio</h3><span>${dinero(S[1][2])}</span></div>`;
+    h += c.hojas.map((p, i) => { const f = fabDe(p[0]); if(!f || !f.hoja) return ''; const pr = X.precioFab(f, prov), m2 = p[1] * p[2] * p[3] / 10000, hm2 = f.hoja[0] * f.hoja[1] / 10000;
+      return `<button class="ln" type="button" data-hoja="${i}"><span class="ln-t">${esc(f.nombre)} · ${p[1] > 1 ? p[1] + ' de ' : ''}${num(p[2])} × ${num(p[3])}</span><span class="ln-v">${pr.p != null ? dinero(m2 * pr.p * (1 + R.iva / 100) / hm2) : 'sin precio'}</span><span class="ln-s">${num(m2, 2)} m² · ${Math.round(m2 / hm2 * 100)} % de la hoja${p[4] ? ' · ' + esc(p[4]) : ''}</span></button>`; }).join('') || '<p class="mat-s" style="margin:4px 2px">Sin lámina ni vidrio.</p>';
+    h += '<button class="btn-nuevo" type="button" data-hoja="nueva">+ Lámina o vidrio</button></section>';
+    // ---- Pintura y consumibles: siempre a la vista, con su rendimiento
+    h += `<section class="fi-sec" id="s-cons"><div class="fi-sh"><h3>Pintura y consumibles</h3><span>${dinero(S[2][2])}</span></div><p class="mat-s" style="margin:0 2px 2px">Toca uno para cambiar cuántas puertas rinde en este modelo.</p>`;
+    h += D().insumos.filter(i => i.grupo !== 'Accesorios').map(it => {
+      const propio = Number((c.rend || {})[it.id]) || 0, r = propio || Number(it.r) || 0, l = x.lineas.find(y => y.n === it.nombre && y.g === it.grupo);
+      const txt = !r ? (it.grupo === 'Pintura y masilla' ? 'Falta cuántas puertas rinde' : 'Sin dato: no se cuenta') : (r >= 1 ? 'rinde ' + num(r) + (r === 1 ? ' puerta' : ' puertas') : num(1 / r, 0) + ' por puerta') + (propio ? ' · de este modelo' : ' · general');
+      return `<button class="ln" type="button" data-rend="${it.id}"><span class="ln-t">${esc(it.nombre)}</span><span class="ln-v"${!r && it.grupo === 'Pintura y masilla' ? ' style="color:var(--danger)"' : ''}>${l ? dinero(l.v) : !r && it.grupo === 'Pintura y masilla' ? 'Falta' : '·'}</span><span class="ln-s">${esc(txt)}</span></button>`; }).join('');
+    h += '</section>';
+    // ---- Herrajes
+    h += `<section class="fi-sec" id="s-herr"><div class="fi-sh"><h3>Herrajes</h3><span>${dinero(S[3][2])}</span></div>`;
+    h += Object.entries(c.acc || {}).map(([k, n]) => { const it = D().insumos.find(y => String(y.id) === String(k)); if(!it) return ''; const l = x.lineas.find(y => y.g === 'Accesorios' && y.n === it.nombre);
+      return `<button class="ln" type="button" data-acc="${esc(k)}"><span class="ln-t">${num(n)} × ${esc(it.nombre)}</span><span class="ln-v">${l ? dinero(l.v) : ''}</span><span class="ln-s">${dinero(it.p)} sin IVA cada uno</span></button>`; }).join('') || '<p class="mat-s" style="margin:4px 2px">Sin herrajes.</p>';
+    h += '<button class="btn-nuevo" type="button" data-acc="nuevo">+ Herraje</button></section>';
+    // ---- Mano de obra
+    h += `<section class="fi-sec" id="s-obra"><div class="fi-sh"><h3>Mano de obra</h3><span>${dinero(S[4][2])}</span></div>`;
+    h += x.lineas.filter(l => l.g === 'Mano de obra').map(l => `<div class="ln"><span class="ln-t">${esc(l.n)}</span><span class="ln-v">${dinero(l.v)}</span></div>`).join('');
+    h += `<div class="field-label" style="margin-top:10px">Categoría de pago</div><div class="opts" style="--cols:2">${D().categorias.filter(k => !m.tipo || k.producto === m.tipo).map(k => `<button class="opt ${x.cat && String(x.cat.id) === String(k.id) ? 'selected' : ''}" type="button" data-cat="${k.id}">${esc(k.nombre)}</button>`).join('') || '<p class="mat-s">No hay categorías de este producto.</p>'}</div>
+      <p class="mat-s" style="margin:6px 2px 0">Las tarifas se cambian en <a href="categorias-pago.html" style="color:var(--accent);font-weight:800">Categorías de pago</a>.</p></section>`;
+    // ---- Extras
+    h += `<section class="fi-sec" id="s-extras"><div class="fi-sh"><h3>Extras</h3><span>se cobran aparte</span></div>`;
+    h += x.extras.length ? x.extras.map((e, i) => `<button class="ln" type="button" data-extra="${i}"><span class="ln-t">${esc(e.n)}</span><span class="ln-v">${dinero(e.venta)}</span><span class="ln-s">Cuesta ${dinero(e.costo)} · sin gastos fijos</span></button>`).join('') : '<p class="mat-s" style="margin:4px 2px">Sin extras. Ejemplo: protección, marco decorativo.</p>';
+    h += `<button class="btn-nuevo" type="button" data-extra="nuevo">+ Extra</button></section>
+      <div class="field" style="margin-top:16px"><label class="field-label" for="fNotas">Notas</label><textarea class="input" id="fNotas" rows="2">${esc(c.notas || '')}</textarea><div class="field-hint">Se guardan al salir del campo.</div></div>`;
+    if(q.get('volver') === 'semana') h = `<a class="caja-ok" style="display:block;text-decoration:none;margin-bottom:10px" href="costos.html?tab=semana&para=${esc(q.get('para') || '')}">${c.piezas.length ? 'Cortes cargados. Volver al plan de corte' : 'Cuando cargues sus cortes, vuelve al plan de corte'} ›</a>` + h;
+    $('fichaBody').innerHTML = h;
+    // ---- Precio siempre abajo
+    const dif = x.hoy != null ? r2(x.hoy - x.final) : null;
+    const etq = x.falta.length ? '<span class="pill gris">Faltan datos</span>' : dis ? '<span class="pill gris">En diseño</span>' : Math.abs(dif) < 0.005 ? '<span class="pill verde">Igual al catálogo</span>' : dif < 0 ? `<span class="pill rojo">${dinero(-dif)} abajo del catálogo</span>` : `<span class="pill verde">${dinero(dif)} arriba del catálogo</span>`;
+    $('fichaFoot').innerHTML = `<button class="fi-precio" type="button" data-precio><span class="fi-pl"><small>Sugerido · cuesta ${dinero(x.costo)}</small><b>${dinero(x.final)}</b></span><span class="fi-pr">${etq}<small>${esc(provNom(prov))} · por metro ›</small></span></button>`;
+  }
+  const r2 = X.r2;
+  function pintarInicio(m){
+    const cat = D().categorias.find(k => String(k.id) === String(m.categoria_pago_id)), md = medida(m), bs = bases();
+    const de = ini.de != null ? modelo(ini.de) : null;
+    let h = `<div class="fi-cat"><img src="${esc(foto(m))}" alt=""><div style="min-width:0"><b>Del Catálogo</b><span>${esc([m.tipo, md ? md + ' cm' : '', dinero(m.precio_base), 'pago: ' + (cat ? cat.nombre : 'sin categoría')].filter(Boolean).join(' · '))}</span>
+      ${trae(m).length ? `<div class="fi-chips">${trae(m).map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}</div></div>
+      <p class="mat-s" style="margin:6px 2px 12px">Foto, medida, precio y lo que trae se cambian en el Catálogo.</p>`;
+    h += `<div class="opt-grande ${ini.modo === 'copiar' ? 'on' : ''}" role="button" tabindex="0" data-ini="copiar"><b>Copiar de otro modelo</b><span>Trae todo y cambias solo lo distinto.</span>
+      <div class="fi-chips" style="margin-top:8px">${bs.slice(0, 2).concat(de && !bs.slice(0, 2).includes(de) ? [de] : []).map(b => `<button type="button" class="fx ${ini.modo === 'copiar' && String(ini.de) === String(b.id) ? 'on' : ''}" data-ini-de="${esc(b.id)}">${esc(b.nombre)}</button>`).join('')}${bs.length > 2 ? '<button type="button" class="fx" data-buscar-base>Buscar…</button>' : ''}${!bs.length ? '<span class="mat-s">Todavía no hay otro modelo con cortes.</span>' : ''}</div></div>
+      <div class="opt-grande ${ini.modo === 'estandar' ? 'on' : ''}" role="button" tabindex="0" data-ini="estandar"><b>Estructura estándar</b><span>Bastidor 3" x 1" (2 × 200 y 2 × 88), ${D().reglas.bisagras} bisagras y cerradura.</span></div>
+      <div class="opt-grande ${ini.modo === 'blanco' ? 'on' : ''}" role="button" tabindex="0" data-ini="blanco"><b>En blanco</b><span>Para portones, ventanas o madera.</span></div>`;
+    $('fichaBody').innerHTML = h;
+    const txt = ini.modo === 'copiar' ? (de ? 'Copiar del ' + de.nombre : 'Elige de cuál copiar') : ini.modo === 'estandar' ? 'Empezar con la estructura estándar' : 'Empezar en blanco';
+    $('fichaFoot').innerHTML = `<button class="btn-primary" type="button" data-empezar ${ini.modo === 'copiar' && !de ? 'disabled' : ''}>${esc(txt)}</button>`;
+  }
+  async function empezar(){
+    const R = D().reglas; let c;
+    if(ini.modo === 'copiar'){ const b = D().costeo[ini.de]; if(!b) return; c = Object.assign(JSON.parse(JSON.stringify(b)), { mid:null, estado:'borrador', notas:'' }); }
+    else if(ini.modo === 'estandar'){ const bis = insumoDe('bisagra'), cer = insumoDe('cerradura'), acc = {}; if(bis) acc[bis.id] = R.bisagras; if(cer) acc[cer.id] = 1; c = { mid:null, estado:'borrador', piezas:bastidor(), hojas:[], rend:{}, acc, extras:[], notas:'' }; }
+    else c = { mid:null, estado:'borrador', piezas:[], hojas:[], rend:{}, acc:{}, extras:[], notas:'' };
+    D().costeo[sel] = c;
+    const ok = await hacer(() => X.guardarCosteo(sel), ini.modo === 'copiar' ? 'Copiado. Cambia solo lo que sea distinto.' : ini.modo === 'estandar' ? 'Estructura puesta. Agrega los cortes propios del modelo.' : 'Listo. Agrega su primer corte.');
+    if(!ok) delete D().costeo[sel];
+    pintarFicha();
   }
 
-  // ================= Precios (lista sin IVA por proveedor) =================
-  let vistaPrecios = 'material';
-  function secMateriales(){
-    const d = D();
-    $('subtitulo').textContent = 'Lista de precios sin IVA, por proveedor';
-    const pn = (k) => ((d.proveedores.find(x => String(x.id) === String(k)) || {}).nombre || '').replace('Inversiones ', '').replace(' (ferretería y otros)', '');
-    let h = `<div class="opts" style="--cols:2;margin-bottom:10px"><button class="opt ${vistaPrecios === 'material' ? 'selected' : ''}" type="button" data-vprecios="material">Por material</button><button class="opt ${vistaPrecios === 'proveedor' ? 'selected' : ''}" type="button" data-vprecios="proveedor">Por proveedor</button></div>
-      <p class="mat-s" style="margin:0 2px 8px">Sin IVA. Los precios entran solos al registrar una compra en Depósito. Para costear, en la ficha de cada modelo eliges el proveedor o "El más barato".</p>`;
-    const activos = d.fab.filter(f => f.activo);
-    if(vistaPrecios === 'proveedor'){
-      d.proveedores.forEach(p => {
-        const L = activos.filter(f => f.precios && f.precios[p.id]);
-        h += `<details class="acc"><summary><span>${esc(p.nombre)}</span><span class="acc-x">${L.length === 1 ? '1 material' : L.length + ' materiales'}</span></summary><div class="acc-b">
-          ${L.length ? L.map(f => { const v = f.precios[p.id], otros = Object.entries(f.precios).filter(([k]) => String(k) !== String(p.id)).map(([, o]) => Number(o.p)), min = otros.length ? Math.min(...otros) : null;
-            return `<button class="cg-fila" type="button" data-mat="${f.id}" style="width:100%;text-align:left"><div class="cg-nom">${esc(f.nombre)}<span>${v.esp ? esc(v.esp) + ' · ' : ''}desde ${esc(String(v.desde || '').split('-').reverse().join('/'))}${min != null ? (Number(v.p) <= min ? ' · <b style="color:var(--accent)">el más barato</b>' : ' · otro lo vende a ' + dinero(min)) : ''}</span></div><div style="text-align:right;font-weight:800">${dinero(v.p)}</div></button>`; }).join('')
-            : '<p class="mat-s" style="margin:0 2px">Todavía no hay precios de este proveedor.</p>'}</div></details>`;
-      });
-    } else {
-      ['hierro','laminas','vidrio','aluminio'].forEach(t => {
-        const L = activos.filter(f => f.tipo === t); if(!L.length) return;
-        h += `<div class="tit">${TIPO[t]}</div>`;
-        h += L.map(f => {
-          const ps = Object.entries(f.precios || {}).map(([k, v]) => ({ k, p:Number(v.p), esp:v.esp })).sort((a, b) => a.p - b.p), min = ps.length ? ps[0].p : null;
-          const metro = (p) => f.pres === 'barra' ? ' · ' + dinero(p / (f.largo / 100)) + ' el metro' : '';
-          return `<details class="acc"><summary><span>${esc(f.nombre)}${ps.length > 1 ? `<small class="mat-s" style="display:block;font-weight:700">${ps.length} proveedores · el más barato ${esc(pn(ps[0].k))}</small>` : ps.length ? `<small class="mat-s" style="display:block;font-weight:700">${esc(pn(ps[0].k))}</small>` : '<small class="mat-s" style="display:block;font-weight:700">Sin precios todavía</small>'}</span><span class="acc-x">${min != null ? dinero(min) : 'Sin precio'}</span></summary><div class="acc-b">
-            ${ps.map(p => `<div class="cg-fila"><div class="cg-nom">${esc(pn(p.k))}<span>${p.esp ? esc(p.esp) + ' · ' : ''}${p.p > min + 0.005 ? '+' + dinero(p.p - min) + ' (' + Math.round((p.p - min) / min * 100) + ' % más caro)' : 'el más barato'}${metro(p.p)}</span></div><div style="text-align:right;font-weight:800">${dinero(p.p)}</div></div>`).join('')}
-            ${f.fijo ? `<p class="mat-s" style="margin:6px 2px 0;color:var(--accent);font-weight:800">Para costear con el principal se usa el precio fijo ${dinero(f.fijo)}</p>` : ''}
-            <button class="btn-secondary" type="button" data-mat="${f.id}" style="width:100%;margin-top:8px">Cambiar precios</button></div></details>`; }).join('');
-      });
-    }
-    h += '<div class="tit">Pintura, consumibles y accesorios</div>';
-    ['Pintura y masilla','Consumibles','Accesorios'].forEach(g => {
-      const L = d.insumos.filter(i => i.grupo === g);
-      h += `<details class="acc"><summary><span>${g}</span><span class="acc-x">${L.length}</span></summary><div class="acc-b"><div class="mat-lista ya">` + L.map(i => `<button class="mat" type="button" data-insumo="${i.id}"><span class="mat-ico fab">${esc(i.nombre[0])}</span><span style="min-width:0"><span class="mat-t">${esc(i.nombre)}</span><span class="mat-s">${g === 'Accesorios' ? 'Por unidad' : i.r ? 'Rinde ' + String(i.r).replace('.', ',') + (Number(i.r) === 1 ? ' puerta' : ' puertas') + ' (general)' : 'Rendimiento: lo pone cada modelo'}</span></span><span class="mat-n"><b style="font-size:18px">${dinero(i.p)}</b><span>sin IVA</span></span></button>`).join('') + '</div></div></details>';
-    });
-    h += '<button class="btn-nuevo" type="button" data-insumo="nuevo">+ Agregar pintura, consumible o accesorio</button>';
-    h += '<button class="btn-secondary" type="button" data-pdf-precios style="width:100%;margin-top:10px">Lista de precios en PDF</button>';
-    if(ancho.matches) h += '<button class="btn-nuevo" type="button" data-mat="nuevo">+ Agregar material</button>';
-    return h;
+  // ================= Precios =================
+  const FILP = { hierro:'Hierro', hojas:'Lámina y vidrio', aluminio:'Aluminio', 'Pintura y masilla':'Pintura', Consumibles:'Consumibles', Accesorios:'Herrajes' };
+  function pintarFiltrosPrecios(){
+    $('filtros').querySelector('.mostrar-t').textContent = 'Ver';
+    $('filtrosL').innerHTML = Object.entries(FILP).map(([k, t]) => `<button type="button" class="fx ${k === filPrecios ? 'on' : ''}" data-filp="${esc(k)}">${t}</button>`).join('');
   }
-  async function pdfGanancia(){
-    const d = D(), R = d.reglas, fijos = totalFijos();
-    const filas = d.catalogo.filter(m => m.tipo !== 'Puerta de Madera').map(m => ({ m, x:X.costear(m.id, { prov }) })).filter(o => o.x && !o.x.falta.length).sort((a, b) => a.x.pct - b.x.pct);
-    const b = [{ t:'titulo', texto:'Gastos fijos del mes', der:'Monto' }];
-    d.gastosFijos.forEach(g => b.push({ t:'fila', a:g.cat, b:dinero(g.monto) }));
-    b.push({ t:'total', a:'Total ÷ ' + R.puertasMes + ' puertas = ' + dinero(fijos / R.puertasMes) + ' por puerta', b:dinero(fijos) });
-    b.push({ t:'titulo', texto:'Ganancia por producto', der:'gana por puerta' });
-    filas.forEach(({ m, x }) => b.push({ t:'fila', a:m.nombre + ' · cuesta ' + dinero(x.costo) + ' · sugerido ' + dinero(x.final) + ' · catálogo ' + dinero(x.hoy), b:(x.ganancia < 0 ? '- ' : '') + dinero(Math.abs(x.ganancia)) + ' (' + Math.round(x.pct) + ' %)', rojo:x.pct < 15 }));
-    if(!filas.length) b.push({ t:'nota', texto:'Todavía no hay modelos costeados.' });
-    b.push({ t:'nota', texto:'Precio del catálogo menos costo y gastos fijos. Ganancia ' + R.ganancia + ' % sobre el costo para el precio sugerido.' });
-    try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear({ titulo:'Ganancia por producto', derecha:new Date().toLocaleDateString('es-VE'), subtitulo:'Con los precios de ' + (prov === 'barato' ? 'el proveedor más barato' : ((d.proveedores.find(p => String(p.id) === String(prov)) || {}).nombre || 'el principal')) + '.', bloques:b });
-      const x = await window.PDFR.compartir(blob, 'Ganancia-por-producto.pdf'); if(x === 'descargado') toast('PDF listo'); }
-    catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }
+  const pn = (k) => provNom(k);
+  function secPrecios(){
+    const d = D(), R = d.reglas;
+    $('subtitulo').textContent = 'Precios sin IVA por proveedor';
+    let h = '';
+    const esFab = ['hierro','hojas','aluminio'].includes(filPrecios);
+    if(esFab){
+      const tipos = filPrecios === 'hojas' ? ['laminas','vidrio'] : [filPrecios];
+      const activos = d.fab.filter(f => f.activo && tipos.includes(f.tipo));
+      h += `<div class="opts" style="--cols:2;margin-bottom:6px"><button class="opt ${vistaPrecios === 'material' ? 'selected' : ''}" type="button" data-vprecios="material">Por material</button><button class="opt ${vistaPrecios === 'proveedor' ? 'selected' : ''}" type="button" data-vprecios="proveedor">Por proveedor</button></div>`;
+      if(vistaPrecios === 'proveedor'){
+        d.proveedores.forEach(p => {
+          const L = activos.filter(f => f.precios && f.precios[p.id]); if(!L.length) return;
+          h += `<div class="grp-t"><span>${esc(p.nombre)}</span><span>${plural(L.length, '1 material', 'materiales')}</span></div>` + L.map(f => { const v = f.precios[p.id], otros = Object.entries(f.precios).filter(([k]) => String(k) !== String(p.id)).map(([, o]) => Number(o.p)), min = otros.length ? Math.min(...otros) : null;
+            return `<button class="ln" type="button" data-mat="${f.id}"><span class="ln-t">${esc(f.nombre)}</span><span class="ln-v">${dinero(v.p)}</span><span class="ln-s">${v.esp ? esc(v.esp) + ' · ' : ''}${min == null ? 'solo lo vende este' : Number(v.p) <= min ? 'el más barato' : 'otro lo vende a ' + dinero(min)}</span></button>`; }).join('');
+        });
+        if(!activos.some(f => Object.keys(f.precios || {}).length)) h += '<p class="mat-s" style="margin:8px 2px">Todavía no hay precios de este tipo.</p>';
+      } else {
+        h += activos.map(f => { const ps = Object.entries(f.precios || {}).map(([k, v]) => ({ k, p:Number(v.p) })).sort((a, b) => a.p - b.p);
+          const sub = (f.pres === 'barra' ? '' : '') + (ps.length > 1 ? pn(ps[0].k) + ' el más barato · ' + ps.length + ' proveedores' : ps.length ? pn(ps[0].k) : 'Sin precio todavía') + (f.pres === 'barra' ? ' · barra ' + num(f.largo) + ' cm' : f.hoja ? ' · hoja ' + num(f.hoja[0]) + ' × ' + num(f.hoja[1]) : '');
+          const otro = ps.length > 1 ? ps.slice(1).map(o => pn(o.k) + ' ' + dinero(o.p) + ' (' + Math.round((o.p - ps[0].p) / ps[0].p * 100) + ' % más caro)').join(' · ') : '';
+          return `<button class="ln" type="button" data-mat="${f.id}"><span class="ln-t">${esc(f.nombre)}</span><span class="ln-v">${ps.length ? dinero(ps[0].p) : '<span style="color:var(--danger)">Falta</span>'}</span><span class="ln-s">${esc(sub)}${otro ? '<br>' + esc(otro) : ''}</span></button>`; }).join('') || '<p class="mat-s" style="margin:8px 2px">No hay materiales de este tipo.</p>';
+      }
+      h += '<button class="btn-nuevo" type="button" data-mat="nuevo">+ Material nuevo</button>';
+    } else {
+      const L = d.insumos.filter(i => i.grupo === filPrecios);
+      h += L.map(i => `<button class="ln" type="button" data-insumo="${i.id}"><span class="ln-t">${esc(i.nombre)}</span><span class="ln-v">${dinero(i.p)}</span><span class="ln-s">${i.grupo === 'Accesorios' ? 'Por unidad, sin IVA' : i.r ? 'Rinde ' + num(i.r) + (Number(i.r) === 1 ? ' puerta' : ' puertas') + ' (general)' : 'Sin rendimiento general: lo pone cada modelo'}</span></button>`).join('') || '<p class="mat-s" style="margin:8px 2px">No hay nada aquí todavía.</p>';
+      h += `<button class="btn-nuevo" type="button" data-insumo="nuevo">+ ${filPrecios === 'Accesorios' ? 'Herraje' : filPrecios === 'Consumibles' ? 'Consumible' : 'Pintura o masilla'} nuevo</button>`;
+    }
+    h += `<button class="regla" type="button" data-reglas style="margin-top:14px;border-top:1px solid var(--line)"><span class="grow"><span class="mat-t">Reglas</span><span class="mat-s">IVA ${num(R.iva)} % · ganancia ${num(R.ganancia)} % · gastos ${dinero(R.gastosMes)} ÷ ${R.puertasMes} puertas · corte ${num(R.corte)} cm · despunte ${num(R.despunte)} cm</span></span>${CHEV}</button>`;
+    h += '<button class="btn-secondary" type="button" data-pdf-precios style="width:100%;margin-top:10px">Lista de precios en PDF</button>';
+    return h;
   }
   async function pdfPrecios(){
-    const d = D(), pn = (k) => (d.proveedores.find(x => String(x.id) === String(k)) || {}).nombre || '';
-    const b = [];
+    const d = D(), b = [];
     d.fab.filter(f => f.activo).forEach(f => { const ps = Object.entries(f.precios || {}).map(([k, v]) => ({ k, p:Number(v.p) })).sort((a, c) => a.p - c.p); if(!ps.length) return;
-      b.push({ t:'sub', texto:f.nombre, der:f.pres === 'barra' ? 'barra de ' + String(f.largo / 100).replace('.', ',') + ' m' : 'hoja ' + f.hoja[0] + ' × ' + f.hoja[1] });
-      ps.forEach((p, i) => b.push({ t:'fila', a:pn(p.k) + (i === 0 && ps.length > 1 ? ' (el más barato)' : ''), b:dinero(p.p) })); });
-    b.push({ t:'titulo', texto:'Pintura, consumibles y accesorios' });
-    d.insumos.forEach(i => b.push({ t:'fila', a:i.nombre + ' · ' + i.grupo, b:dinero(i.p) }));
+      b.push({ t:'sub', texto:f.nombre, der:f.pres === 'barra' ? 'barra de ' + num(f.largo / 100) + ' m' : 'hoja ' + f.hoja[0] + ' × ' + f.hoja[1] });
+      ps.forEach((p, i) => b.push({ t:'fila', a:provNom(p.k) + (i === 0 && ps.length > 1 ? ' (el más barato)' : ''), b:dinero(p.p) })); });
+    b.push({ t:'titulo', texto:'Pintura, consumibles y herrajes' });
+    d.insumos.forEach(i => b.push({ t:'fila', a:i.nombre + ' · ' + (i.grupo === 'Accesorios' ? 'Herrajes' : i.grupo), b:dinero(i.p) }));
     b.push({ t:'nota', texto:'Precios sin IVA. Costos les suma el IVA al calcular cada modelo.' });
     try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear({ titulo:'Lista de precios', derecha:new Date().toLocaleDateString('es-VE'), subtitulo:'Por material y proveedor.', bloques:b });
-      const x = await window.PDFR.compartir(blob, 'Lista-de-precios.pdf'); if(x === 'descargado') toast('PDF listo'); }
+      const r = await window.PDFR.compartir(blob, 'Lista-de-precios.pdf'); if(r === 'descargado') toast('PDF listo'); }
     catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }
   }
 
-  // ================= Ganancia =================
-  const totalFijos = () => D().gastosFijos.reduce((a, g) => a + (Number(g.monto) || 0), 0);
-  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  let VENTAS = null;
-  async function cargarVentasMes(){
-    const hoy = new Date(), ini = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-01';
-    const { data, error } = await db.from('ventas').select('id,total,confirmada_en,interna,estado,items:venta_items(catalogo_id,nombre,cantidad,precio_unitario)').gte('confirmada_en', ini).not('estado', 'in', '(cotizacion,cancelada)');
-    VENTAS = error ? [] : (data || []).filter(v => !v.interna);
-  }
-  function mesVentas(){
-    const out = { puertas:0, vendido:0, costo:0, aporte:0, sinCosto:0, nSin:0 };
-    (VENTAS || []).forEach(v => (v.items || []).forEach(it => {
-      const n = it.cantidad, x = it.catalogo_id ? X.costear(it.catalogo_id) : null, ok = x && !x.falta.length;
-      out.puertas += n; out.vendido += Number(it.precio_unitario) * n;
-      if(ok){ out.costo += x.costo * n; out.aporte += (Number(it.precio_unitario) - x.costo) * n; }
-      else { out.sinCosto += Number(it.precio_unitario) * n; out.nSin += n; }
-    }));
-    return out;
-  }
-  function secGanancia(){
-    const d = D(), R = d.reglas;
-    const fijos = totalFijos(), porPuerta = fijos / R.puertasMes;
-    const hoy = new Date(), M = mesVentas();
-    $('subtitulo').textContent = 'Gastos fijos y ganancia por producto';
-    const cubre = Math.min(1, fijos ? M.aporte / fijos : 0), falta = Math.max(0, fijos - M.aporte);
-    const prom = M.puertas - M.nSin > 0 ? M.aporte / (M.puertas - M.nSin) : null;
-    let h = `<div class="tit" style="margin-top:0">¿Alcanzamos este mes? · ${MESES[hoy.getMonth()]}</div>
-      <div class="meta"><div class="meta-b"><span style="width:${Math.round(cubre * 100)}%"></span></div>
-        <div class="meta-t"><b>${falta > 0.005 ? 'Faltan ' + dinero(falta) : 'Gastos fijos cubiertos'}</b><span>Cubres ${dinero(Math.min(M.aporte, fijos))} de ${dinero(fijos)}</span></div></div>
-      <div class="tot">
-        <div class="fila"><span>Vendido con costeo (${plural(M.puertas - M.nSin, '1 puerta', 'puertas')})</span><b>+ ${dinero(M.vendido - M.sinCosto)}</b></div>
-        <div class="fila"><span>Costo de materiales y mano de obra</span><b>− ${dinero(M.costo)}</b></div>
-        <div class="fila"><span>Gastos fijos del mes</span><b>− ${dinero(fijos)}</b></div>
-        <div class="fila fin"><span>${M.aporte - fijos >= 0 ? 'Te queda' : 'Te falta'}</span><span style="color:${M.aporte - fijos >= 0 ? 'var(--accent)' : 'var(--danger)'}">${dinero(Math.abs(M.aporte - fijos))}</span></div></div>
-      ${falta > 0.005 && prom > 0 ? `<p class="mat-s" style="margin:8px 2px 0">Al ritmo de este mes cada puerta deja ${dinero(prom)}. Faltan unas <b>${Math.ceil(falta / prom)} puertas</b> para cubrir los gastos fijos. Previstas al mes: ${R.puertasMes}; vas ${M.puertas}.</p>` : ''}
-      ${M.nSin ? `<div class="caja-amar">Además vendiste ${plural(M.nSin, '1 puerta', 'puertas')} sin costeo por ${dinero(M.sinCosto)}. No se sabe cuánto dejan: carga su costeo para que este número sea exacto.</div>` : ''}`;
-    h += `<div class="tit">Gastos fijos del mes</div><div class="mat-lista">${d.gastosFijos.map((g, i) => `<button class="regla" type="button" data-gfijo="${i}"><span class="grow"><span class="mat-t">${esc(g.cat)}</span></span><b>${dinero(g.monto)}</b>${CHEV}</button>`).join('')}
-      <div class="regla" style="cursor:default"><span class="grow"><span class="mat-t">Total</span></span><b>${dinero(fijos)}</b></div></div>
-      <button class="btn-nuevo" type="button" data-gfijo="nuevo">+ Agregar gasto fijo</button>
-      <div class="mat-lista" style="margin-top:8px"><button class="regla" type="button" data-regla="puertasMes"><span class="grow"><span class="mat-t">Puertas al mes</span><span class="mat-s">Entre cuántas puertas se reparten</span></span><b>${R.puertasMes}</b>${CHEV}</button></div>
-      <div class="formula" style="margin-top:8px">${dinero(fijos)} ÷ ${R.puertasMes} puertas = <b>${dinero(porPuerta)} por puerta</b>. Esto se suma al precio sugerido de cada modelo.<br><span class="mat-s"><a href="finanzas.html?tab=gastos" style="color:var(--accent);font-weight:800">En Finanzas, Gastos</a> ves lo que se pagó de verdad cada mes.</span></div>`;
-    const gr = d.gastoReal;
-    if(gr && Math.abs(gr.porPuerta - porPuerta) > porPuerta * 0.1) h += `<div class="caja-amar">Tu gasto real por puerta es ${dinero(gr.porPuerta)} (últimos 3 meses: ${dinero(gr.gastos)} ÷ ${gr.puertas} puertas); usas ${dinero(porPuerta)}. Si quieres, cambia los gastos fijos o las puertas al mes. No cambia solo.</div>`;
-    else if(!gr) h += '<p class="mat-s" style="margin:6px 2px 0">Cuando haya 3 meses de gastos cargados en Finanzas, aquí sale el gasto real por puerta para comparar.</p>';
-    const filas = d.catalogo.filter(m => m.tipo !== 'Puerta de Madera').map(m => ({ m, x:X.costear(m.id, { prov }) }));
-    const cost = filas.filter(o => o.x && !o.x.falta.length).sort((a, b) => a.x.pct - b.x.pct), sin = filas.filter(o => !(o.x && !o.x.falta.length));
-    h += `<div class="tit">Ganancia por producto</div><p class="mat-s" style="margin:0 2px 6px">Precio del catálogo menos costo y gastos fijos. Los de abajo del 30 % conviene subirlos.</p>`;
-    h += cost.map(({ m, x }) => { const s = X.semaforo(x); return `<button class="rent" type="button" data-modelo="${esc(m.id)}" data-ir-modelos><span class="grow"><span class="mat-t">${esc(m.nombre)}</span>
-        <span class="mat-s">Cuesta ${dinero(x.costo)} · sugerido ${dinero(x.final)} · catálogo ${dinero(x.hoy)}</span></span>
-        <span class="mat-n"><b style="color:${COLOR[s[0]]}">${x.ganancia < 0 ? '− ' : ''}${dinero(Math.abs(x.ganancia))}</b><span>${pill(s)}</span></span></button>`; }).join('') || '<p class="mat-s">Todavía no hay modelos costeados.</p>';
-    if(sin.length) h += `<details class="sin-c"><summary>${plural(sin.length, '1 modelo sin costear', 'modelos sin costear')} · no se sabe si ganan</summary>${sin.map(({ m }) => `<button class="rent" type="button" data-modelo="${esc(m.id)}" data-ir-modelos><span class="grow"><span class="mat-t">${esc(m.nombre)}</span><span class="mat-s">${esc(m.tipo)} · catálogo ${dinero(m.precio_base)}</span></span><span class="pill gris">Costear</span></button>`).join('')}</details>`;
-    h += `<p class="mat-s" style="margin:8px 2px 0">La madera se costea aparte, más adelante.</p>`;
-    const fila = (k, t, s2, v) => `<button class="regla" type="button" data-regla="${k}"><span class="grow"><span class="mat-t">${t}</span><span class="mat-s">${s2}</span></span><b>${v}</b>${CHEV}</button>`;
-    h += `<div class="tit">Reglas</div><div class="mat-lista">
-      ${fila('iva', 'IVA', 'Se suma a los materiales', R.iva + ' %')}
-      ${fila('ganancia', 'Ganancia', 'Se suma al costo de cada modelo y a los extras', R.ganancia + ' %')}
-      ${fila('corte', 'Grosor del corte', 'Lo que se pierde en cada corte del disco (cm)', String(R.corte).replace('.', ',') + ' cm')}</div>
-      <div class="leyenda">${[['verde','Gana 30 % o más'],['amar','Gana de 15 a 30 %'],['rojo','Gana menos de 15 %'],['negro','Pierde dinero'],['gris','Sin costear o faltan datos']].map(([c, t]) => `<span><span class="sem-dot" style="background:${COLOR[c]}"></span>${t}</span>`).join('')}</div>
-      <a class="btn-nuevo" href="categorias-pago.html" style="text-decoration:none">Categorías de pago (mano de obra)</a>
-      <button class="btn-secondary" type="button" data-pdf-ganancia style="width:100%;margin-top:10px">Ganancia por producto en PDF</button>`;
-    return h;
-  }
-
-  // ================= Formularios =================
+  // ================= Formularios (hoja encima de la ficha) =================
   const opts = (lista, valor, attr, cols) => `<div class="opts" style="--cols:${cols || 2}">${lista.map(([v, t]) => `<button class="opt ${valor != null && String(valor) === String(v) ? 'selected' : ''}" type="button" ${attr}="${esc(v)}">${t}</button>`).join('')}</div>`;
-  const campo = (id, label, val, extra) => `<div class="field" id="c_${id}"><label class="field-label" for="${id}">${label}</label><input class="input" id="${id}" inputmode="decimal" value="${esc(val == null ? '' : val)}"><div class="field-error">Revisa este dato</div>${extra ? `<div class="field-hint">${extra}</div>` : ''}</div>`;
+  const chips = (lista, valor, attr) => `<div class="fi-opc">${lista.map(([v, t]) => `<button class="fx ${valor != null && String(valor) === String(v) ? 'on' : ''}" type="button" ${attr}="${esc(v)}">${t}</button>`).join('')}</div>`;
+  const campo = (id, label, val, extra, modoT) => `<div class="field" id="c_${id}"><label class="field-label" for="${id}">${label}</label><input class="input" id="${id}" ${modoT ? '' : 'inputmode="decimal"'} value="${esc(val == null ? '' : val)}"><div class="field-error">Revisa este dato</div>${extra ? `<div class="field-hint">${extra}</div>` : ''}</div>`;
   function abrirForm(f){ F = f; pintarForm(); abrirHoja('sheetForm'); }
+  // Buscador de material dentro de la hoja (sin listas desplegables)
+  function selector(pres){
+    const t = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const L = D().fab.filter(f => f.activo && f.pres === pres && (!F.bm || t(f.nombre).includes(t(F.bm))));
+    return `<label class="search-box" style="margin:0 0 8px"><input id="fBuscaMat" type="search" placeholder="Buscar material" aria-label="Buscar material" value="${esc(F.bm || '')}" autocomplete="off"></label>
+      <div id="listaMat">${L.map(f => `<button class="ln" type="button" data-f-mat="${f.id}"><span class="ln-t">${esc(f.nombre)}</span><span class="ln-v">${String(f.id) === String(F.mat) ? '✓' : ''}</span><span class="ln-s">${f.pres === 'barra' ? 'barra de ' + num(f.largo) + ' cm' : 'hoja ' + num(f.hoja[0]) + ' × ' + num(f.hoja[1]) + ' cm'}</span></button>`).join('') || '<p class="mat-s">No hay materiales con ese nombre.</p>'}</div>
+      <button class="btn-nuevo" type="button" data-ir-precios>¿No está? Agrégalo en Costos › Precios</button>`;
+  }
   function pintarForm(){
-    const d = D(); let h = '', boton = 'Guardar', borrar = false;
-    if(F.t === 'pieza'){
-      $('formTitulo').textContent = F.i === 'nueva' ? 'Pieza nueva' : 'Pieza';
-      h = `<div class="field"><span class="field-label">Material</span>${opts(d.fab.filter(f => f.pres === 'barra' && f.activo).map(f => [f.id, esc(f.nombre)]), F.mat, 'data-f-mat')}</div>
-        <div class="input-row">${campo('fCant', 'Cantidad', F.cant)}${campo('fCm', 'Medida (cm)', F.cm)}</div>
-        <div class="field"><label class="field-label" for="fNota">Para qué es</label><input class="input" id="fNota" value="${esc(F.nota || '')}"><div class="field-hint">Ejemplo: bastidor largo, divisor, marco.</div></div>
-        <a class="btn-secondary" href="deposito.html?tab=fab" style="display:flex;align-items:center;justify-content:center;width:100%;text-decoration:none">¿No está el material? Agrégalo en Depósito</a>`;
+    const d = D(); let h = '', boton = 'Guardar', borrar = false, txtBorrar = 'Quitar';
+    if(F.t === 'pieza' || F.t === 'hoja'){
+      const f = fabDe(F.mat), pres = F.t === 'pieza' ? 'barra' : 'hoja';
+      $('formTitulo').textContent = F.t === 'pieza' ? (F.i === 'nueva' ? 'Pieza nueva' : 'Pieza') : (F.i === 'nueva' ? 'Lámina o vidrio' : (f ? f.nombre : 'Hoja'));
+      if(F.pick){ $('formBody').innerHTML = selector(pres); $('formFoot').innerHTML = '<button class="btn-secondary" type="button" data-f-pick="no" style="width:100%">Volver</button>'; return; }
+      h = `<div class="field"><span class="field-label">Material</span><button class="fi-sel" type="button" data-f-pick="si"><span>${f ? esc(f.nombre) : 'Elegir material'}</span><b>Cambiar</b></button></div>`;
+      if(F.t === 'pieza'){
+        h += `<div class="input-row">${campo('fCant', 'Cantidad', F.cant)}${campo('fCm', 'Medida (cm)', F.cm)}</div>
+          <div class="field" id="c_fQue"><span class="field-label">Qué es</span>${chips(QUE.map(v => [v, v === 'Otra' ? 'Otra…' : v]), F.que, 'data-f-que')}<div class="field-error">Elige qué es</div></div>
+          ${F.que === 'Otra' ? `<div class="field" id="c_fNota"><label class="field-label" for="fNota">¿Qué pieza es?</label><input class="input" id="fNota" value="${esc(F.nota || '')}"><div class="field-error">Escribe qué pieza es</div></div>` : ''}
+          <div class="field" id="c_fOri"><span class="field-label">Va</span>${opts([['V','Vertical'],['H','Horizontal']], F.ori, 'data-f-ori')}<div class="field-error">Elige si va vertical u horizontal</div></div>
+          <p class="mat-s" style="margin:-8px 2px 4px">"Qué es" y "Va" sirven después para dibujar la puerta en 3D.</p>`;
+      } else {
+        const m2 = (numLibre(F.cant) || 0) * (numLibre(F.a) || 0) * (numLibre(F.h) || 0) / 10000, hm2 = f && f.hoja ? f.hoja[0] * f.hoja[1] / 10000 : 1;
+        h += `<div class="input-row">${campo('fCant', 'Cantidad', F.cant)}${campo('fA', 'Ancho (cm)', F.a)}</div>${campo('fH', 'Alto (cm)', F.h)}
+          <div class="field"><label class="field-label" for="fNota">Para qué es</label><input class="input" id="fNota" value="${esc(F.nota || '')}"><div class="field-hint">Ejemplo: panel, franja de vidrio.</div></div>
+          ${f && f.hoja ? `<div class="caja-nota" id="cajaHoja"><span>Uso de la hoja</span>${num(m2, 3)} m² de una hoja de ${f.hoja[0]} × ${f.hoja[1]} cm = <b>${Math.round(m2 / hm2 * 100)} %</b></div>` : ''}`;
+      }
       borrar = F.i !== 'nueva';
     }
     if(F.t === 'acc'){
-      $('formTitulo').textContent = F.nuevo ? 'Accesorio nuevo' : 'Accesorio';
-      h = `<div class="field"><span class="field-label">Accesorio</span>${opts(d.insumos.filter(i => i.grupo === 'Accesorios').map(i => [i.id, esc(i.nombre) + '<br><small style="font-weight:600">' + dinero(i.p) + ' sin IVA</small>']), F.k, 'data-f-acc', 1)}</div>${campo('fCant', 'Cantidad por puerta', F.cant)}`;
+      $('formTitulo').textContent = F.nuevo ? 'Herraje nuevo' : 'Herraje';
+      h = `<div class="field"><span class="field-label">Herraje</span>${opts(d.insumos.filter(i => i.grupo === 'Accesorios').map(i => [i.id, esc(i.nombre) + '<br><small style="font-weight:600">' + dinero(i.p) + ' sin IVA</small>']), F.k, 'data-f-acc', 1)}</div>${campo('fCant', 'Cantidad por puerta', F.cant)}`;
       borrar = !F.nuevo;
     }
-    if(F.t === 'hoja'){
-      $('formTitulo').textContent = F.i === 'nueva' ? 'Hoja nueva' : 'Hoja';
-      const f = d.fab.find(y => String(y.id) === String(F.mat));
-      const m2 = (numLibre(F.cant) || 0) * (numLibre(F.a) || 0) * (numLibre(F.h) || 0) / 10000, hm2 = f ? f.hoja[0] * f.hoja[1] / 10000 : 1;
-      h = `<div class="field"><span class="field-label">Material</span>${opts(d.fab.filter(x => x.pres === 'hoja' && x.activo).map(x => [x.id, esc(x.nombre)]), F.mat, 'data-f-mat')}</div>
-        <div class="input-row">${campo('fCant', 'Cantidad', F.cant)}${campo('fA', 'Ancho (cm)', F.a)}</div>${campo('fH', 'Alto (cm)', F.h)}
-        <div class="field"><label class="field-label" for="fNota">Para qué es</label><input class="input" id="fNota" value="${esc(F.nota || '')}"><div class="field-hint">Ejemplo: panel, franja de vidrio.</div></div>
-        ${f ? `<div class="caja-nota" id="cajaHoja"><span>Uso de la hoja</span>${m2.toLocaleString('es-VE', { maximumFractionDigits:3 })} m² de una hoja de ${f.hoja[0]} × ${f.hoja[1]} cm = <b>${Math.round(m2 / hm2 * 100)} %</b></div>` : ''}`;
-      borrar = F.i !== 'nueva';
-    }
     if(F.t === 'rend'){
-      $('formTitulo').textContent = F.nombre;
-      h = `${campo('fRend', '¿Cuántas puertas rinde 1 unidad?', F.r, 'Si se usan 2 por puerta, escribe 0,5.')}`;
+      const it = d.insumos.find(i => String(i.id) === String(F.id));
+      $('formTitulo').textContent = it.nombre;
+      h = `${campo('fRend', '¿Cuántas puertas rinde 1 en este modelo?', F.r, 'Si se usan 2 por puerta, escribe 0,5.')}
+        <div class="caja-nota"><span>General</span>${it.r ? 'Rinde ' + num(it.r) + (Number(it.r) === 1 ? ' puerta' : ' puertas') + '. Se usa en todos los modelos que no digan otra cosa.' : 'Sin rendimiento general: cada modelo pone el suyo.'} El general se cambia en Costos › Precios.</div>`;
+      borrar = F.propio; txtBorrar = 'Usar el general';
     }
     if(F.t === 'extra'){
       $('formTitulo').textContent = F.i === 'nuevo' ? 'Extra nuevo' : 'Extra';
-      const v = numLibre(F.v) || 0;
-      const KIND = ['Protección', 'Marco decorativo', 'Vitral', 'Yeso'];
-      const k = KIND.includes(F.n) ? F.n : (F.n ? 'Otro' : null);
+      const v = numLibre(F.v) || 0, KIND = ['Protección', 'Marco decorativo', 'Vitral', 'Yeso'], k = KIND.includes(F.n) ? F.n : (F.n ? 'Otro' : null);
       h = `<div class="field"><span class="field-label">¿Qué extra es?</span>${opts(KIND.concat('Otro').map(x => [x, x]), F.kind || k, 'data-f-kind')}<div class="field-hint">Protección y marco decorativo salen solos en la venta con este precio.</div></div>
         ${(F.kind || k) === 'Otro' ? `<div class="field" id="c_fN"><label class="field-label" for="fN">Nombre</label><input class="input" id="fN" value="${esc(KIND.includes(F.n) ? '' : F.n || '')}"><div class="field-error">Escribe el nombre</div></div>` : ''}
         ${campo('fV', 'Cuánto te cuesta (con IVA)', F.v)}
-        <div class="caja-nota" id="cajaExtra"><span>Se cobra al cliente</span>${dinero(v)} × ${String(1 + d.reglas.ganancia / 100).replace('.', ',')} = <b>${dinero(v * (1 + d.reglas.ganancia / 100))}</b>. Sin gastos fijos. En la venta aparece como sugerencia del modelo.</div>`;
+        <div class="caja-nota" id="cajaExtra"><span>Se cobra al cliente</span>${dinero(v)} × ${num(1 + d.reglas.ganancia / 100)} = <b>${dinero(v * (1 + d.reglas.ganancia / 100))}</b>. Sin gastos fijos.</div>`;
       borrar = F.i !== 'nuevo';
     }
-    if(F.t === 'regla'){
-      const N = { iva:'IVA (%)', ganancia:'Ganancia (%)', puertasMes:'Puertas al mes', corte:'Grosor del corte (cm)' };
-      $('formTitulo').textContent = 'Cambiar regla';
-      h = campo('fRegla', N[F.k], d.reglas[F.k], 'Cambia el precio sugerido de todos los modelos.');
+    if(F.t === 'precio'){
+      const m = modelo(sel), x = X.costear(m.id, { prov, modo }), xt = X.costear(m.id, { prov, modo:'tubo' }), R = d.reglas, s = X.semaforo(x), dis = !!m.en_diseno;
+      const provs = d.proveedores.filter(p => (p.tipos || []).includes('hierro'));
+      $('formTitulo').textContent = 'Precio del ' + m.nombre;
+      const compara = provs.length > 1 ? provs.map(p => ({ p, y:X.costear(m.id, { prov:p.id, modo }) })).concat([{ p:{ id:'barato', nombre:'El más barato de cada material' }, y:X.costear(m.id, { prov:'barato', modo }) }]) : [];
+      h = `<div class="field-label">Precios de</div>${chips(provs.map(p => [p.id, esc(provNom(p.id))]).concat([['barato', 'Más barato']]), prov, 'data-prov')}
+        <div class="opts" style="--cols:2;margin-top:10px"><button class="opt ${modo === 'metro' ? 'selected' : ''}" type="button" data-modo="metro">Por metro usado</button><button class="opt ${modo === 'tubo' ? 'selected' : ''}" type="button" data-modo="tubo">Barra completa</button></div>
+        ${x.avisos.map(a => `<div class="caja-amar">${esc(a)}</div>`).join('')}
+        ${x.falta.length ? `<div class="caja-rara">Faltan datos: ${esc(x.falta.join(', '))}.</div>` : ''}
+        <div class="tot" style="margin-top:10px">
+          <div class="fila"><span>Costo de la puerta</span><b>${dinero(x.costo)}</b></div>
+          <div class="fila"><span>Con ganancia (+${num(R.ganancia)} %)</span><b>${dinero(x.venta)}</b></div>
+          <div class="fila"><span>Gastos fijos (${dinero(R.gastosMes)} ÷ ${R.puertasMes})</span><b>${dinero(x.fijos)}</b></div>
+          <div class="fila fin"><span>Precio sugerido${modo === 'metro' ? `<small class="mat-s" style="display:block;font-weight:600">con barra completa: ${dinero(xt.final)}</small>` : ''}</span><span>${dinero(x.final)}</span></div></div>
+        ${!dis ? `<div class="fi-hoy"><span><b>Hoy en catálogo ${dinero(x.hoy)}</b><small>ganas ${x.ganancia < 0 ? '− ' : ''}${dinero(Math.abs(x.ganancia))} por puerta (${Math.round(x.pct)} %)</small></span>${pill(s)}</div>` : ''}
+        ${compara.length ? `<div class="tit">Con cada proveedor</div>${compara.map(({ p, y }) => `<button class="rep-f" type="button" data-prov="${p.id}"><span>${esc(p.id === 'barato' ? p.nombre : provNom(p.id))}<small class="mat-s" style="display:block;font-weight:600">cuesta ${dinero(y.costo)}${y.avisos.length ? ' · usa precios de otro en ' + y.avisos.length : ''}</small></span><b>${dinero(y.final)}</b></button>`).join('')}` : ''}`;
+      boton = x.falta.length ? 'Faltan datos' : dis ? 'Pasar al catálogo' : `Usar ${dinero(x.final)} en el catálogo`;
+      F.dis = x.falta.length > 0;
+    }
+    if(F.t === 'reglas'){
+      const R = d.reglas;
+      $('formTitulo').textContent = 'Reglas';
+      h = `<div class="input-row">${campo('rIva', 'IVA (%)', R.iva)}${campo('rGan', 'Ganancia (%)', R.ganancia)}</div>
+        <div class="input-row">${campo('rCorte', 'Grosor del corte (cm)', R.corte, 'Lo que se come el disco en cada corte.')}${campo('rDesp', 'Despunte (cm)', R.despunte, 'Lo que se bota de la punta de cada barra.')}</div>
+        ${campo('rPuertas', 'Puertas al mes (respaldo)', R.puertasMes, 'Entre cuántas puertas se reparten los gastos fijos.')}
+        <div class="caja-nota"><span>Gastos fijos ${dinero(R.gastosMes)} al mes</span>Se cambian en <a href="finanzas.html?tab=gastos" style="color:var(--accent);font-weight:800">Finanzas › Gastos</a>. Aquí se reparten: ${dinero(R.gastosMes)} ÷ ${R.puertasMes} = ${dinero(R.gastosMes / R.puertasMes)} por puerta.</div>`;
+      boton = 'Guardar reglas';
     }
     if(F.t === 'mat'){
-      const f = d.fab.find(y => String(y.id) === String(F.id));
-      $('formTitulo').textContent = f ? f.nombre : 'Material';
+      const f = fabDe(F.id);
+      $('formTitulo').textContent = f.nombre;
       const provs = d.proveedores.filter(p => (p.tipos || []).includes(f.tipo));
-      h = `<div class="tit" style="margin-top:4px">Precio sin IVA por proveedor</div>
-        <p class="mat-s" style="margin:0 2px 8px">Solo salen los proveedores que venden ${esc((TIPO[f.tipo] || '').toLowerCase())}. Para que salga otro, márcalo en Finanzas, Proveedores, Editar.</p>
-        ${provs.length ? provs.map(p => `<div class="input-row">${campo('fp_' + p.id, esc(p.nombre.replace('Inversiones ', '')), (F.precios[p.id] || {}).p)}<div class="field"><label class="field-label" for="fe_${p.id}">Espesor</label><input class="input" id="fe_${p.id}" value="${esc((F.precios[p.id] || {}).esp || '')}"></div></div>`).join('') : '<div class="caja-amar">Ningún proveedor vende este tipo. Márcalo en Finanzas, Proveedores, Editar.</div>'}
+      const usan = Object.values(d.costeo).filter(c => c.piezas.some(p => String(p[0]) === String(f.id)) || c.hojas.some(p => String(p[0]) === String(f.id))).length;
+      h = `<p class="mat-s" style="margin:-4px 2px 10px">${f.pres === 'barra' ? 'Barra de ' + num(f.largo) + ' cm' : 'Hoja de ' + num(f.hoja[0]) + ' × ' + num(f.hoja[1]) + ' cm'} · ${esc((TIPO[f.tipo] || '').toLowerCase())}</p>
+        <div class="field-label">Precio sin IVA</div>
+        ${provs.length ? provs.map(p => `<div class="input-row">${campo('fp_' + p.id, esc(provNom(p.id)), (F.precios[p.id] || {}).p)}<div class="field"><label class="field-label" for="fe_${p.id}">Espesor</label><input class="input" id="fe_${p.id}" value="${esc((F.precios[p.id] || {}).esp || '')}"></div></div>`).join('') : '<div class="caja-amar">Ningún proveedor vende este tipo. Márcalo en Finanzas, Proveedores, Editar.</div>'}
         ${f.tipo === 'hierro' ? `<div class="field"><span class="field-label">Para costear usar</span>${opts([['no', 'Última compra'], ['si', 'Precio fijo']], F.fijo != null && F.fijo !== '' ? 'si' : 'no', 'data-f-fijo')}</div>${F.fijo != null && F.fijo !== '' ? campo('fFijo', 'Precio fijo ($)', F.fijo) : ''}` : ''}
-        <a class="row-link" href="deposito.html?tab=fab" style="margin-top:6px"><span>Medidas y existencias (en Depósito)</span>${CHEV}</a>`;
+        <div class="tot"><div class="fila"><span>Si cambias el precio<small class="mat-s" style="display:block;font-weight:600">se recalculan los modelos que lo usan</small></span><b>${plural(usan, '1 modelo', 'modelos')}</b></div></div>
+        <a class="row-link" href="deposito.html?tab=fab" style="margin-top:6px"><span>En el Depósito: ${num(f.stock || 0)} ${f.pres === 'barra' ? (Number(f.stock) === 1 ? 'barra' : 'barras') : (Number(f.stock) === 1 ? 'hoja' : 'hojas')} · ${plural((f.retazos || []).length + (f.sobrantes || []).length, '1 retazo', 'retazos')}</span>${CHEV}</a>`;
+      boton = 'Guardar precios';
+    }
+    if(F.t === 'matnuevo'){
+      $('formTitulo').textContent = 'Material nuevo';
+      const hoja = F.tipo === 'laminas' || F.tipo === 'vidrio';
+      h = `<div class="field" id="c_mNom"><label class="field-label" for="mNom">Nombre</label><input class="input" id="mNom" value="${esc(F.nombre || '')}"><div class="field-error">Escribe el nombre</div><div class="field-hint">Ejemplo: Tubo 1" x 2" 0,90.</div></div>
+        <div class="field" id="c_mTipo"><span class="field-label">Tipo</span>${opts([['hierro','Hierro'],['aluminio','Aluminio'],['laminas','Lámina'],['vidrio','Vidrio']], F.tipo, 'data-f-tipo')}<div class="field-error">Elige el tipo</div></div>
+        ${F.tipo ? (hoja ? `<div class="input-row">${campo('mAn', 'Ancho de la hoja (cm)', F.an)}${campo('mAl', 'Alto de la hoja (cm)', F.al)}</div>` : campo('mLargo', 'Largo de la barra (cm)', F.largo == null ? 600 : F.largo)) : ''}
+        ${campo('mEsp', 'Espesor (si aplica)', F.esp, 'Ejemplo: 0,90 mm.', true)}
+        <p class="mat-s" style="margin:0 2px">Después le pones el precio de cada proveedor.</p>`;
+      boton = 'Agregar material';
     }
     if(F.t === 'insumo'){
-      const i = F.id === 'nuevo' ? null : d.insumos.find(y => String(y.id) === String(F.id));
-      $('formTitulo').textContent = i ? i.nombre : 'Insumo nuevo';
-      h = (i ? '' : `<div class="field" id="c_fINom"><label class="field-label" for="fINom">Nombre</label><input class="input" id="fINom" value="${esc(F.nombre || '')}"><div class="field-error">Escribe el nombre</div></div>
-          <div class="field"><span class="field-label">Grupo</span>${opts([['Pintura y masilla','Pintura y masilla'],['Consumibles','Consumibles'],['Accesorios','Accesorios']], F.grupo, 'data-f-grupo', 1)}</div>`)
-        + campo('fP', 'Precio sin IVA ($)', i ? i.p : F.p) + ((i ? i.grupo : F.grupo) !== 'Accesorios' ? campo('fR', 'Rinde (puertas por unidad, general)', i ? i.r : F.r, 'Vacío = lo pone cada modelo (fondo, esmalte y masilla).') : '');
-    }
-    if(F.t === 'gfijo'){
-      $('formTitulo').textContent = F.i === 'nuevo' ? 'Gasto fijo nuevo' : F.cat;
-      h = `<div class="field" id="c_fGNom"><label class="field-label" for="fGNom">Qué gasto es</label><input class="input" id="fGNom" value="${esc(F.cat || '')}"><div class="field-error">Escribe el nombre</div><div class="field-hint">Ejemplo: alquiler, luz, contador.</div></div>
-        ${campo('fGMonto', 'Cuánto es al mes ($)', F.monto, 'Cambia el precio sugerido de todos los modelos.')}`;
-      borrar = F.i !== 'nuevo';
+      const i = F.id === 'nuevo' ? null : d.insumos.find(y => String(y.id) === String(F.id)), g = i ? i.grupo : F.grupo;
+      $('formTitulo').textContent = i ? i.nombre : 'Nuevo';
+      h = (i ? '' : `<div class="field" id="c_fINom"><label class="field-label" for="fINom">Nombre</label><input class="input" id="fINom" value="${esc(F.nombre || '')}"><div class="field-error">Escribe el nombre</div></div>`)
+        + campo('fP', 'Precio sin IVA ($)', i ? i.p : F.p) + (g !== 'Accesorios' ? campo('fR', 'Rinde (puertas por unidad, general)', i ? i.r : F.r, 'Cada modelo lo puede cambiar en su ficha. Vacío: lo pone cada modelo.') : '');
     }
     if(F.t === 'usar'){
-      const m = modelo(sel), x = X.costear(m.id, { prov }), redondo = Math.ceil(x.final / 5) * 5;
-      $('formTitulo').textContent = m.en_diseno ? 'Pasar al catálogo' : 'Usar este precio';
+      const m = modelo(sel), x = X.costear(m.id, { prov });
+      $('formTitulo').textContent = m.en_diseno ? 'Pasar al catálogo' : 'Usar en el catálogo';
       h = `<p class="mat-s" style="margin:0 2px 12px;font-size:14px">${m.en_diseno ? 'El modelo aparece en el Catálogo con este precio y la vendedora ya lo puede vender. Después ponle fotos y su categoría de pago en Catálogo.' : `Hoy está en ${dinero(m.precio_base)}. El sugerido es ${dinero(x.final)}. El costeo queda "Listo".`}</p>
-        ${campo('fPrecio', 'Precio de venta ($)', F.precio || redondo, 'Redondeado hacia arriba de 5 en 5. Puedes cambiarlo.')}`;
+        ${campo('fPrecio', 'Precio de venta ($)', F.precio == null ? x.final : F.precio, 'Puedes redondearlo.')}`;
       boton = m.en_diseno ? 'Pasar al catálogo' : 'Cambiar precio';
+    }
+    if(F.t === 'buscarBase'){
+      $('formTitulo').textContent = 'Copiar de otro modelo';
+      const t = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      const L = bases().filter(b => !F.bm || t(b.nombre).includes(t(F.bm)));
+      $('formBody').innerHTML = `<label class="search-box" style="margin:0 0 8px"><input id="fBuscaBase" type="search" placeholder="Buscar modelo" aria-label="Buscar modelo" value="${esc(F.bm || '')}" autocomplete="off"></label>
+        <div id="listaBase">${L.map(b => `<button class="ln" type="button" data-elegir-base="${esc(b.id)}"><span class="ln-t">${esc(b.nombre)}</span><span class="ln-v"></span><span class="ln-s">${plural(D().costeo[b.id].piezas.length, '1 corte', 'cortes')}</span></button>`).join('') || '<p class="mat-s">No hay modelos con ese nombre.</p>'}</div>`;
+      $('formFoot').innerHTML = ''; return;
     }
     if(F.t === 'corte' && window.CORTE){ const o = window.CORTE.form(F); h = o.h; boton = o.boton; $('formTitulo').textContent = o.titulo; }
     $('formBody').innerHTML = h;
-    $('formFoot').innerHTML = `${borrar ? '<button class="btn-secondary" type="button" id="btnBorrar" style="height:54px;flex:1">Quitar</button>' : ''}<button class="btn-primary" type="button" id="btnForm" style="flex:2">${boton}</button>`;
+    $('formFoot').innerHTML = `${borrar ? `<button class="btn-secondary" type="button" id="btnBorrar" style="height:54px;flex:1">${txtBorrar}</button>` : ''}<button class="btn-primary" type="button" id="btnForm" style="flex:2" ${F.dis ? 'disabled' : ''}>${boton}</button>`;
     $('formFoot').style.display = 'flex'; $('formFoot').style.gap = '10px';
   }
   const val = (id) => { const el = $(id); return el ? el.value : undefined; };
   function leer(){
-    const map = { fCant:'cant', fCm:'cm', fNota:'nota', fA:'a', fH:'h', fRend:'r', fN:'n', fV:'v', fFijo:'fijo', fPrecio:'precio', fINom:'nombre', fP:'p', fR:'r' };
+    const map = { fCant:'cant', fCm:'cm', fNota:'nota', fA:'a', fH:'h', fRend:'r', fN:'n', fV:'v', fFijo:'fijo', fPrecio:'precio', fINom:'nombre', fP:'p', fR:'r', mNom:'nombre', mLargo:'largo', mAn:'an', mAl:'al', mEsp:'esp' };
     Object.entries(map).forEach(([id, k]) => { const v = val(id); if(v !== undefined) F[k] = v; });
     if(F.t === 'mat') D().proveedores.forEach(p => { const v = val('fp_' + p.id); if(v !== undefined){ F.precios[p.id] = { p:v, esp:val('fe_' + p.id) }; } });
   }
@@ -383,12 +408,14 @@
     if(!F) return;
     leer(); const d = D();
     if(F.t === 'corte' && window.CORTE){ const r = await window.CORTE.guardarForm(F); if(r !== false){ cerrarHoja('sheetForm', true); F = null; } return; }
-    let ok = false, c = sel != null && d.costeo[sel] ? copia() : null;
+    if(F.t === 'precio'){ if(F.dis) return; F = { t:'usar' }; pintarForm(); return; }
+    let ok = false; const c = sel != null && d.costeo[sel] ? copia() : null;
     if(F.t === 'pieza'){
       const cant = Math.round(numLibre(F.cant)), cm = numLibre(F.cm);
       if(!F.mat) return toast('Elige el material', 'error');
-      if(!(cant > 0)) return mal('fCant'); if(!(cm > 0) || cm > 1000) return mal('fCm');
-      const p = [Number(F.mat), cant, cm, F.nota || ''];
+      if(!(cant > 0) || cant > 99) return mal('fCant'); if(!(cm > 0) || cm > 1000) return mal('fCm');
+      if(!F.que) return mal('fQue'); if(F.que === 'Otra' && !String(F.nota || '').trim()) return mal('fNota'); if(!F.ori) return mal('fOri');
+      const p = [Number(F.mat), cant, cm, F.que === 'Otra' ? String(F.nota).trim() : (F.nota || ''), F.que, F.ori];
       if(F.i === 'nueva') c.piezas.push(p); else c.piezas[F.i] = p;
       ok = await guardarCopia(c, 'Pieza guardada. El costo se recalculó.');
     }
@@ -398,34 +425,34 @@
       if(!(cant > 0)) return mal('fCant'); if(!(a > 0)) return mal('fA'); if(!(h > 0)) return mal('fH');
       const fila = [Number(F.mat), cant, a, h, F.nota || ''];
       if(F.i === 'nueva') c.hojas.push(fila); else c.hojas[F.i] = fila;
-      ok = await guardarCopia(c, 'Hoja guardada');
+      ok = await guardarCopia(c, 'Guardado. El costo se recalculó.');
     }
     if(F.t === 'acc'){
-      const n = numLibre(F.cant); if(!F.k) return toast('Elige el accesorio', 'error'); if(!(n > 0)) return mal('fCant');
+      const n = numLibre(F.cant); if(!F.k) return toast('Elige el herraje', 'error'); if(!(n > 0)) return mal('fCant');
       c.acc = c.acc || {}; if(!F.nuevo && F.k0 && String(F.k0) !== String(F.k)) delete c.acc[F.k0]; c.acc[F.k] = n;
-      ok = await guardarCopia(c, 'Accesorio guardado');
+      ok = await guardarCopia(c, 'Herraje guardado');
     }
-    if(F.t === 'rend'){ const r = numLibre(F.r); if(!(r > 0)) return mal('fRend'); (c.rend = c.rend || {})[F.id] = r; ok = await guardarCopia(c, 'Rendimiento guardado para este modelo'); }
+    if(F.t === 'rend'){ const r = numLibre(F.r); if(!(r > 0)) return mal('fRend'); (c.rend = c.rend || {})[F.id] = r; ok = await guardarCopia(c, 'Guardado para este modelo'); }
     if(F.t === 'extra'){
       if(F.kind && F.kind !== 'Otro') F.n = F.kind;
       const v = numLibre(F.v); if(!String(F.n || '').trim()) return F.kind ? mal('fN') : toast('Elige qué extra es', 'error'); if(!(v > 0)) return mal('fV');
       c.extras = c.extras || []; if(F.i === 'nuevo') c.extras.push({ n:F.n.trim(), v }); else c.extras[F.i] = { n:F.n.trim(), v };
       ok = await guardarCopia(c, 'Extra guardado');
     }
-    if(F.t === 'regla'){
-      const v = numLibre(val('fRegla')); if(!(v >= 0) || (F.k === 'puertasMes' && !(v >= 1))) return mal('fRegla');
-      const k = { iva:'iva', ganancia:'ganancia', puertasMes:'puertas_mes', corte:'corte_cm' }[F.k];
-      ok = await hacer(() => X.rpc('costeo_reglas_guardar', { p:{ [k]:v } }), 'Regla cambiada. Todos los modelos se recalcularon.');
-    }
-    if(F.t === 'gfijo'){
-      const nom = String(val('fGNom') || '').trim(), monto = numLibre(val('fGMonto'));
-      if(!nom) return mal('fGNom'); if(!(monto >= 0)) return mal('fGMonto');
-      const g = F.i === 'nuevo' ? null : d.gastosFijos[F.i];
-      ok = await hacer(() => X.rpc('gasto_fijo_guardar', { p:{ id:g ? g.id : null, categoria:nom, monto } }), 'Gasto fijo guardado. El precio sugerido se recalculó.');
+    if(F.t === 'reglas'){
+      const R = d.reglas, v = { iva:numLibre(val('rIva')), ganancia:numLibre(val('rGan')), corte_cm:numLibre(val('rCorte')), despunte_cm:numLibre(val('rDesp')), puertas_mes:numLibre(val('rPuertas')) };
+      if(!(v.iva >= 0 && v.iva <= 50)) return mal('rIva'); if(!(v.ganancia >= 0 && v.ganancia <= 300)) return mal('rGan');
+      if(!(v.corte_cm >= 0 && v.corte_cm <= 2)) return mal('rCorte'); if(!(v.despunte_cm >= 0 && v.despunte_cm <= 20)) return mal('rDesp');
+      if(!(v.puertas_mes >= 1) || v.puertas_mes % 1) return mal('rPuertas');
+      const antes = { iva:R.iva, ganancia:R.ganancia, corte_cm:R.corte, despunte_cm:R.despunte, puertas_mes:R.puertasMes }, p = {};
+      Object.keys(v).forEach(k => { if(Number(antes[k]) !== v[k]) p[k] = v[k]; });
+      if(!Object.keys(p).length){ cerrarHoja('sheetForm', true); F = null; return; }
+      ok = await hacer(() => X.rpc('costeo_reglas_guardar', { p }), 'Reglas guardadas. Todos los modelos se recalcularon.');
     }
     if(F.t === 'mat'){
-      const f = d.fab.find(y => String(y.id) === String(F.id)), cambios = [];
+      const f = fabDe(F.id), cambios = [];
       for(const [k, o] of Object.entries(F.precios)){ const p = numLibre(o.p), act = (f.precios || {})[k];
+        if(o.p !== '' && o.p != null && !(p > 0)) return mal('fp_' + k);
         if(p > 0 && (!act || Number(act.p) !== p || String(act.esp || '') !== String(o.esp || ''))) cambios.push({ material_id:f.id, proveedor_id:Number(k), precio:p, espesor:o.esp || null }); }
       const fijo = f.tipo === 'hierro' ? numLibre(F.fijo) : NaN, fijoN = fijo > 0 ? fijo : null;
       ok = await hacer(async () => {
@@ -435,40 +462,43 @@
           const m = data.fab.find(y => y.id === f.id);
           await X.rpc('material_fab_guardar', { p:{ id:m.id, nombre:m.nombre, tipo:m.tipo, presentacion:m.pres, largo_cm:m.largo, hoja_ancho_cm:m.hoja && m.hoja[0], hoja_alto_cm:m.hoja && m.hoja[1], espesor:m.espesor, precio_fijo:fijoN, minimo:m.minimo, activo:m.activo } });
         }
-      }, 'Precios guardados');
+      }, 'Precios guardados. Los modelos se recalcularon.');
+    }
+    if(F.t === 'matnuevo'){
+      const nom = String(F.nombre || '').trim(); if(!nom) return mal('mNom'); if(!F.tipo) return mal('mTipo');
+      const hoja = F.tipo === 'laminas' || F.tipo === 'vidrio', largo = numLibre(F.largo == null ? 600 : F.largo), an = numLibre(F.an), al = numLibre(F.al);
+      if(hoja){ if(!(an > 0)) return mal('mAn'); if(!(al > 0)) return mal('mAl'); } else if(!(largo > 0) || largo > 2000) return mal('mLargo');
+      let nid = null;
+      ok = await hacer(async () => { const r = await X.rpc('material_fab_guardar', { p:{ nombre:nom, tipo:F.tipo, presentacion:hoja ? 'hoja' : 'barra', largo_cm:hoja ? null : largo, hoja_ancho_cm:hoja ? an : null, hoja_alto_cm:hoja ? al : null, espesor:String(F.esp || '').trim() || null, precio_fijo:null, minimo:0, activo:true } }); nid = r && r.id; }, 'Material agregado. Ponle su precio.');
+      if(ok && nid){ const f = fabDe(nid); if(f){ filPrecios = f.tipo === 'laminas' || f.tipo === 'vidrio' ? 'hojas' : f.tipo; pintar(); F = { t:'mat', id:f.id, precios:{}, fijo:null }; pintarForm(); return; } }
     }
     if(F.t === 'insumo'){
       const i = F.id === 'nuevo' ? null : d.insumos.find(y => String(y.id) === String(F.id)), p = numLibre(F.p);
       if(!i && !String(F.nombre || '').trim()) return mal('fINom');
-      if(!i && !F.grupo) return toast('Elige el grupo', 'error');
       if(!(p >= 0)) return mal('fP');
-      const r = numLibre(F.r);
-      ok = await hacer(() => X.rpc('costeo_insumo_guardar', { p:{ id:i ? i.id : null, nombre:i ? i.nombre : F.nombre.trim(), grupo:i ? i.grupo : F.grupo, precio:p, rendimiento:r > 0 ? r : null } }), 'Guardado');
+      const r = numLibre(F.r); if(String(F.r || '').trim() && !(r > 0)) return mal('fR');
+      ok = await hacer(() => X.rpc('costeo_insumo_guardar', { p:{ id:i ? i.id : null, nombre:i ? i.nombre : F.nombre.trim(), grupo:i ? i.grupo : F.grupo, precio:p, rendimiento:r > 0 ? r : null } }), 'Guardado. Los modelos se recalcularon.');
     }
     if(F.t === 'usar'){
-      const precio = numLibre(F.precio); if(!(precio > 0)) return mal('fPrecio');
+      const precio = numLibre(F.precio); if(!(precio > 0) || precio > 100000) return mal('fPrecio');
       const m = modelo(sel), eraDis = m.en_diseno, c0 = d.costeo[sel];
       let nuevoSel = sel;
-      ok = await hacer(async () => { if(!c0.mid) await X.guardarCosteo(sel); const r = await X.rpc('costeo_pasar_catalogo', { mid:c0.mid, p_precio:precio }); nuevoSel = r.catalogo_id; }, eraDis ? 'Listo: ya está en el Catálogo' : 'Precio cambiado en el Catálogo');
+      ok = await hacer(async () => { if(!c0.mid) await X.guardarCosteo(sel); const r = await X.rpc('costeo_pasar_catalogo', { mid:c0.mid, p_precio:Math.round(precio * 100) / 100 }); nuevoSel = r.catalogo_id; }, eraDis ? 'Listo: ya está en el Catálogo' : 'Precio cambiado en el Catálogo');
       if(ok) sel = nuevoSel;
     }
     if(ok === false) return;
-    const t1 = F.t; cerrarHoja('sheetForm', true); F = null; pintar(); if(!ancho.matches && sel != null && !['gfijo','regla','insumo','mat'].includes(t1)) pintarFicha();
+    cerrarHoja('sheetForm', true); F = null; pintar(); if(sel != null && fichaAbierta()) pintarFicha();
   }
   async function borrar(){
     if(!F) return;
-    if(F.t === 'gfijo'){
-      const g = D().gastosFijos[F.i];
-      const ok = await hacer(() => X.rpc('gasto_fijo_guardar', { p:{ id:g.id, categoria:g.cat, monto:g.monto, activo:false } }), 'Quitado');
-      if(ok){ cerrarHoja('sheetForm', true); F = null; pintar(); } return;
-    }
     const c = copia();
     if(F.t === 'pieza') c.piezas.splice(F.i, 1);
     if(F.t === 'extra') c.extras.splice(F.i, 1);
     if(F.t === 'hoja') c.hojas.splice(F.i, 1);
     if(F.t === 'acc') delete c.acc[F.k];
-    const ok = await guardarCopia(c, 'Quitado');
-    if(ok){ cerrarHoja('sheetForm', true); F = null; pintar(); if(!ancho.matches) pintarFicha(); }
+    if(F.t === 'rend') delete (c.rend || {})[F.id];
+    const ok = await guardarCopia(c, F.t === 'rend' ? 'Ahora usa el general' : 'Quitado');
+    if(ok){ cerrarHoja('sheetForm', true); F = null; pintar(); if(fichaAbierta()) pintarFicha(); }
   }
 
   // ================= Eventos =================
@@ -476,77 +506,71 @@
     if(!D()) return;
     const t = e.target.closest('#tabs [data-tab]'); if(t){ tab = t.dataset.tab; pintar(); window.scrollTo(0, 0); return; }
     const fl = e.target.closest('[data-filtro]'); if(fl){ filtro = fl.dataset.filtro; pintar(); return; }
+    const fp = e.target.closest('[data-filp]'); if(fp){ filPrecios = fp.dataset.filp; pintar(); return; }
     const vp = e.target.closest('[data-vprecios]'); if(vp){ vistaPrecios = vp.dataset.vprecios; pintar(); return; }
     if(e.target.closest('[data-pdf-precios]')) return pdfPrecios();
-    if(e.target.closest('[data-pdf-ganancia]')) return pdfGanancia();
-    if(window.CORTE && tab === 'semana' && window.CORTE.click(e)) return;
-    const md = e.target.closest('[data-modelo]'); if(md && md.hasAttribute('data-ir-modelos')) tab = 'modelos';
-    if(md) return abrirFicha(isNaN(+md.dataset.modelo) ? md.dataset.modelo : +md.dataset.modelo);
-    const pv = e.target.closest('[data-prov]'); if(pv && e.target.closest('#detBody,#panel')){ prov = pv.dataset.prov; return pintarFicha(); }
-    if(e.target.closest('[data-bastidor]')){
-      const R = D().reglas, bis = insumoDe('bisagra'), cer = insumoDe('cerradura'), acc = {};
-      if(bis) acc[bis.id] = R.bisagras; if(cer) acc[cer.id] = 1;
-      D().costeo[sel] = { mid:null, estado:'borrador', piezas:bastidor(), hojas:[], rend:{}, acc, extras:[], notas:'' };
-      const ok = await hacer(() => X.guardarCosteo(sel), 'Bastidor puesto. Agrega los cortes propios del modelo.');
-      if(!ok) delete D().costeo[sel];
-      if(!ancho.matches) pintarFicha(); return;
+    if(window.CORTE && tab === 'semana' && !e.target.closest('#sheetFicha') && window.CORTE.click(e)) return;
+    if(e.target.closest('#btnForm')) return guardar();
+    if(e.target.closest('#btnBorrar')) return borrar();
+    // ---- Dentro de una hoja de formulario
+    if(F && e.target.closest('#sheetForm')){
+      const set = (attr, k) => { const b = e.target.closest('[' + attr + ']'); if(b){ leer(); F[k] = b.getAttribute(attr); pintarForm(); return true; } };
+      const pk = e.target.closest('[data-f-pick]'); if(pk){ leer(); F.pick = pk.dataset.fPick === 'si'; F.bm = ''; pintarForm(); return; }
+      const fm = e.target.closest('[data-f-mat]'); if(fm){ F.mat = Number(fm.dataset.fMat); F.pick = false; pintarForm(); return; }
+      if(e.target.closest('[data-ir-precios]')){ cerrarHoja('sheetForm', true); cerrarHoja('sheetFicha', true); F = null; tab = 'materiales'; pintar(); return; }
+      const eb = e.target.closest('[data-elegir-base]'); if(eb){ ini = { modo:'copiar', de:isNaN(+eb.dataset.elegirBase) ? eb.dataset.elegirBase : +eb.dataset.elegirBase }; cerrarHoja('sheetForm', true); F = null; pintarFicha(); return; }
+      const pv = e.target.closest('[data-prov]'); if(pv && F.t === 'precio'){ prov = pv.dataset.prov; pintarForm(); pintarFicha(); return; }
+      const mo = e.target.closest('[data-modo]'); if(mo && F.t === 'precio'){ modo = mo.dataset.modo; pintarForm(); return; }
+      if(set('data-f-que', 'que') || set('data-f-ori', 'ori') || set('data-f-acc', 'k') || set('data-f-kind', 'kind') || set('data-f-tipo', 'tipo')) return;
+      const fj = e.target.closest('[data-f-fijo]'); if(fj){ leer(); F.fijo = fj.dataset.fFijo === 'si' ? (F.fijo || (Object.values(F.precios)[0] || {}).p || '0') : ''; pintarForm(); return; }
+      if(F.t === 'corte' && window.CORTE && window.CORTE.clickForm(e, F)){ pintarForm(); return; }
+      return;
     }
-    const mo = e.target.closest('[data-modo]'); if(mo){ modo = mo.dataset.modo; return pintarFicha(); }
-    const ct = e.target.closest('[data-cat]'); if(ct && D().costeo[sel]){ const c = copia(); c.categoria_pago_id = Number(ct.dataset.cat); await guardarCopia(c, 'Mano de obra cambiada'); if(!ancho.matches) pintarFicha(); return; }
-    const cp = e.target.closest('[data-copiar-de]'); if(cp){
-      const base = D().costeo[cp.dataset.copiarDe]; if(!base) return;
-      D().costeo[sel] = Object.assign(JSON.parse(JSON.stringify(base)), { mid:null, estado:'borrador', notas:'' });
-      const ok = await hacer(() => X.guardarCosteo(sel), 'Piezas copiadas. Cambia lo que sea distinto.');
-      if(!ok) delete D().costeo[sel];
-      if(!ancho.matches) pintarFicha(); return;
-    }
+    // ---- Lista y ficha
+    const md = e.target.closest('[data-modelo]'); if(md){ const id = isNaN(+md.dataset.modelo) ? md.dataset.modelo : +md.dataset.modelo; return abrirFicha(id); }
+    const ir = e.target.closest('[data-ir]'); if(ir){ const s = $(ir.dataset.ir); if(s) s.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
+    const ib = e.target.closest('[data-ini-de]'); if(ib){ ini = { modo:'copiar', de:isNaN(+ib.dataset.iniDe) ? ib.dataset.iniDe : +ib.dataset.iniDe }; return pintarFicha(); }
+    if(e.target.closest('[data-buscar-base]')) return abrirForm({ t:'buscarBase', bm:'' });
+    const io = e.target.closest('[data-ini]'); if(io){ ini = { modo:io.dataset.ini, de:io.dataset.ini === 'copiar' ? (ini.de != null ? ini.de : (bases()[0] || {}).id) : ini.de }; return pintarFicha(); }
+    if(e.target.closest('[data-empezar]')) return empezar();
+    if(e.target.closest('[data-precio]')) return abrirForm({ t:'precio' });
+    const ct = e.target.closest('[data-cat]'); if(ct && D().costeo[sel]){ const c = copia(); c.categoria_pago_id = Number(ct.dataset.cat); await guardarCopia(c, 'Mano de obra cambiada'); pintarFicha(); return; }
     if(e.target.closest('[data-duplicar]')){
       const c = D().costeo[sel]; let nid = null;
       const ok = await hacer(async () => { const r = await X.rpc('costeo_duplicar', { mid:c.mid }); nid = 'd' + r.id; }, 'Copia creada en diseño. Cambia sus piezas y pásala al catálogo cuando esté lista.');
-      if(ok && nid){ filtro = 'Todos'; sel = nid; pintar(); if(!ancho.matches) pintarFicha(); } return;
+      if(ok && nid){ filtro = 'En diseño'; sel = nid; pintar(); pintarFicha(); $('fichaBody').scrollTop = 0; } return;
     }
-    if(e.target.closest('[data-usar]')) return abrirForm({ t:'usar' });
     const pz = e.target.closest('[data-pieza]');
-    if(pz){ const c = D().costeo[sel]; if(pz.dataset.pieza === 'nueva') return abrirForm({ t:'pieza', i:'nueva', mat:idDe('t1x1') || null, cant:1, cm:'', nota:'' }); const i = +pz.dataset.pieza, p = c.piezas[i]; return abrirForm({ t:'pieza', i, mat:p[0], cant:p[1], cm:p[2], nota:p[3] }); }
+    if(pz){ const c = D().costeo[sel]; if(pz.dataset.pieza === 'nueva'){ const u = c.piezas[c.piezas.length - 1]; return abrirForm({ t:'pieza', i:'nueva', mat:u ? u[0] : idDe('t1x1') || null, cant:1, cm:'', nota:'', que:null, ori:null }); }
+      const i = +pz.dataset.pieza, p = c.piezas[i]; return abrirForm({ t:'pieza', i, mat:p[0], cant:p[1], cm:p[2], nota:p[3], que:p[4] || null, ori:p[5] || null }); }
     const hj = e.target.closest('[data-hoja]'); if(hj){ if(hj.dataset.hoja === 'nueva') return abrirForm({ t:'hoja', i:'nueva', mat:idDe('lam14') || null, cant:1, a:'', h:'', nota:'' }); const i = +hj.dataset.hoja, p = D().costeo[sel].hojas[i]; return abrirForm({ t:'hoja', i, mat:p[0], cant:p[1], a:p[2], h:p[3], nota:p[4] }); }
     const ac = e.target.closest('[data-acc]'); if(ac){ const c = D().costeo[sel]; if(ac.dataset.acc === 'nuevo') return abrirForm({ t:'acc', k:null, nuevo:true, cant:1 }); return abrirForm({ t:'acc', k:ac.dataset.acc, k0:ac.dataset.acc, cant:c.acc[ac.dataset.acc] }); }
-    const rd = e.target.closest('[data-rend]'); if(rd){ const it = D().insumos.find(y => y.nombre === rd.dataset.rend); if(!it || !D().costeo[sel]) return; const c = D().costeo[sel]; return abrirForm({ t:'rend', id:it.id, nombre:it.nombre, r:(c.rend || {})[it.id] || it.r || '' }); }
+    const rd = e.target.closest('[data-rend]'); if(rd && D().costeo[sel]){ const it = D().insumos.find(y => String(y.id) === rd.dataset.rend); if(!it) return; const pr = Number((D().costeo[sel].rend || {})[it.id]) || 0; return abrirForm({ t:'rend', id:it.id, r:pr || it.r || '', propio:!!pr }); }
     const ex = e.target.closest('[data-extra]'); if(ex){ if(ex.dataset.extra === 'nuevo') return abrirForm({ t:'extra', i:'nuevo' }); const i = +ex.dataset.extra, o = D().costeo[sel].extras[i]; return abrirForm({ t:'extra', i, n:o.n, v:o.v }); }
-    const rg = e.target.closest('[data-regla]'); if(rg) return abrirForm({ t:'regla', k:rg.dataset.regla });
-    const gf = e.target.closest('[data-gfijo]'); if(gf){ if(gf.dataset.gfijo === 'nuevo') return abrirForm({ t:'gfijo', i:'nuevo', cat:'', monto:'' }); const g = D().gastosFijos[+gf.dataset.gfijo]; return abrirForm({ t:'gfijo', i:+gf.dataset.gfijo, cat:g.cat, monto:g.monto }); }
-    const mt = e.target.closest('[data-mat]'); if(mt){ if(mt.dataset.mat === 'nuevo'){ location.href = 'deposito.html?tab=fab'; return; } const f = D().fab.find(y => String(y.id) === mt.dataset.mat); return abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
-    if(e.target.closest('#btnNuevoMat')){ location.href = 'deposito.html?tab=fab'; return; }
-    const ins = e.target.closest('[data-insumo]'); if(ins) return abrirForm({ t:'insumo', id:ins.dataset.insumo, grupo:null });
-    if(e.target.closest('#btnForm')) return guardar();
-    if(e.target.closest('#btnBorrar')) return borrar();
-    if(F){
-      const set = (attr, k) => { const b = e.target.closest('[' + attr + ']'); if(b && b.closest('#formBody')){ leer(); F[k] = b.getAttribute(attr); pintarForm(); return true; } };
-      if(set('data-f-acc', 'k')) return;
-      if(set('data-f-kind', 'kind')) return;
-      if(set('data-f-mat', 'mat') || set('data-f-grupo', 'grupo')) return;
-      const fj = e.target.closest('[data-f-fijo]'); if(fj){ leer(); F.fijo = fj.dataset.fFijo === 'si' ? (F.fijo || (Object.values(F.precios)[0] || {}).p || '0') : ''; pintarForm(); return; }
-      if(F.t === 'corte' && window.CORTE && window.CORTE.clickForm(e, F)){ pintarForm(); return; }
-    }
+    if(e.target.closest('[data-reglas]')) return abrirForm({ t:'reglas' });
+    const mt = e.target.closest('[data-mat]'); if(mt){ if(mt.dataset.mat === 'nuevo') return abrirForm({ t:'matnuevo', tipo:filPrecios === 'hojas' ? 'laminas' : filPrecios }); const f = fabDe(mt.dataset.mat); return abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
+    const ins = e.target.closest('[data-insumo]'); if(ins) return abrirForm({ t:'insumo', id:ins.dataset.insumo, grupo:filPrecios });
   });
   document.addEventListener('input', (e) => {
+    if(e.target.id === 'buscaModelo'){ busca = e.target.value; const l = $('modLista'); if(l) l.innerHTML = listaModelos(lista().filter(FIL[filtro] || FIL.Todos).filter(o => { const t = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); return !busca || t(o.m.nombre).includes(t(busca)); })); return; }
     if(!F) return;
-    if(F.t === 'hoja' && ['fCant','fA','fH'].includes(e.target.id)){ leer(); const f = D().fab.find(y => String(y.id) === String(F.mat)); const caja = $('cajaHoja'); if(f && caja){ const m2 = (numLibre(F.cant) || 0) * (numLibre(F.a) || 0) * (numLibre(F.h) || 0) / 10000, hm2 = f.hoja[0] * f.hoja[1] / 10000; caja.innerHTML = `<span>Uso de la hoja</span>${m2.toLocaleString('es-VE', { maximumFractionDigits:3 })} m² de una hoja de ${f.hoja[0]} × ${f.hoja[1]} cm = <b>${Math.round(m2 / hm2 * 100)} %</b>`; } }
-    if(F.t === 'extra' && e.target.id === 'fV'){ leer(); const v = numLibre(F.v) || 0, g = 1 + D().reglas.ganancia / 100, caja = $('cajaExtra'); if(caja) caja.innerHTML = `<span>Se cobra al cliente</span>${dinero(v)} × ${String(g).replace('.', ',')} = <b>${dinero(v * g)}</b>. Sin gastos fijos. En la venta aparece como sugerencia del modelo.`; }
+    if(e.target.id === 'fBuscaMat' || e.target.id === 'fBuscaBase'){ F.bm = e.target.value; const pos = e.target.selectionStart; pintarForm(); const el = $(e.target.id); if(el){ el.focus(); try{ el.setSelectionRange(pos, pos); } catch(_){} } return; }
+    if(F.t === 'hoja' && ['fCant','fA','fH'].includes(e.target.id)){ leer(); const f = fabDe(F.mat), caja = $('cajaHoja'); if(f && f.hoja && caja){ const m2 = (numLibre(F.cant) || 0) * (numLibre(F.a) || 0) * (numLibre(F.h) || 0) / 10000, hm2 = f.hoja[0] * f.hoja[1] / 10000; caja.innerHTML = `<span>Uso de la hoja</span>${num(m2, 3)} m² de una hoja de ${f.hoja[0]} × ${f.hoja[1]} cm = <b>${Math.round(m2 / hm2 * 100)} %</b>`; } }
+    if(F.t === 'extra' && e.target.id === 'fV'){ leer(); const v = numLibre(F.v) || 0, g = 1 + D().reglas.ganancia / 100, caja = $('cajaExtra'); if(caja) caja.innerHTML = `<span>Se cobra al cliente</span>${dinero(v)} × ${num(g)} = <b>${dinero(v * g)}</b>. Sin gastos fijos.`; }
   });
   document.addEventListener('change', async (e) => {
     if(e.target.id === 'fNotas' && sel != null && D().costeo[sel]){ const c = copia(); c.notas = e.target.value; await guardarCopia(c, 'Notas guardadas'); }
   });
-  ancho.addEventListener('change', pintar);
 
   (async () => {
     const perfil = await window.Sesion.requerir();
     if(!perfil) return;
-    if(!perfil.confirma_abonos){ $('cont').innerHTML = '<div class="caja-amar" style="margin:16px 18px">Costos es solo para Ray o Gualfredo.</div>'; $('filtros').classList.add('hidden'); return; }
-    $('cont').innerHTML = '<p class="mat-s" style="margin:24px 18px">Cargando…</p>';
-    try{ await X.cargar(); prov = D().prov; await Promise.all([cargarVentasMes(), window.CORTE ? window.CORTE.cargar() : null]); }
-    catch(e){ $('cont').innerHTML = `<div class="caja-amar" style="margin:16px 18px">${esc(errTxt(e))}</div><div style="margin:0 18px"><button class="btn-secondary" type="button" onclick="location.reload()">Reintentar</button></div>`; return; }
+    if(!perfil.confirma_abonos){ $('cont').innerHTML = '<div class="caja-amar" style="margin:16px 0">Costos es solo para Ray o Gualfredo.</div>'; $('filtros').classList.add('hidden'); return; }
+    $('cont').innerHTML = '<p class="mat-s" style="margin:24px 2px">Cargando…</p>';
+    try{ await X.cargar(); prov = D().prov; if(window.CORTE) await window.CORTE.cargar(); }
+    catch(e){ $('cont').innerHTML = `<div class="caja-amar" style="margin:16px 0">${esc(errTxt(e))}</div><button class="btn-secondary" type="button" data-recargar style="width:100%">Reintentar</button>`; document.addEventListener('click', (ev) => { if(ev.target.closest('[data-recargar]')) location.reload(); }); return; }
     pintar();
-    if(sel != null && modelo(sel)) abrirFicha(sel);
-    const mq = q.get('material'); if(mq && tab === 'materiales'){ const f = D().fab.find(y => String(y.id) === mq); if(f) abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
+    const mq = q.get('modelo'); if(mq){ const id = isNaN(+mq) ? mq : +mq; if(modelo(id)) abrirFicha(id); }
+    const mat = q.get('material'); if(mat && tab === 'materiales'){ const f = fabDe(mat); if(f) abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
   })();
 })();

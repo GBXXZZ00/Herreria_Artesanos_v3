@@ -42,6 +42,8 @@ function ruta(quien,rpcs,D){
       if(name==='pago_confirmar_y_ubicar') return j({id:7,estado:'confirmado',produccion:true,ubicado:true});
       if(name==='mes_datos') return j({cerrado:false,datos:{mes:'2026-10',entro:[['Pagos de clientes · Zelle',400]],salio:[['Gasto · Alquiler',-800],['Nómina',-80],['Comisión y cambio',-70]],compras:[['Inversiones Torniplemaca',1674.5]],vendido:320,costo:223.22,sinCosto:0,nSin:0,puertas:1,gastoTot:950,fijosPrev:915,pagadoFijo:[{cat:'Alquiler',prev:800,pagado:800},{cat:'Internet',prev:30,pagado:0}],porModelo:[['Modelo bitral × 1',60.18]],cuentas:[['Zelle de Ray',2450]],proveedores:[['Inversiones Torniplemaca',-1674.5]],ajustes:1}});
       if(name==='mes_cerrar') return j({mes:a.p_mes});
+      if(name==='costeo_resumen') return j({'7':{modelo:'Modelo bitral',costo:223.22,final:326.79,fijos:36.6,pct:26.9599,listo:true,estado:'listo',falta:[]},'4':{modelo:'Lineal Economico',costo:0,final:0,pct:0,listo:false,estado:'borrador',falta:['cortes']}});
+      if(name==='gasto_fijo_guardar') return j({id:a.p.id||9});
       if(name==='nomina_semana') return j({trabajadores:[{id:'t1',nombre:'Jesus',trabajos:1,monto:80,vales:0,neto:80}]});
       return j({id:60});}
     if(u.includes('/perfiles')){ if(u.includes('id=eq'))return j(P); return j([{usuario:P.usuario,nombre:P.nombre,rol:P.rol,orden:1}]); }
@@ -70,7 +72,16 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   const t=await p.textContent('#cont');
   ok('Mes: lo que ganaste, entró y salió con nómina y comisión, compras, gastos fijos, productos, saldos',t.includes('Lo que ganaste')&&t.includes('Nómina')&&t.includes('Comisión y cambio')&&t.includes('Compras a proveedores')&&t.includes('Gastos fijos')&&t.includes('Pérdida')&&t.includes('Entró')&&!!(await p.$('[data-mes-mov]'))&&t.includes('Modelo bitral × 1')&&t.includes('Así quedaron los proveedores'));
   ok('Ganancia del mes: 320 − 223,22 − 950',t.includes('Pérdida del mes')&&t.includes('$853.22'));
+  await p.waitForTimeout(600);const tg=await p.textContent('#cont');
+  ok('Mes: Ganancia por modelo (viene de Costos): Bitral deja $60.18 · 27 %, sin los que no están listos',tg.includes('Ganancia por modelo')&&tg.includes('$60.18 · 27 %')&&!tg.includes('Lineal Economico'));
   await p.screenshot({path:'shots4/t45-1-mes.png'});
+  await p.goto(H+'finanzas.html?tab=gastos');await p.waitForSelector('[data-gfijo="1"]');await w();
+  await p.click('[data-gfijo="1"]');await p.waitForSelector('#sheetForm.open');await w();
+  await p.fill('#gfMonto','');await p.click('#btnForm');await w(200);
+  ok('Gasto fijo sin monto marca el campo',await p.$eval('#campoGfMonto',x=>x.classList.contains('invalid')));
+  await p.fill('#gfMonto','850');await p.click('#btnForm');await w(800);
+  ok('Gastos fijos solo en Finanzas: cambiar Alquiler a $850',JSON.stringify(ultimo(rpcs,'gasto_fijo_guardar'))===JSON.stringify({p:{id:1,categoria:'Alquiler',monto:850,activo:true}}),ultimo(rpcs,'gasto_fijo_guardar'));
+  await p.goto(H+'finanzas.html?tab=mes&mes='+ant);await p.waitForSelector('[data-pdf-mes]');await w();
   await p.click('[data-mes-todos]');await w();
   ok('Todos los meses en una hoja',(await p.$$('#detBody [data-mes]')).length>=1);
   await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.toggle('open',false));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.toggle('open',false));});

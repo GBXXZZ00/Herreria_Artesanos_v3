@@ -34,6 +34,38 @@
     F().pintar();
   }
 
+  // ---------- Ganancia por modelo (antes en Costos › Ganancia): precio del catálogo menos costo y gastos fijos ----------
+  let RES = null, cargandoRes = false;
+  async function traerResumen(){
+    if(RES || cargandoRes) return; cargandoRes = true;
+    try{ const { data, error } = await db.rpc('costeo_resumen'); if(error) throw error; RES = data || {}; }
+    catch(e){ RES = { _error:F().errTxt(e) }; }
+    finally { cargandoRes = false; }
+    F().pintar();
+  }
+  const filasGanancia = () => Object.entries(RES || {}).filter(([k, x]) => k !== '_error' && x && x.listo && !(x.falta || []).length)
+    .map(([k, x]) => ({ id:k, n:x.modelo || 'Modelo', costo:Number(x.costo), final:Number(x.final), pct:Number(x.pct), gana:F().r2(Number(x.pct) * Number(x.costo) / 100) }))
+    .sort((a, b) => a.pct - b.pct);
+  const semPct = (p) => p >= 30 ? 'verde' : p >= 15 ? 'amar' : 'rojo';
+  function gananciaModelos(acc){
+    if(!RES){ traerResumen(); return acc('gmod', 'Ganancia por modelo', '…', '<p class="mat-s" style="margin:4px 2px">Cargando…</p>'); }
+    if(RES._error) return acc('gmod', 'Ganancia por modelo', '', `<div class="caja-amar">${esc(RES._error)}</div>`);
+    const L = filasGanancia();
+    const b = L.length ? `<div class="rep">${L.map(o => `<a class="rep-f" href="costos.html?modelo=${encodeURIComponent(o.id)}" style="text-decoration:none;color:inherit"><span>${esc(o.n)}<small class="mat-s" style="display:block;font-weight:600">cuesta ${dinero(o.costo)} · sugerido ${dinero(o.final)}</small></span><b class="pill ${semPct(o.pct)}" style="white-space:nowrap">${o.gana < 0 ? '− ' : ''}${dinero(Math.abs(o.gana))} · ${Math.round(o.pct)} %</b></a>`).join('')}</div>
+        <p class="mat-s" style="margin:8px 2px 0">Lo que deja cada puerta: precio del catálogo menos costo y gastos fijos. Los de abajo del 30 % conviene subirlos en Costos.</p>
+        <button class="btn-secondary" type="button" data-pdf-gmod style="width:100%;margin-top:10px">Ganancia por modelo en PDF</button>`
+      : '<p class="mat-s" style="margin:4px 2px">Todavía no hay modelos listos en Costos. Cuando Ray deje uno "Listo", sale aquí.</p>';
+    return acc('gmod', 'Ganancia por modelo', L.length === 1 ? '1 modelo' : L.length + ' modelos', b);
+  }
+  async function pdfGanancia(){
+    const L = filasGanancia(), b = [{ t:'titulo', texto:'Ganancia por modelo', der:'deja por puerta' }];
+    L.forEach(o => b.push({ t:'fila', a:o.n + ' · cuesta ' + dinero(o.costo) + ' · sugerido ' + dinero(o.final), b:(o.gana < 0 ? '- ' : '') + dinero(Math.abs(o.gana)) + ' (' + Math.round(o.pct) + ' %)', rojo:o.pct < 15 }));
+    b.push({ t:'nota', texto:'Precio del catálogo menos costo y gastos fijos por puerta.' });
+    try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear({ titulo:'Ganancia por modelo', derecha:new Date().toLocaleDateString('es-VE'), subtitulo:'Con los precios del proveedor principal.', bloques:b });
+      const r = await window.PDFR.compartir(blob, 'Ganancia-por-modelo.pdf'); if(r === 'descargado') toast('PDF listo'); }
+    catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }
+  }
+
   // ---------- Pantalla ----------
   function html(){
     const ms = meses(); mesSel = mesSel && ms.includes(mesSel) ? mesSel : (mesSel || F().mesActual()); if(!ms.includes(mesSel)) ms.unshift(mesSel);
@@ -69,6 +101,7 @@
     const pagF = C.pagadoFijo.reduce((a, g) => a + Number(g.pagado), 0);
     h += acc('fijos', 'Gastos fijos', dinero(pagF) + ' de ' + dinero(C.fijosPrev), `<div class="rep">${C.pagadoFijo.map(g => `<div class="rep-f"><span>${esc(g.cat)}<small class="mat-s" style="display:block;font-weight:600">previsto ${dinero(g.prev)}</small></span><b class="${Number(g.pagado) + 0.005 < Number(g.prev) ? 's-debe' : 's-favor'}">${Number(g.pagado) ? dinero(g.pagado) : 'Sin pagar'}</b></div>`).join('')}
       <div class="rep-f total"><span>Pagado de ${dinero(C.fijosPrev)} previstos</span><b>${dinero(pagF)}</b></div></div>`);
+    h += gananciaModelos(acc);
     if(C.porModelo.length) h += acc('prod', 'Lo que dejó cada producto', signo(suma(C.porModelo)), rep(C.porModelo, 'Total después de gastos fijos', suma(C.porModelo)));
     h += acc('ctas', 'Así quedaron las cuentas', dinero(suma(C.cuentas)), rep(C.cuentas.length ? C.cuentas : [['Sin cuentas', 0]], 'En cuentas', suma(C.cuentas)));
     h += acc('provs', 'Así quedaron los proveedores', signo(suma(C.proveedores)), rep(C.proveedores.length ? C.proveedores : [['Sin proveedores', 0]], suma(C.proveedores) < 0 ? 'Les debes en total' : 'A tu favor en total', suma(C.proveedores)));
@@ -183,6 +216,7 @@
 
   document.addEventListener('click', (e) => {
     if(!F() || !F().datos) return;
+    if(e.target.closest('[data-pdf-gmod]')) return pdfGanancia();
     const v = e.target.closest('[data-fm-vista]'); if(v){ vista = v.dataset.fmVista; F().pintar(); return; }
     const ms = e.target.closest('[data-mes]'); if(ms){ mesSel = ms.dataset.mes; if(ms.closest('#detBody')) window.AH.cerrarHoja('sheetDet', true); F().pintar(); return; }
     const mm = e.target.closest('[data-mes-mov]'); if(mm){ mover(+mm.dataset.mesMov); F().pintar(); return; }
