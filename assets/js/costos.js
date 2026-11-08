@@ -91,6 +91,9 @@
     const t = (window.AH.normalizar ? window.AH.normalizar : (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''));
     const ver = todos.filter(FIL[filtro] || FIL.Todos).filter(o => !busca || t(o.m.nombre).includes(t(busca)));
     let h = `<label class="search-box" style="margin:0 0 6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="buscaModelo" type="search" placeholder="Buscar modelo" aria-label="Buscar modelo" value="${esc(busca)}" autocomplete="off"></label><div id="modLista">`;
+    const pend = (D().extrasPendientes || []).filter(p => modelo(p.catalogo_id));
+    if(pend.length && filtro !== 'En diseño' && !busca) h += `<div class="grp-t"><span>Extras vendidos sin costear</span><span>${pend.length}</span></div>` + pend.map(p => { const m = modelo(p.catalogo_id);
+      return `<button class="mod" type="button" data-extra-pend="${esc(p.catalogo_id)}" data-k="${esc(p.k)}"><img src="${esc(foto(m))}" alt="" loading="lazy"><span class="grow"><span class="mat-t">${esc(p.extra)} del ${esc(m.nombre)}</span><span class="mat-s">vendido en ${p.n === 1 ? '1 puerta' : p.n + ' puertas'} en fabricación · sin cortes</span></span><span class="mat-n"><b style="font-size:14px;color:var(--amber)">Cargar cortes</b></span></button>`; }).join('');
     h += listaModelos(ver) + '</div>';
     return h;
   }
@@ -129,7 +132,7 @@
       ${x ? '<button class="fi-dup" type="button" data-duplicar>Duplicar</button>' : ''}</div>`;
     if(!x) return pintarInicio(m);
     const R = D().reglas, c = x.c, suma = (gs) => x.lineas.filter(l => gs.includes(l.g)).reduce((a, l) => a + l.v, 0);
-    const S = [['s-cortes','Cortes',suma(['Hierro'])],['s-hojas','Lámina',suma(['Lámina','Vidrio'])],['s-cons','Consumibles',suma(['Pintura y masilla','Consumibles'])],['s-herr','Herrajes',suma(['Accesorios'])],['s-obra','Obra',suma(['Mano de obra'])],['s-extras','Extras',null]];
+    const S = [['s-cortes','Cortes',suma(['Hierro'])],['s-hojas','Lámina',suma(['Lámina','Vidrio'])],['s-cons','Consumibles',suma(['Pintura y masilla','Consumibles'])],['s-herr','Herrajes',suma(['Accesorios'])],['s-obra','Obra',suma(['Mano de obra'])],['s-extras','Extras',suma(['Extras incluidos']) || null]];
     let h = `<div class="fi-idx">${S.map(([id, t, v]) => `<button class="fx" type="button" data-ir="${id}">${t}${v != null ? ' ' + dinero(v) : ''}</button>`).join('')}</div>`;
     if(x.falta.length) h += `<div class="caja-rara">Faltan datos: ${esc(x.falta.join(', '))}. Sin esto no se sabe cuánto cuesta.</div>`;
     // ---- Cortes: una sola lista, agrupada por material, con su barra dibujada
@@ -168,7 +171,9 @@
       <p class="mat-s" style="margin:6px 2px 0">Las tarifas se cambian en <a href="categorias-pago.html" style="color:var(--accent);font-weight:800">Categorías de pago</a>.</p></section>`;
     // ---- Extras
     h += `<section class="fi-sec" id="s-extras"><div class="fi-sh"><h3>Extras</h3><span>se cobran aparte</span></div>`;
-    h += x.extras.length ? x.extras.map((e, i) => `<button class="ln" type="button" data-extra="${i}"><span class="ln-t">${esc(e.n)}</span><span class="ln-v">${dinero(e.venta)}</span><span class="ln-s">Cuesta ${dinero(e.costo)} · sin gastos fijos</span></button>`).join('') : '<p class="mat-s" style="margin:4px 2px">Sin extras. Ejemplo: protección, marco decorativo.</p>';
+    h += (D().extrasPendientes || []).filter(p => String(p.catalogo_id) === String(m.id)).map(p => `<div class="caja-amar">${p.n === 1 ? 'Se vendió 1' : 'Se vendieron ' + p.n} con ${esc(String(p.extra).toLowerCase())} y no tiene sus cortes. Cárgalos para saber cuánto cuesta.</div>`).join('');
+    h += x.lineas.filter(l => l.g === 'Extras incluidos').map(l => `<div class="ln"><span class="ln-t">${esc(l.n)}</span><span class="ln-v">${dinero(l.v)}</span><span class="ln-s">Viene en el modelo (tildado en el Catálogo): ya está en el costo</span></div>`).join('');
+    h += x.extras.length ? x.extras.map((e, i) => `<button class="ln" type="button" data-extra="${i}"><span class="ln-t">${esc(e.n)}${e.ofrecer ? '' : ' · oculto'}</span><span class="ln-v"${e.listo ? '' : ' style="color:var(--amber)"'}>${e.listo ? dinero(e.venta) : 'Falta'}</span><span class="ln-s">${e.listo ? 'Cuesta ' + dinero(e.costo) + ' · sin gastos fijos' : 'Falta ' + esc(e.falta.join(', ')) + '. Se vende igual: la vendedora escribe el monto.'}</span></button>`).join('') : '<p class="mat-s" style="margin:4px 2px">Sin extras. Ejemplo: protección, marco decorativo, yeso.</p>';
     h += `<button class="btn-nuevo" type="button" data-extra="nuevo">+ Extra</button></section>
       <div class="field" style="margin-top:16px"><label class="field-label" for="fNotas">Notas</label><textarea class="input" id="fNotas" rows="2">${esc(c.notas || '')}</textarea><div class="field-hint">Se guardan al salir del campo.</div></div>`;
     if(q.get('volver') === 'semana') h = `<a class="caja-ok" style="display:block;text-decoration:none;margin-bottom:10px" href="costos.html?tab=semana&para=${esc(q.get('para') || '')}">${c.piezas.length ? 'Cortes cargados. Volver al plan de corte' : 'Cuando cargues sus cortes, vuelve al plan de corte'} ›</a>` + h;
@@ -269,6 +274,35 @@
       <div id="listaMat">${L.map(f => `<button class="ln" type="button" data-f-mat="${f.id}"><span class="ln-t">${esc(f.nombre)}</span><span class="ln-v">${String(f.id) === String(F.mat) ? '✓' : ''}</span><span class="ln-s">${f.pres === 'barra' ? 'barra de ' + num(f.largo) + ' cm' : 'hoja ' + num(f.hoja[0]) + ' × ' + num(f.hoja[1]) + ' cm'}</span></button>`).join('') || '<p class="mat-s">No hay materiales con ese nombre.</p>'}</div>
       <button class="btn-nuevo" type="button" data-ir-precios>¿No está? Agrégalo en Costos › Precios</button>`;
   }
+  // ---- Extras: tipos, lo que lleva el formulario y cuánto cuesta
+  const EXK = ['Protección', 'Marco decorativo', 'Yeso', 'Vitrales', 'Farquilla', 'Ecobel', 'Detalles de ventana', 'Ventana con protección', 'Manillón'];
+  function extraDeF(){
+    const n = F.kind === 'Otro' ? String(F.n || '').trim() : (F.kind || ''), prot = /^protecci/i.test(n), sin = /^manill/i.test(n);
+    const mano = (prot && F.manoModo !== 'propia') || String(F.mano == null ? '' : F.mano).trim() === '' ? null : numLibre(F.mano);
+    return { id:F.id || null, n, v:sin ? (numLibre(F.v) || 0) : 0, piezas:sin ? [] : F.piezas, ofrecer:F.ofr !== 'no', sin_cortes:sin, mano };
+  }
+  function resumenExtra(){
+    const e = extraDeF(); if(!e.n) return '<span>Costo</span>Elige qué extra es.';
+    const x = X.costearExtra(D().costeo[sel], modelo(sel) || {}, Object.assign({}, e, { mano:Number.isFinite(e.mano) ? e.mano : null }), prov);
+    const mo = x.lineas.filter(l => l.g === 'Mano de obra');
+    if(!x.listo) return `<span>Falta</span>${esc(x.falta.join(', '))}. Se puede vender igual: la vendedora escribe el monto y sale el aviso.${mo.length ? '<br>Mano de obra: ' + mo.map(l => esc(l.n) + ' ' + dinero(l.v)).join(' · ') : ''}`;
+    return `<span>Cuesta ${dinero(x.costo)}</span>${x.lineas.map(l => esc(l.n) + ' ' + dinero(l.v)).join(' · ')}<br>Se cobra al cliente <b>${dinero(x.venta)}</b>. Sin gastos fijos.`;
+  }
+  // Otros modelos que ya tienen los cortes de ese extra
+  const copiables = (n) => { const k = X.claveExtra(n); return D().catalogo.concat(D().enDiseno).filter(m => String(m.id) !== String(sel) && D().costeo[m.id])
+    .map(m => ({ id:m.id, nombre:m.nombre, ex:(D().costeo[m.id].extras || []).find(e => X.claveExtra(e.n) === k && (e.piezas || []).length) })).filter(o => o.ex); };
+  function abrirExtra(i){
+    const c = D().costeo[sel], o = i === 'nuevo' ? null : c.extras[i];
+    if(!o) return abrirForm({ t:'extra', i:'nuevo', kind:null, n:'', v:'', piezas:[], ofr:'si', mano:'', manoModo:'cat' });
+    abrirForm({ t:'extra', i, id:o.id, kind:EXK.includes(o.n) ? o.n : 'Otro', n:o.n, v:o.v || '', piezas:JSON.parse(JSON.stringify(o.piezas || [])), ofr:o.ofrecer === false ? 'no' : 'si', mano:o.mano == null ? '' : o.mano, manoModo:o.mano == null ? 'cat' : 'propia' });
+  }
+  // Abre el extra de un modelo por su clave (proteccion, marco_decorativo); si no existe, uno nuevo de ese tipo
+  function abrirExtraClave(k){
+    const c = D().costeo[sel]; if(!c) return;
+    const i = (c.extras || []).findIndex(e => X.claveExtra(e.n) === k);
+    if(i >= 0) return abrirExtra(i);
+    abrirExtra('nuevo'); F.kind = EXK.find(n => X.claveExtra(n) === k) || null; pintarForm();
+  }
   function pintarForm(){
     const d = D(); let h = '', boton = 'Guardar', borrar = false, txtBorrar = 'Quitar';
     if(F.t === 'pieza' || F.t === 'hoja'){
@@ -303,13 +337,37 @@
       borrar = F.propio; txtBorrar = 'Usar el general';
     }
     if(F.t === 'extra'){
-      $('formTitulo').textContent = F.i === 'nuevo' ? 'Extra nuevo' : 'Extra';
-      const v = numLibre(F.v) || 0, KIND = ['Protección', 'Marco decorativo', 'Vitral', 'Yeso'], k = KIND.includes(F.n) ? F.n : (F.n ? 'Otro' : null);
-      h = `<div class="field"><span class="field-label">¿Qué extra es?</span>${opts(KIND.concat('Otro').map(x => [x, x]), F.kind || k, 'data-f-kind')}<div class="field-hint">Protección y marco decorativo salen solos en la venta con este precio.</div></div>
-        ${(F.kind || k) === 'Otro' ? `<div class="field" id="c_fN"><label class="field-label" for="fN">Nombre</label><input class="input" id="fN" value="${esc(KIND.includes(F.n) ? '' : F.n || '')}"><div class="field-error">Escribe el nombre</div></div>` : ''}
-        ${campo('fV', 'Cuánto te cuesta (con IVA)', F.v)}
-        <div class="caja-nota" id="cajaExtra"><span>Se cobra al cliente</span>${dinero(v)} × ${num(1 + d.reglas.ganancia / 100)} = <b>${dinero(v * (1 + d.reglas.ganancia / 100))}</b>. Sin gastos fijos.</div>`;
-      borrar = F.i !== 'nuevo';
+      const e = extraDeF();
+      if(F.sub === 'pieza'){
+        $('formTitulo').textContent = 'Corte de ' + (e.n || 'el extra').toLowerCase();
+        if(F.pick){ $('formBody').innerHTML = selector('barra'); $('formFoot').innerHTML = '<button class="btn-secondary" type="button" data-f-pick="no" style="width:100%">Volver</button>'; return; }
+        const f = fabDe(F.mat);
+        h = `<div class="field"><span class="field-label">Material</span><button class="fi-sel" type="button" data-f-pick="si"><span>${f ? esc(f.nombre) : 'Elegir material'}</span><b>Cambiar</b></button></div>
+          <div class="input-row">${campo('fCant', 'Cantidad', F.cant)}${campo('fCm', 'Medida (cm)', F.cm)}</div>`;
+        boton = 'Listo'; borrar = F.pi !== 'nueva';
+      } else if(F.sub === 'copiar'){
+        $('formTitulo').textContent = 'Copiar cortes';
+        const L = copiables(e.n);
+        $('formBody').innerHTML = `<p class="mat-s" style="margin:0 2px 8px">Modelos que ya tienen los cortes de ${esc((e.n || 'este extra').toLowerCase())}. Después los puedes cambiar.</p>
+          ${L.map(o => `<button class="ln" type="button" data-fx-de="${esc(o.id)}"><span class="ln-t">${esc(o.nombre)}</span><span class="ln-v"></span><span class="ln-s">${plural(o.ex.piezas.length, '1 corte', 'cortes')}</span></button>`).join('') || '<div class="vacio-d"><b>Ningún modelo lo tiene</b>Carga los cortes con "+ Pieza".</div>'}`;
+        $('formFoot').innerHTML = '<button class="btn-secondary" type="button" data-fx-sub="" style="width:100%">Volver</button>'; return;
+      } else {
+        $('formTitulo').textContent = F.i === 'nuevo' ? 'Extra nuevo' : e.n || 'Extra';
+        const prot = /^protecci/i.test(e.n || '');
+        h = `<div class="field"><span class="field-label">¿Qué extra es?</span>${opts(EXK.concat('Otro').map(k => [k, k]), F.kind, 'data-f-kind')}</div>
+          ${F.kind === 'Otro' ? `<div class="field" id="c_fN"><label class="field-label" for="fN">Nombre</label><input class="input" id="fN" value="${esc(F.n || '')}"><div class="field-error">Escribe el nombre</div></div>` : ''}
+          <div class="field"><span class="field-label">En el Catálogo y la venta</span>${opts([['si','Se ofrece'],['no','Oculto']], F.ofr, 'data-fx-ofr')}<div class="field-hint">${F.ofr === 'no' ? 'Oculto: la vendedora no ve su precio.' : 'La vendedora ve su precio cuando el cliente lo pide.'}</div></div>`;
+        if(e.sin_cortes) h += campo('fV', 'Cuánto te cuesta (con IVA)', F.v, 'No lleva cortes: solo su precio.');
+        else {
+          h += `<div class="field-label" style="margin-top:6px">Cortes</div>` + (F.piezas.length ? F.piezas.map((z, i) => { const f = fabDe(z[0]) || { nombre:'Material' };
+            return `<button class="pzr" type="button" data-fx-pz="${i}"><span class="pzr-n">${z[1]}</span><span class="pzr-n pzr-cm">${num(z[2], z[2] % 1 ? 1 : 0)}</span><span class="pzr-t">${esc(f.nombre)}</span>${CHEV}</button>`; }).join('') : '<p class="mat-s" style="margin:4px 2px">Sin cortes todavía.</p>');
+          h += `<div class="input-row" style="margin:8px 0 14px"><button class="btn-nuevo" type="button" data-fx-pz="nueva" style="margin:0">+ Pieza</button><button class="btn-nuevo" type="button" data-fx-sub="copiar" style="margin:0">Copiar de otro modelo</button></div>`;
+        }
+        if(prot) h += `<div class="field"><span class="field-label">Mano de obra</span>${opts([['cat','La de la categoría'],['propia','Otro monto']], F.manoModo, 'data-fx-mano')}</div>`;
+        if(!prot || F.manoModo === 'propia') h += campo('fMano', 'Mano de obra del extra ($)', F.mano, prot ? 'Lo que se le paga al trabajador por la protección.' : 'Lo que se le paga al trabajador por este extra. Vacío si no se paga aparte.');
+        h += `<div class="caja-nota" id="cajaExtra">${resumenExtra()}</div>`;
+        borrar = F.i !== 'nuevo';
+      }
     }
     if(F.t === 'precio'){
       const m = modelo(sel), x = X.costear(m.id, { prov, modo }), xt = X.costear(m.id, { prov, modo:'tubo' }), R = d.reglas, s = X.semaforo(x), dis = !!m.en_diseno;
@@ -390,7 +448,7 @@
   }
   const val = (id) => { const el = $(id); return el ? el.value : undefined; };
   function leer(){
-    const map = { fCant:'cant', fCm:'cm', fNota:'nota', fA:'a', fH:'h', fRend:'r', fN:'n', fV:'v', fFijo:'fijo', fPrecio:'precio', fINom:'nombre', fP:'p', fR:'r', mNom:'nombre', mLargo:'largo', mAn:'an', mAl:'al', mEsp:'esp' };
+    const map = { fCant:'cant', fCm:'cm', fNota:'nota', fA:'a', fH:'h', fRend:'r', fN:'n', fV:'v', fFijo:'fijo', fPrecio:'precio', fINom:'nombre', fP:'p', fR:'r', mNom:'nombre', mLargo:'largo', mAn:'an', mAl:'al', mEsp:'esp', fMano:'mano' };
     Object.entries(map).forEach(([id, k]) => { const v = val(id); if(v !== undefined) F[k] = v; });
     if(F.t === 'mat') D().proveedores.forEach(p => { const v = val('fp_' + p.id); if(v !== undefined){ F.precios[p.id] = { p:v, esp:val('fe_' + p.id) }; } });
   }
@@ -434,9 +492,19 @@
     }
     if(F.t === 'rend'){ const r = numLibre(F.r); if(!(r > 0)) return mal('fRend'); (c.rend = c.rend || {})[F.id] = r; ok = await guardarCopia(c, 'Guardado para este modelo'); }
     if(F.t === 'extra'){
-      if(F.kind && F.kind !== 'Otro') F.n = F.kind;
-      const v = numLibre(F.v); if(!String(F.n || '').trim()) return F.kind ? mal('fN') : toast('Elige qué extra es', 'error'); if(!(v > 0)) return mal('fV');
-      c.extras = c.extras || []; if(F.i === 'nuevo') c.extras.push({ n:F.n.trim(), v }); else c.extras[F.i] = { n:F.n.trim(), v };
+      if(F.sub === 'pieza'){
+        const cant = Math.round(numLibre(F.cant)), cm = numLibre(F.cm);
+        if(!F.mat) return toast('Elige el material', 'error');
+        if(!(cant > 0) || cant > 99) return mal('fCant'); if(!(cm > 0) || cm > 1000) return mal('fCm');
+        const z = [Number(F.mat), cant, cm]; if(F.pi === 'nueva') F.piezas.push(z); else F.piezas[F.pi] = z;
+        F.sub = null; pintarForm(); return;
+      }
+      if(!F.kind) return toast('Elige qué extra es', 'error');
+      const ex = extraDeF(); if(!ex.n) return mal('fN');
+      if(ex.sin_cortes && !(ex.v > 0)) return mal('fV');
+      if(ex.mano != null && !(ex.mano >= 0 && ex.mano <= 10000)) return mal('fMano');
+      if((c.extras || []).some((o, i) => String(i) !== String(F.i) && X.claveExtra(o.n) === X.claveExtra(ex.n))) return toast('Ese extra ya está en este modelo', 'error');
+      delete ex.id; c.extras = c.extras || []; if(F.i === 'nuevo') c.extras.push(ex); else c.extras[F.i] = ex;
       ok = await guardarCopia(c, 'Extra guardado');
     }
     if(F.t === 'reglas'){
@@ -491,6 +559,7 @@
   }
   async function borrar(){
     if(!F) return;
+    if(F.t === 'extra' && F.sub === 'pieza'){ F.piezas.splice(F.pi, 1); F.sub = null; pintarForm(); return; }
     const c = copia();
     if(F.t === 'pieza') c.piezas.splice(F.i, 1);
     if(F.t === 'extra') c.extras.splice(F.i, 1);
@@ -521,6 +590,11 @@
       const eb = e.target.closest('[data-elegir-base]'); if(eb){ ini = { modo:'copiar', de:isNaN(+eb.dataset.elegirBase) ? eb.dataset.elegirBase : +eb.dataset.elegirBase }; cerrarHoja('sheetForm', true); F = null; pintarFicha(); return; }
       const pv = e.target.closest('[data-prov]'); if(pv && F.t === 'precio'){ prov = pv.dataset.prov; pintarForm(); pintarFicha(); return; }
       const mo = e.target.closest('[data-modo]'); if(mo && F.t === 'precio'){ modo = mo.dataset.modo; pintarForm(); return; }
+      const xp = e.target.closest('[data-fx-pz]'); if(xp){ leer(); const i = xp.dataset.fxPz, u = F.piezas[F.piezas.length - 1];
+        Object.assign(F, i === 'nueva' ? { sub:'pieza', pi:'nueva', mat:u ? u[0] : idDe('t1x1') || null, cant:1, cm:'' } : { sub:'pieza', pi:+i, mat:F.piezas[+i][0], cant:F.piezas[+i][1], cm:F.piezas[+i][2] }); F.pick = false; pintarForm(); return; }
+      const xs = e.target.closest('[data-fx-sub]'); if(xs){ leer(); F.sub = xs.dataset.fxSub || null; F.pick = false; pintarForm(); return; }
+      const xd = e.target.closest('[data-fx-de]'); if(xd){ const o = copiables(extraDeF().n).find(y => String(y.id) === xd.dataset.fxDe); if(o){ F.piezas = JSON.parse(JSON.stringify(o.ex.piezas)); if(o.ex.mano != null && /^protecci/i.test(o.ex.n)){ F.manoModo = 'propia'; F.mano = o.ex.mano; } else if(o.ex.mano != null && F.mano === ''){ F.mano = o.ex.mano; } toast('Cortes copiados del ' + o.nombre + '. Revísalos y guarda.'); } F.sub = null; pintarForm(); return; }
+      if(set('data-fx-ofr', 'ofr') || set('data-fx-mano', 'manoModo')) return;
       if(set('data-f-que', 'que') || set('data-f-ori', 'ori') || set('data-f-acc', 'k') || set('data-f-kind', 'kind') || set('data-f-tipo', 'tipo')) return;
       const fj = e.target.closest('[data-f-fijo]'); if(fj){ leer(); F.fijo = fj.dataset.fFijo === 'si' ? (F.fijo || (Object.values(F.precios)[0] || {}).p || '0') : ''; pintarForm(); return; }
       if(F.t === 'corte' && window.CORTE && window.CORTE.clickForm(e, F)){ pintarForm(); return; }
@@ -546,7 +620,8 @@
     const hj = e.target.closest('[data-hoja]'); if(hj){ if(hj.dataset.hoja === 'nueva') return abrirForm({ t:'hoja', i:'nueva', mat:idDe('lam14') || null, cant:1, a:'', h:'', nota:'' }); const i = +hj.dataset.hoja, p = D().costeo[sel].hojas[i]; return abrirForm({ t:'hoja', i, mat:p[0], cant:p[1], a:p[2], h:p[3], nota:p[4] }); }
     const ac = e.target.closest('[data-acc]'); if(ac){ const c = D().costeo[sel]; if(ac.dataset.acc === 'nuevo') return abrirForm({ t:'acc', k:null, nuevo:true, cant:1 }); return abrirForm({ t:'acc', k:ac.dataset.acc, k0:ac.dataset.acc, cant:c.acc[ac.dataset.acc] }); }
     const rd = e.target.closest('[data-rend]'); if(rd && D().costeo[sel]){ const it = D().insumos.find(y => String(y.id) === rd.dataset.rend); if(!it) return; const pr = Number((D().costeo[sel].rend || {})[it.id]) || 0; return abrirForm({ t:'rend', id:it.id, r:pr || it.r || '', propio:!!pr }); }
-    const ex = e.target.closest('[data-extra]'); if(ex){ if(ex.dataset.extra === 'nuevo') return abrirForm({ t:'extra', i:'nuevo' }); const i = +ex.dataset.extra, o = D().costeo[sel].extras[i]; return abrirForm({ t:'extra', i, n:o.n, v:o.v }); }
+    const ex = e.target.closest('[data-extra]'); if(ex && D().costeo[sel]) return abrirExtra(ex.dataset.extra === 'nuevo' ? 'nuevo' : +ex.dataset.extra);
+    const xp = e.target.closest('[data-extra-pend]'); if(xp){ const id = +xp.dataset.extraPend; abrirFicha(id); if(D().costeo[id]) abrirExtraClave(xp.dataset.k); return; }
     if(e.target.closest('[data-reglas]')) return abrirForm({ t:'reglas' });
     const mt = e.target.closest('[data-mat]'); if(mt){ if(mt.dataset.mat === 'nuevo') return abrirForm({ t:'matnuevo', tipo:filPrecios === 'hojas' ? 'laminas' : filPrecios }); const f = fabDe(mt.dataset.mat); return abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
     const ins = e.target.closest('[data-insumo]'); if(ins) return abrirForm({ t:'insumo', id:ins.dataset.insumo, grupo:filPrecios });
@@ -556,7 +631,7 @@
     if(!F) return;
     if(e.target.id === 'fBuscaMat' || e.target.id === 'fBuscaBase'){ F.bm = e.target.value; const pos = e.target.selectionStart; pintarForm(); const el = $(e.target.id); if(el){ el.focus(); try{ el.setSelectionRange(pos, pos); } catch(_){} } return; }
     if(F.t === 'hoja' && ['fCant','fA','fH'].includes(e.target.id)){ leer(); const f = fabDe(F.mat), caja = $('cajaHoja'); if(f && f.hoja && caja){ const m2 = (numLibre(F.cant) || 0) * (numLibre(F.a) || 0) * (numLibre(F.h) || 0) / 10000, hm2 = f.hoja[0] * f.hoja[1] / 10000; caja.innerHTML = `<span>Uso de la hoja</span>${num(m2, 3)} m² de una hoja de ${f.hoja[0]} × ${f.hoja[1]} cm = <b>${Math.round(m2 / hm2 * 100)} %</b>`; } }
-    if(F.t === 'extra' && e.target.id === 'fV'){ leer(); const v = numLibre(F.v) || 0, g = 1 + D().reglas.ganancia / 100, caja = $('cajaExtra'); if(caja) caja.innerHTML = `<span>Se cobra al cliente</span>${dinero(v)} × ${num(g)} = <b>${dinero(v * g)}</b>. Sin gastos fijos.`; }
+    if(F.t === 'extra' && !F.sub && ['fV','fMano','fN'].includes(e.target.id)){ leer(); const caja = $('cajaExtra'); if(caja) caja.innerHTML = resumenExtra(); }
   });
   document.addEventListener('change', async (e) => {
     if(e.target.id === 'fNotas' && sel != null && D().costeo[sel]){ const c = copia(); c.notas = e.target.value; await guardarCopia(c, 'Notas guardadas'); }
@@ -570,7 +645,7 @@
     try{ await X.cargar(); prov = D().prov; if(window.CORTE) await window.CORTE.cargar(); if(window.COMPRA) await window.COMPRA.cargar().catch(() => {}); if(window.COMPRA) window.COMPRA.alCambiar(() => recargar().catch(() => {})); }
     catch(e){ $('cont').innerHTML = `<div class="caja-amar" style="margin:16px 0">${esc(errTxt(e))}</div><button class="btn-secondary" type="button" data-recargar style="width:100%">Reintentar</button>`; document.addEventListener('click', (ev) => { if(ev.target.closest('[data-recargar]')) location.reload(); }); return; }
     pintar();
-    const mq = q.get('modelo'); if(mq){ const id = isNaN(+mq) ? mq : +mq; if(modelo(id)) abrirFicha(id); }
+    const mq = q.get('modelo'); if(mq){ const id = isNaN(+mq) ? mq : +mq; if(modelo(id)){ abrirFicha(id); if(q.get('extra') && D().costeo[id]) abrirExtraClave(q.get('extra')); } }
     const mat = q.get('material'); if(mat && tab === 'materiales'){ const f = fabDe(mat); if(f) abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
   })();
 })();

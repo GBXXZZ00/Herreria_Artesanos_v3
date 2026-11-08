@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=78">
+<link rel="stylesheet" href="assets/css/base.css?v=79">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -592,15 +592,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=78"></script>
-<script src="assets/js/supabase-client.js?v=78"></script>
-<script src="assets/js/img-compress.js?v=78"></script>
-<script src="assets/js/comun.js?v=78"></script>
-<script src="assets/js/avisos.js?v=78"></script>
-<script src="assets/js/sesion.js?v=78"></script>
-<script src="assets/js/ayuda.js?v=78"></script>
-<script src="assets/js/pdf-reporte.js?v=78"></script>
-<script src="assets/js/mi-trabajo.js?v=78"></script>
+<script src="assets/vendor/supabase.js?v=79"></script>
+<script src="assets/js/supabase-client.js?v=79"></script>
+<script src="assets/js/img-compress.js?v=79"></script>
+<script src="assets/js/comun.js?v=79"></script>
+<script src="assets/js/avisos.js?v=79"></script>
+<script src="assets/js/sesion.js?v=79"></script>
+<script src="assets/js/ayuda.js?v=79"></script>
+<script src="assets/js/pdf-reporte.js?v=79"></script>
+<script src="assets/js/mi-trabajo.js?v=79"></script>
 <script>
 (function(){
   'use strict';
@@ -858,6 +858,8 @@
     if(a.plan_por_aceptar) pend.push({ color:'azul', icono:'reloj', titulo:'Plan de corte del ' + window.AH.sabadoCorto(a.plan_por_aceptar.sab) + ' por aceptar', detalle: plural(a.plan_por_aceptar.n, '1 puerta', 'puertas') + ' asignadas', href:'costos.html?tab=semana&para=' + a.plan_por_aceptar.sab });
     if(a.sin_cortes && a.sin_cortes.length) pend.push({ color:'rojo', icono:'etiqueta', titulo: plural(a.sin_cortes.length, '1 modelo en fabricación sin cortes', 'modelos en fabricación sin cortes'), detalle: a.sin_cortes.slice(0, 2).map(m => m.nombre).join(', ') + ' · cargarlos', href:'costos.html?modelo=' + a.sin_cortes[0].id });
     if(a.mes_sin_cerrar) pend.push({ color:'naranja', icono:'reloj', titulo:'Cierra el mes de ' + a.mes_sin_cerrar.nombre, detalle:'Reporte completo en Finanzas', href:'finanzas.html?tab=mes&mes=' + a.mes_sin_cerrar.mes });
+    if(a.extras_sin_costear && a.extras_sin_costear.length){ const x = a.extras_sin_costear, n = x.reduce((t, e) => t + (Number(e.n) || 0), 0);
+      pend.push({ color:'amarillo', icono:'etiqueta', titulo: n === 1 ? 'Hay 1 extra vendido sin costear' : 'Hay ' + n + ' extras vendidos sin costear', detalle: x.slice(0, 2).map(e => e.extra + ' del ' + e.nombre).join(', ') + ' · cargar sus cortes', href:'costos.html?modelo=' + x[0].catalogo_id + '&extra=' + x[0].k }); }
     if(a.sin_costear && a.sin_costear.length) pend.push({ color:'azul', icono:'etiqueta', titulo: plural(a.sin_costear.length, '1 modelo vendido sin costear', 'modelos vendidos sin costear'), detalle: a.sin_costear.slice(0, 2).map(m => m.nombre).join(', '), href:'costos.html?modelo=' + a.sin_costear[0].id });
     const ec = $('cuenta-costos'); if(ec && a.costeados) ec.innerHTML = `<span class="num">${a.costeados.listos}</span> de ${a.costeados.total} listos`;
     else if(ec) ec.textContent = 'Costo de cada modelo';

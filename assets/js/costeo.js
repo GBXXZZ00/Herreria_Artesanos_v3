@@ -17,7 +17,7 @@
     D = {
       prov: d.prov, reglas: Object.assign({ bisagras:3, despunte:0 }, d.reglas), gastosFijos: d.gastosFijos || [],
       proveedores: d.proveedores || [], insumos: d.insumos || [], fab: d.fab || [], categorias: d.categorias || [],
-      catalogo: d.catalogo || [], enFabricacion: d.enFabricacion || [], vendidos: d.vendidos || [],
+      catalogo: d.catalogo || [], enFabricacion: d.enFabricacion || [], vendidos: d.vendidos || [], extrasPendientes: d.extrasPendientes || [],
       costeo: {}, enDiseno: [], servidor: {},
     };
     (d.modelos || []).forEach(m => {
@@ -25,7 +25,8 @@
       D.costeo[key] = { mid:m.id, codigo:m.codigo, estado:m.estado, ver:m.actualizado_en || '', categoria_pago_id:m.categoria_pago_id, notas:m.nota || '',
         piezas:(m.piezas || []).map(p => [p[0], Number(p[1]), Number(p[2]), p[3] || '', p[4] || null, p[5] || null]),
         hojas:(m.hojas || []).map(h => [h[0], Number(h[1]), Number(h[2]), Number(h[3]), h[4] || '']),
-        rend:m.rend || {}, acc:m.acc || {}, extras:(m.extras || []).map(e => ({ n:e.n, v:Number(e.v) })) };
+        rend:m.rend || {}, acc:m.acc || {}, extras:(m.extras || []).map(e => ({ id:e.id, n:e.n, v:Number(e.v) || 0, piezas:(e.piezas || []).map(z => [z[0], Number(z[1]), Number(z[2])]),
+          ofrecer:e.ofrecer !== false, sin_cortes:!!e.sin_cortes, mano:e.mano == null || e.mano === '' ? null : Number(e.mano) })) };
       D.servidor[key] = m.x;
       if(m.catalogo_id == null) D.enDiseno.push({ id:key, nombre:m.nombre, tipo:m.tipo || 'Puerta Multilock', precio_base:0, categoria_pago_id:m.categoria_pago_id, en_diseno:true });
     });
@@ -53,6 +54,39 @@
     for(const k of orden) if(f.precios && f.precios[k]) return usar(k);
     return { p:null, de:null };
   }
+  // Costo de un extra (igual que _extra_costo de la base, v85): sus cortes por metro usado + su mano de obra.
+  // Sin cortes (manillón): el costo escrito a mano. Protección sin mano de obra propia: la de la categoría (prot_monto).
+  function costearExtra(c, m, e, prov){
+    const R = D.reglas, iva = 1 + R.iva / 100, lineas = [], falta = [];
+    let tot = 0;
+    if(e.sin_cortes){ if(!(Number(e.v) > 0)) falta.push('costo'); else { tot = Number(e.v); lineas.push({ g:'Material', n:e.n, v:tot }); } }
+    else if(!(e.piezas || []).length) falta.push('cortes');
+    else {
+      const cms = {};
+      for(const [mid, cant, cm] of e.piezas) cms[mid] = (cms[mid] || 0) + Number(cant) * Number(cm);
+      for(const mid of Object.keys(cms)){
+        const f = D.fab.find(x => String(x.id) === String(mid)); if(!f) continue;
+        const pr = precioFab(f, prov);
+        if(pr.p == null){ falta.push('precio de ' + f.nombre); continue; }
+        const v = cms[mid] / 100 * pr.p * iva / (f.largo / 100);
+        lineas.push({ g:'Hierro', n:f.nombre, v:r2(v) }); tot += v;
+      }
+    }
+    if(e.mano != null){ tot += Number(e.mano); lineas.push({ g:'Mano de obra', n:'Mano de obra del extra', v:Number(e.mano) }); }
+    else if(/^protecci/i.test(e.n || '')){
+      const cat = D.categorias.find(x => String(x.id) === String(c.categoria_pago_id || m.categoria_pago_id));
+      if(cat){
+        const ea = m.especificaciones_base || {}, area = (Number(ea.alto) || 2) * (Number(ea.ancho) || 1);
+        [['hierro','Hierro de la protección'],['masilla_pintura','Masilla y pintura de la protección']].forEach(([k, n]) => {
+          const t = (cat.tarifas || {})[k]; if(!t || !Number(t.prot_monto)) return;
+          const v = Number(t.prot_monto) * (t.prot_modo === 'm2' ? area : 1); lineas.push({ g:'Mano de obra', n, v }); tot += v; });
+      }
+    }
+    const listo = !falta.length;
+    return { id:e.id, n:e.n, ofrecer:e.ofrecer !== false, listo, falta, lineas, costo:listo ? r2(tot) : null, venta:listo ? r2(tot * (1 + R.ganancia / 100)) : null };
+  }
+  // Clave del extra por su nombre: la misma que usa la venta en las especificaciones
+  const claveExtra = (n) => /^protecci/i.test(n || '') ? 'proteccion' : /^marco/i.test(n || '') ? 'marco_decorativo' : /^manill/i.test(n || '') ? 'manillon' : String(n || '').toLowerCase();
   const modeloDe = (id) => D.catalogo.find(x => String(x.id) === String(id)) || D.enDiseno.find(x => String(x.id) === String(id));
   function costear(id, o){
     if(!D) return null;
@@ -101,9 +135,16 @@
       [['Hierro','hierro'],['Masilla y pintura','masilla_pintura'],['Detalles','detalles']].forEach(([n, k]) => { const t = (cat.tarifas || {})[k]; if(t && Number(t.monto)) add('Mano de obra', n, cat.nombre, Number(t.monto) * (t.modo === 'm2' ? area : 1)); });
     } else falta.push('categoría de pago');
     if(!c.piezas.length && !c.hojas.length) falta.push('cortes');
+    // Extras que el Catálogo trae tildados (protección, marco decorativo): van incluidos en el costo del modelo
+    const extras = (c.extras || []).map(e => costearExtra(c, m, e, prov));
+    const eb = m.especificaciones_base || {};
+    [['proteccion','Protección','cortes de la protección'],['marco_decorativo','Marco decorativo','cortes del marco decorativo']].forEach(([k, n, f]) => {
+      if(String(eb[k]) !== 'true') return;
+      const x = extras.find(e => claveExtra(e.n) === k);
+      if(!x || !x.listo) falta.push(f); else add('Extras incluidos', n, 'viene en el modelo', x.costo);
+    });
     const costo = lineas.reduce((a, l) => a + l.v, 0), venta = costo * (1 + R.ganancia / 100), fijos = R.gastosMes / R.puertasMes, final = venta + fijos;
     const hoy = m.en_diseno ? null : Number(m.precio_base || 0), ganancia = hoy == null ? null : hoy - fijos - costo, pct = costo && hoy != null ? ganancia / costo * 100 : 0;
-    const extras = (c.extras || []).map(e => ({ n:e.n, costo:e.v, venta:e.v * (1 + R.ganancia / 100) }));
     return { lineas, grupos, avisos:[...avisos], falta, costo:r2(costo), venta:r2(venta), fijos:r2(fijos), final:r2(final), hoy, ganancia:ganancia == null ? null : r2(ganancia), pct, cat, c, m, extras, prov, modo };
   }
   const semaforo = (x) => !x ? ['gris','Sin costear'] : x.falta.length ? ['gris','Faltan datos'] : x.hoy == null ? ['gris','En diseño'] : x.pct >= 30 ? ['verde','Gana ' + Math.round(x.pct) + ' %'] : x.pct >= 15 ? ['amar','Gana ' + Math.round(x.pct) + ' %'] : x.pct >= 0 ? ['rojo','Gana ' + Math.round(x.pct) + ' %'] : ['negro','Pierde'];
@@ -120,5 +161,5 @@
     return r;
   }
 
-  window.COSTEO = { cargar, datos:() => D, costear, semaforo, empacar, precioFab, guardarCosteo, rpc, r2 };
+  window.COSTEO = { cargar, datos:() => D, costear, costearExtra, claveExtra, semaforo, empacar, precioFab, guardarCosteo, rpc, r2 };
 })();

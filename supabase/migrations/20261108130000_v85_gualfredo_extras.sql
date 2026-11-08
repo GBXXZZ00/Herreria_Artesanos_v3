@@ -298,7 +298,7 @@ declare r jsonb;
 begin
   r := _corte_plan_guardar_v82(p_sab, p);
   if jsonb_typeof(coalesce(p->'extras_mano', '[]'::jsonb)) <> 'array' then raise exception 'El plan no es válido'; end if;
-  update cortes_planes set extras_mano = coalesce(p->'extras_mano', '[]'::jsonb) where sab = p_sab;
+  if p ? 'extras_mano' then update cortes_planes set extras_mano = coalesce(p->'extras_mano', '[]'::jsonb) where sab = p_sab; end if;
   return r;
 end $$;
 create or replace function public.mi_hoja_corte()

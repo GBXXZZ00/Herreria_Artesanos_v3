@@ -64,6 +64,8 @@
   function piezasDe(unidades){
     const por = {};
     unidades.forEach(u => D().costeo[u.mid].piezas.forEach(([mid, n, cm, nota, que]) => { for(let i = 0; i < n; i++) (por[mid] ||= []).push({ cm:Number(cm), nota:que && que !== 'Otra' ? que : nota, eid:u.eid, etq:u.etq, tid:u.tid, color:u.color }); }));
+    // Cortes de los extras que pidió el cliente (protección, marco decorativo...)
+    unidades.forEach(u => (u.ext || []).forEach(e => e.piezas.forEach(([mid, n, cm]) => { for(let i = 0; i < n; i++) (por[mid] ||= []).push({ cm:Number(cm), nota:e.n, eid:u.eid, etq:u.etq, tid:u.tid, color:u.color }); })));
     return por;
   }
   function sugerir(unidades, noUsar){
@@ -72,7 +74,7 @@
     return barras;
   }
   // La firma cambia si cambia lo asignado o las piezas de un modelo (versión del costeo)
-  const firma = (unidades) => unidades.map(u => u.eid + ':' + u.tid + ':' + u.mid + '@' + ((D().costeo[u.mid] || {}).ver || '')).sort().join(',');
+  const firma = (unidades) => unidades.map(u => u.eid + ':' + u.tid + ':' + u.mid + '@' + ((D().costeo[u.mid] || {}).ver || '') + ((u.ext || []).length ? '+' + u.ext.map(e => X().claveExtra(e.n)).join('.') : '')).sort().join(',');
   // Lámina: guillotina simple por filas (las piezas más altas primero)
   function acomodarHoja(piezas, f){
     const W = Number(f.hoja[0]), H = Number(f.hoja[1]), hojas = [];
@@ -94,7 +96,12 @@
     prov = prov || (window.CostosApp && window.CostosApp.prov) || D().prov;
     const todos = pasosHierro();
     const asign = todos.filter(u => u.tid && u.para === sab);
-    asign.forEach((u, i) => { u.color = COLORES[i % COLORES.length]; u.conCortes = !!u.mid && tieneCortes(u.mid); u.x = u.conCortes ? X().costear(u.mid, { prov }) : null; });
+    asign.forEach((u, i) => { u.color = COLORES[i % COLORES.length]; u.conCortes = !!u.mid && tieneCortes(u.mid); u.x = u.conCortes ? X().costear(u.mid, { prov }) : null;
+      // Extras que el cliente pidió (en la venta): los que tienen cortes entran al plan; los que no, salen con aviso
+      u.ext = []; u.extFalta = [];
+      if(u.conCortes){ const ex = D().costeo[u.mid].extras || [], esp = u.esp || {};
+        ex.forEach(e => { if(!e.sin_cortes && e.piezas.length && String(esp[X().claveExtra(e.n)]) === 'true') u.ext.push(e); });
+        [['proteccion','Protección'],['marco_decorativo','Marco decorativo']].forEach(([k, n]) => { if(String(esp[k]) === 'true' && !u.ext.some(e => X().claveExtra(e.n) === k)) u.extFalta.push({ k, n }); }); } });
     const conPlan = asign.filter(u => u.conCortes && !u.cortado), sinCortes = asign.filter(u => !u.conCortes), cortadas = asign.filter(u => u.conCortes && u.cortado);
     const pendientes = todos.filter(u => !u.tid), otroSab = todos.filter(u => u.tid && u.para !== sab);
     const guardado = (C.planes || {})[sab], f0 = firma(conPlan), noUsar = (guardado && guardado.no_usar) || [];
@@ -119,7 +126,7 @@
     const usadas = barras.filter(b => b.tipo === 'barra').length;
     const nBarras = compras.reduce((a, m) => a + m.comprar, 0), nHojas = hj.filter(x => !x.vidrio).reduce((a, x) => a + x.comprar, 0), nVidrio = hj.filter(x => x.vidrio).reduce((a, x) => a + x.comprar, 0);
     return { sab, prov, asign, conPlan, sinCortes, cortadas, pendientes, otroSab, barras, compras, hj, herreros, cambio, ajustado, noUsar,
-      manual:(guardado && guardado.manual) || {}, aceptado:!!(guardado && guardado.firma === f0 && guardado.aceptado), cerrado:!!(guardado && guardado.cerrado), firma:f0,
+      manual:(guardado && guardado.manual) || {}, extrasMano:(guardado && guardado.extras_mano) || [], aceptado:!!(guardado && guardado.firma === f0 && guardado.aceptado), cerrado:!!(guardado && guardado.cerrado), firma:f0,
       aviso:guardado && guardado.aviso, nuevos:(guardado && guardado.nuevos) || [], corregido:(guardado && guardado.corregido) || {}, algunoCorto:herreros.some(h => h.entregado),
       comprar:X().r2(compras.reduce((a, m) => a + m.costo, 0)), nBarras, nHojas, nVidrio, nComprar:nBarras + nHojas + nVidrio, ahorro:Math.max(0, solas - usadas), aluminio:C.aluminio || 0 };
   }
@@ -177,6 +184,11 @@
       h += `<div class="caja-amar" style="margin-top:8px">${esc(u.etq)} · ${esc(u.nombre)} no tiene cortes: ${manual ? esc(u.herrero || 'el herrero') + ' lo corta a mano esta semana.' : 'no entra al plan.'}
         <span class="dos-btn">${u.mid ? `<a class="btn-mini" href="costos.html?modelo=${encodeURIComponent(u.mid)}&volver=semana&para=${semSab}">Cargar cortes</a>` : ''}${manual ? '' : `<button class="btn-mini sec" type="button" data-manual="${u.eid}">Cortar a mano</button>`}</span></div>`;
     });
+    P.asign.forEach(u => (u.extFalta || []).forEach(x => {
+      const mano = P.extrasMano.some(o => String(o.eid) === String(u.eid) && o.k === x.k), la = x.k === 'proteccion' ? 'la' : 'lo';
+      h += `<div class="caja-amar" style="margin-top:8px">${esc(x.n)} del ${esc(u.etq)} sin cortes: ${mano ? esc(u.herrero || 'el herrero') + ' ' + la + ' corta a mano esta semana.' : 'no entra al plan.'}
+        <span class="dos-btn"><a class="btn-mini" href="costos.html?modelo=${encodeURIComponent(u.mid)}&extra=${x.k}&volver=semana&para=${semSab}">Cargar cortes</a>${mano ? '' : `<button class="btn-mini sec" type="button" data-extra-mano="${esc(u.eid)}" data-k="${x.k}">Cortar a mano</button>`}</span></div>`;
+    }));
     if(P.pendientes.length) h += `<a class="row-link" href="produccion.html" style="margin-top:6px"><span>${plural(P.pendientes.length, '1 puerta sin asignar', 'puertas sin asignar')} en Producción</span><span class="pill amar">Asignar</span></a>`;
     if(P.otroSab.length) h += `<p class="mat-s" style="margin:6px 2px 0">${plural(P.otroSab.length, '1 puerta asignada', 'puertas asignadas')} para otro sábado.</p>`;
     if(P.aluminio) h += `<div class="gris-l">Aluminio · ${plural(P.aluminio, '1 paso', 'pasos')} en fabricación. El plan de aluminio llega pronto.</div>`;
@@ -216,7 +228,8 @@
     const porMat = {}; hr.barras.forEach(b => (porMat[b.mid] ||= []).push(b));
     const manuales = P.sinCortes.filter(u => u.tid === tid);
     const pasar = []; hr.barras.forEach(b => b.piezas.filter(p => p.tid !== tid).forEach(p => pasar.push(p)));
-    return { hr, porMat, manuales, pasar };
+    const extras = P.extrasMano.filter(o => String(o.tid) === String(tid));
+    return { hr, porMat, manuales, pasar, extras };
   }
   const nomH = (P, tid) => (P.herreros.find(h2 => h2.tid === tid) || {}).nombre || '';
   function abrirHojaHerrero(tid){
@@ -230,6 +243,7 @@
           <span class="tel-p">${b.piezas.map(x => `${num(x.cm)} · ${esc(x.etq)}${x.tid !== o.hr.tid ? ' (de ' + esc(nomH(P, x.tid)) + ')' : ''}`).join('<br>')}${b.libre >= minRet(fabDe(b.mid)) ? '<br><b>Guarda el retazo de ' + mTxt(b.libre) + '</b>' : ''}</span></div>`).join('')}`).join('')}
         ${o.pasar.length ? `<div class="tel-m">Pásale a tu compañero</div>${o.pasar.map(x => `<div class="tel-p">${num(x.cm)} cm · ${esc(x.etq)} → ${esc(nomH(P, x.tid))}</div>`).join('')}` : ''}
         ${o.manuales.map(u => `<div class="tel-m">${esc(u.etq)} · ${esc(u.nombre)}</div><div class="tel-p">Este modelo no tiene plan. Córtalo como siempre.</div>`).join('')}
+        ${o.extras.map(x => `<div class="tel-m">${esc(x.etq)}</div><div class="tel-p">${esc(x.extra)}: no tiene plan. Córtalo como siempre.</div>`).join('')}
       </div>`;
     $('detFoot').innerHTML = `<button class="btn-primary" type="button" data-pdf-hoja="${esc(tid)}">PDF de la hoja de ${esc(o.hr.nombre)}</button>`;
     abrirHoja('sheetDet');
@@ -245,7 +259,8 @@
       bs.forEach(b => bloques.push({ t:'barra', etiqueta:b.tipo === 'retazo' ? 'Retazo ' + etqRetazo(b) : 'Barra ' + b.n + (b.comprar ? ' (nueva)' : ''), der:'sobra ' + mTxt(b.libre) + (b.libre >= minRet(fabDe(b.mid)) ? ' · guardar' : ''), largo:b.largo, sobra:b.libre,
         piezas:b.piezas.map(x => ({ cm:x.cm, txt:'(' + x.etq + (x.tid !== tid ? ', de ' + nomH(P, x.tid) : '') + ')' })) })); });
     if(o.pasar.length){ bloques.push({ t:'titulo', texto:'Pásale a tu compañero' }); o.pasar.forEach(x => bloques.push({ t:'fila', a:x.cm + ' cm · ' + x.etq, b:nomH(P, x.tid) })); }
-    if(o.manuales.length){ bloques.push({ t:'titulo', texto:'Sin plan: cortar a mano' }); o.manuales.forEach(u => bloques.push({ t:'fila', a:u.etq + ' · ' + u.nombre, b:'a mano' })); }
+    if(o.manuales.length || o.extras.length){ bloques.push({ t:'titulo', texto:'Sin plan: cortar a mano' }); o.manuales.forEach(u => bloques.push({ t:'fila', a:u.etq + ' · ' + u.nombre, b:'a mano' }));
+      o.extras.forEach(x => bloques.push({ t:'fila', a:x.etq + ' · ' + x.extra, b:'a mano' })); }
     await sacarPDF({ titulo:'Hoja de corte', derecha:o.hr.nombre, subtitulo:'Para el ' + sabTxt(semSab) + '. Sale de lo asignado en Producción.', bloques }, 'Hoja-de-corte-' + String(o.hr.nombre).replace(/[^A-Za-z0-9]+/g, '-') + '-' + semSab + '.pdf');
   }
   async function pdfCompra(){
@@ -428,6 +443,8 @@
   function click(e){
     if(e.target.closest('#sheetForm')) return false;
     const sb = e.target.closest('[data-sab]'); if(sb){ semSab = sb.dataset.sab; window.CostosApp.pintar(); return true; }
+    const xm = e.target.closest('[data-extra-mano]'); if(xm){ const P = planSemana(semSab), u = P.asign.find(y => String(y.eid) === xm.dataset.extraMano), x = u && u.extFalta.find(z => z.k === xm.dataset.k); if(!x) return true;
+      guardarPlan(P, { extras_mano:P.extrasMano.concat([{ eid:u.eid, k:x.k, extra:x.n, etq:u.etq + ' · ' + u.nombre, tid:u.tid }]) }, (x.k === 'proteccion' ? 'La' : 'Lo') + ' corta a mano esta semana. Sale en su hoja.'); return true; }
     const ma = e.target.closest('[data-manual]'); if(ma){ llamar('corte_manual', { p_sab:semSab, eid:+ma.dataset.manual }, 'Lo corta a mano esta semana. Sale en su hoja.'); return true; }
     const hh = e.target.closest('[data-hoja-h]'); if(hh){ abrirHojaHerrero(hh.dataset.hojaH); return true; }
     const ph = e.target.closest('[data-pdf-hoja]'); if(ph){ pdfHoja(ph.dataset.pdfHoja); return true; }
