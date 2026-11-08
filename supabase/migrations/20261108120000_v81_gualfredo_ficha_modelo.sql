@@ -1,7 +1,7 @@
 -- Autor: Gualfredo (Claude de Gualfredo)
 -- v81 · Ficha del modelo (lote 1 de la reestructura de Costos): una sola lista de cortes como el Costeador.
 -- Cada pieza dice qué es (Bastidor, Marco, Divisor, Travesaño, Ranura, Vitral u Otra) y si va vertical (V) u
--- horizontal (H): prepara el dibujo en 3D. Reglas: despunte (cm que se botan de cada punta de la barra), empieza en 0.
+-- horizontal (H): prepara el dibujo en 3D. Reglas: despunte (cm que se botan de cada barra nueva, una vez), empieza en 0.
 -- _costeo NO cambia: el costo no depende de esto (Bitral sigue en $223,22 · $290,19 · $326,79 · $339,23).
 
 alter table public.costeo_piezas add column if not exists que_es text
