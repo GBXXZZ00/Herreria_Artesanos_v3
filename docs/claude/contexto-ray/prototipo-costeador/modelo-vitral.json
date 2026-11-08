@@ -1,0 +1,155 @@
+{
+  "actualizado": "2026-10-30T16:46:07.767Z",
+  "calculo": {
+    "barras": [
+      {
+        "barras": 1,
+        "metros": 5.76,
+        "perfil": "t3x1",
+        "sobranteM": 0.24
+      },
+      {
+        "barras": 1,
+        "metros": 1.94,
+        "perfil": "t2x1",
+        "sobranteM": 4.06
+      },
+      {
+        "barras": 1,
+        "metros": 6,
+        "perfil": "pl12",
+        "sobranteM": 0
+      },
+      {
+        "barras": 2,
+        "metros": 9.9,
+        "perfil": "t12",
+        "sobranteM": 2.1
+      },
+      {
+        "barras": 1,
+        "metros": 5,
+        "perfil": "marco10",
+        "sobranteM": 0.1
+      }
+    ],
+    "costoTotal": 223.22,
+    "gastosFijos": 36.6,
+    "laminaM2": 1.101,
+    "precioFinal": 326.79,
+    "precioVenta": 290.19,
+    "vidrioM2": 0.284
+  },
+  "codigo": "M-01",
+  "consumo": "general",
+  "cortes": [
+    {
+      "perfil": "t3x1",
+      "piezas": [
+        {
+          "cant": 2,
+          "cm": 200,
+          "et": "Bastidor largo"
+        },
+        {
+          "cant": 2,
+          "cm": 88,
+          "et": "Bastidor ancho"
+        }
+      ]
+    },
+    {
+      "perfil": "t2x1",
+      "piezas": [
+        {
+          "cant": 1,
+          "cm": 194,
+          "et": "Divisor vertical"
+        }
+      ]
+    },
+    {
+      "perfil": "pl12",
+      "piezas": [
+        {
+          "cant": 1,
+          "cm": 600,
+          "et": "Ranuras (frente) – total"
+        }
+      ]
+    },
+    {
+      "perfil": "t12",
+      "piezas": [
+        {
+          "cant": 1,
+          "cm": 600,
+          "et": "Ranuras (atrás) – total"
+        },
+        {
+          "cant": 1,
+          "cm": 390,
+          "et": "Vitral largo – total"
+        }
+      ]
+    },
+    {
+      "perfil": "marco10",
+      "piezas": [
+        {
+          "cant": 1,
+          "cm": 500,
+          "et": "Marco"
+        }
+      ]
+    }
+  ],
+  "dificultad": "Complicado",
+  "estado": "listo",
+  "fotos": [
+    {
+      "id": "30dea10c4fe892b9ef850a14a124c9f7",
+      "url": "/_blob/30dea10c4fe892b9ef850a14a124c9f7"
+    },
+    {
+      "id": "2bfc1eb89d6e4304b489ce24d0ecc703",
+      "url": "/_blob/2bfc1eb89d6e4304b489ce24d0ecc703"
+    }
+  ],
+  "lamina": "lam14",
+  "laminas": [
+    {
+      "a": 61.5,
+      "cant": 1,
+      "h": 179
+    }
+  ],
+  "manillon": true,
+  "manillonCant": 1,
+  "medida": "2 x 1 m",
+  "nombre": "Vitral",
+  "notas": "Panel de lámina con 5 ranuras horizontales con vidrio y franja vertical de vidrio al lado. Manillón incluido.\nPendiente: desglosar la platina (6 m) y el tubo 1/2\" (6 m + 3,90 m) pieza por pieza.",
+  "precioActual": 320,
+  "rend": {
+    "carton": 3,
+    "disco7": 3,
+    "esmalte": 3,
+    "fondo": 3,
+    "masilla": 3,
+    "thinner": 3
+  },
+  "tipo": "Puerta",
+  "vidrio": "vid5",
+  "vidrios": [
+    {
+      "a": 184,
+      "cant": 1,
+      "h": 10
+    },
+    {
+      "a": 50,
+      "cant": 5,
+      "h": 4
+    }
+  ]
+}
