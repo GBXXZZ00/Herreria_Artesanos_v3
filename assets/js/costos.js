@@ -335,7 +335,7 @@
       $('formTitulo').textContent = 'Reglas';
       h = `<div class="input-row">${campo('rIva', 'IVA (%)', R.iva)}${campo('rGan', 'Ganancia (%)', R.ganancia)}</div>
         <div class="input-row">${campo('rCorte', 'Grosor del corte (cm)', R.corte, 'Lo que se come el disco en cada corte.')}${campo('rDesp', 'Despunte (cm)', R.despunte, 'Lo que se bota de la punta de cada barra.')}</div>
-        ${campo('rPuertas', 'Puertas al mes (respaldo)', R.puertasMes, 'Entre cuántas puertas se reparten los gastos fijos.')}
+        ${campo('rPuertas', 'Puertas al mes', R.puertasMes, 'Se pone solo al cerrar el mes con las puertas vendidas; si no hubo ventas, 25. Puedes cambiarlo.')}
         <div class="caja-nota"><span>Gastos fijos ${dinero(R.gastosMes)} al mes</span>Se cambian en <a href="finanzas.html?tab=gastos" style="color:var(--accent);font-weight:800">Finanzas › Gastos</a>. Aquí se reparten: ${dinero(R.gastosMes)} ÷ ${R.puertasMes} = ${dinero(R.gastosMes / R.puertasMes)} por puerta.</div>`;
       boton = 'Guardar reglas';
     }

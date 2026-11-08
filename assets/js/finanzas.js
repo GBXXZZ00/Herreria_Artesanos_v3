@@ -232,7 +232,7 @@
     const otros = pagos.filter(m => !D.gastosFijos.some(g => g.cat === m.cat));
     if(otros.length) h += '<div class="tit">Otros gastos</div>' + otros.map(m => `<button class="gasto" type="button" data-mov="${m.id}" style="width:100%;text-align:left"><div class="cg-nom">${esc(m.cat)}<span>${esc((cta(m.cuenta) || {}).nombre || '')} · ${fecha(m.fecha)}</span></div><div style="font-weight:800">${dinero(m.llego || m.salio)}</div><span></span></button>`).join('');
     h += '<div class="tit">Taller y comisiones del mes</div>' + reporte([['Nómina pagada', -nom], ['Vales (adelantos)', -vales], ['Comisión y cambio', -comis]], 'Total', -(nom + vales + comis));
-    h += `<div class="caja-nota"><span>Conexión con Costos</span>Los gastos fijos solo se cambian aquí. Costos los lee y los reparte entre las puertas del mes (regla en Costos › Precios › Reglas).</div>`;
+    h += `<div class="caja-nota"><span>Conexión con Costos</span>Los gastos fijos solo se cambian aquí. Costos los reparte entre las puertas vendidas el mes anterior: se pone solo al cerrar el mes (si no hubo ventas, 25). El flete que pagues en una compra es gasto real del mes y el cierre lo compara con lo previsto.</div>`;
     h += '<button class="btn-secondary" type="button" data-pdf-gastos style="width:100%;margin-top:12px">Gastos del mes en PDF</button>';
     if(ancho.matches) h += '<button class="btn-nuevo" type="button" data-nuevo-gasto>+ Registrar gasto</button>';
     return h;

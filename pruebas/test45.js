@@ -42,6 +42,11 @@ function ruta(quien,rpcs,D){
       if(name==='pago_confirmar_y_ubicar') return j({id:7,estado:'confirmado',produccion:true,ubicado:true});
       if(name==='mes_datos') return j({cerrado:false,datos:{mes:'2026-10',entro:[['Pagos de clientes · Zelle',400]],salio:[['Gasto · Alquiler',-800],['Nómina',-80],['Comisión y cambio',-70]],compras:[['Inversiones Torniplemaca',1674.5]],vendido:320,costo:223.22,sinCosto:0,nSin:0,puertas:1,gastoTot:950,fijosPrev:915,pagadoFijo:[{cat:'Alquiler',prev:800,pagado:800},{cat:'Internet',prev:30,pagado:0}],porModelo:[['Modelo bitral × 1',60.18]],cuentas:[['Zelle de Ray',2450]],proveedores:[['Inversiones Torniplemaca',-1674.5]],ajustes:1}});
       if(name==='compras_en_camino')return j({grupos:[{grupo:41,fecha:new Date().toISOString(),total:35.06,lugares:[{id:41,proveedor_id:1,proveedor:'Colores y Ambiente',iva:true,total:15.06,lineas:[{material_id:1,cantidad:4,precio:12.98,n:'Tubo',pres:'barra'}]}],gastos:[]}],proveedores:[],cuentas:[],consumibles:[],fab:[]});
+      if(name==='cierre_datos') return j({mes:a.p_mes,cerrado:false,primero:true,en_camino:1,puertas:3,
+        cuentas:[{id:1,nombre:'Zelle de Ray',moneda:'USD',saldo:2389,hecho:null},{id:2,nombre:'Bolívares',moneda:'VES',saldo:100,hecho:{dato:{app:100,real:100}}}],
+        proveedores:[{id:10,nombre:'Inversiones Torniplemaca',saldo:-1674.5,inicio:0,compras:1674.5,pagos:0,hecho:null}],
+        deposito:{hecho:null,fab:[{id:1,nombre:'Tubo 1" x 3"',pres:'barra',stock:8,retazos:1}]}});
+      if(name==='cierre_paso') return j({ok:true});
       if(name==='mes_cerrar') return j({mes:a.p_mes});
       if(name==='costeo_resumen') return j({'7':{modelo:'Modelo bitral',costo:223.22,final:326.79,fijos:36.6,pct:26.9599,listo:true,estado:'listo',falta:[]},'4':{modelo:'Lineal Economico',costo:0,final:0,pct:0,listo:false,estado:'borrador',falta:['cortes']}});
       if(name==='gasto_fijo_guardar') return j({id:a.p.id||9});
@@ -88,6 +93,31 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   await p.click('[data-mes-todos]');await w();
   ok('Todos los meses en una hoja',(await p.$$('#detBody [data-mes]')).length>=1);
   await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.toggle('open',false));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.toggle('open',false));});
+  // Lista del cierre (lote 6)
+  await p.waitForSelector('[data-cierre-paso="cuentas"]',{timeout:8000}).catch(()=>{});
+  let lc=await p.textContent('#cont');
+  ok('Cierre: lista de 4 pasos y el primero es el arranque',lc.includes('Primer cierre: es el arranque')&&lc.includes('1 · Cuentas y su saldo')&&lc.includes('2 · Contar el Depósito')&&lc.includes('3 · Cuadrar proveedores')&&lc.includes('4 · Revisar el mes y cerrar'));
+  ok('Cierre: cuentas 1 de 2, avisa compras en camino y el reparto por 3 puertas',lc.includes('1 de 2')&&lc.includes('en camino')&&lc.includes('las 3 puertas vendidas'));
+  await p.screenshot({path:'shots4/t45-3-cierre.png'});
+  await p.click('[data-cierre-paso="cuentas"]');await p.waitForSelector('#sheetDet.open');await w();
+  ok('Paso 1: crear cuentas en el arranque',!!(await p.$('#detBody [data-nueva-cuenta]')));
+  await p.fill('#cq_1','2400');await p.fill('#cm_1','Comisión del banco');await p.click('[data-cq-ok="1"]');await w(900);
+  ok('Paso 1: lo que dice el banco con motivo',JSON.stringify(ultimo(rpcs,'cierre_paso'))===JSON.stringify({p_mes:ant+'-01',p_paso:'cuenta',p_ref:1,p:{saldo:2400,motivo:'Comisión del banco'}}),ultimo(rpcs,'cierre_paso'));
+  await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.remove('open'));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.remove('open'));});
+  await p.click('[data-cierre-paso="proveedores"]');await p.waitForSelector('#sheetDet.open');await w();
+  await p.click('[data-cie-prov="10"]');await w();
+  ok('Cuadrar Torniplemaca: la app dice que le debes $1,674.50',(await p.textContent('#detBody')).includes('La app dice que le debes')&&(await p.textContent('#detBody')).includes('$1,674.50'));
+  await p.fill('#cpv','1700');await w();
+  ok('Sale la diferencia de $25.50',(await p.textContent('#cpvDif')).includes('$25.50'));
+  await p.click('[data-cpv-ok]');await w(300);
+  ok('Sin motivo no cuadra',await p.$eval('#c_cpvm',x=>x.classList.contains('invalid')));
+  await p.fill('#cpvm','Nota 00-2901 sin cargar');await p.click('[data-cpv-ok]');await w(900);
+  ok('Cuadrar proveedor con motivo',JSON.stringify(ultimo(rpcs,'cierre_paso').p)===JSON.stringify({debo:1700,motivo:'Nota 00-2901 sin cargar'}));
+  await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.remove('open'));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.remove('open'));});
+  await p.click('[data-cierre-paso="deposito"]');await p.waitForSelector('#sheetDet.open');await w();
+  await p.fill('#cd_1','7');await p.click('[data-cd-ok]');await w(900);
+  ok('Contar el Depósito usa el conteo',JSON.stringify(ultimo(rpcs,'cierre_paso'))===JSON.stringify({p_mes:ant+'-01',p_paso:'deposito',p_ref:null,p:{conteo:[{material_id:1,contado:7}]}}));
+  await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.remove('open'));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.remove('open'));});
   await p.click('[data-cerrar-mes]');await w(800);
   ok('Cerrar el mes llama a mes_cerrar con el primer día',JSON.stringify(ultimo(rpcs,'mes_cerrar'))===JSON.stringify({p_mes:ant+'-01'}));
   await p.click('[data-pdf-mes]');await w(2500);
