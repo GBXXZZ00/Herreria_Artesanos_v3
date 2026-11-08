@@ -26,6 +26,7 @@
   async function cargar(){
     D = await rpc('deposito_fab_datos');
     NEC = {};
+    if(window.COMPRA) await window.COMPRA.cargar().catch(() => {});
     if(window.CORTE){ try{ NEC = await window.CORTE.necesita(); } catch(e){ NEC = {}; } }
   }
   function asegurar(pintarFn){
@@ -35,6 +36,7 @@
     return false;
   }
   async function recargar(){ await cargar(); const t = window.Deposito && window.Deposito.tab; if(t === 'fab') pintarFab(); else if(t === 'compras') pintarCompras(); }
+  if(window.COMPRA) window.COMPRA.alCambiar(() => { if(D) recargar().catch(() => {}); });
 
   // ================= Fabricación: lo que hay, por tubo =================
   const retazosHtml = (f) => (f.retazos || []).length ? `<span class="ret-l">${f.retazos.map(r => `<span class="ret-c">${r.ancho ? r.largo + ' × ' + r.ancho : r.largo} cm</span>`).join('')}</span>` : '';
@@ -49,6 +51,8 @@
       <div class="res-c"><span>Barras y retazos</span><b>${esc(barras)} · ${esc(rets)}</b></div></div>`;
     if(falta) h += `<a class="caja-amar" style="display:block;text-decoration:none;margin:0 0 12px" href="costos.html?tab=semana&para=${esc(sab)}">Faltan ${plural(falta, '1 barra u hoja', 'barras u hojas')} para lo asignado al ${esc(sabTxt(sab))}. Ver el plan de corte y qué comprar →</a>`;
     if(D.conteo){ const n = (D.conteo.diferencias || []).length; h += `<div class="${n ? 'caja-rara' : 'caja-ok'}" style="margin:0 0 12px">Último conteo: ${fecha(D.conteo.fecha)} · ${esc(D.conteo.por)}. ${n ? plural(n, '1 diferencia', 'diferencias') + ': ' + D.conteo.diferencias.map(x => `${esc(x.nombre)} decía ${x.antes}, había ${x.contado}`).join('. ') : 'Todo cuadró.'}</div>`; }
+    const camino = window.COMPRA ? window.COMPRA.tarjetasHtml({ titulo:'En camino: compra' }) : '';
+    if(camino) h += camino + '<p class="mat-s" style="margin:-4px 2px 12px">Lo que está en camino no se puede cortar ni entregar hasta confirmar que llegó.</p>';
     if(!D.fab.length) h += '<p class="mat-s" style="margin:8px 2px">Todavía no hay material de fabricación.</p>';
     [['hierro', 'Tubos, platinas y marcos'], ['laminas', 'Láminas'], ['vidrio', 'Vidrio'], ['aluminio', 'Aluminio']].forEach(([t, tit]) => {
       const L = D.fab.filter(f => f.tipo === t && f.activo); if(!L.length) return;
@@ -60,7 +64,7 @@
           <span class="mat-ico fab">${esc(ini(f.nombre))}</span>
           <span style="min-width:0"><span class="mat-t">${esc(f.nombre)}</span>
             <span class="mat-s">${esc(med)}${x && f.pres === 'barra' && x.usa ? ' · el ' + esc(sabTxt(sab)) + ' usa ' + x.usa : ''}${fp && fp.falta ? ' · próximo sáb faltan ' + fp.falta : ''} ${pill}</span>
-            ${retazosHtml(f)}</span>
+            ${retazosHtml(f)}${window.COMPRA && window.COMPRA.enCamino(f.id) ? `<span class="cp-chip">+${window.COMPRA.enCamino(f.id)} en camino</span>` : ''}</span>
           <span class="mat-n"><b>${esc(f.stock)}</b><span>${f.pres === 'barra' ? (f.stock === 1 ? 'barra' : 'barras') : (f.stock === 1 ? 'hoja' : 'hojas')}</span></span>
         </button>`; }).join('') + '</div>';
     });

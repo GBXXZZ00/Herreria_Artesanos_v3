@@ -53,6 +53,7 @@
     const { data, error } = await db.rpc('finanzas_datos');
     if(error) throw error;
     D = data;
+    if(window.COMPRA) await window.COMPRA.cargar().catch(() => {});
     // Lo que sigue es extra: si falla, Finanzas igual funciona
     const ini0 = mesActual() + '-01';
     const [rc, rp, rv] = await Promise.all([
@@ -71,6 +72,7 @@
     if(VENTAS_MES.length){ const rr = await Promise.resolve(db.rpc('costeo_resumen')).catch(() => ({})); COSTOS = (rr && !rr.error && rr.data) || null; }
   }
   async function recargar(){ try{ await cargar(); pintar(); pintarDetalle(); } catch(e){ toast(errTxt(e), 'error'); } }
+  if(window.COMPRA) window.COMPRA.alCambiar(() => recargar());
 
   function saldoTxt(s){
     if(s > 0.005) return { cls:'s-favor', t:'a tu favor', corto:'A tu favor' };
@@ -126,7 +128,8 @@
   }
   function secDinero(){
     const r = resumen(), ub = porUbicar(), sal = salidasPorUbicar(), pc = D.porCobrar || [], pc0 = D.porConfirmar;
-    let h = '';
+    let h = window.COMPRA ? window.COMPRA.tarjetasHtml({ titulo:'Salida por confirmar' }) : '';
+    if(h) h += '<p class="mat-s" style="margin:-4px 2px 12px">Lo amarillo no se resta todavía: cuando llegue, toca ¿Llegó? y di cómo se pagó.</p>';
     if(pc0.length){
       const tot = pc0.reduce((x, a) => x + Number(a.monto), 0), nv = gruposConfirmar().length;
       h += `<button class="ub conf" type="button" data-lista-confirmar style="margin-bottom:14px"><span class="grow"><b>${pc0.length === 1 ? '1 pago por confirmar' : pc0.length + ' pagos por confirmar'}</b><small>${nv === 1 ? '1 venta' : nv + ' ventas'} · toca para revisarlos uno tras otro</small></span><span class="m">${dinero(tot)}</span>${CHEV}</button>`;
@@ -261,7 +264,7 @@
     const precios = EXTRA.precios.filter(x => String(x.proveedor_id) === String(id));
     const mat = (mid) => EXTRA.materiales.find(m => m.id === mid) || {};
     const ajustes = movs.filter(m => m.tipo === 'ajuste');
-    const body = `<div class="grande ${s > 0.005 ? 'favor' : s < -0.005 ? 'debe' : ''}"><span>${st.corto}</span><b>${dinero(Math.abs(s))}</b>
+    const body = (window.COMPRA ? window.COMPRA.tarjetasHtml({ proveedor:id, titulo:'En camino' }) : '') + `<div class="grande ${s > 0.005 ? 'favor' : s < -0.005 ? 'debe' : ''}"><span>${st.corto}</span><b>${dinero(Math.abs(s))}</b>
         <p>${s > 0.005 ? 'Le transferiste de más. Se descuenta solo en la próxima compra.' : s < -0.005 ? 'Compraste más de lo que le has transferido.' : 'No le debes nada y no tienes saldo a favor.'}</p></div>
       <div class="d-datos">
         <div class="d-dato"><span>RIF</span><b>${esc(p.rif || 'Sin RIF')}</b></div>

@@ -37,7 +37,7 @@
   const pill = (s) => `<span class="pill ${s[0]}">${esc(s[1])}</span>`;
   const fichaAbierta = () => $('sheetFicha').classList.contains('open');
 
-  async function recargar(){ await X.cargar(); if(prov == null) prov = D().prov; if(window.CORTE) await window.CORTE.cargar().catch(() => {}); pintar(); if(sel != null && fichaAbierta()) pintarFicha(); }
+  async function recargar(){ await X.cargar(); if(prov == null) prov = D().prov; if(window.CORTE) await window.CORTE.cargar().catch(() => {}); if(window.COMPRA) await window.COMPRA.cargar().catch(() => {}); pintar(); if(sel != null && fichaAbierta()) pintarFicha(); }
   // Guarda y vuelve a cargar todo; avisa si falla (sin señal o regla de la base)
   async function hacer(fn, ok){
     if(ocupado) return false; ocupado = true;
@@ -567,7 +567,7 @@
     if(!perfil) return;
     if(!perfil.confirma_abonos){ $('cont').innerHTML = '<div class="caja-amar" style="margin:16px 0">Costos es solo para Ray o Gualfredo.</div>'; $('filtros').classList.add('hidden'); return; }
     $('cont').innerHTML = '<p class="mat-s" style="margin:24px 2px">Cargando…</p>';
-    try{ await X.cargar(); prov = D().prov; if(window.CORTE) await window.CORTE.cargar(); }
+    try{ await X.cargar(); prov = D().prov; if(window.CORTE) await window.CORTE.cargar(); if(window.COMPRA) await window.COMPRA.cargar().catch(() => {}); if(window.COMPRA) window.COMPRA.alCambiar(() => recargar().catch(() => {})); }
     catch(e){ $('cont').innerHTML = `<div class="caja-amar" style="margin:16px 0">${esc(errTxt(e))}</div><button class="btn-secondary" type="button" data-recargar style="width:100%">Reintentar</button>`; document.addEventListener('click', (ev) => { if(ev.target.closest('[data-recargar]')) location.reload(); }); return; }
     pintar();
     const mq = q.get('modelo'); if(mq){ const id = isNaN(+mq) ? mq : +mq; if(modelo(id)) abrirFicha(id); }

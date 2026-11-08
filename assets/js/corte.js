@@ -105,13 +105,14 @@
     const iva = 1 + D().reglas.iva / 100, mats = {}, cm = {};
     Object.entries(piezasDe(conPlan)).forEach(([mid, pz]) => { cm[mid] = pz.reduce((a, p) => a + p.cm, 0); });
     barras.forEach(b => { const m = (mats[b.mid] ||= { f:fabDe(b.mid), barras:0, retazos:[], cm:cm[b.mid] || 0 }); if(b.tipo === 'barra') m.barras++; else m.retazos.push(b); });
-    const compras = Object.values(mats).filter(m => m.f).map(m => { const pr = X().precioFab(m.f, String(prov)), comprar = Math.max(0, m.barras - m.f.stock); return Object.assign(m, { comprar, precio:(pr.p || 0) * iva, costo:comprar * (pr.p || 0) * iva, de:pr.de }); });
+    const camino = (mid) => window.COMPRA && window.COMPRA.datos ? window.COMPRA.enCamino(mid) : 0;
+    const compras = Object.values(mats).filter(m => m.f).map(m => { const pr = X().precioFab(m.f, String(prov)), comprar = Math.max(0, m.barras - m.f.stock - camino(m.f.id)); m.camino = camino(m.f.id); return Object.assign(m, { comprar, precio:(pr.p || 0) * iva, costo:comprar * (pr.p || 0) * iva, de:pr.de }); });
     // Lámina y vidrio: la lámina se acomoda en la hoja; el vidrio se compra cortado (lista de piezas)
     const porHoja = {}; conPlan.forEach(u => (D().costeo[u.mid].hojas || []).forEach(([mid, n, a, h]) => { for(let i = 0; i < n; i++) (porHoja[mid] ||= []).push({ a:Number(a), h:Number(h), etq:u.etq, color:u.color }); }));
     const hj = Object.entries(porHoja).map(([mid, pz]) => { const f = fabDe(mid); if(!f || !f.hoja) return null; const hm2 = f.hoja[0] * f.hoja[1] / 10000, m2 = pz.reduce((a, p) => a + p.a * p.h / 10000, 0);
       if(f.tipo === 'vidrio'){ const g = {}; pz.forEach(p => { const k = Math.max(p.a, p.h) + ' × ' + Math.min(p.a, p.h); g[k] = (g[k] || 0) + 1; }); return { f, vidrio:true, m2, piezas:pz.length, lista:Object.entries(g).map(([k, n]) => ({ k, n })), comprar:pz.length }; }
       const acom = acomodarHoja(pz, f), sob = (f.sobrantes || []).reduce((a, s2) => a + s2[0] * s2[1] / 10000, 0);
-      return { f, m2, hojas:m2 / hm2, sobrante:sob, acom, comprar:Math.max(0, acom.length - f.stock) }; }).filter(Boolean);
+      return { f, m2, hojas:m2 / hm2, sobrante:sob, acom, camino:camino(f.id), comprar:Math.max(0, acom.length - f.stock - camino(f.id)) }; }).filter(Boolean);
     const herreros = [...new Set(asign.map(u => u.tid))].map(tid => ({ tid, nombre:(asign.find(u => u.tid === tid) || {}).herrero || 'Herrero', barras:barras.filter(b => b.tid === tid), unidades:asign.filter(u => u.tid === tid),
       entregado:!!(guardado && guardado.entregado && guardado.entregado[tid]) }));
     let solas = 0; conPlan.forEach(u => Object.entries(piezasDe([u])).forEach(([mid, pz]) => { const f = fabDe(mid); if(f) solas += X().empacar(pz, f.largo, reglas().corte).length; }));
@@ -161,6 +162,7 @@
     const P = PA = planSemana(semSab);
     $('subtitulo').textContent = 'Plan del ' + sabTxt(semSab);
     let h = `<div class="fi-opc" style="margin-bottom:10px">${[SAB.este, SAB.proximo].map(v => `<button class="fx ${v === semSab ? 'on' : ''}" type="button" data-sab="${v}">${esc(sabTxt(v))}</button>`).join('')}</div>`;
+    if(window.COMPRA && window.COMPRA.datos) h += window.COMPRA.tarjetasHtml({ titulo:'Compra pedida' });
     if(P.aviso) h += `<div class="caja-rara">${esc(P.aviso)}. Cuando haya barras, márcalo a mano abajo.</div>`;
     if(P.cambio) h += `<div class="caja-amar">Cambió lo asignado en Producción o las piezas de un modelo. La app volvió a sugerir. Revísalo y acéptalo de nuevo.</div>`;
     if(P.cerrado) h += `<div class="caja-ok">Cortes de este sábado hechos. Las barras bajaron del Depósito y los retazos quedaron guardados. Si algo salió distinto, toca el material y "Corregir corte".</div>`;
@@ -183,7 +185,7 @@
       h += paso(2, 'Material', 'necesitas · hay · comprar');
       h += `<div class="pc-tabla"><div class="pc-fila pc-cab"><span></span><span>Necesitas</span><span>Hay</span><span>Comprar</span></div>`;
       h += P.compras.map(m => { const vivos = (m.f.retazos || []).length;
-        return `<button class="pc-fila" type="button" data-cmat="${m.f.id}"><b>${esc(m.f.nombre)}</b><span>${mTxt(m.cm)}</span><span>${!Number(m.f.stock) && !vivos ? 'nada' : (Number(m.f.stock) ? plural(Number(m.f.stock), '1 barra', 'barras') : '') + (Number(m.f.stock) && vivos ? ' + ' : '') + (vivos ? plural(vivos, '1 retazo', 'retazos') : '')}</span><span class="${m.comprar ? 'rojo' : 'ok'}">${m.comprar}</span></button>`; }).join('');
+        return `<button class="pc-fila" type="button" data-cmat="${m.f.id}"><b>${esc(m.f.nombre)}</b><span>${mTxt(m.cm)}</span><span>${!Number(m.f.stock) && !vivos ? 'nada' : (Number(m.f.stock) ? plural(Number(m.f.stock), '1 barra', 'barras') : '') + (Number(m.f.stock) && vivos ? ' + ' : '') + (vivos ? plural(vivos, '1 retazo', 'retazos') : '')}${m.camino ? `<i class="cp-chip">+${m.camino} en camino</i>` : ''}</span><span class="${m.comprar ? 'rojo' : 'ok'}">${m.comprar}</span></button>`; }).join('');
       h += P.hj.map(x => x.vidrio
         ? `<button class="pc-fila" type="button" data-cmat="${x.f.id}"><b>${esc(x.f.nombre)}</b><span>${plural(x.piezas, '1 pieza', 'piezas')}</span><span>se compra cortado</span><span class="rojo">${x.comprar}</span></button>`
         : `<button class="pc-fila" type="button" data-cmat="${x.f.id}"><b>${esc(x.f.nombre)}</b><span>${num(x.hojas, 2)} hoja</span><span>${Number(x.f.stock) ? plural(Number(x.f.stock), '1 hoja', 'hojas') : 'nada'}</span><span class="${x.comprar ? 'rojo' : 'ok'}">${x.comprar ? plural(x.comprar, '1 hoja', 'hojas') : 0}</span></button>`).join('');
