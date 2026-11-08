@@ -60,7 +60,7 @@
   const minRet = (b) => Number(b.minimo) || 50;
   const etqBarra = (b) => b.tipo === 'retazo' ? 'Retazo' + (b.num ? ' R-' + b.num : '') + ' · ' + mTxt(b.largo) : 'Barra ' + (b.n || '') + (b.comprar ? ' (nueva)' : '');
   function hojaCorteHtml(){
-    return hojasCorte.filter(h => !h.cortado && ((h.barras || []).length || (h.manual || []).length)).map((h, hi) => {
+    return hojasCorte.filter(h => !h.cortado && ((h.barras || []).length || (h.manual || []).length || (h.extras_mano || []).length)).map((h, hi) => {
       const porMat = {}; (h.barras || []).forEach(b => (porMat[b.material || 'Material'] ||= []).push(b));
       const nb = (h.barras || []).length, puertas = {};
       (h.barras || []).forEach(b => (b.piezas || []).forEach(x => { if(x.etq && !puertas[x.etq]) puertas[x.etq] = x.color || '#6F7C7E'; }));
@@ -73,17 +73,19 @@
           <span>${(b.piezas || []).map(x => `${x.cm} · ${esc(x.etq || '')}`).join('<br>')}${Number(b.libre) >= minRet(b) ? '<br><b>Guarda el retazo de ' + mTxt(b.libre) + '</b>' : ''}</span></div>`).join('')}`).join('')}
         ${(h.pasar || []).length ? `<div class="tj-corte-m">Pásale a tu compañero</div>${h.pasar.map(x => `<div class="tj-corte-b"><span>${x.cm} cm · ${esc(x.etq || '')} → ${esc(x.a || '')}</span></div>`).join('')}` : ''}
         ${(h.manual || []).map(u => `<div class="tj-corte-m">N° ${esc(u.venta)} · ${esc(u.nombre)}</div><div class="tj-corte-b"><span>Este modelo no tiene plan. Córtalo como siempre.</span></div>`).join('')}
+        ${(h.extras_mano || []).map(x => `<div class="tj-corte-m">${esc(x.etq || '')}</div><div class="tj-corte-b"><span>${esc(x.extra || 'Extra')}: no tiene plan. Córtalo como siempre.</span></div>`).join('')}
       </details>`; }).join('');
   }
   // PDF de la hoja de corte (mismo diseño del PDF de la venta)
   async function pdfHojaCorte(i){
-    const h = hojasCorte.filter(x => !x.cortado && ((x.barras || []).length || (x.manual || []).length))[i]; if(!h || !window.PDFR) return;
+    const h = hojasCorte.filter(x => !x.cortado && ((x.barras || []).length || (x.manual || []).length || (x.extras_mano || []).length))[i]; if(!h || !window.PDFR) return;
     const bloques = [{ t:'nota', texto:'Corta primero los retazos. Medidas de las piezas en cm. Guarda los retazos que dice cada barra.' }];
     const porMat = {}; (h.barras || []).forEach(b => (porMat[b.material || 'Material'] ||= []).push(b));
     Object.entries(porMat).forEach(([mat, bs]) => { bloques.push({ t:'titulo', texto:mat });
       bs.forEach(b => bloques.push({ t:'barra', etiqueta:etqBarra(b), der:'sobra ' + mTxt(b.libre) + (Number(b.libre) >= minRet(b) ? ' · guardar' : ''), largo:Number(b.largo), sobra:Number(b.libre), piezas:(b.piezas || []).map(x => ({ cm:x.cm, txt:'(' + (x.etq || '') + ')' })) })); });
     if((h.pasar || []).length){ bloques.push({ t:'titulo', texto:'Pásale a tu compañero' }); h.pasar.forEach(x => bloques.push({ t:'fila', a:x.cm + ' cm · ' + (x.etq || ''), b:x.a || '' })); }
-    if((h.manual || []).length){ bloques.push({ t:'titulo', texto:'Sin plan: cortar a mano' }); h.manual.forEach(u => bloques.push({ t:'fila', a:'N° ' + u.venta + ' · ' + u.nombre, b:'a mano' })); }
+    if((h.manual || []).length || (h.extras_mano || []).length){ bloques.push({ t:'titulo', texto:'Sin plan: cortar a mano' }); (h.manual || []).forEach(u => bloques.push({ t:'fila', a:'N° ' + u.venta + ' · ' + u.nombre, b:'a mano' }));
+      (h.extras_mano || []).forEach(x => bloques.push({ t:'fila', a:(x.etq || '') + ' · ' + (x.extra || 'Extra'), b:'a mano' })); }
     try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear({ titulo:'Hoja de corte', derecha:window.AH.sabadoCorto(h.sab), subtitulo:'Para el ' + window.AH.sabadoCorto(h.sab) + '.', bloques });
       const r = await window.PDFR.compartir(blob, 'Hoja-de-corte-' + h.sab + '.pdf'); if(r === 'descargado') toast('PDF listo'); }
     catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }

@@ -144,7 +144,7 @@
       partes.push(`Modelo ${dinero(total)}`);
     }
     const b = base(modelo);
-    if(s.manillon && s.manillon !== 'Sin' && !b.manillon){ total += PRECIO_MANILLON; partes.push(`manillón ${dinero(PRECIO_MANILLON)}`); }
+    if(s.manillon && s.manillon !== 'Sin' && !b.manillon){ const pm = precioManillon(modelo); total += pm; partes.push(`manillón ${dinero(pm)}`); }
     if(prod.tipo === 'Combo' && s.aluminio === 'Ecobel'){ total += ECOBEL_COMBO; partes.push(`Ecobel ${dinero(ECOBEL_COMBO)}`); }
     if(pideMontoProteccion(prod, modelo)){
       const x = montoOrNull(prod.extraProteccion) || 0;
@@ -246,7 +246,8 @@
     esq.grupos.filter(g => dependeDeExtra(g) && grupoActivo(g, s) && !g.zona).forEach(g => { html += grupoHtml(prod, g, false, ver); });
     // El precio de la protección y del marco decorativo sale de Costos (extras del modelo); se puede cambiar
     const deCostos = (k) => { const e = modelo && EXTRAS && EXTRAS[modelo.id]; return e && e[k] != null ? Number(e[k]) : null; };
-    const pista = (v) => v != null ? `<div class="field-hint">Sale de Costos: ${dinero(v)}. Puedes cambiarlo.</div>` : '';
+    // Sin precio en Costos: se vende igual, la vendedora escribe el monto y Ray recibe el aviso de cargar sus cortes
+    const pista = (v) => v != null ? `<div class="field-hint">Sale de Costos: ${dinero(v)}. Puedes cambiarlo.</div>` : (modelo && EXTRAS ? '<div class="field-hint" style="color:var(--amber)">Sin costear en Costos: escribe el monto.</div>' : '');
     const sugProt = deCostos('proteccion'), sugMarco = deCostos('marco_decorativo');
     if(sugProt != null && !prod.extraProteccion && pideMontoProteccion(prod, modelo)) prod.extraProteccion = String(sugProt);
     if(sugMarco != null && !prod.extraMarco && pideMontoMarco(prod, modelo)) prod.extraMarco = String(sugMarco);
@@ -307,6 +308,8 @@
 
   // Precios sugeridos de los extras por modelo (Costos). Se cargan una vez; si falla, se escribe a mano como siempre.
   let EXTRAS = null;
+  // Manillón: el precio de Costos si el modelo lo tiene; si no, el de siempre
+  function precioManillon(modelo){ const e = modelo && EXTRAS && EXTRAS[modelo.id]; return e && Number(e.manillon) > 0 ? Number(e.manillon) : PRECIO_MANILLON; }
   if(window.db && window.db.rpc) Promise.resolve(window.db.rpc('extras_precios')).then(r => { EXTRAS = (r && !r.error && r.data) || {}; }).catch(() => { EXTRAS = {}; });
   window.SpecsProducto = { TARIFA_VENTANA, PRECIO_MANILLON, ECOBEL_COMBO, calcular, pideMontoProteccion, pideMontoMarco, esSoloProt, montosFaltan, montosEsp, optsHtml, optsCuerpo, specsHtml, tocar, escribir, faltaEnModelo, faltanEn, guardarAtajoMedidas };
 })();

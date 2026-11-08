@@ -139,3 +139,10 @@ Primero: Ray o Gualfredo agregan sus cuentas (Finanzas › Dinero › "+ Agregar
   - [ ] La vendedora de madera entra a Producción y también puede marcar los pasos de madera. La de hierro solo mira.
   - [ ] Nómina, carpintero: al terminar Estructura sale la mitad del monto; Armado y Pintura dicen "Va en el pago de la puerta"; al terminar Ensamblado sale el resto. El botón de pagarle lo tienes tú, no Ray.
   - [ ] Ayuda: en Producción, Ventas, Nueva venta, Categorías de pago y Usuarios ya explica todo esto con sus fotos.
+- 8 nov (v79, lote 7): **Extras de punta a punta.**
+  - [ ] Costos › un modelo › Extras › + Extra › Protección: "+ Pieza" o "Copiar de otro modelo". Sale cuánto cuesta (cortes + $25 hierro + $25 masilla de la categoría) y cuánto se cobra.
+  - [ ] Manillón: no pide cortes, solo cuánto cuesta. Prueba "Oculto": la vendedora no ve su precio.
+  - [ ] Catálogo: un modelo con Protección tildada. En Costos su costo suma la protección (o dice "falta cortes de la protección").
+  - [ ] Nueva venta: puerta con protección de un modelo costeado: el monto sale solo ("Sale de Costos"). Sin costear: dice "Sin costear en Costos: escribe el monto" y deja vender.
+  - [ ] Esa venta en fabricación: Inicio dice "Hay N extras vendidos sin costear"; Costos › Modelos tiene el grupo "Extras vendidos sin costear" con "Cargar cortes".
+  - [ ] Plan de corte: la protección con cortes entra al plan. Sin cortes sale "Protección del N° ... sin cortes" con Cargar cortes y Cortar a mano; el herrero ve en Mi trabajo "córtalo como siempre".
