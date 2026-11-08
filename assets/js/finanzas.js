@@ -53,6 +53,7 @@
     const { data, error } = await db.rpc('finanzas_datos');
     if(error) throw error;
     D = data;
+    if(window.COMPRA) await window.COMPRA.cargar().catch(() => {});
     // Lo que sigue es extra: si falla, Finanzas igual funciona
     const ini0 = mesActual() + '-01';
     const [rc, rp, rv] = await Promise.all([
@@ -71,6 +72,7 @@
     if(VENTAS_MES.length){ const rr = await Promise.resolve(db.rpc('costeo_resumen')).catch(() => ({})); COSTOS = (rr && !rr.error && rr.data) || null; }
   }
   async function recargar(){ try{ await cargar(); pintar(); pintarDetalle(); } catch(e){ toast(errTxt(e), 'error'); } }
+  if(window.COMPRA) window.COMPRA.alCambiar(() => recargar());
 
   function saldoTxt(s){
     if(s > 0.005) return { cls:'s-favor', t:'a tu favor', corto:'A tu favor' };
@@ -126,7 +128,8 @@
   }
   function secDinero(){
     const r = resumen(), ub = porUbicar(), sal = salidasPorUbicar(), pc = D.porCobrar || [], pc0 = D.porConfirmar;
-    let h = '';
+    let h = window.COMPRA ? window.COMPRA.tarjetasHtml({ titulo:'Salida por confirmar' }) : '';
+    if(h) h += '<p class="mat-s" style="margin:-4px 2px 12px">Lo amarillo no se resta todavía: cuando llegue, toca ¿Llegó? y di cómo se pagó.</p>';
     if(pc0.length){
       const tot = pc0.reduce((x, a) => x + Number(a.monto), 0), nv = gruposConfirmar().length;
       h += `<button class="ub conf" type="button" data-lista-confirmar style="margin-bottom:14px"><span class="grow"><b>${pc0.length === 1 ? '1 pago por confirmar' : pc0.length + ' pagos por confirmar'}</b><small>${nv === 1 ? '1 venta' : nv + ' ventas'} · toca para revisarlos uno tras otro</small></span><span class="m">${dinero(tot)}</span>${CHEV}</button>`;
@@ -223,12 +226,13 @@
     const pagado = pagos.reduce((a, m) => a + Number(m.llego || m.salio || 0), 0);
     let h = `<div class="res"><div class="res-c"><span>Gastos pagados este mes</span><b>${dinero(pagado)}</b></div><div class="res-c"><span>Gastos fijos previstos</span><b>${dinero(fijos)}</b></div></div>`;
     h += D.gastosFijos.map(g => { const p = porCat(g.cat);
-      return `<div class="gasto"><div class="cg-nom">${esc(g.cat)}<span>Previsto ${dinero(g.monto)}</span></div><div style="font-weight:800">${p ? dinero(p) : ''}</div>${p >= Number(g.monto) - 0.005 ? '<span class="pill verde">Pagado</span>' : `<button class="pill amar" type="button" data-gasto-cat="${esc(g.cat)}">Falta</button>`}</div>`; }).join('');
-    if(!D.gastosFijos.length) h += '<p class="mat-s" style="margin:4px 2px">Los gastos fijos (alquiler, luz, internet…) se ponen en Costos › Ganancia.</p>';
+      return `<div class="gasto"><button type="button" class="cg-nom" data-gfijo="${g.id}" style="text-align:left">${esc(g.cat)}<span>Previsto ${dinero(g.monto)} · cambiar</span></button><div style="font-weight:800">${p ? dinero(p) : ''}</div>${p >= Number(g.monto) - 0.005 ? '<span class="pill verde">Pagado</span>' : `<button class="pill amar" type="button" data-gasto-cat="${esc(g.cat)}">Falta</button>`}</div>`; }).join('');
+    if(!D.gastosFijos.length) h += '<p class="mat-s" style="margin:4px 2px">Todavía no hay gastos fijos (alquiler, luz, internet, flete…).</p>';
+    h += '<button class="btn-nuevo" type="button" data-gfijo="nuevo">+ Gasto fijo</button>';
     const otros = pagos.filter(m => !D.gastosFijos.some(g => g.cat === m.cat));
     if(otros.length) h += '<div class="tit">Otros gastos</div>' + otros.map(m => `<button class="gasto" type="button" data-mov="${m.id}" style="width:100%;text-align:left"><div class="cg-nom">${esc(m.cat)}<span>${esc((cta(m.cuenta) || {}).nombre || '')} · ${fecha(m.fecha)}</span></div><div style="font-weight:800">${dinero(m.llego || m.salio)}</div><span></span></button>`).join('');
     h += '<div class="tit">Taller y comisiones del mes</div>' + reporte([['Nómina pagada', -nom], ['Vales (adelantos)', -vales], ['Comisión y cambio', -comis]], 'Total', -(nom + vales + comis));
-    h += `<div class="caja-nota"><span>Conexión con Costos</span>Costos reparte los gastos fijos entre las puertas del mes. Con los gastos reales puedes ajustar esa regla en Costos › Ganancia.</div>`;
+    h += `<div class="caja-nota"><span>Conexión con Costos</span>Los gastos fijos solo se cambian aquí. Costos los reparte entre las puertas vendidas el mes anterior: se pone solo al cerrar el mes (si no hubo ventas, 25). El flete que pagues en una compra es gasto real del mes y el cierre lo compara con lo previsto.</div>`;
     h += '<button class="btn-secondary" type="button" data-pdf-gastos style="width:100%;margin-top:12px">Gastos del mes en PDF</button>';
     if(ancho.matches) h += '<button class="btn-nuevo" type="button" data-nuevo-gasto>+ Registrar gasto</button>';
     return h;
@@ -260,7 +264,7 @@
     const precios = EXTRA.precios.filter(x => String(x.proveedor_id) === String(id));
     const mat = (mid) => EXTRA.materiales.find(m => m.id === mid) || {};
     const ajustes = movs.filter(m => m.tipo === 'ajuste');
-    const body = `<div class="grande ${s > 0.005 ? 'favor' : s < -0.005 ? 'debe' : ''}"><span>${st.corto}</span><b>${dinero(Math.abs(s))}</b>
+    const body = (window.COMPRA ? window.COMPRA.tarjetasHtml({ proveedor:id, titulo:'En camino' }) : '') + `<div class="grande ${s > 0.005 ? 'favor' : s < -0.005 ? 'debe' : ''}"><span>${st.corto}</span><b>${dinero(Math.abs(s))}</b>
         <p>${s > 0.005 ? 'Le transferiste de más. Se descuenta solo en la próxima compra.' : s < -0.005 ? 'Compraste más de lo que le has transferido.' : 'No le debes nada y no tienes saldo a favor.'}</p></div>
       <div class="d-datos">
         <div class="d-dato"><span>RIF</span><b>${esc(p.rif || 'Sin RIF')}</b></div>
@@ -325,6 +329,13 @@
   function abrirForm(f){ F = f; pintarForm(); abrirHoja('sheetForm'); }
   function pintarForm(){
     let h = '', boton = 'Guardar';
+    if(F.t === 'gfijo'){
+      const g = D.gastosFijos.find(x => String(x.id) === String(F.id));
+      $('formTitulo').textContent = g ? g.cat : 'Gasto fijo nuevo';
+      h = `<div class="field" id="campoGfNom"><label class="field-label" for="gfNom">Qué gasto es</label><input class="input" id="gfNom" value="${esc(F.nom != null ? F.nom : g ? g.cat : '')}"><div class="field-error">Escribe el nombre</div><div class="field-hint">Ejemplo: alquiler, luz, flete.</div></div>
+        <div class="field" id="campoGfMonto"><label class="field-label" for="gfMonto">Cuánto es al mes ($)</label><input class="input" id="gfMonto" inputmode="decimal" value="${esc(F.monto != null ? F.monto : g ? g.monto : '')}"><div class="field-error">Escribe el monto (puede ser 0)</div><div class="field-hint">Cambia el precio sugerido de todos los modelos en Costos.</div></div>
+        ${g ? `<div class="field"><span class="field-label">¿Se sigue pagando?</span>${opts([['si', 'Sí'], ['no', 'Ya no se paga']], F.gfact || 'si', 'data-f-gfact')}</div>` : ''}`;
+    }
     if(F.t === 'transferencia'){
       const p = F.prov ? prov(F.prov) : null, antes = p ? saldoProv(F.prov) : 0;
       $('formTitulo').textContent = p && !F.elegirProv ? 'Transferencia a ' + p.nombre.replace('Inversiones ', '') : 'Pago a un proveedor';
@@ -523,6 +534,13 @@
       if(!F.tipo){ $('campoTipoCta').classList.add('invalid'); return false; }
       accion = async () => { await rpc('cuenta_guardar', { p:{ id:F.id || null, nombre:F.nombre.trim(), tipo:F.tipo, activa:F.activa !== false } }); return F.id ? 'Cuenta guardada' : 'Cuenta agregada. Ponle su saldo con "Cambiar saldo".'; };
     }
+    if(F.t === 'gfijo'){
+      const nom = String($('gfNom').value || '').trim(), raw = String($('gfMonto').value || '').trim(), monto = Number(raw.replace(',', '.'));
+      if(!nom){ $('campoGfNom').classList.add('invalid'); return false; }
+      if(!raw || !isFinite(monto) || monto < 0){ $('campoGfMonto').classList.add('invalid'); return false; }
+      const g = D.gastosFijos.find(x => String(x.id) === String(F.id));
+      accion = async () => { await rpc('gasto_fijo_guardar', { p:{ id:g ? g.id : null, categoria:nom, monto:Math.round(monto * 100) / 100, activo:F.gfact === 'no' ? false : true } }); return F.gfact === 'no' ? 'Quitado de los gastos fijos' : 'Gasto fijo guardado. Costos ya lo usa.'; };
+    }
     if(F.t === 'gasto'){
       const cat = F.cat === 'Otro' ? (F.catOtro || '').trim() : F.cat;
       if(!cat) return err('Elige qué gasto es'); if(!F.cuenta) return err('Elige la cuenta');
@@ -626,6 +644,7 @@
     if(F){
       const set = (attr, campo) => { const b = e.target.closest('[' + attr + ']'); if(b && b.closest('#formBody')){ leerCampos(); F[campo] = b.getAttribute(attr); pintarForm(); return true; } return false; };
       const fp = e.target.closest('[data-f-prov]'); if(fp && fp.closest('#formBody')){ leerCampos(); if(fp.dataset.fProv === 'luego'){ F.prov = null; F.luego = true; } else { F.prov = fp.dataset.fProv; F.luego = false; } pintarForm(); return; }
+      if(e.target.closest('[data-f-gfact]') && $('gfNom')){ F.nom = $('gfNom').value; F.monto = $('gfMonto').value; F.gfact = e.target.closest('[data-f-gfact]').dataset.fGfact; pintarForm(); return; }
       if(set('data-f-llego', 'llego')) return;
       if(set('data-f-cuenta', 'cuenta') || set('data-f-destino', 'destino') || set('data-f-signo', 'signo') || set('data-f-cat', 'cat') || set('data-f-de', 'de') || set('data-f-a', 'a') || set('data-f-origen', 'origen') || set('data-f-tipocta', 'tipo')) return;
       const mn = e.target.closest('[data-f-menos]'); if(mn){ leerCampos(); F.menos = !F.menos; pintarForm(); return; }
@@ -650,6 +669,7 @@
     if(e.target.closest('[data-nueva-cuenta]')) return abrirForm({ t:'cuenta', nombre:'', tipo:null });
     if(e.target.closest('[data-nuevo-prov]') || e.target.closest('#btnNuevoProv')) return abrirForm({ t:'proveedor', nombre:'', tipos:[], iva:true });
     const gc = e.target.closest('[data-gasto-cat]'); if(gc) return abrirForm({ t:'gasto', cat:gc.dataset.gastoCat, monto:(D.gastosFijos.find(g => g.cat === gc.dataset.gastoCat) || {}).monto });
+    const gfx = e.target.closest('[data-gfijo]'); if(gfx) return abrirForm({ t:'gfijo', id:gfx.dataset.gfijo === 'nuevo' ? null : gfx.dataset.gfijo });
     if(e.target.closest('[data-nuevo-gasto]') || e.target.closest('#btnNuevoGasto')) return abrirForm({ t:'gasto', cat:null });
     const mv = e.target.closest('[data-mov]'); if(mv) return abrirForm({ t:'mov', id:+mv.dataset.mov });
     const pd = e.target.closest('[data-pdf]'); if(pd) return abrirPdf('prov', pd.dataset.pdf);

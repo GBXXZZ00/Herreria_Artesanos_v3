@@ -5,6 +5,40 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
 
+## Reestructura de Costos, Depósito y Finanzas (v75 a v78, 8 nov 2026, Claude de Gualfredo)
+Antes: aplicar las migraciones v81, v81b, v82, v83 y v84 (en ese orden) y cerrar y abrir la app.
+
+**Costos › Modelos (Ray o Gualfredo)**
+- [ ] La lista sale por grupos: Listos, Borrador y Faltan por costear. Los filtros (Todos, Puertas, Combos, Ventanas, Madera, En diseño) y el buscador funcionan.
+- [ ] Abrir un modelo sin costear: sale "Del Catálogo" con lo que trae. Copiar del Bitral, Estructura estándar o En blanco.
+- [ ] Ficha del Bitral en pantalla completa: el índice arriba lleva a cada parte; el precio queda siempre abajo. Tocar el precio: $223,22 · $290,19 · $326,79 · barra completa $339,23.
+- [ ] Tocar una pieza: cambiar material con el buscador, qué es (Bastidor…) y Vertical u Horizontal. Guardar.
+- [ ] Tocar Disco de corte 14": poner 6 solo para ese modelo; después "Usar el general".
+- [ ] Usar $326,79 en el catálogo (o el precio que quieras).
+
+**Costos › Precios**
+- [ ] Filtros por tipo. "+ Material nuevo" aquí (ya no manda a Depósito). Reglas: IVA, ganancia, grosor del corte, despunte y puertas al mes.
+
+**Finanzas**
+- [ ] Gastos: tocar un gasto fijo para cambiarlo; "+ Gasto fijo". Aparece Flete en $0.
+- [ ] Mes: "Ganancia por modelo" (antes en Costos) y su PDF.
+
+**Costos › Plan de corte (con una venta en fabricación asignada a un herrero para el sábado)**
+- [ ] 1 Pedidos del sábado · 2 Material en metros (necesitas · hay · comprar) · 3 Comprar lo que falta.
+- [ ] Tocar un material: barras dibujadas, "No usar" un retazo, "+ Retazo que encontré", tocar una barra para mover una pieza. La lámina sale dibujada en la hoja y el vidrio como lista de piezas cortadas.
+- [ ] Aceptar plan. El herrero ve su hoja en Mi trabajo con un color por puerta y retazos R-NN. Cuando termine TODOS sus pasos de Hierro del sábado, las barras bajan solas del Depósito. Si no, "Marcar a mano".
+- [ ] Después de cortar: tocar el material y "Corregir corte" (barras de verdad, retazos usados y los que quedaron, motivo).
+
+**Compras**
+- [ ] Comprar lo que falta: Más barato o Todo en un proveedor, + Material, + Otro lugar, + Gasto (flete). Pedir compra.
+- [ ] Queda en amarillo en el plan, en Depósito › Fabricación ("+N en camino") y en Finanzas › Dinero y en el proveedor ("salida por confirmar").
+- [ ] Tocar "¿Llegó?": cambiar cantidad o precio, número de factura, foto, total del papel (dice si cuadra). Probar Lo debo, Pagué, Una parte y Saqué dinero (con vuelto; si no cuadra pide motivo). En la cuenta de bolívares pide la tasa.
+- [ ] "No llegó" con motivo.
+
+**Cierre del mes (Finanzas › Mes, un mes que ya terminó)**
+- [ ] La lista de 4 pasos; el primero dice que es el arranque. 1 Cuentas (lo que dice el banco), 2 Contar el Depósito, 3 Cuadrar cada proveedor (Torniplemaca en $1.674,50), 4 Revisar y cerrar.
+- [ ] Con una compra en camino no deja cerrar.
+
 ## Finanzas, Depósito, Costos, Corte, Mes y Reportes (v73, 3 nov 2026, Claude de Ray)
 Primero: Ray o Gualfredo agregan sus cuentas (Finanzas › Dinero › "+ Agregar cuenta") y ponen el saldo de cada una con "Cambiar saldo".
 - [ ] Vendedora: no ve Finanzas ni Costos en Inicio; en Depósito solo ve Materiales y Entregas. Registra un pago como siempre; ya no puede cambiarlo ni borrarlo.

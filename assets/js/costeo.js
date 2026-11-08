@@ -15,15 +15,15 @@
     if(error) throw error;
     const d = data;
     D = {
-      prov: d.prov, reglas: Object.assign({ bisagras:3 }, d.reglas), gastosFijos: d.gastosFijos || [],
+      prov: d.prov, reglas: Object.assign({ bisagras:3, despunte:0 }, d.reglas), gastosFijos: d.gastosFijos || [],
       proveedores: d.proveedores || [], insumos: d.insumos || [], fab: d.fab || [], categorias: d.categorias || [],
       catalogo: d.catalogo || [], enFabricacion: d.enFabricacion || [], vendidos: d.vendidos || [],
       costeo: {}, enDiseno: [], servidor: {},
     };
     (d.modelos || []).forEach(m => {
       const key = m.catalogo_id != null ? m.catalogo_id : 'd' + m.id;
-      D.costeo[key] = { mid:m.id, codigo:m.codigo, estado:m.estado, categoria_pago_id:m.categoria_pago_id, notas:m.nota || '',
-        piezas:(m.piezas || []).map(p => [p[0], Number(p[1]), Number(p[2]), p[3] || '']),
+      D.costeo[key] = { mid:m.id, codigo:m.codigo, estado:m.estado, ver:m.actualizado_en || '', categoria_pago_id:m.categoria_pago_id, notas:m.nota || '',
+        piezas:(m.piezas || []).map(p => [p[0], Number(p[1]), Number(p[2]), p[3] || '', p[4] || null, p[5] || null]),
         hojas:(m.hojas || []).map(h => [h[0], Number(h[1]), Number(h[2]), Number(h[3]), h[4] || '']),
         rend:m.rend || {}, acc:m.acc || {}, extras:(m.extras || []).map(e => ({ n:e.n, v:Number(e.v) })) };
       D.servidor[key] = m.x;

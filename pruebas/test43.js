@@ -26,6 +26,7 @@ async function pagina(b,uid,err){
     if(u.includes('/auth/v1/user'))return j(user);
     if(u.includes('/rpc/')){const name=u.split('/rpc/')[1].split('?')[0];const a=JSON.parse(req.postData()||'{}');rpcs.push([name,a]);
       if(name==='deposito_resumen')return j(Object.assign({es_admin:PERF[uid].rol==='admin',es_ray:!!PERF[uid].confirma_abonos},JSON.parse(JSON.stringify(resumen))));
+      if(name==='compras_en_camino')return j({grupos:[{grupo:41,fecha:new Date().toISOString(),total:35.06,lugares:[{id:41,proveedor_id:1,proveedor:'Colores y Ambiente',iva:true,total:15.06,lineas:[{material_id:1,cantidad:4,precio:12.98,n:'Tubo',pres:'barra'}]}],gastos:[]}],proveedores:[],cuentas:[],consumibles:[],fab:[]});
       if(name==='deposito_fab_datos')return PERF[uid].rol==='admin'?j(D):j({message:'Solo el administrador'},400);
       if(name==='compra_guardar')return j({id:9,total:100,saldo_proveedor:-50});
       if(name==='compra_material_registrar')return j({id:1,lineas:1,subtotal_lineas:122.1,subtotal_papel:1674.5});
@@ -52,6 +53,7 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   await p.goto(H+'deposito.html');await p.waitForSelector('#tabs [data-tab="fab"]');await w(800);
   ok('Tres pestañas: Consumibles, Fabricación y Compras',(await p.textContent('#tabs')).replace(/\s+/g,' ').includes('Consumibles Fabricación Compras'));
   await p.click('#tabs [data-tab="fab"]');await p.waitForSelector('[data-fab="1"]');await w();
+  ok('Depósito: compra en camino en amarillo y +4 en camino en el tubo',(await p.textContent('#cont')).includes('En camino: compra a Colores y Ambiente')&&(await p.textContent('[data-fab="1"]')).includes('+4 en camino'));
   const t=await p.textContent('#cont');
   ok('Fabricación: barras, retazo con su medida y hojas con sobrante',t.includes('Tubo 1" x 3"')&&t.includes('120 cm')&&t.includes('61 × 60 cm')&&t.includes('Hoja 122 × 244 cm'));
   await p.screenshot({path:'shots4/t43-1-fabricacion.png'});

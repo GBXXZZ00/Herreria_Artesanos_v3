@@ -9,8 +9,8 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Costos · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=74">
-<link rel="stylesheet" href="assets/css/modulo.css?v=74">
+<link rel="stylesheet" href="assets/css/base.css?v=78">
+<link rel="stylesheet" href="assets/css/modulo.css?v=78">
 <style>
   /* Costos: lista de modelos con semáforo y ficha de costeo (al lado en computadora) */
   .sem-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
@@ -51,10 +51,91 @@
   .leyenda{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px;margin-top:8px}
   .prov-p{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0}
   .prov-p + .prov-p{border-top:1px solid var(--line)}
-  /* Cuatro pestañas */
-  #tabs.seg-d{grid-template-columns:repeat(4,1fr)}
-  #tabs .seg-fondo{width:calc(25% - 2px)}
+  /* Tres pestañas */
+  #tabs.seg-d{grid-template-columns:repeat(3,1fr)}
+  #tabs .seg-fondo{width:calc(33.333% - 2px)}
   #tabs button{font-size:14px}
+  /* Plan de corte en 3 pasos */
+  .pc-paso{display:flex;align-items:center;gap:8px;margin:18px 0 6px}
+  .pc-paso b{font-size:17px}
+  .pc-n{width:24px;height:24px;border-radius:7px;background:var(--ink);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .pc-der{margin-left:auto;font-size:12.5px;color:var(--ink-soft);text-align:right}
+  .pc-tabla{border-top:1px solid var(--line)}
+  .pc-fila{display:grid;grid-template-columns:1.25fr 0.9fr 1.1fr 0.7fr;gap:6px;align-items:center;width:100%;padding:10px 2px;border-bottom:1px solid var(--line);text-align:left;font-size:13.5px}
+  .pc-fila:active{transform:scale(0.98)}
+  .pc-fila b{font-size:14px;line-height:1.25}
+  .pc-fila > span:last-child{text-align:right;font-weight:800;font-size:15px}
+  .pc-fila .rojo{color:var(--danger)}
+  .pc-fila .ok{color:var(--accent)}
+  .pc-cab{font-size:11.5px;font-weight:800;color:var(--ink-soft);padding:6px 2px}
+  .pc-cab:active{transform:none}
+  .pc-cab > span:last-child{font-size:11.5px;font-weight:800}
+  .pc-hr{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid var(--line)}
+  .pc-hr > span{flex:1;min-width:0}
+  .pc-hr b{display:block;font-size:15px}
+  .pc-hr small{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .btn-mini.sec2{background:var(--surface);color:var(--accent);border:1px solid var(--line-strong)}
+  .tag-dep{font-style:normal;font-size:10.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 6px;margin-left:4px}
+  .pc-ret{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line)}
+  .pc-ret b{display:block;font-size:14.5px}
+  .pc-ret small{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .pc-q{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .pc-hoja{position:relative;width:100%;border-radius:8px;background:#F1E4D6;overflow:hidden;margin:4px 0 10px}
+  .pc-hoja span{position:absolute;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;outline:2px solid var(--surface);outline-offset:-1px;overflow:hidden;white-space:nowrap}
+  /* Lista por grupos */
+  .grp-t{display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:var(--ink-soft);padding:14px 2px 4px;border-bottom:1px solid var(--line)}
+  /* Ficha del modelo: pantalla completa que entra por la derecha */
+  .sheet.ficha-pag{top:0;height:100vh;height:100dvh;max-width:none;border-radius:0;box-shadow:none;transform:translateX(100%);z-index:45}
+  .sheet.ficha-pag.open{transform:translateX(0)}
+  #scrimFicha{z-index:44}
+  .fi-head{flex-shrink:0;padding:calc(10px + var(--safe-t)) 18px 8px;border-bottom:1px solid var(--line)}
+  .fi-volver{height:32px;padding:0;font-size:15px;font-weight:800;color:var(--accent)}
+  .fi-volver:active{transform:scale(0.97)}
+  .fi-tit{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .fi-tit .sheet-title{font-size:24px;line-height:1.15}
+  .fi-dup{flex-shrink:0;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-strong);font-size:14px;font-weight:800;color:var(--ink)}
+  .fi-dup:active{transform:scale(0.97)}
+  #fichaBody{padding-top:0}
+  .fi-idx{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -18px 6px;padding:10px 18px;background:var(--bg);border-bottom:1px solid var(--line)}
+  .fi-idx::-webkit-scrollbar{display:none}
+  .fi-sec{scroll-margin-top:60px;padding-bottom:6px}
+  .fi-sh{display:flex;justify-content:space-between;align-items:baseline;padding:16px 2px 4px}
+  .fi-sh h3{margin:0;font-size:17px;font-weight:800}
+  .fi-sh span{font-size:13.5px;font-weight:800;color:var(--ink-soft)}
+  .fi-mat{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-top:12px;padding:0 2px}
+  .fi-mat b{font-size:14.5px}
+  .fi-mat span{font-size:12.5px;color:var(--ink-soft);text-align:right}
+  .pzr{display:grid;grid-template-columns:40px 56px 1fr auto;gap:8px;align-items:center;width:100%;padding:5px 0;text-align:left}
+  .pzr:active{transform:scale(0.98)}
+  .pzr-n{height:38px;border:1px solid var(--line-strong);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .pzr-t{height:38px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:14px;font-weight:700;min-width:0;overflow:hidden;white-space:nowrap}
+  .pzr-t.gris{color:var(--ink-soft);font-weight:600}
+  .pzr-t i{font-style:normal;font-size:11px;font-weight:800;color:var(--accent)}
+  .fi-cat{display:flex;gap:12px;padding:12px;border-radius:16px;background:var(--surface-2);margin-top:12px}
+  .fi-cat img{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--surface);flex-shrink:0}
+  .fi-cat b{display:block;font-size:15px}
+  .fi-cat span{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:2px;line-height:1.4}
+  .fi-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .fi-chips > span{font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+  .opt-grande{cursor:pointer;transition:transform 140ms var(--ease-out)}
+  .opt-grande:active{transform:scale(0.98)}
+  .opt-grande.on{border-color:var(--accent);background:var(--accent-soft)}
+  .fi-precio{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:10px 14px;border:1px solid var(--line-strong);border-radius:16px;text-align:left}
+  .fi-precio:active{transform:scale(0.98)}
+  .fi-pl small,.fi-pr small{display:block;font-size:12px;color:var(--ink-soft);font-weight:700}
+  .fi-pl b{font-size:24px;font-weight:800;letter-spacing:-0.3px}
+  .fi-pr{text-align:right}
+  .fi-pr small{margin-top:4px}
+  .fi-hoy{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}
+  .fi-hoy b{display:block;font-size:15px}
+  .fi-hoy small{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .fi-opc{display:flex;flex-wrap:wrap;gap:8px}
+  .fi-opc .fx{height:38px;padding:0 14px;font-size:14px}
+  .fi-sel{display:flex;justify-content:space-between;align-items:center;width:100%;height:50px;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--radius-md);text-align:left;font-size:16px}
+  .fi-sel b{color:var(--accent);font-size:14px}
+  .fi-sel:active{transform:scale(0.98)}
+  .rep-f{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:9px 2px;text-align:left}
+  .rep-f + .rep-f{border-top:1px solid var(--line)}
   /* Plan de corte */
   .ped-c{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 2px}
   .ped-c + .ped-c{border-top:1px solid var(--line)}
@@ -146,15 +227,13 @@
   <div class="seg-d" id="tabs" role="group" aria-label="Qué ver">
     <span class="seg-fondo" aria-hidden="true"></span>
     <button class="on" type="button" data-tab="modelos" aria-pressed="true">Modelos</button>
-    <button type="button" data-tab="semana" aria-pressed="false">Semana</button>
-    <button type="button" data-tab="ganancia" aria-pressed="false">Ganancia</button>
+    <button type="button" data-tab="semana" aria-pressed="false">Plan de corte</button>
     <button type="button" data-tab="materiales" aria-pressed="false">Precios</button>
   </div>
   <div class="mostrar" id="filtros"><span class="mostrar-t">Mostrar</span><div class="mostrar-l" id="filtrosL"></div></div>
   <section class="d-cont" id="cont" aria-live="polite"></section>
 </main>
 
-<div class="pie-entregar hidden" id="pieMat"><button class="btn-primary" type="button" id="btnNuevoMat">Agregar material</button></div>
 
 <div class="bottom-nav-wrap" id="menuModulos" data-activo="costos"></div>
 
@@ -165,6 +244,13 @@
     <button class="icon-btn" data-cerrar="sheetDet" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
   <div class="sheet-body" id="detBody"></div>
   <div class="sheet-foot" id="detFoot"></div>
+</section>
+
+<div class="sheet-scrim" id="scrimFicha" data-cerrar="sheetFicha"></div>
+<section class="sheet ficha-pag" id="sheetFicha" role="dialog" aria-modal="true" aria-labelledby="fichaTitulo">
+  <div class="fi-head" id="fichaHead"></div>
+  <div class="sheet-body" id="fichaBody"></div>
+  <div class="sheet-foot" id="fichaFoot"></div>
 </section>
 
 <div class="sheet-scrim scrim-top" id="scrimForm" data-cerrar="sheetForm"></div>
@@ -178,13 +264,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=74"></script>
-<script src="assets/js/supabase-client.js?v=74"></script>
-<script src="assets/js/comun.js?v=74"></script>
-<script src="assets/js/sesion.js?v=74"></script>
-<script src="assets/js/pdf-reporte.js?v=74"></script>
-<script src="assets/js/costeo.js?v=74"></script>
-<script src="assets/js/corte.js?v=74"></script>
-<script src="assets/js/costos.js?v=74"></script>
+<script src="assets/vendor/supabase.js?v=78"></script>
+<script src="assets/js/supabase-client.js?v=78"></script>
+<script src="assets/js/comun.js?v=78"></script>
+<script src="assets/js/sesion.js?v=78"></script>
+<script src="assets/js/img-compress.js?v=78"></script>
+<script src="assets/js/compra.js?v=78"></script>
+<script src="assets/js/pdf-reporte.js?v=78"></script>
+<script src="assets/js/costeo.js?v=78"></script>
+<script src="assets/js/corte.js?v=78"></script>
+<script src="assets/js/costos.js?v=78"></script>
 </body>
 </html>

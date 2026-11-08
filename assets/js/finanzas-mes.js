@@ -34,6 +34,114 @@
     F().pintar();
   }
 
+  // ---------- Ganancia por modelo (antes en Costos › Ganancia): precio del catálogo menos costo y gastos fijos ----------
+  let RES = null, cargandoRes = false;
+  async function traerResumen(){
+    if(RES || cargandoRes) return; cargandoRes = true;
+    try{ const { data, error } = await db.rpc('costeo_resumen'); if(error) throw error; RES = data || {}; }
+    catch(e){ RES = { _error:F().errTxt(e) }; }
+    finally { cargandoRes = false; }
+    F().pintar();
+  }
+  const filasGanancia = () => Object.entries(RES || {}).filter(([k, x]) => k !== '_error' && x && x.listo && !(x.falta || []).length)
+    .map(([k, x]) => ({ id:k, n:x.modelo || 'Modelo', costo:Number(x.costo), final:Number(x.final), pct:Number(x.pct), gana:F().r2(Number(x.pct) * Number(x.costo) / 100) }))
+    .sort((a, b) => a.pct - b.pct);
+  const semPct = (p) => p >= 30 ? 'verde' : p >= 15 ? 'amar' : 'rojo';
+  function gananciaModelos(acc){
+    if(!RES){ traerResumen(); return acc('gmod', 'Ganancia por modelo', '…', '<p class="mat-s" style="margin:4px 2px">Cargando…</p>'); }
+    if(RES._error) return acc('gmod', 'Ganancia por modelo', '', `<div class="caja-amar">${esc(RES._error)}</div>`);
+    const L = filasGanancia();
+    const b = L.length ? `<div class="rep">${L.map(o => `<a class="rep-f" href="costos.html?modelo=${encodeURIComponent(o.id)}" style="text-decoration:none;color:inherit"><span>${esc(o.n)}<small class="mat-s" style="display:block;font-weight:600">cuesta ${dinero(o.costo)} · sugerido ${dinero(o.final)}</small></span><b class="pill ${semPct(o.pct)}" style="white-space:nowrap">${o.gana < 0 ? '− ' : ''}${dinero(Math.abs(o.gana))} · ${Math.round(o.pct)} %</b></a>`).join('')}</div>
+        <p class="mat-s" style="margin:8px 2px 0">Lo que deja cada puerta: precio del catálogo menos costo y gastos fijos. Los de abajo del 30 % conviene subirlos en Costos.</p>
+        <button class="btn-secondary" type="button" data-pdf-gmod style="width:100%;margin-top:10px">Ganancia por modelo en PDF</button>`
+      : '<p class="mat-s" style="margin:4px 2px">Todavía no hay modelos listos en Costos. Cuando Ray deje uno "Listo", sale aquí.</p>';
+    return acc('gmod', 'Ganancia por modelo', L.length === 1 ? '1 modelo' : L.length + ' modelos', b);
+  }
+  async function pdfGanancia(){
+    const L = filasGanancia(), b = [{ t:'titulo', texto:'Ganancia por modelo', der:'deja por puerta' }];
+    L.forEach(o => b.push({ t:'fila', a:o.n + ' · cuesta ' + dinero(o.costo) + ' · sugerido ' + dinero(o.final), b:(o.gana < 0 ? '- ' : '') + dinero(Math.abs(o.gana)) + ' (' + Math.round(o.pct) + ' %)', rojo:o.pct < 15 }));
+    b.push({ t:'nota', texto:'Precio del catálogo menos costo y gastos fijos por puerta.' });
+    try{ toast('Preparando el PDF…'); const blob = await window.PDFR.crear({ titulo:'Ganancia por modelo', derecha:new Date().toLocaleDateString('es-VE'), subtitulo:'Con los precios del proveedor principal.', bloques:b });
+      const r = await window.PDFR.compartir(blob, 'Ganancia-por-modelo.pdf'); if(r === 'descargado') toast('PDF listo'); }
+    catch(e){ toast((e && e.message) || 'No se pudo hacer el PDF', 'error'); }
+  }
+
+  // ---------- Cierre del mes: lista de pasos (el primero es el arranque) ----------
+  // 1 Cuentas (lo que dice el banco) · 2 Contar el Depósito · 3 Cuadrar cada proveedor · 4 Revisar y cerrar.
+  // Cada diferencia queda con motivo (cierre_paso usa saldo_cambiar y conteo_guardar). Nada se borra.
+  const CD = {}, CDn = {}; let cdCargando = false, PASO = null;
+  const nCuentas = () => ((F().datos || {}).cuentas || []).filter(c => c.activa !== false).length;
+  async function traerCierre(m, forzar){
+    if((CD[m] && !forzar) || cdCargando) return; cdCargando = true;
+    try{ const { data, error } = await db.rpc('cierre_datos', { p_mes:m + '-01' }); if(error) throw error; CD[m] = data; }
+    catch(e){ CD[m] = { error:F().errTxt(e) }; }
+    finally { cdCargando = false; }
+    F().pintar(); if(PASO) pintarPaso();
+  }
+  const pillPaso = (hechos, total) => !total ? '<span class="pill amar">Falta</span>' : hechos >= total ? '<span class="pill verde">Listo</span>' : hechos ? `<span class="pill amar">${hechos} de ${total}</span>` : '<span class="pill amar">Falta</span>';
+  function listaCierre(m){
+    const X = CD[m];
+    if(!X){ traerCierre(m); return '<p class="mat-s" style="margin:4px 2px 12px">Cargando la lista del cierre…</p>'; }
+    if(!X.error && X.cuentas.length !== nCuentas() && CDn[m] !== nCuentas()){ CDn[m] = nCuentas(); traerCierre(m, true); }
+    if(X.error) return `<div class="caja-amar">${esc(X.error)}</div>`;
+    if(X.cerrado) return '';
+    const cu = X.cuentas.filter(c => c.hecho).length, pv = X.proveedores.filter(p => p.hecho).length, dep = !!X.deposito.hecho;
+    const todo = X.cuentas.length && cu === X.cuentas.length && dep && pv === X.proveedores.length;
+    let h = `<div class="tit" style="margin-top:4px">Cierre de ${esc(nomMes(m))}</div><p class="mat-s" style="margin:-2px 2px 8px">Emparejar la app con lo real, en orden.</p>`;
+    if(X.primero) h += '<div class="caja-ok cie-arr"><b>Primer cierre: es el arranque.</b> Además se crean las cuentas y se pone el saldo inicial de cada proveedor.</div>';
+    if(X.en_camino) h += `<div class="caja-rara">${X.en_camino === 1 ? 'Hay 1 compra en camino. Confírmala o márcala como que no llegó' : 'Hay ' + X.en_camino + ' compras en camino. Confírmalas o márcalas como que no llegaron'} antes de cerrar.</div>`;
+    const paso = (k, n, t, sub, pill) => `<button class="cie-paso" type="button" data-cierre-paso="${k}"><span><b>${n} · ${t}</b><small>${sub}</small></span>${pill}</button>`;
+    h += paso('cuentas', 1, 'Cuentas y su saldo', X.cuentas.length ? esc(X.cuentas.map(c => c.nombre).slice(0, 3).join(', ')) + (X.cuentas.length > 3 ? '…' : '') + ' · lo que dice el banco' : 'Crea tus cuentas', pillPaso(cu, X.cuentas.length));
+    h += paso('deposito', 2, 'Contar el Depósito', 'Barras, hojas y retazos', pillPaso(dep ? 1 : 0, 1));
+    h += paso('proveedores', 3, 'Cuadrar proveedores', esc(X.proveedores.map(p => (p.nombre || '').replace('Inversiones ', '').replace(' (ferretería y otros)', '') + (p.hecho ? ' listo' : ' falta')).slice(0, 3).join(' · ')), pillPaso(pv, X.proveedores.length));
+    h += `<div class="cie-paso cie-4"><span><b>4 · Revisar el mes y cerrar</b><small>Ganancia, compras y gastos: abajo. Al cerrar, los gastos fijos se reparten entre ${X.puertas > 0 ? (X.puertas === 1 ? 'la 1 puerta vendida' : 'las ' + X.puertas + ' puertas vendidas') : '25 puertas (no hubo ventas)'} este mes.</small></span>${todo ? '<span class="pill verde">Listo</span>' : '<span class="pill gris">Después</span>'}</div>`;
+    h += '<p class="mat-s" style="margin:6px 2px 12px">Cada diferencia se corrige con motivo y queda guardada. Nada se borra.</p>';
+    return h;
+  }
+  function abrirPaso(k, id){ PASO = { k, id }; pintarPaso(); window.AH.abrirHoja('sheetDet'); }
+  function pintarPaso(){
+    const X = CD[mesSel]; if(!PASO || !X || X.error) return;
+    const prov = (id) => X.proveedores.find(p => String(p.id) === String(id));
+    const corto = (n) => String(n || '').replace('Inversiones ', '').replace(' (ferretería y otros)', '');
+    let h = '', foot = '';
+    if(PASO.k === 'cuentas'){
+      $('detTitulo').textContent = '1 · Cuentas y su saldo';
+      h = '<p class="mat-s" style="margin:0 2px 10px">Escribe lo que dice el banco o la caja hoy. Si no cuadra, di por qué.</p>' + X.cuentas.map(c => {
+        const hc = c.hecho && c.hecho.dato;
+        return `<div class="cie-item"><div class="cie-ih"><b>${esc(c.nombre)}</b><span>${hc ? '<span class="pill verde">Listo</span>' : ''}</span></div>
+          <p class="mat-s" style="margin:0 2px 6px">La app dice ${dinero(c.saldo)}${c.moneda === 'VES' ? ' (en dólares)' : ''}</p>
+          <div class="input-row"><div class="field"><label class="field-label" for="cq_${c.id}">El banco dice ($)</label><input class="input" id="cq_${c.id}" inputmode="decimal" value="${esc(c.saldo)}"></div>
+          <div class="field"><label class="field-label" for="cm_${c.id}">Motivo si no cuadra</label><input class="input" id="cm_${c.id}" value=""></div></div>
+          <button class="btn-secondary" type="button" data-cq-ok="${c.id}" style="width:100%">${hc ? 'Volver a guardar' : 'Listo'}</button></div>`; }).join('');
+      if(X.primero || !X.cuentas.length) h += '<button class="btn-nuevo" type="button" data-nueva-cuenta>+ Cuenta nueva</button>';
+    } else if(PASO.k === 'deposito'){
+      $('detTitulo').textContent = '2 · Contar el Depósito';
+      h = '<p class="mat-s" style="margin:0 2px 10px">Cuenta las barras y hojas enteras. La app dice qué no cuadra y lo deja guardado.</p>' + X.deposito.fab.map(f => `<div class="input-row cie-cont"><div class="field"><label class="field-label" for="cd_${f.id}">${esc(f.nombre)}</label><small class="mat-s">La app dice ${f.stock} ${f.pres === 'barra' ? 'barras' : 'hojas'}${f.retazos ? ' · ' + f.retazos + ' retazos' : ''}</small></div><input class="input" id="cd_${f.id}" inputmode="numeric" value="${esc(f.stock)}" aria-label="Contado de ${esc(f.nombre)}"></div>`).join('');
+      if(X.deposito.hecho) h += `<div class="caja-ok">Ya contado este mes. Puedes volver a contar.</div>`;
+      foot = '<button class="btn-primary" type="button" data-cd-ok>Guardar conteo</button>';
+    } else if(PASO.k === 'proveedores'){
+      $('detTitulo').textContent = '3 · Cuadrar proveedores';
+      h = X.proveedores.map(p => `<button class="rep-f" type="button" data-cie-prov="${p.id}"><span>${esc(p.nombre)}<small class="mat-s" style="display:block;font-weight:600">${p.saldo < -0.005 ? 'le debes ' + dinero(-p.saldo) : p.saldo > 0.005 ? 'a tu favor ' + dinero(p.saldo) : 'al día'}</small></span>${p.hecho ? '<span class="pill verde">Listo</span>' : '<span class="pill amar">Falta</span>'}</button>`).join('') || '<p class="mat-s">No hay proveedores.</p>';
+    } else if(PASO.k === 'prov'){
+      const p = prov(PASO.id); if(!p) return;
+      $('detTitulo').textContent = '3 · Cuadrar ' + corto(p.nombre);
+      const debe = -Number(p.saldo);
+      h = `<div class="tot"><div class="fila"><span>Saldo al empezar el mes${X.primero ? ' (arranque)' : ''}</span><b>${dinero(-p.inicio)}</b></div><div class="fila"><span>+ Compras del mes</span><b>${dinero(p.compras)}</b></div><div class="fila"><span>− Pagos del mes</span><b>${dinero(p.pagos)}</b></div>
+          <div class="fila fin"><span>La app dice que le debes</span><span>${dinero(debe)}</span></div></div>
+        <div class="field" style="margin-top:12px"><label class="field-label" for="cpv">¿Cuánto dice ${esc(corto(p.nombre))} que le debes? ($)</label><input class="input" id="cpv" inputmode="decimal" value="${esc(PASO.v != null ? PASO.v : debe)}"><div class="field-hint">Si te debe él a ti, escríbelo en negativo.</div></div>
+        <div id="cpvDif">${difTxt(debe, PASO.v != null ? PASO.v : debe)}</div>
+        <div class="field" id="c_cpvm"><label class="field-label" for="cpvm">Motivo</label><input class="input" id="cpvm" value="${esc(PASO.m || '')}"><div class="field-error">Escribe el motivo</div><div class="field-hint">Ejemplo: nota 00-2901 sin cargar.</div></div>`;
+      foot = `<div style="display:flex;gap:10px"><button class="btn-secondary" type="button" data-cierre-paso="proveedores" style="flex:1;height:54px">Volver</button><button class="btn-primary" type="button" data-cpv-ok style="flex:1.4">Cuadrar</button></div>`;
+    }
+    $('detBody').innerHTML = h; $('detFoot').innerHTML = foot;
+  }
+  const numIn = (v) => { const n = parseFloat(String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.')); return isFinite(n) ? n : NaN; };
+  const difTxt = (app, real) => { const d = Math.round((numIn(real) - app) * 100) / 100; return !isFinite(d) ? '' : Math.abs(d) < 0.005 ? '<div class="caja-ok">Cuadra con la app.</div>' : `<div class="caja-rara cie-dif"><span>Diferencia</span><b>${d > 0 ? '+' : '−'}${dinero(Math.abs(d))}</b></div>`; };
+  async function guardarPaso(paso, ref, p, ok){
+    try{ const { error } = await db.rpc('cierre_paso', { p_mes:mesSel + '-01', p_paso:paso, p_ref:ref, p }); if(error) throw error; toast(ok); await F().recargar(); await traerCierre(mesSel, true); return true; }
+    catch(e){ toast(F().errTxt(e), 'error'); return false; }
+  }
+
   // ---------- Pantalla ----------
   function html(){
     const ms = meses(); mesSel = mesSel && ms.includes(mesSel) ? mesSel : (mesSel || F().mesActual()); if(!ms.includes(mesSel)) ms.unshift(mesSel);
@@ -48,6 +156,7 @@
     if(!M) return h + '<p class="mat-s" style="margin:12px 2px">Cargando…</p>';
     if(M.error) return h + `<div class="caja-amar">${esc(M.error)}</div><button class="btn-secondary" type="button" data-fm-reintentar style="width:100%">Reintentar</button>`;
     const C = M.datos;
+    if(!M.cerrado && mesSel < F().mesActual()) h += listaCierre(mesSel);
     if(M.cerrado) h += `<div class="caja-ok">Mes cerrado el ${F().fecha(M.fecha)}${M.por ? ' por ' + esc(M.por) : ''}. Estos números quedaron fijos. Si hay que corregir algo, se hace con "Cambiar saldo" y un motivo.</div>`;
     else if(mesSel === F().mesActual()) h += `<div class="caja-nota"><span>Mes en curso</span>Los números cambian hasta que termine el mes. Se cierra a partir del día 1 del mes siguiente.</div>`;
     const neto = suma(C.entro) + suma(C.salio), ganancia = C.vendido - C.sinCosto - C.costo - C.gastoTot;
@@ -69,6 +178,7 @@
     const pagF = C.pagadoFijo.reduce((a, g) => a + Number(g.pagado), 0);
     h += acc('fijos', 'Gastos fijos', dinero(pagF) + ' de ' + dinero(C.fijosPrev), `<div class="rep">${C.pagadoFijo.map(g => `<div class="rep-f"><span>${esc(g.cat)}<small class="mat-s" style="display:block;font-weight:600">previsto ${dinero(g.prev)}</small></span><b class="${Number(g.pagado) + 0.005 < Number(g.prev) ? 's-debe' : 's-favor'}">${Number(g.pagado) ? dinero(g.pagado) : 'Sin pagar'}</b></div>`).join('')}
       <div class="rep-f total"><span>Pagado de ${dinero(C.fijosPrev)} previstos</span><b>${dinero(pagF)}</b></div></div>`);
+    h += gananciaModelos(acc);
     if(C.porModelo.length) h += acc('prod', 'Lo que dejó cada producto', signo(suma(C.porModelo)), rep(C.porModelo, 'Total después de gastos fijos', suma(C.porModelo)));
     h += acc('ctas', 'Así quedaron las cuentas', dinero(suma(C.cuentas)), rep(C.cuentas.length ? C.cuentas : [['Sin cuentas', 0]], 'En cuentas', suma(C.cuentas)));
     h += acc('provs', 'Así quedaron los proveedores', signo(suma(C.proveedores)), rep(C.proveedores.length ? C.proveedores : [['Sin proveedores', 0]], suma(C.proveedores) < 0 ? 'Les debes en total' : 'A tu favor en total', suma(C.proveedores)));
@@ -110,7 +220,7 @@
   }
   async function cerrarMes(){
     if(!confirm('¿Cerrar ' + nomMes(mesSel) + '? Los números quedan fijos. Después solo se corrige con ajustes con motivo.')) return;
-    try{ const { error } = await db.rpc('mes_cerrar', { p_mes:mesSel + '-01' }); if(error) throw error; delete cache[mesSel]; toast('Mes cerrado. Los números quedaron fijos.'); F().pintar(); }
+    try{ const { error } = await db.rpc('mes_cerrar', { p_mes:mesSel + '-01' }); if(error) throw error; delete cache[mesSel]; delete CD[mesSel]; toast('Mes cerrado. Los números quedaron fijos. Costos ya reparte los gastos fijos con las puertas de este mes.'); F().pintar(); }
     catch(e){ toast(F().errTxt(e), 'error'); }
   }
 
@@ -183,6 +293,7 @@
 
   document.addEventListener('click', (e) => {
     if(!F() || !F().datos) return;
+    if(e.target.closest('[data-pdf-gmod]')) return pdfGanancia();
     const v = e.target.closest('[data-fm-vista]'); if(v){ vista = v.dataset.fmVista; F().pintar(); return; }
     const ms = e.target.closest('[data-mes]'); if(ms){ mesSel = ms.dataset.mes; if(ms.closest('#detBody')) window.AH.cerrarHoja('sheetDet', true); F().pintar(); return; }
     const mm = e.target.closest('[data-mes-mov]'); if(mm){ mover(+mm.dataset.mesMov); F().pintar(); return; }
@@ -190,6 +301,17 @@
     if(e.target.closest('[data-fm-reintentar]')){ delete cache[mesSel]; F().pintar(); return; }
     if(e.target.closest('[data-pdf-mes]')) return pdfMes();
     if(e.target.closest('[data-cerrar-mes]')) return cerrarMes();
+    const cp = e.target.closest('[data-cierre-paso]'); if(cp){ if(cp.closest('#detFoot,#detBody')) { PASO = { k:cp.dataset.cierrePaso }; pintarPaso(); } else abrirPaso(cp.dataset.cierrePaso); return; }
+    const cpv = e.target.closest('[data-cie-prov]'); if(cpv){ PASO = { k:'prov', id:cpv.dataset.cieProv }; pintarPaso(); return; }
+    const cq = e.target.closest('[data-cq-ok]'); if(cq){ const id = cq.dataset.cqOk, v = numIn(($('cq_' + id) || {}).value); if(!isFinite(v)){ toast('Escribe lo que dice el banco', 'error'); return; }
+      guardarPaso('cuenta', +id, { saldo:v, motivo:String(($('cm_' + id) || {}).value || '').trim() || null }, 'Cuenta lista'); return; }
+    if(e.target.closest('[data-cd-ok]')){ const X = CD[mesSel], conteo = [];
+      for(const f of X.deposito.fab){ const v = numIn(($('cd_' + f.id) || {}).value); if(!(v >= 0) || v % 1){ toast('Revisa lo contado de ' + f.nombre, 'error'); return; } conteo.push({ material_id:f.id, contado:v }); }
+      guardarPaso('deposito', null, { conteo }, 'Depósito contado. Las diferencias quedaron guardadas.'); return; }
+    if(e.target.closest('[data-cpv-ok]')){ const v = numIn(($('cpv') || {}).value), m = String(($('cpvm') || {}).value || '').trim(), p = CD[mesSel].proveedores.find(x => String(x.id) === String(PASO.id));
+      if(!isFinite(v)){ toast('Escribe lo que dice el proveedor', 'error'); return; }
+      if(Math.abs(v + Number(p.saldo)) > 0.005 && !m){ const c = $('c_cpvm'); if(c) c.classList.add('invalid'); return; }
+      guardarPaso('proveedor', p.id, { debo:v, motivo:m || null }, 'Proveedor cuadrado').then(ok => { if(ok){ PASO = { k:'proveedores' }; pintarPaso(); } }); return; }
     const de = e.target.closest('[data-fr-de]'); if(de){ R.de = de.dataset.frDe; R.id = null; F().pintar(); return; }
     const rg = e.target.closest('[data-fr-rango]'); if(rg){ R.rango = rg.dataset.frRango; F().pintar(); return; }
     const vr = e.target.closest('[data-fr-ver]'); if(vr){ R.id = vr.dataset.frVer; F().pintar(); const el = $('frDetalle'); if(el) el.scrollIntoView({ block:'start', behavior:'smooth' }); return; }
@@ -202,5 +324,9 @@
   });
   if(q.get('reporte') === 'cuenta') R.de = 'cuenta';
 
+  document.addEventListener('input', (e) => {
+    if(e.target.id === 'cpv' && PASO && PASO.k === 'prov'){ const p = CD[mesSel].proveedores.find(x => String(x.id) === String(PASO.id)); PASO.v = e.target.value; const d = $('cpvDif'); if(d) d.innerHTML = difTxt(-Number(p.saldo), e.target.value); }
+    if(e.target.id === 'cpvm' && PASO) PASO.m = e.target.value;
+  });
   window.FinMes = { html, despues };
 })();
