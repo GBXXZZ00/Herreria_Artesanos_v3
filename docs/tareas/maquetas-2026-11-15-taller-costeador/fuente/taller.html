@@ -1,0 +1,349 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=390"><style>
+:root{--accent:#17555C;--accent-soft:rgba(23,85,92,.09);--ink:#1C1A17;--ink-soft:#6E6A64;--surface-2:#F7F6F4;--line:#E9E7E3;--danger:#B42318;--amber:#B7791F;--amber-soft:#FDF3E1;--ok:#1F7A4D;--ok-soft:#E7F4EC}
+*{box-sizing:border-box;margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;color:var(--ink);background:#fff;font-size:15px}
+.scr{width:390px;min-height:844px;position:relative;padding:14px 16px 96px;display:none}
+.scr.on{display:block}
+.top{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+.logo{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:15px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.sub{color:var(--ink-soft);font-size:14px;margin-top:2px}
+.tabs{display:flex;background:var(--surface-2);border-radius:14px;padding:4px;margin-bottom:14px}
+.tabs b{flex:1;text-align:center;font-size:14px;padding:9px 0;color:var(--ink-soft);font-weight:600;border-radius:11px;white-space:nowrap}
+.tabs b.on{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(28,26,23,.08)}
+.bento{display:grid;grid-template-columns:1.3fr 1fr;gap:8px;margin-bottom:16px}
+.bx{background:var(--surface-2);border-radius:16px;padding:12px 14px}
+.bx .n{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.bx .l{font-size:13px;color:var(--ink-soft);margin-top:2px}
+.bx.big{grid-row:span 2;background:var(--accent);color:#fff}
+.bx.big .l{color:rgba(255,255,255,.8)}
+.bx.big .n{font-size:32px}
+.bx.am{background:var(--amber-soft)} .bx.am .n{color:var(--amber)}
+.grp{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--ink-soft);margin:16px 0 6px;text-transform:none}
+.row{display:flex;align-items:center;gap:12px;padding:11px 0}
+.row+.row{border-top:1px solid var(--line)}
+.th{width:44px;height:44px;border-radius:10px;background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:11px;overflow:hidden}
+.th.ph{background:linear-gradient(160deg,#5b6770,#2f383f)}
+.rt{flex:1;min-width:0}.rt b{display:block;font-size:15px}.rt span{font-size:13px;color:var(--ink-soft)}
+.rr{text-align:right;font-size:14px;font-weight:700;white-space:nowrap}
+.rr small{display:block;font-weight:500;color:var(--ink-soft);font-size:12px}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft)}
+.pill.am{background:var(--amber-soft);color:var(--amber)}.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.ac{background:var(--accent-soft);color:var(--accent)}.pill.rj{background:#FDECEA;color:var(--danger)}
+.btn{display:block;text-align:center;background:var(--accent);color:#fff;font-weight:700;border-radius:14px;padding:14px;font-size:16px}
+.btn.sec{background:var(--surface-2);color:var(--ink)}
+.btn.sm{display:inline-block;padding:7px 14px;font-size:14px;border-radius:999px}
+.ck{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex-shrink:0}
+.ck.on{background:var(--accent);border-color:var(--accent);position:relative}
+.ck.on:after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.wk{background:var(--surface-2);border-radius:16px;padding:6px 14px;margin-bottom:10px}
+.wk h3{display:flex;justify-content:space-between;align-items:center;font-size:16px;padding:8px 0 4px}
+.foot{position:absolute;left:12px;right:12px;bottom:14px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:12px 14px;box-shadow:0 6px 24px rgba(28,26,23,.10)}
+.nav{display:flex;justify-content:space-around;font-size:11px;color:var(--ink-soft);font-weight:600}
+.nav span.on{color:var(--accent)}
+.chips{display:flex;gap:8px;overflow:hidden;margin-bottom:12px}
+.chips b{font-size:14px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;font-weight:600}
+.chips b.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hero{height:300px;border-radius:18px;background:linear-gradient(160deg,#6d7a83,#2c353b);position:relative;margin-bottom:14px;overflow:hidden}
+.hero .door{position:absolute;left:120px;top:24px;width:150px;height:260px;border:8px solid #1d2327;background:#3a4449}
+.hero .door i{position:absolute;left:14px;right:14px;height:6px;background:#9fb4bd}
+.hero .tag{position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:5px 10px;border-radius:999px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.kv div{background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.kv span{display:block;font-size:12px;color:var(--ink-soft)}.kv b{font-size:15px}
+.note{font-size:13px;color:var(--ink-soft);text-align:center;margin-top:10px}
+/* costeador */
+.price{position:sticky;top:0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:12px;box-shadow:0 4px 16px rgba(28,26,23,.06)}
+.price .big{font-size:30px;font-weight:800;letter-spacing:-.6px;color:var(--accent)}
+.lines{font-size:13px;color:var(--ink-soft);display:flex;justify-content:space-between;margin-top:4px}
+.opt{display:flex;gap:6px;margin-top:8px}.opt b{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--surface-2);font-weight:600}
+.perf{border-top:1px solid var(--line);padding:12px 0}
+.perf h4{display:flex;justify-content:space-between;font-size:15px}
+.perf .m{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink-soft);margin:2px 0 8px}
+.pz{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.in{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:15px;font-weight:700;text-align:right}
+.in.q{width:44px}.in.c{width:64px}.in.t{flex:1;text-align:left;font-weight:500;color:var(--ink)}
+.x{color:var(--ink-soft);font-size:13px}
+.bar{display:flex;height:20px;border-radius:5px;overflow:hidden;margin-top:6px;font-size:10px;color:#fff;font-weight:700}
+.bar i{display:flex;align-items:center;justify-content:center;background:#5f6b73;border-right:2px solid #fff;font-style:normal}
+.bar i:nth-child(even){background:#465158}
+.bar i.s{background:#EAD9CF;border:0}
+.blab{display:flex;justify-content:space-between;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-soft);margin-top:6px}
+.add{font-size:14px;color:var(--accent);font-weight:700;padding:4px 0}
+.stp{display:flex;align-items:center;gap:8px}
+.stp b{width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:18px}
+.stp em{font-style:normal;font-weight:800;font-size:17px;width:22px;text-align:center}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.tiles div{background:var(--surface-2);border-radius:14px;padding:10px 12px}
+.tiles b{font-size:20px;font-weight:800;display:block}.tiles span{font-size:12px;color:var(--ink-soft)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:12px;color:var(--ink-soft);text-align:right;font-weight:600;padding:6px 4px}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td{padding:9px 4px;border-top:1px solid var(--line);text-align:right}
+.tbl td .in{display:inline-block;min-width:52px;padding:6px 7px;font-size:13px}
+.tbl td.low .in{background:var(--ok-soft);color:var(--ok)}
+.ylw{background:var(--amber-soft);border-radius:14px;padding:10px 12px;font-size:13px;color:#7a5313;margin-bottom:10px}
+
+.scr{height:844px;overflow:hidden}
+.dim{position:absolute;inset:0;background:rgba(28,26,23,.38)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 20px;overflow:hidden}
+.handle{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.sh-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.sh-h h2{font-size:21px;font-weight:800;letter-spacing:-.3px}
+.close{width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:16px;flex-shrink:0}
+.ats{display:flex;gap:6px;overflow:hidden;margin:6px 0 10px}
+.ats b{font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:6px 11px;border-radius:999px;white-space:nowrap}
+.pc{border:1px solid var(--line);border-radius:16px;padding:11px 13px;margin-bottom:9px}
+.pc .t{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.pc .t b{font-size:15px}
+.prod{display:flex;flex-direction:column;align-items:flex-start;margin-top:8px;gap:5px}
+.prod>span{font-size:14px;font-weight:600;white-space:nowrap}
+.trk{display:flex;gap:4px}
+.trk i{font-style:normal;font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;white-space:nowrap}
+.trk .h{background:var(--accent);color:#fff}
+.trk .p{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.trk .a{background:var(--surface-2);color:var(--ink)}
+.trk .s{background:var(--amber-soft);color:var(--amber);box-shadow:inset 0 0 0 1.5px #E8C98F}
+.trk .w{background:#fff;color:#B5B0A8;box-shadow:inset 0 0 0 1px var(--line)}
+.pc .ft{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft)}
+.step{display:flex;align-items:center;gap:10px;padding:10px 0}
+.step+.step{border-top:1px solid var(--line)}
+.dot{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.dot.h{background:var(--accent);color:#fff}.dot.p{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}.dot.s{background:var(--amber-soft);color:var(--amber)}.dot.w{background:var(--surface-2);color:#B5B0A8}
+.mini{width:38px;height:38px;border-radius:9px;background:linear-gradient(160deg,#6d7a83,#2c353b);flex-shrink:0}
+.lbl{font-size:13px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px}
+.op{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:7px}
+.op.on{border-color:var(--accent);background:var(--accent-soft)}
+.op .rt b{font-size:15px}
+.rad{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0}
+.op.on .rad{border:6px solid var(--accent)}
+.seg{display:flex;gap:8px}.seg b{flex:1;text-align:center;border:1.5px solid var(--line);border-radius:12px;padding:10px 4px;font-size:14px}
+.seg b.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.fld{background:var(--surface-2);border-radius:12px;padding:12px;font-size:16px;font-weight:600}
+.lock{background:linear-gradient(170deg,#28484d,#0f2427);color:#fff}
+.lock .clock{text-align:center;font-size:76px;font-weight:300;margin-top:60px;letter-spacing:-2px}
+.lock .date{text-align:center;font-size:18px;opacity:.85}
+.push{background:rgba(255,255,255,.88);color:var(--ink);border-radius:20px;padding:12px 14px;margin-top:40px;display:flex;gap:10px}
+.push .ic{width:38px;height:38px;border-radius:9px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:13px;flex-shrink:0}
+.cap{position:absolute;left:0;right:0;bottom:30px;text-align:center;font-size:14px;opacity:.8}
+.bx.rd{background:#FDECEA}.bx.rd .n{color:var(--danger)}
+.wrow{display:flex;align-items:center;gap:12px;padding:12px 0}
+.wrow+.wrow{border-top:1px solid var(--line)}
+.av{width:42px;height:42px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+
+.sec{border-radius:18px;padding:12px 14px;margin-bottom:12px;background:var(--surface-2)}
+.sec.am{background:var(--amber-soft)}
+.sec h3{display:flex;justify-content:space-between;align-items:baseline;font-size:16px;margin-bottom:2px}
+.sec h3 a{font-size:13px;color:var(--accent);font-weight:700;text-decoration:none}
+.sec .big{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.sec .row{padding:9px 0}.sec .row+.row{border-top:1px solid rgba(28,26,23,.08)}
+.prog{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0 6px;gap:2px}
+.prog i{display:block}
+.leg{display:flex;gap:12px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap}
+.leg b{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:0}
+.tt{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+.tt th{font-size:12px;color:var(--ink-soft);font-weight:600;text-align:right;padding:4px 2px}
+.tt th:first-child,.tt td:first-child{text-align:left}
+.tt td{padding:8px 2px;text-align:right;border-top:1px solid rgba(28,26,23,.08)}
+.tt tr.tot td{font-weight:800;border-top:1.5px solid var(--ink)}
+.alrt{display:flex;gap:8px;margin-bottom:12px}
+.alrt div{flex:1;border-radius:14px;padding:9px 11px;font-size:13px;font-weight:600}
+.wkn{display:flex;align-items:center;gap:10px}.wkn span{width:30px;height:30px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+.trk .r{background:#FDECEA;color:var(--danger);box-shadow:inset 0 0 0 1.5px #F2B8B2}
+.chips{flex-wrap:wrap}
+.carry{display:flex;align-items:center;gap:8px;background:#FDECEA;color:var(--danger);border-radius:12px;padding:8px 11px;font-size:13px;font-weight:600;margin:8px 0 2px}
+
+.chips{flex-wrap:nowrap}
+.chips b{padding:7px 12px}
+.per{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.per b{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:999px;padding:5px 14px 5px 5px;font-size:15px;font-weight:700;color:var(--ink-soft)}
+.per b.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.per b i{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-style:normal;display:flex;align-items:center;justify-content:center;font-size:13px}
+.per b.no{padding:5px 14px}
+.per b.lk{opacity:.6}
+.stt{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px}
+.stt b{font-size:17px}.stt span{font-size:13px;color:var(--ink-soft)}
+.segd{display:flex;background:var(--surface-2);border-radius:14px;padding:4px}.segd b{flex:1;text-align:center;padding:10px;border-radius:11px;font-size:15px;color:var(--ink-soft)}
+.segd b.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(28,26,23,.1)}
+.btn.dk{background:var(--ink)}
+.uh{display:flex;justify-content:space-between;align-items:center;margin:14px 0 2px}
+.uh b{font-size:14px;color:var(--ink-soft)}
+.sk{background:linear-gradient(90deg,#F1EFEC,#F7F6F4,#F1EFEC);border-radius:10px}
+.state{border:1px dashed var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.state .tg{font-size:11px;font-weight:800;color:var(--ink-soft);letter-spacing:.4px;margin-bottom:8px}
+.toast{background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:center}
+.rtag{font-size:11px;font-weight:700;color:var(--danger);background:#FDECEA;padding:2px 7px;border-radius:6px;margin-left:4px}
+</style></head><body><div class="scr" id="01-resumen" style="height:auto;overflow:visible"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Hoy jue 19 · semana 16 al 21 nov</div></div></div><div class="wkn"><span>‹</span><span>›</span></div></div><div class="tabs"><b class="on">Resumen</b><b class="">Pedidos</b><b class="">Nómina</b></div>
+<div class="alrt"><div style="background:var(--amber-soft);color:var(--amber)">1 entrega en 2 días ›</div><div style="background:var(--ok-soft);color:var(--ok)">1 listo para entregar ›</div></div>
+<div class="sec am"><h3><span>1 · Por asignar</span><a>Ver en Pedidos ›</a></h3>
+<div class="big" style="color:var(--amber)">13 pasos <span style="font-size:15px;font-weight:600;color:var(--ink-soft)">en 3 pedidos</span></div>
+<div class="row"><div class="rt"><b>N° 1203 · Bitral ×2</b><span>6 pasos · sáb 28 nov</span></div><span class="btn sm">Asignar</span></div>
+<div class="row"><div class="rt"><b>N° 1200 · Bitral ×2</b><span>3 pasos · entrega sáb 21</span></div><span class="btn sm">Asignar</span></div>
+<div class="row"><div class="rt"><b>N° 1205 · Combo #1</b><span>4 pasos · vie 5 dic</span></div><span class="btn sm">Asignar</span></div></div>
+<div class="sec"><h3><span>2 · Lo asignado esta semana</span><a>Ver en Pedidos ›</a></h3>
+<div class="big">6 de 9 hechos</div>
+<div class="prog"><i style="flex:6;background:var(--accent)"></i><i style="flex:1;background:#8FB3B7"></i><i style="flex:1;background:#D9D6D1"></i><i style="flex:1;background:#E9A8A0"></i></div>
+<div class="leg"><span><b style="background:var(--accent)"></b>6 hechos</span><span><b style="background:#8FB3B7"></b>1 haciendo</span><span><b style="background:#D9D6D1"></b>1 sin empezar</span><span><b style="background:#E9A8A0"></b>1 de la semana pasada</span></div>
+<table class="tt"><tr><th>Trabajador</th><th>Asignado</th><th>Hecho</th><th>Falta</th></tr>
+<tr><td><b>Jesus</b> <span class="x">Hierro</span></td><td>4</td><td>3</td><td>1</td></tr>
+<tr><td><b>Luis Paz</b> <span class="x">Masilla</span></td><td>4</td><td>2</td><td style="color:var(--danger);font-weight:700">2 <span style="font-size:11px">(1 ↩)</span></td></tr>
+<tr><td><b>Pedro</b> <span class="x">Detalles</span></td><td>1</td><td>1</td><td>0</td></tr>
+<tr><td><b>José</b> <span class="x">Hierro</span></td><td>0</td><td>·</td><td>·</td></tr></table>
+<div class="carry">↩ Detalles del Lineal (exhibición): era para el sáb 14 · Luis Paz</div>
+<div class="sub" style="font-size:12px;margin-top:6px">Toca un trabajador para ver sus trabajos con foto.</div></div>
+<div class="sec"><h3><span>3 · Por pagar</span><a>Ir a Nómina ›</a></h3>
+<div class="big" style="color:var(--accent)">$210 <span style="font-size:15px;font-weight:600;color:var(--ink-soft)">trabajos $220 menos vales $10</span></div>
+<table class="tt"><tr><th>Trabajador</th><th>Trabajos</th><th>Vales</th><th>A pagar</th></tr>
+<tr><td><b>Jesus</b> <span class="rtag">1 ↩</span></td><td>4 · $125</td><td style="color:var(--danger)">−$10</td><td><b>$115</b></td></tr>
+<tr><td><b>Luis Paz</b></td><td>2 · $95</td><td>·</td><td><b>$95</b></td></tr>
+<tr class="tot"><td>Total</td><td>$220</td><td>−$10</td><td>$210</td></tr></table>
+<div class="sub" style="font-size:12px;margin-top:6px">Ya pagaste $15 esta semana (Pedro). Lo que no pagues pasa a la semana siguiente con ↩.</div></div>
+<div class="sec"><h3><span>4 · Vales</span><a>Ver vales ›</a></h3>
+<div class="row"><div class="rt"><b>Luis Paz pidió $20</b><span>Pasaje de la semana · hoy 8:10 am</span></div><span class="btn sm">Revisar</span></div>
+<div class="row"><div class="rt"><b>Jesus · $10 aprobado</b><span>el mar · se descuenta al pagarle</span></div></div></div>
+<div class="ats"><b>✂ Plan de corte sáb 21</b><b>+ Fabricar para exhibición</b></div><div style="height:90px"></div><div class="foot" style="position:relative;left:0;right:0;bottom:0;margin-top:-70px"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="scr" id="02-pedidos-todos" style="height:auto;overflow:visible"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">6 pedidos en el taller</div></div></div></div><div class="tabs"><b class="">Resumen</b><b class="on">Pedidos</b><b class="">Nómina</b></div><div class="chips"><b class="on">Todos 6</b><b>Por asignar 3</b><b>En proceso 3</b><b>Listos 1</b></div><div class="pc"><div class="t"><b>N° 1200 · Ana Rincón</b><span class="pill am">sáb 21 · en 2 días</span></div><div class="prod"><span>Bitral 1 de 2</span><div class="trk"><i class="h">Hierro ✓</i><i class="a">Masilla · Luis</i><i class="s">Detalles</i></div></div><div class="prod"><span>Bitral 2 de 2</span><div class="trk"><i class="p">Hierro · Jesus</i><i class="s">Masilla</i><i class="s">Detalles</i></div></div><div class="ft"><span style="">Foto nueva de Jesus hoy · 3 pasos por asignar</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>N° 1203 · Ana Rincón</b><span class="pill ">sáb 28 nov</span></div><div class="prod"><span>Bitral 1 de 2</span><div class="trk"><i class="s">Hierro</i><i class="s">Masilla</i><i class="s">Detalles</i></div></div><div class="prod"><span>Bitral 2 de 2</span><div class="trk"><i class="s">Hierro</i><i class="s">Masilla</i><i class="s">Detalles</i></div></div><div class="ft"><span style="">6 pasos por asignar</span><span class="btn sm">Asignar</span></div></div><div class="pc"><div class="t"><b>N° 1205 · Carlos Pérez</b><span class="pill ">vie 5 dic</span></div><div class="prod"><span>Combo #1</span><div class="trk"><i class="s">Hierro</i><i class="s">Masilla</i><i class="s">Aluminio</i><i class="s">Detalles</i></div></div><div class="ft"><span style="">4 pasos por asignar</span><span class="btn sm">Asignar</span></div></div><div class="pc"><div class="t"><b>Exhibición · La Limpia</b><span class="pill ">sin fecha</span></div><div class="prod"><span>Lineal Económico</span><div class="trk"><i class="h">Hierro ✓</i><i class="h">Masilla ✓</i><i class="r">Detalles · Luis ↩</i></div></div><div class="ft"><span style="color:var(--danger)">↩ Era para el sáb 14 y no se terminó</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>N° 1207 · María León</b><span class="pill ">sáb 12 dic</span></div><div class="prod"><span>Puerta de madera</span><div class="trk"><i class="h">Estructura ✓</i><i class="p">Armado</i><i class="w">Pintura</i><i class="w">Ensamblado</i></div></div><div class="ft"><span style="">Madera · la lleva Gualfredo</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>N° 1198 · José Marín</b><span class="pill ok">Lista</span></div><div class="prod"><span>Lineal</span><div class="trk"><i class="h">Hierro ✓</i><i class="h">Masilla ✓</i><i class="h">Detalles ✓</i></div></div><div class="ft"><span style="">Lista desde ayer · avisar al cliente</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div style="height:90px"></div><div class="foot" style="position:relative;left:0;right:0;bottom:0;margin-top:-70px"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="scr" id="03-pedidos-en-proceso"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Pedidos en proceso</div></div></div></div><div class="tabs"><b class="">Resumen</b><b class="on">Pedidos</b><b class="">Nómina</b></div><div class="chips"><b>Todos 6</b><b>Por asignar 3</b><b class="on">En proceso 3</b><b>Listos 1</b></div><div class="pc"><div class="t"><b>N° 1200 · Ana Rincón</b><span class="pill am">sáb 21 · en 2 días</span></div><div class="prod"><span>Bitral 1 de 2</span><div class="trk"><i class="h">Hierro ✓</i><i class="a">Masilla · Luis</i><i class="s">Detalles</i></div></div><div class="prod"><span>Bitral 2 de 2</span><div class="trk"><i class="p">Hierro · Jesus</i><i class="s">Masilla</i><i class="s">Detalles</i></div></div><div class="ft"><span style="">Foto nueva de Jesus hoy · 3 pasos por asignar</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>Exhibición · La Limpia</b><span class="pill ">sin fecha</span></div><div class="prod"><span>Lineal Económico</span><div class="trk"><i class="h">Hierro ✓</i><i class="h">Masilla ✓</i><i class="r">Detalles · Luis ↩</i></div></div><div class="ft"><span style="color:var(--danger)">↩ Era para el sáb 14 y no se terminó</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>N° 1207 · María León</b><span class="pill ">sáb 12 dic</span></div><div class="prod"><span>Puerta de madera</span><div class="trk"><i class="h">Estructura ✓</i><i class="p">Armado</i><i class="w">Pintura</i><i class="w">Ensamblado</i></div></div><div class="ft"><span style="">Madera · la lleva Gualfredo</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="scr" id="04-pedidos-listos"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Listos para entregar</div></div></div></div><div class="tabs"><b class="">Resumen</b><b class="on">Pedidos</b><b class="">Nómina</b></div><div class="chips"><b>Todos 6</b><b>Por asignar 3</b><b>En proceso 3</b><b class="on">Listos 1</b></div>
+<div class="pc"><div class="t"><b>N° 1198 · José Marín</b><span class="pill ok">Lista desde ayer</span></div>
+<div class="prod"><span>Lineal</span><div class="trk"><i class="h">Hierro ✓</i><i class="h">Masilla ✓</i><i class="h">Detalles ✓</i></div></div>
+<div class="kv" style="margin:10px 0 4px"><div><span>Debe el cliente</span><b style="color:var(--ok)">$0 · pagado</b></div><div><span>Entrega</span><b>vie 20 nov</b></div></div>
+<div class="ats" style="margin-bottom:4px"><b>WhatsApp</b><b>Fotos</b><b>Venta</b></div>
+<div class="btn" style="margin-top:6px">Marcar entregada</div></div>
+<div class="note">Aquí sale un pedido cuando todos sus pasos están hechos, sin importar en qué semana se asignaron.</div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="scr" id="05-drawer-pedido"><div style="opacity:.9"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Pedidos en proceso</div></div></div></div><div class="tabs"><b class="">Resumen</b><b class="on">Pedidos</b><b class="">Nómina</b></div><div class="chips"><b>Todos 6</b><b>Por asignar 3</b><b class="on">En proceso 3</b><b>Listos 1</b></div><div class="pc"><div class="t"><b>N° 1200 · Ana Rincón</b><span class="pill am">sáb 21 · en 2 días</span></div><div class="prod"><span>Bitral 1 de 2</span><div class="trk"><i class="h">Hierro ✓</i><i class="a">Masilla · Luis</i><i class="s">Detalles</i></div></div><div class="prod"><span>Bitral 2 de 2</span><div class="trk"><i class="p">Hierro · Jesus</i><i class="s">Masilla</i><i class="s">Detalles</i></div></div><div class="ft"><span style="">Foto nueva de Jesus hoy · 3 pasos por asignar</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>Exhibición · La Limpia</b><span class="pill ">sin fecha</span></div><div class="prod"><span>Lineal Económico</span><div class="trk"><i class="h">Hierro ✓</i><i class="h">Masilla ✓</i><i class="r">Detalles · Luis ↩</i></div></div><div class="ft"><span style="color:var(--danger)">↩ Era para el sáb 14 y no se terminó</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>N° 1207 · María León</b><span class="pill ">sáb 12 dic</span></div><div class="prod"><span>Puerta de madera</span><div class="trk"><i class="h">Estructura ✓</i><i class="p">Armado</i><i class="w">Pintura</i><i class="w">Ensamblado</i></div></div><div class="ft"><span style="">Madera · la lleva Gualfredo</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="dim"></div><div class="sheet" style="height:790px"><div class="handle"></div>
+<div class="sh-h"><div><h2>N° 1200 · Ana Rincón</h2><div class="sub">Entrega sáb 21 nov · en 2 días · pagado completo</div></div><span class="close">✕</span></div>
+<div class="ats"><b>Venta</b><b>Seguimiento</b><b>✂ Corte</b><b>Costeo</b></div>
+<div class="uh"><b>Modelo bitral · 1 de 2</b><span class="btn sm">Asignar</span></div>
+<div class="step"><div class="dot h">✓</div><div class="rt"><b>Hierro</b><span>Jesus · terminó hoy 9:40 am</span></div><div class="mini"></div><div class="rr">$30<small style="color:var(--amber)">por pagar</small></div></div>
+<div class="step"><div class="dot p">2</div><div class="rt"><b>Masilla y pintura</b><span>Luis Paz · ya puede empezar</span></div><div class="rr">$30</div></div>
+<div class="step"><div class="dot s">3</div><div class="rt"><b>Detalles</b><span style="color:var(--amber)">sin asignar</span></div></div>
+<div class="uh"><b>Modelo bitral · 2 de 2</b><span class="btn sm">Asignar</span></div>
+<div class="step"><div class="dot p">1</div><div class="rt"><b>Hierro</b><span>Jesus · haciéndolo desde 10:15 am</span></div><div class="rr">$30</div></div>
+<div class="step"><div class="dot s">2</div><div class="rt"><b>Masilla y pintura</b><span style="color:var(--amber)">sin asignar</span></div></div>
+<div class="step"><div class="dot s">3</div><div class="rt"><b>Detalles</b><span style="color:var(--amber)">sin asignar</span></div></div>
+<div class="note">Toca un paso hecho para ver su foto en grande.</div></div></div><div class="scr" id="06-asignar"><div style="opacity:.9"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Pedidos en proceso</div></div></div></div><div class="tabs"><b class="">Resumen</b><b class="on">Pedidos</b><b class="">Nómina</b></div><div class="chips"><b>Todos 6</b><b>Por asignar 3</b><b class="on">En proceso 3</b><b>Listos 1</b></div><div class="pc"><div class="t"><b>N° 1200 · Ana Rincón</b><span class="pill am">sáb 21 · en 2 días</span></div><div class="prod"><span>Bitral 1 de 2</span><div class="trk"><i class="h">Hierro ✓</i><i class="a">Masilla · Luis</i><i class="s">Detalles</i></div></div><div class="prod"><span>Bitral 2 de 2</span><div class="trk"><i class="p">Hierro · Jesus</i><i class="s">Masilla</i><i class="s">Detalles</i></div></div><div class="ft"><span style="">Foto nueva de Jesus hoy · 3 pasos por asignar</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>Exhibición · La Limpia</b><span class="pill ">sin fecha</span></div><div class="prod"><span>Lineal Económico</span><div class="trk"><i class="h">Hierro ✓</i><i class="h">Masilla ✓</i><i class="r">Detalles · Luis ↩</i></div></div><div class="ft"><span style="color:var(--danger)">↩ Era para el sáb 14 y no se terminó</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>N° 1207 · María León</b><span class="pill ">sáb 12 dic</span></div><div class="prod"><span>Puerta de madera</span><div class="trk"><i class="h">Estructura ✓</i><i class="p">Armado</i><i class="w">Pintura</i><i class="w">Ensamblado</i></div></div><div class="ft"><span style="">Madera · la lleva Gualfredo</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="dim"></div><div class="sheet" style="height:700px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Asignar: Modelo bitral (2 de 2)</h2><div class="sub">N° 1200 · Ana Rincón</div></div><span class="close">✕</span></div>
+<div class="sub" style="margin-bottom:12px">Elige quién hace cada paso. A cada uno le llega el aviso cuando le toque.</div>
+<div style="font-weight:700;margin-bottom:8px">¿Para cuándo?</div>
+<div class="segd"><b class="on">Este sáb 21 nov</b><b>Próximo sáb 28 nov</b></div>
+<div class="stt"><b>Hierro</b><span>$30 · ya empezó</span></div>
+<div class="per"><b class="on lk"><i>J</i>Jesus</b></div>
+<div class="stt"><b>Masilla y pintura</b><span>$30</span></div>
+<div class="per"><b class="on"><i>L</i>Luis Paz</b><b class="no">Sin asignar</b></div>
+<div class="stt"><b>Detalles</b><span>$15</span></div>
+<div class="per"><b class="on"><i>P</i>Pedro</b><b class="no">Sin asignar</b></div>
+<div class="btn dk" style="position:absolute;left:16px;right:16px;bottom:26px">Guardar 2 cambios</div></div></div><div class="scr" id="07-aviso"><div class="lock" style="position:absolute;inset:0;padding:16px"><div class="clock">9:41</div><div class="date">jueves 19 de noviembre</div>
+<div class="push"><div class="ic">HA</div><div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13px"><b>Artesanos</b><span style="color:var(--ink-soft)">ahora</span></div>
+<div style="font-size:15px;font-weight:700;margin-top:2px">Terminó Hierro · foto lista</div><div style="font-size:14px">Jesus · Modelo bitral 1 de 2 · N° 1200. Toca para ver la foto.</div></div></div>
+<div class="cap">Al tocarlo abre el trabajo con su foto →</div></div></div><div class="scr" id="08-foto-trabajo"><div style="opacity:.9"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Hoy jue 19 · semana 16 al 21 nov</div></div></div><div class="wkn"><span>‹</span><span>›</span></div></div><div class="tabs"><b class="on">Resumen</b><b class="">Pedidos</b><b class="">Nómina</b></div>
+<div class="alrt"><div style="background:var(--amber-soft);color:var(--amber)">1 entrega en 2 días ›</div><div style="background:var(--ok-soft);color:var(--ok)">1 listo para entregar ›</div></div>
+<div class="sec am"><h3><span>1 · Por asignar</span><a>Ver en Pedidos ›</a></h3>
+<div class="big" style="color:var(--amber)">13 pasos <span style="font-size:15px;font-weight:600;color:var(--ink-soft)">en 3 pedidos</span></div>
+<div class="row"><div class="rt"><b>N° 1203 · Bitral ×2</b><span>6 pasos · sáb 28 nov</span></div><span class="btn sm">Asignar</span></div>
+<div class="row"><div class="rt"><b>N° 1200 · Bitral ×2</b><span>3 pasos · entrega sáb 21</span></div><span class="btn sm">Asignar</span></div>
+<div class="row"><div class="rt"><b>N° 1205 · Combo #1</b><span>4 pasos · vie 5 dic</span></div><span class="btn sm">Asignar</span></div></div>
+<div class="sec"><h3><span>2 · Lo asignado esta semana</span><a>Ver en Pedidos ›</a></h3>
+<div class="big">6 de 9 hechos</div>
+<div class="prog"><i style="flex:6;background:var(--accent)"></i><i style="flex:1;background:#8FB3B7"></i><i style="flex:1;background:#D9D6D1"></i><i style="flex:1;background:#E9A8A0"></i></div>
+<div class="leg"><span><b style="background:var(--accent)"></b>6 hechos</span><span><b style="background:#8FB3B7"></b>1 haciendo</span><span><b style="background:#D9D6D1"></b>1 sin empezar</span><span><b style="background:#E9A8A0"></b>1 de la semana pasada</span></div>
+<table class="tt"><tr><th>Trabajador</th><th>Asignado</th><th>Hecho</th><th>Falta</th></tr>
+<tr><td><b>Jesus</b> <span class="x">Hierro</span></td><td>4</td><td>3</td><td>1</td></tr>
+<tr><td><b>Luis Paz</b> <span class="x">Masilla</span></td><td>4</td><td>2</td><td style="color:var(--danger);font-weight:700">2 <span style="font-size:11px">(1 ↩)</span></td></tr>
+<tr><td><b>Pedro</b> <span class="x">Detalles</span></td><td>1</td><td>1</td><td>0</td></tr>
+<tr><td><b>José</b> <span class="x">Hierro</span></td><td>0</td><td>·</td><td>·</td></tr></table>
+<div class="carry">↩ Detalles del Lineal (exhibición): era para el sáb 14 · Luis Paz</div>
+<div class="sub" style="font-size:12px;margin-top:6px">Toca un trabajador para ver sus trabajos con foto.</div></div>
+<div class="sec"><h3><span>3 · Por pagar</span><a>Ir a Nómina ›</a></h3>
+<div class="big" style="color:var(--accent)">$210 <span style="font-size:15px;font-weight:600;color:var(--ink-soft)">trabajos $220 menos vales $10</span></div>
+<table class="tt"><tr><th>Trabajador</th><th>Trabajos</th><th>Vales</th><th>A pagar</th></tr>
+<tr><td><b>Jesus</b> <span class="rtag">1 ↩</span></td><td>4 · $125</td><td style="color:var(--danger)">−$10</td><td><b>$115</b></td></tr>
+<tr><td><b>Luis Paz</b></td><td>2 · $95</td><td>·</td><td><b>$95</b></td></tr>
+<tr class="tot"><td>Total</td><td>$220</td><td>−$10</td><td>$210</td></tr></table>
+<div class="sub" style="font-size:12px;margin-top:6px">Ya pagaste $15 esta semana (Pedro). Lo que no pagues pasa a la semana siguiente con ↩.</div></div>
+<div class="sec"><h3><span>4 · Vales</span><a>Ver vales ›</a></h3>
+<div class="row"><div class="rt"><b>Luis Paz pidió $20</b><span>Pasaje de la semana · hoy 8:10 am</span></div><span class="btn sm">Revisar</span></div>
+<div class="row"><div class="rt"><b>Jesus · $10 aprobado</b><span>el mar · se descuenta al pagarle</span></div></div></div>
+<div class="ats"><b>✂ Plan de corte sáb 21</b><b>+ Fabricar para exhibición</b></div><div style="height:90px"></div><div class="foot" style="position:relative;left:0;right:0;bottom:0;margin-top:-70px"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="dim"></div><div class="sheet" style="height:790px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Hierro terminado</h2><div class="sub">Modelo bitral · 1 de 2 · N° 1200</div></div><span class="close">✕</span></div>
+<div class="hero" style="height:300px"><div class="door" style="height:250px;top:22px"><i style="top:40px"></i><i style="top:80px"></i><i style="top:120px"></i><i style="top:160px"></i><i style="top:200px"></i></div><span class="tag">Foto de Jesus · hoy 9:40 am · toca para ampliar</span></div>
+<div class="kv" style="margin-top:0"><div><span>Lo hizo</span><b>Jesus</b></div><div><span>Se le paga por esto</span><b>$30,00</b></div><div><span>Sigue</span><b>Masilla · Luis Paz</b></div><div><span>Por pagar a Jesus</span><b style="color:var(--accent)">$115,00</b></div></div>
+<div class="ats"><b>Ver pedido N° 1200</b><b>Nómina de Jesus</b></div>
+<div class="note" style="text-align:left">Ya se sumó a lo que le debes a Jesus. Lo pagas cuando quieras desde Nómina.</div></div></div><div class="scr" id="09-nomina"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Hoy jue 19 · semana 16 al 21 nov</div></div></div><div class="wkn"><span>‹</span><span>›</span></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Nómina</b></div>
+<div class="bento" style="grid-template-columns:1.3fr 1fr"><div class="bx big"><div class="l">Por pagar</div><div class="n">$210</div><div class="l">trabajos $220 · vales −$10</div></div><div class="bx"><div class="n" style="font-size:22px">$15</div><div class="l">Ya pagado esta semana</div></div></div>
+<div class="grp"><span>Por trabajador</span><span>a pagar</span></div>
+<div class="wrow"><div class="av">JE</div><div class="rt"><b>Jesus</b><span>Hierro · 4 trabajos · vale −$10</span><br><span class="rtag" style="margin:4px 0 0">1 de la semana pasada</span></div><div class="rr" style="color:var(--accent)">$115 ›</div></div>
+<div class="wrow"><div class="av">LP</div><div class="rt"><b>Luis Paz</b><span>Masilla y pintura · 2 trabajos</span><br><span class="pill am" style="margin-top:4px">Pidió vale $20 · revisar</span></div><div class="rr" style="color:var(--accent)">$95 ›</div></div>
+<div class="wrow"><div class="av">PE</div><div class="rt"><b>Pedro</b><span>Detalles · le pagaste $15 el mié</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="wrow"><div class="av">JO</div><div class="rt"><b>José</b><span>Hierro · nada esta semana</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="ats" style="margin-top:12px"><b>+ Vale</b><b>Categorías de pago</b><b>Historial</b></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="scr" id="10-drawer-trabajador"><div style="opacity:.9"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Hoy jue 19 · semana 16 al 21 nov</div></div></div><div class="wkn"><span>‹</span><span>›</span></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Nómina</b></div>
+<div class="bento" style="grid-template-columns:1.3fr 1fr"><div class="bx big"><div class="l">Por pagar</div><div class="n">$210</div><div class="l">trabajos $220 · vales −$10</div></div><div class="bx"><div class="n" style="font-size:22px">$15</div><div class="l">Ya pagado esta semana</div></div></div>
+<div class="grp"><span>Por trabajador</span><span>a pagar</span></div>
+<div class="wrow"><div class="av">JE</div><div class="rt"><b>Jesus</b><span>Hierro · 4 trabajos · vale −$10</span><br><span class="rtag" style="margin:4px 0 0">1 de la semana pasada</span></div><div class="rr" style="color:var(--accent)">$115 ›</div></div>
+<div class="wrow"><div class="av">LP</div><div class="rt"><b>Luis Paz</b><span>Masilla y pintura · 2 trabajos</span><br><span class="pill am" style="margin-top:4px">Pidió vale $20 · revisar</span></div><div class="rr" style="color:var(--accent)">$95 ›</div></div>
+<div class="wrow"><div class="av">PE</div><div class="rt"><b>Pedro</b><span>Detalles · le pagaste $15 el mié</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="wrow"><div class="av">JO</div><div class="rt"><b>José</b><span>Hierro · nada esta semana</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="ats" style="margin-top:12px"><b>+ Vale</b><b>Categorías de pago</b><b>Historial</b></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="dim"></div><div class="sheet" style="height:800px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Jesus</h2><div class="sub">Hierro · por pagar <b style="color:var(--accent)">$115</b></div></div><span class="close">✕</span></div>
+<div class="chips"><b class="on">Por pagar</b><b>Historial</b><b>Vales</b></div>
+<div class="step"><div class="ck on"></div><div class="mini"></div><div class="rt"><b>Hierro · Arco 3 vidrios <span class="rtag">↩</span></b><span>sáb 14 · no se pagó · <u>N° 1185</u></span></div><div class="rr">$35</div></div>
+<div class="step"><div class="ck on"></div><div class="mini"></div><div class="rt"><b>Hierro · Bitral 1 de 2</b><span>hoy · <u>N° 1200</u></span></div><div class="rr">$30</div></div>
+<div class="step"><div class="ck on"></div><div class="mini"></div><div class="rt"><b>Hierro · Lineal</b><span>mar · <u>N° 1198</u></span></div><div class="rr">$30</div></div>
+<div class="step"><div class="ck on"></div><div class="mini"></div><div class="rt"><b>Hierro · Taco</b><span>lun · <u>N° 1195</u></span></div><div class="rr">$30</div></div>
+<div class="step"><div class="ck on"></div><div class="th" style="width:38px;height:38px;font-size:10px">vale</div><div class="rt"><b>Vale del martes</b><span>aprobado · se descuenta</span></div><div class="rr" style="color:var(--danger)">−$10</div></div>
+<div class="lbl">Haciendo ahora (se suma cuando termine)</div>
+<div class="step"><div class="dot p">·</div><div class="rt"><b>Hierro · Bitral 2 de 2</b><span>desde 10:15 am · <u>N° 1200</u></span></div><div class="rr" style="color:var(--ink-soft)">$30</div></div>
+<div style="position:absolute;left:16px;right:16px;bottom:22px"><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px"><span>4 trabajos $125 · vale −$10</span><b>$115,00</b></div><div class="btn">Pagar $115 a Jesus</div><div class="note" style="margin-top:6px">Lo que desmarques pasa a la semana siguiente con ↩.</div></div></div></div><div class="scr" id="11-pagar"><div style="opacity:.9"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Hoy jue 19 · semana 16 al 21 nov</div></div></div><div class="wkn"><span>‹</span><span>›</span></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Nómina</b></div>
+<div class="bento" style="grid-template-columns:1.3fr 1fr"><div class="bx big"><div class="l">Por pagar</div><div class="n">$210</div><div class="l">trabajos $220 · vales −$10</div></div><div class="bx"><div class="n" style="font-size:22px">$15</div><div class="l">Ya pagado esta semana</div></div></div>
+<div class="grp"><span>Por trabajador</span><span>a pagar</span></div>
+<div class="wrow"><div class="av">JE</div><div class="rt"><b>Jesus</b><span>Hierro · 4 trabajos · vale −$10</span><br><span class="rtag" style="margin:4px 0 0">1 de la semana pasada</span></div><div class="rr" style="color:var(--accent)">$115 ›</div></div>
+<div class="wrow"><div class="av">LP</div><div class="rt"><b>Luis Paz</b><span>Masilla y pintura · 2 trabajos</span><br><span class="pill am" style="margin-top:4px">Pidió vale $20 · revisar</span></div><div class="rr" style="color:var(--accent)">$95 ›</div></div>
+<div class="wrow"><div class="av">PE</div><div class="rt"><b>Pedro</b><span>Detalles · le pagaste $15 el mié</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="wrow"><div class="av">JO</div><div class="rt"><b>José</b><span>Hierro · nada esta semana</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="ats" style="margin-top:12px"><b>+ Vale</b><b>Categorías de pago</b><b>Historial</b></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="dim"></div><div class="sheet" style="height:640px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Pagar $115 a Jesus</h2><div class="sub">4 trabajos $125 · vale −$10</div></div><span class="close">✕</span></div>
+<div class="lbl">¿De qué cuenta salió?</div>
+<div class="op on"><div class="rad"></div><div class="rt"><b>Efectivo dólares</b><span>tienes $420,00</span></div></div>
+<div class="op"><div class="rad"></div><div class="rt"><b>Zelle</b><span>tienes $1.250,00</span></div></div>
+<div class="op"><div class="rad"></div><div class="rt"><b>Banesco (bolívares)</b><span>pide la tasa del día</span></div></div>
+<div class="lbl">Monto</div><div class="fld">$115,00</div>
+<div class="btn" style="margin-top:14px">Confirmar pago</div>
+<div class="note">Jesus recibe un aviso. Sale en Finanzas como nómina.</div></div></div><div class="scr" id="12-vale"><div style="opacity:.9"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Hoy jue 19 · semana 16 al 21 nov</div></div></div><div class="wkn"><span>‹</span><span>›</span></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Nómina</b></div>
+<div class="bento" style="grid-template-columns:1.3fr 1fr"><div class="bx big"><div class="l">Por pagar</div><div class="n">$210</div><div class="l">trabajos $220 · vales −$10</div></div><div class="bx"><div class="n" style="font-size:22px">$15</div><div class="l">Ya pagado esta semana</div></div></div>
+<div class="grp"><span>Por trabajador</span><span>a pagar</span></div>
+<div class="wrow"><div class="av">JE</div><div class="rt"><b>Jesus</b><span>Hierro · 4 trabajos · vale −$10</span><br><span class="rtag" style="margin:4px 0 0">1 de la semana pasada</span></div><div class="rr" style="color:var(--accent)">$115 ›</div></div>
+<div class="wrow"><div class="av">LP</div><div class="rt"><b>Luis Paz</b><span>Masilla y pintura · 2 trabajos</span><br><span class="pill am" style="margin-top:4px">Pidió vale $20 · revisar</span></div><div class="rr" style="color:var(--accent)">$95 ›</div></div>
+<div class="wrow"><div class="av">PE</div><div class="rt"><b>Pedro</b><span>Detalles · le pagaste $15 el mié</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="wrow"><div class="av">JO</div><div class="rt"><b>José</b><span>Hierro · nada esta semana</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="ats" style="margin-top:12px"><b>+ Vale</b><b>Categorías de pago</b><b>Historial</b></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="dim"></div><div class="sheet" style="height:540px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Vale de Luis Paz</h2><div class="sub">Lo pidió hoy 8:10 am</div></div><span class="close">✕</span></div>
+<div class="kv"><div><span>Pide</span><b>$20,00</b></div><div><span>Por pagarle hoy</span><b>$95,00</b></div></div>
+<div class="op"><div class="rt"><span>Motivo</span><b style="font-weight:600">Pasaje de la semana</b></div></div>
+<div class="note" style="text-align:left;margin:8px 0 14px">Si lo apruebas, se descuenta cuando le pagues: quedarían $75.</div>
+<div class="btn">Aprobar vale $20</div>
+<div class="btn sec" style="margin-top:8px;color:var(--danger)">No aprobar</div></div></div><div class="scr" id="13-historial"><div style="opacity:.9"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Hoy jue 19 · semana 16 al 21 nov</div></div></div><div class="wkn"><span>‹</span><span>›</span></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Nómina</b></div>
+<div class="bento" style="grid-template-columns:1.3fr 1fr"><div class="bx big"><div class="l">Por pagar</div><div class="n">$210</div><div class="l">trabajos $220 · vales −$10</div></div><div class="bx"><div class="n" style="font-size:22px">$15</div><div class="l">Ya pagado esta semana</div></div></div>
+<div class="grp"><span>Por trabajador</span><span>a pagar</span></div>
+<div class="wrow"><div class="av">JE</div><div class="rt"><b>Jesus</b><span>Hierro · 4 trabajos · vale −$10</span><br><span class="rtag" style="margin:4px 0 0">1 de la semana pasada</span></div><div class="rr" style="color:var(--accent)">$115 ›</div></div>
+<div class="wrow"><div class="av">LP</div><div class="rt"><b>Luis Paz</b><span>Masilla y pintura · 2 trabajos</span><br><span class="pill am" style="margin-top:4px">Pidió vale $20 · revisar</span></div><div class="rr" style="color:var(--accent)">$95 ›</div></div>
+<div class="wrow"><div class="av">PE</div><div class="rt"><b>Pedro</b><span>Detalles · le pagaste $15 el mié</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="wrow"><div class="av">JO</div><div class="rt"><b>José</b><span>Hierro · nada esta semana</span></div><div class="rr" style="color:var(--ok)">al día ›</div></div>
+<div class="ats" style="margin-top:12px"><b>+ Vale</b><b>Categorías de pago</b><b>Historial</b></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="dim"></div><div class="sheet" style="height:740px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Jesus</h2><div class="sub">Historial de pagos</div></div><span class="close">✕</span></div>
+<div class="chips"><b>Por pagar</b><b class="on">Historial</b><b>Vales</b></div>
+<div class="pc"><div class="t"><b>Sáb 14 nov</b><b>$120,00</b></div><div class="sub" style="font-size:13px">Efectivo dólares · pagó Ray · 4 trabajos · vale −$10</div>
+ <div class="step" style="padding-top:8px"><div class="mini"></div><div class="rt"><b>Hierro · Lineal ×2</b><span>N° 1190</span></div><div class="rr">$60</div></div>
+ <div class="step"><div class="mini"></div><div class="rt"><b>Hierro · Taco Punto</b><span>N° 1187</span></div><div class="rr">$35</div></div>
+ <div class="step"><div class="mini"></div><div class="rt"><b>Hierro · Escalera</b><span>N° 1186</span></div><div class="rr">$35</div></div></div>
+<div class="pc"><div class="t"><b>Sáb 7 nov</b><b>$95,00</b></div><div class="sub" style="font-size:13px">Zelle · pagó Ray · 3 trabajos</div></div>
+<div class="pc"><div class="t"><b>Mié 4 nov</b><b>$30,00</b></div><div class="sub" style="font-size:13px">Efectivo dólares · pagó Ray · 1 trabajo</div></div>
+<div class="note">Los pagos hechos no se cambian.</div></div></div><div class="scr" id="14-semana-pasada"><div style="opacity:.9"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Pedidos en proceso</div></div></div></div><div class="tabs"><b class="">Resumen</b><b class="on">Pedidos</b><b class="">Nómina</b></div><div class="chips"><b>Todos 6</b><b>Por asignar 3</b><b class="on">En proceso 3</b><b>Listos 1</b></div><div class="pc"><div class="t"><b>N° 1200 · Ana Rincón</b><span class="pill am">sáb 21 · en 2 días</span></div><div class="prod"><span>Bitral 1 de 2</span><div class="trk"><i class="h">Hierro ✓</i><i class="a">Masilla · Luis</i><i class="s">Detalles</i></div></div><div class="prod"><span>Bitral 2 de 2</span><div class="trk"><i class="p">Hierro · Jesus</i><i class="s">Masilla</i><i class="s">Detalles</i></div></div><div class="ft"><span style="">Foto nueva de Jesus hoy · 3 pasos por asignar</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>Exhibición · La Limpia</b><span class="pill ">sin fecha</span></div><div class="prod"><span>Lineal Económico</span><div class="trk"><i class="h">Hierro ✓</i><i class="h">Masilla ✓</i><i class="r">Detalles · Luis ↩</i></div></div><div class="ft"><span style="color:var(--danger)">↩ Era para el sáb 14 y no se terminó</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="pc"><div class="t"><b>N° 1207 · María León</b><span class="pill ">sáb 12 dic</span></div><div class="prod"><span>Puerta de madera</span><div class="trk"><i class="h">Estructura ✓</i><i class="p">Armado</i><i class="w">Pintura</i><i class="w">Ensamblado</i></div></div><div class="ft"><span style="">Madera · la lleva Gualfredo</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="dim"></div><div class="sheet" style="height:610px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Exhibición · La Limpia</h2><div class="sub">Lineal Económico · orden para exhibir</div></div><span class="close">✕</span></div>
+<div class="ats"><b>Ver la orden</b><b>Costeo del Lineal</b></div>
+<div class="uh"><b>Lineal Económico</b><span class="btn sm">Asignar</span></div>
+<div class="step"><div class="dot h">✓</div><div class="rt"><b>Hierro</b><span>Jesus · sáb 7 nov</span></div><div class="mini"></div></div>
+<div class="step"><div class="dot h">✓</div><div class="rt"><b>Masilla y pintura</b><span>Luis Paz · sáb 14 nov</span></div><div class="mini"></div></div>
+<div class="step"><div class="dot" style="background:#FDECEA;color:var(--danger)">↩</div><div class="rt"><b>Detalles</b><span style="color:var(--danger)">Luis Paz · era para el sáb 14 · no lo terminó</span></div></div>
+<div class="carry" style="margin-top:10px">Sigue en la lista de Luis para este sábado. Con Asignar se lo das a otro.</div>
+<div class="note">Que el Hierro y la Masilla caigan en semanas distintas es normal: eso no se marca.</div></div></div><div class="scr" id="15-vendedora"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Lo que ve la vendedora</div></div></div></div><div class="tabs"><b class="on">Pedidos</b></div><div class="chips"><b class="on">Todos 6</b><b>En proceso 3</b><b>Listos 1</b></div>
+<div class="pc"><div class="t"><b>N° 1200 · Ana Rincón</b><span class="pill am">sáb 21 · en 2 días</span></div><div class="prod"><span>Bitral 1 de 2</span><div class="trk"><i class="h">Hierro ✓</i><i class="a">Masilla</i><i class="w">Detalles</i></div></div><div class="prod"><span>Bitral 2 de 2</span><div class="trk"><i class="p">Hierro</i><i class="w">Masilla</i><i class="w">Detalles</i></div></div><div class="ft"><span>2 de 6 pasos hechos</span><span style="color:var(--accent);font-weight:700">Abrir ›</span></div></div>
+<div class="pc"><div class="t"><b>N° 1198 · José Marín</b><span class="pill ok">Lista</span></div><div class="prod"><span>Lineal</span><div class="trk"><i class="h">Hierro ✓</i><i class="h">Masilla ✓</i><i class="h">Detalles ✓</i></div></div><div class="ft"><span>Avisa al cliente</span><span class="btn sm">Marcar entregada</span></div></div>
+<div class="note" style="text-align:left">La vendedora ve los pasos y las fotos, pero no ve montos, no asigna y no tiene Nómina. La vendedora de madera además marca los pasos de madera.</div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span></div></div></div><div class="scr" id="16-estados"><div class="top" style="justify-content:space-between"><div style="display:flex;gap:12px;align-items:center"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Cargando, vacío y error</div></div></div></div><div class="tabs"><b class="">Resumen</b><b class="on">Pedidos</b><b class="">Nómina</b></div>
+<div class="state"><div class="tg">CARGANDO</div><div class="sk" style="height:18px;width:60%;margin-bottom:10px"></div><div class="sk" style="height:12px;width:40%;margin-bottom:14px"></div><div class="sk" style="height:22px;width:90%;margin-bottom:8px"></div><div class="sk" style="height:22px;width:80%"></div></div>
+<div class="state" style="text-align:center"><div class="tg" style="text-align:left">VACÍO</div><div style="font-size:30px">✓</div><b>Nada por asignar</b><div class="sub" style="font-size:13px;margin:4px 0 10px">Todo lo que entró ya tiene quién lo haga.</div><span class="btn sm sec">Ver lo asignado</span></div>
+<div class="state"><div class="tg">ERROR</div><div class="toast"><span style="font-size:18px">!</span><span>No se pudo guardar. Revisa la conexión y toca Guardar otra vez.</span></div><div class="sub" style="font-size:13px;margin-top:8px">Si se cae la conexión al pagar o asignar, no se guarda nada a medias.</div></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div></body></html>
