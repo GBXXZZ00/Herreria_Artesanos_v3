@@ -87,6 +87,7 @@ No hace falta pedir permiso al otro socio, pero estas partes afectan a todos: di
 - RLS activo en toda tabla nueva. Las reglas importantes van en funciones `security definer` que revisan `auth.uid()` y el rol (`_es_admin()`, `_es_deposito()`, `_es_ray()`, `_lleva_madera()`, `_puede_madera()`), y con `revoke execute ... from anon` cuando no la usa el cliente sin sesión.
 - Cada cambio de base es una migración nueva: archivo `supabase/migrations/<version>_vNN_<autor>_que_hace.sql` (empieza con `-- Autor: ...`) **dentro del PR**. Se aplica a la base (con el conector de Supabase, `apply_migration`, mismo nombre) cuando tu socio dio el OK, justo antes de unir el PR. Nunca antes de que pasen las pruebas.
 - Si una migración borra datos (`delete`, `drop`, `revoke`) el conector pide confirmación: si dice "cancelled", no se insiste ni se esquiva.
+- **Sin `drop` en las migraciones** (decidido 15 nov): el conector le pide "Permitir" al socio y la pregunta se vence en un minuto. Para cambiar el cuerpo de una función, `create or replace`. Para cambiar sus datos de entrada o lo que devuelve, se crea una función con **nombre nuevo** y la vieja se deja quieta (como en Airtek). Lo mismo en las pruebas con `begin … rollback`.
 - Toda llamada a Supabase maneja el error y la falta de señal con un `.toast` claro.
 
 ## Quién hizo qué (obligatorio)
