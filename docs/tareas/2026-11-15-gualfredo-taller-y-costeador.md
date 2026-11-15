@@ -3,6 +3,8 @@
 Fecha: 15 nov 2026 · Pedida por: Gualfredo · Escrita por: Claude de Gualfredo (en el chat con Gualfredo, con un consejo de 3 revisores)
 Rama sugerida: `gualfredo/taller-costeador` (sale de `main`). Maquetas: `docs/tareas/maquetas-2026-11-15-taller-costeador/` (PNG en tamaño iPhone 13 y su fuente HTML en `fuente/`): T1 a T7 Taller; C1 a C5 Costeador y nota; R1 a R4 Costeador completo para Ray (ficha entera, registrar pieza, Sábado entero y mapa).
 
+**Todas las pantallas juntas (lienzo de diseño):** https://claude.ai/artifact/4ttqw6JFSAbUi1YZCSbHZr (páginas Inicio, Taller y Costeador; 43 pantallas y drawers).
+
 **Lee primero:** `CLAUDE.md`, la entrada más nueva de `docs/bitacora.md`, este archivo completo y las maquetas en orden (T1 a T7, después C1 a C5). Para el Costeador lee también `docs/claude/contexto-ray/LEEME.md` y el prototipo `docs/claude/contexto-ray/prototipo-costeador/costeador.html` (rama `ray/contexto-reestructuracion`, PR #6), y `docs/tareas/2026-11-08-gualfredo-reestructura-costos.md` (lo que ya se programó).
 
 ---
