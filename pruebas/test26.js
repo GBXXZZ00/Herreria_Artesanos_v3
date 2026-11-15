@@ -320,17 +320,17 @@ async function entrar(b,user,rol,nombre){
  const av=await a.textContent('#avisosAdmin');
  ok('Admin ve "1 vale por aprobar" y lleva a la Nómina de Jesús',av.includes('1 vale por aprobar') && av.includes('Jesús') && !!(await a.$('a.pend-fila.verde[href="nomina.html?t=u5"]')));
  ok('Admin ve "1 trabajo sin asignar"',av.includes('1 trabajo sin asignar'));
- ok('Admin ve "1 trabajo pasó su sábado" en amarillo y lleva a Atrasados',(await a.textContent('.pend-fila.amarillo')).includes('1 trabajo pasó su sábado') && !!(await a.$('a.pend-fila.amarillo[href="produccion.html?filtro=atrasados"]')));
+ ok('Admin ve "1 trabajo pasó su sábado" en amarillo y lleva a En proceso',(await a.textContent('.pend-fila.amarillo')).includes('1 trabajo pasó su sábado') && !!(await a.$('a.pend-fila.amarillo[href="taller.html?filtro=proceso"]')));
  ok('Admin ve el modelo vendido en un color sin foto, y lleva a editarlo',av.includes('1 modelo sin foto en un color') && av.includes('Combo Lineal en negro') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=12"]')));
  ok('Admin ve "En fabricación: 1 producto sin categoría"',av.includes('En fabricación: 1 producto sin categoría'));
  ok('Admin ve "1 combo sin medidas de las ventanas" y lleva a editarlo',av.includes('1 combo sin medidas de las ventanas') && av.includes('Combo Viejo') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=21"]')));
  ok('Admin ve "En catálogo: 3 modelos sin categoría"',av.includes('En catálogo: 3 modelos sin categoría'));
- ok('Los avisos llevan al lugar correcto',!!(await a.$('a.pend-fila[href="produccion.html?filtro=asignar"]')) && !!(await a.$('a.pend-fila[href="produccion.html?filtro=sincat"]')) && !!(await a.$('a.pend-fila[href="categorias-pago.html?asignar=1"]')));
+ ok('Los avisos llevan al lugar correcto',!!(await a.$('a.pend-fila[href="taller.html?filtro=asignar"]')) && !!(await a.$('a.pend-fila[href="taller.html?filtro=sincat"]')) && !!(await a.$('a.pend-fila[href="categorias-pago.html?asignar=1"]')));
  ok('Los pendientes van en una sola caja con su contador',(await a.$$('#avisosAdmin .pend')).length===1 && (await a.$$('.pend-fila')).length===7 && (await a.textContent('.pend-n'))==='7');
  ok('Ya no hay hoja de vales en el Inicio',!(await a.$('#sheetVales')) && !(await a.$('[data-abrir-vales]')));
  ok('El aviso de notificaciones va aparte',!!(await a.$('#avisosAdmin > .notif-fila')));
  ok('Admin sigue viendo sus módulos',await a.isVisible('#modulos') && await a.isVisible('#btnNuevaVenta'));
- ok('La cajita Producción dice cuántos hay sin asignar',(await a.textContent('#cuenta-produccion'))==='1 sin asignar',await a.textContent('#cuenta-produccion'));
+ ok('La cajita Taller dice cuántos hay sin asignar',(await a.textContent('#cuenta-taller'))==='1 sin asignar',await a.textContent('#cuenta-taller'));
  await a.screenshot({path:'shots5/t6-admin.png',fullPage:true});
  // Minimizar pendientes
  await a.click('[data-pend-toggle]');await a.waitForTimeout(300);
