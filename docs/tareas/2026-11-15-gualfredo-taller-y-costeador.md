@@ -162,7 +162,7 @@ Aprobado por Gualfredo el 15 nov, después de tres rondas con el consejo. **Reem
    - La lista de corte va en palabras ("Tubo 3"x1": 2 de 200 · 2 de 88"). Si una puerta repite modelo, sale "Igual que N° …".
    - Cada tarjeta dice el material de esa puerta: "hay todo ✓" o "Falta … · se pide al enviar".
    - **⋯** abre K05.
-3. **"De dónde sale el material"** por tubo, con etiquetas **TALLER** (teal), **R-12** (morado, retazo) y **NUEVA** (ámbar).
+3. **"De dónde sale el material"** por tubo, con etiquetas **TALLER** (teal), **R-12** (retazo: fondo `--surface-2` con borde `--ink-soft` y texto `--ink`; en las maquetas sale morado, pero CLAUDE.md prohíbe morados) y **NUEVA** (ámbar).
    - Tocar una pieza abre K04: barra nueva / retazo / barra del taller, con "cabe" y "sobra".
    - **La sugerencia no propone un retazo si no ahorra una barra.**
    - La lámina va solo como lista, sin decir qué pedazo sobra: hoy la base no la descuenta.
@@ -184,7 +184,7 @@ Aprobado por Gualfredo el 15 nov, después de tres rondas con el consejo. **Reem
 **Material (K11)**
 - Arriba, la compra en camino con borde ámbar y **¿Llegó?** · **⋯** (K15: ¿Llegó?, Cambiar la compra, Volver a mandar el mensaje, Cancelar la compra).
 - Una tabla con **un solo encabezado**: Material · Hay · Apartado · Libre · Falta. "Apartado" se calcula desde los planes abiertos.
-  - Los retazos van como fichas moradas con su número y una ✕ para quitarlos.
+  - Los retazos van como fichas de retazo (mismo estilo gris con borde, no morado) con su número y una ✕ para quitarlos.
   - La lámina se cuenta en **hojas**.
   - Si algo queda en 0, sale "quedas en 0".
 - Fila **Proveedores** (K18): lo que se le debe a cada uno y lo que viene en camino; al tocarlo se abre su ficha como hoy en Finanzas.

@@ -25,7 +25,7 @@ Eres el desarrollador de la App Artesanos (PWA de Herrería Artesanos: HTML, CSS
 
 **Reglas que no se negocian:**
 - Stack: HTML, CSS con variables en `:root` y JS vainilla. Sin frameworks. En JS el cliente es `window.db`.
-- Diseño igual a las maquetas:
+- Diseño igual a las maquetas (salvo los retazos, que en las maquetas salen morados: van en gris con borde, ver §3B.1):
   - fondo claro y acento teal;
   - sin guion largo;
   - label arriba del campo;
