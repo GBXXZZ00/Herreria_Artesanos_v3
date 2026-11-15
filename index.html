@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=79">
+<link rel="stylesheet" href="assets/css/base.css?v=80">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -592,15 +592,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=79"></script>
-<script src="assets/js/supabase-client.js?v=79"></script>
-<script src="assets/js/img-compress.js?v=79"></script>
-<script src="assets/js/comun.js?v=79"></script>
-<script src="assets/js/avisos.js?v=79"></script>
-<script src="assets/js/sesion.js?v=79"></script>
-<script src="assets/js/ayuda.js?v=79"></script>
-<script src="assets/js/pdf-reporte.js?v=79"></script>
-<script src="assets/js/mi-trabajo.js?v=79"></script>
+<script src="assets/vendor/supabase.js?v=80"></script>
+<script src="assets/js/supabase-client.js?v=80"></script>
+<script src="assets/js/img-compress.js?v=80"></script>
+<script src="assets/js/comun.js?v=80"></script>
+<script src="assets/js/avisos.js?v=80"></script>
+<script src="assets/js/sesion.js?v=80"></script>
+<script src="assets/js/ayuda.js?v=80"></script>
+<script src="assets/js/pdf-reporte.js?v=80"></script>
+<script src="assets/js/mi-trabajo.js?v=80"></script>
 <script>
 (function(){
   'use strict';
@@ -741,11 +741,14 @@
   const ICON_NOMINA = '<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>';
 
   function pintarModulos(p){
-    const mods = S.MODULOS.filter(m => m.id !== 'inicio');
+    // Cotizaciones ya no va en el menú de abajo (está dentro de Ventas), pero en Inicio sigue a mano
+    const ICON_COT = '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>';
+    const mods = [{ id:'cotizaciones', nombre:'Cotizaciones', href:'cotizaciones.html', listo:true, icon:ICON_COT }]
+      .concat(S.MODULOS.filter(m => m.id !== 'inicio' && !m.costeador && (!m.roles || !p || !p.rol || m.roles.includes(p.rol))));
     if(p && p.rol === 'admin') mods.push({ id:'nomina', nombre:'Nómina', href:'nomina.html', listo:true, icon:ICON_NOMINA });
     if(p && (p.rol === 'admin' || p.rol === 'vendedor')) mods.push({ id:'deposito', nombre:'Depósito', href:'deposito.html', listo:true, icon:ICON_DEPOSITO });
     // Finanzas y Costos: solo quien confirma pagos (Ray o Gualfredo). La vendedora no ve dinero ni costos.
-    if(p && p.confirma_abonos) mods.push({ id:'finanzas', nombre:'Finanzas', href:'finanzas.html', listo:true, icon:ICON_FINANZAS }, { id:'costos', nombre:'Costos', href:'costos.html', listo:true, icon:ICON_COSTOS });
+    if(p && p.confirma_abonos) mods.push({ id:'finanzas', nombre:'Finanzas', href:'finanzas.html', listo:true, icon:ICON_FINANZAS }, { id:'costos', nombre:'Costeador', href:'costos.html', listo:true, icon:ICON_COSTOS });
     // Primero los módulos que ya funcionan, a lo ancho; luego los que vienen
     const listos = mods.filter(m => m.listo), pronto = mods.filter(m => !m.listo);
     let i = 0;
@@ -965,11 +968,11 @@
       const total = l ? l.reduce((a, t) => a + Math.max(0, Number(t.neto) || 0), 0) : 0;
       en.innerHTML = !l ? 'Pagos de la semana' : total > 0 ? `<span class="num">${window.AH.dinero(total)} por pagar</span>` : 'Semana al día';
     }
-    const ep = $('cuenta-produccion');
+    const ep = $('cuenta-taller');
     if(ep) ep.innerHTML = !(rProd && rProd.data) ? 'Pedidos en fabricación'
       : sinAsignar ? `<span class="num">${sinAsignar} sin asignar</span>` : enTaller ? `${enTaller} en taller` : 'Taller libre';
-    if(sinAsignar) pend.push({ color:'naranja', icono:'persona', titulo: plural(sinAsignar, '1 trabajo sin asignar', 'trabajos sin asignar'), href:'produccion.html?filtro=asignar' });
-    if(atrasados) pend.push({ color:'amarillo', icono:'reloj', titulo: plural(atrasados, '1 trabajo pasó su sábado', 'trabajos pasaron su sábado'), href:'produccion.html?filtro=atrasados' });
+    if(sinAsignar) pend.push({ color:'naranja', icono:'persona', titulo: plural(sinAsignar, '1 trabajo sin asignar', 'trabajos sin asignar'), href:'taller.html?filtro=asignar' });
+    if(atrasados) pend.push({ color:'amarillo', icono:'reloj', titulo: plural(atrasados, '1 trabajo pasó su sábado', 'trabajos pasaron su sábado'), href:'taller.html?filtro=proceso' });
     // Vales: se aprueban en Nómina (Ray). Con uno solo, lleva directo a ese trabajador.
     const vales = rVales.data || [];
     if(vales.length){
@@ -1007,7 +1010,7 @@
     if(nCats === 0){
       pend.push({ color:'azul', icono:'etiqueta', titulo:'Crea las categorías de pago', detalle:'para calcular pagos', href:'categorias-pago.html?nueva=1' });
     } else if(nCats){
-      if(sinCat) pend.push({ color:'azul', icono:'etiqueta', titulo: 'En fabricación: ' + plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'produccion.html?filtro=sincat' });
+      if(sinCat) pend.push({ color:'azul', icono:'etiqueta', titulo: 'En fabricación: ' + plural(sinCat, '1 producto sin categoría', 'productos sin categoría'), href:'taller.html?filtro=asignar' });
       const nMod = rMod && typeof rMod.count === 'number' ? rMod.count : 0;
       if(nMod) pend.push({ color:'teal', icono:'catalogo', titulo: 'En catálogo: ' + plural(nMod, '1 modelo sin categoría', 'modelos sin categoría'), href:'categorias-pago.html?asignar=1' });
     }
@@ -1025,7 +1028,7 @@
         .eq('interna', false).in('estado', ['cotizacion', 'confirmada', 'en_produccion', 'lista']),
       db.rpc('produccion_lectura')
     ].map(q => Promise.resolve(q).catch(() => ({ data:null }))));
-    const ep = $('cuenta-produccion');
+    const ep = $('cuenta-taller');
     if(ep){ const n = (rp && rp.data) ? rp.data.length : null; ep.textContent = n === null ? 'Avance de los pedidos' : n ? (n === 1 ? '1 pedido en taller' : n + ' pedidos en taller') : 'Taller libre'; }
     if(!rv || rv.error || !rv.data) window.AH.toast('No se pudieron cargar tus pendientes. Revisa tu internet.', 'error');
     const ventas = (rv && rv.data) || [];

@@ -9,14 +9,16 @@
   const MODULOS = [
     { id:'inicio',       nombre:'Inicio',       href:'index.html',    listo:true,
       icon:'<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>' },
-    { id:'cotizaciones', nombre:'Cotizaciones', href:'cotizaciones.html', listo:true,
-      icon:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>' },
     { id:'ventas',       nombre:'Ventas',       href:'ventas.html',   listo:true,
       icon:'<path d="M6 2l1.5 4h9L18 2"/><rect x="3" y="6" width="18" height="15" rx="2"/><path d="M8 11a4 4 0 0 0 8 0"/>' },
     { id:'catalogo',     nombre:'Catálogo',     href:'catalogo.html', listo:true,
       icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v6"/>' },
-    { id:'produccion',   nombre:'Producción',   href:'produccion.html', listo:true,
-      icon:'<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>' }
+    // Taller: Producción y Nómina juntas (administradores y vendedora)
+    { id:'taller',       nombre:'Taller',       href:'taller.html', listo:true, roles:['admin', 'vendedor'],
+      icon:'<path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L4 17v3h3l5.3-5.3"/>' },
+    // Costeador: solo Ray y Gualfredo (quien confirma pagos). Por ahora abre Costos.
+    { id:'costeador',    nombre:'Costeador',    href:'costos.html', listo:true, costeador:true,
+      icon:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h2M12 10h2M8 14h2M12 14h2M8 18h2M12 18h2M16 10v8"/>' }
   ];
   function iconoModulo(m, size){
     const s = size || 22;
@@ -28,7 +30,7 @@
     const cont = document.getElementById('menuModulos');
     if(!cont) return;
     const activo = cont.dataset.activo;
-    cont.innerHTML = `<nav class="bottom-nav" aria-label="Módulos">${MODULOS.map(m => {
+    cont.innerHTML = `<nav class="bottom-nav" aria-label="Módulos">${MODULOS.filter(m => seVe(m, perfilActual)).map(m => {
       const es = m.id === activo;
       if(!m.listo) return `<button class="nav-item disabled" disabled aria-label="${m.nombre}, próximamente">${iconoModulo(m)}<span>${m.nombre}</span></button>`;
       return `<a class="nav-item ${es ? 'active' : ''}" ${es ? 'aria-current="page"' : ''} href="${m.href}">${iconoModulo(m)}<span>${m.nombre}</span></a>`;
@@ -41,23 +43,26 @@
     const { data } = await db.auth.getSession();
     return data && data.session ? data.session : null;
   }
-  // Producción la usan los administradores y la vendedora (solo mirar): al resto no se
-  // le muestra el botón del menú de abajo.
-  function ocultarProduccionSiNoAdmin(p){
-    // Solo se ajusta si sabemos el rol (si no se pudo leer el perfil, no se esconde nada).
-    // La vendedora sí la ve (solo para mirar el avance). Si en el mismo teléfono entró
-    // antes otra persona sin Producción, el menú se vuelve a pintar completo.
+  // Quién ve cada botón del menú de abajo. Sin el rol (sin señal y sin copia guardada)
+  // se muestra el Taller igual y no se adivina nada; el Costeador solo con el permiso.
+  function seVe(m, p){
+    if(m.costeador) return !!(p && p.confirma_abonos);
+    if(m.roles && p && p.rol) return m.roles.includes(p.rol);
+    return true;
+  }
+  // Al saber quién entró, el menú se vuelve a pintar si cambia lo que se ve (en el mismo
+  // teléfono pudo entrar antes otra persona)
+  function ajustarMenu(p){
     if(!p || !p.rol) return;
     const cont = document.getElementById('menuModulos');
     if(!cont) return;
-    const item = cont.querySelector('a.nav-item[href="produccion.html"]');
-    const la_ve = p.rol === 'admin' || p.rol === 'vendedor';
-    if(la_ve && !item) pintarMenu();
-    if(!la_ve && item) item.remove();
+    const hay = [...cont.querySelectorAll('a.nav-item')].map(a => a.getAttribute('href')).join('|');
+    const debe = MODULOS.filter(m => seVe(m, p)).map(m => m.href).join('|');
+    if(hay !== debe) pintarMenu();
   }
   async function perfil(){
     // Si el rol no se pudo leer, se vuelve a intentar la próxima vez (no se queda "sin rol")
-    if(perfilActual && perfilActual.rol){ ocultarProduccionSiNoAdmin(perfilActual); return perfilActual; }
+    if(perfilActual && perfilActual.rol){ ajustarMenu(perfilActual); return perfilActual; }
     const s = await sesionActual();
     if(!s) return null;
     // Si la señal falla al leer el perfil, se reintenta y luego se usa el último perfil
@@ -77,7 +82,7 @@
     else { try{ data = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch(e){ data = null; } }
     const meta = s.user.user_metadata || {};
     perfilActual = data || { nombre: meta.nombre || 'Usuario', rol: meta.rol || null };
-    ocultarProduccionSiNoAdmin(perfilActual);
+    ajustarMenu(perfilActual);
     // El trabajador solo usa su Inicio: cualquier otra pantalla lo regresa allí
     if(perfilActual.rol === 'trabajador' && enModulo){ location.replace('index.html'); return null; }
     return perfilActual;
@@ -148,13 +153,25 @@
         history.pushState({ modulo:true, ah:0 }, '', url);
       }
     }
+    // Pestañas que son otra pantalla del mismo módulo (Ventas · Cotizaciones, Taller · Nómina):
+    // cambian sin apilar, así "atrás" sigue llevando a Inicio
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('.tabs-mod a[href]');
+      if(!a || e.defaultPrevented) return;
+      e.preventDefault();
+      if(a.classList.contains('on')){ window.scrollTo({ top:0, behavior:'smooth' }); return; }
+      guardarFlag();
+      location.replace(a.getAttribute('href'));
+    });
     // Menú de abajo dentro de un módulo
     if(cont) cont.addEventListener('click', (e) => {
       const a = e.target.closest('a.nav-item');
       if(!a) return;
       e.preventDefault();
       const id = (MODULOS.find(m => m.href === a.getAttribute('href')) || {}).id;
-      if(id === activo){ window.scrollTo({ top:0, behavior:'smooth' }); return; }
+      // El mismo módulo en otra pantalla (Cotizaciones es parte de Ventas) sí cambia de pantalla
+      const aqui = location.pathname.split('/').pop() || 'index.html';
+      if(id === activo && aqui === a.getAttribute('href')){ window.scrollTo({ top:0, behavior:'smooth' }); return; }
       if(id === 'inicio'){ irInicio(); return; }
       guardarFlag();
       location.replace(a.getAttribute('href'));

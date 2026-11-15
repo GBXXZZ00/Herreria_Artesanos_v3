@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Cotizaciones · Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
-<link rel="stylesheet" href="assets/css/base.css?v=79">
+<link rel="stylesheet" href="assets/css/base.css?v=80">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   #scrimAccion{z-index:50} #sheetAccion{z-index:51}
@@ -104,6 +104,10 @@
 </header>
 
 <main class="page">
+  <nav class="tabs-mod" aria-label="Ventas o cotizaciones">
+    <a href="ventas.html">Ventas</a>
+    <a href="cotizaciones.html" class="on" aria-current="page">Cotizaciones</a>
+  </nav>
   <div class="chips" id="chips" role="tablist"></div>
   <label class="search-box">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -118,7 +122,7 @@
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
 </a>
 
-<div class="bottom-nav-wrap" id="menuModulos" data-activo="cotizaciones"></div>
+<div class="bottom-nav-wrap" id="menuModulos" data-activo="ventas"></div>
 
 <!-- Ficha -->
 <div class="sheet-scrim" id="scrimFicha" data-cerrar="sheetFicha"></div>
@@ -144,14 +148,14 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=79"></script>
-<script src="assets/js/supabase-client.js?v=79"></script>
-<script src="assets/js/img-compress.js?v=79"></script>
-<script src="assets/js/comun.js?v=79"></script>
-<script src="assets/js/avisos.js?v=79"></script>
-<script src="assets/js/sesion.js?v=79"></script>
-<script src="assets/js/ayuda.js?v=79"></script>
-<script src="assets/js/ventas-comun.js?v=79"></script>
-<script src="assets/js/lista-ventas.js?v=79"></script>
+<script src="assets/vendor/supabase.js?v=80"></script>
+<script src="assets/js/supabase-client.js?v=80"></script>
+<script src="assets/js/img-compress.js?v=80"></script>
+<script src="assets/js/comun.js?v=80"></script>
+<script src="assets/js/avisos.js?v=80"></script>
+<script src="assets/js/sesion.js?v=80"></script>
+<script src="assets/js/ayuda.js?v=80"></script>
+<script src="assets/js/ventas-comun.js?v=80"></script>
+<script src="assets/js/lista-ventas.js?v=80"></script>
 </body>
 </html>

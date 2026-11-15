@@ -804,3 +804,9 @@ button.cie-paso:active{transform:scale(0.98)}
 .cie-cont small{display:block;margin-top:-4px}
 .cie-dif{display:flex;justify-content:space-between;align-items:center}
 .cie-dif b{font-size:20px;color:var(--danger)}
+
+/* Pestañas de un módulo que son pantallas aparte (Ventas · Cotizaciones, Taller › Pedidos · Nómina) */
+.tabs-mod{display:flex;gap:4px;padding:4px;margin:10px 18px 6px;border-radius:14px;background:var(--surface-2)}
+.tabs-mod a,.tabs-mod button{text-decoration:none;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;height:42px;border-radius:11px;font-size:15px;font-weight:700;color:var(--ink-soft);white-space:nowrap;transition:transform 120ms var(--ease-out)}
+.tabs-mod a:active,.tabs-mod button:active{transform:scale(0.97)}
+.tabs-mod .on{background:var(--surface);color:var(--accent);box-shadow:0 1px 3px rgba(28,26,23,.08)}

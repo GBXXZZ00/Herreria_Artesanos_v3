@@ -5,6 +5,30 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
 
+## Taller › Pedidos, lote 1 (v80, 15 nov 2026, Claude de Gualfredo)
+Antes: cerrar y abrir la app. La migración v86 (montos de cada paso) se aplica con Gualfredo presente; sin ella todo funciona, pero los pasos que faltan salen sin monto.
+
+**Menú (Ray o Gualfredo)**
+- [ ] Abajo sale Inicio · Ventas · Catálogo · Taller · Costeador. Costeador abre Costos. La vendedora no ve Costeador.
+- [ ] En Ventas, arriba: Ventas · Cotizaciones. Pasar de una a otra y tocar Atrás: vuelve a Inicio.
+- [ ] Inicio sigue teniendo Cotizaciones, Nómina, Depósito, Finanzas y Costeador.
+
+**Taller › Pedidos**
+- [ ] Filtros Todos · Por asignar · En proceso · Listos en una línea, con sus números.
+- [ ] Cada pedido es una tarjeta con sus productos ("Bitral 1 de 2") y los pasos de colores: teal con ✓ hecho, borde teal haciendo, gris asignado, ámbar sin asignar, blanco esperando, rojo con ↩ si era para un sábado que ya pasó.
+- [ ] La fecha de entrega sale ámbar si faltan 2 días o menos, roja si pasó, verde "Lista".
+- [ ] Un pedido sin nada asignado tiene botón Asignar en la tarjeta: abre la hoja de la primera puerta.
+- [ ] Abrir un pedido: atajos Venta, Seguimiento, ✂ Corte y Costeo; cada puerta con un solo Asignar; cada paso dice quién y cuándo, con su foto chiquita y el monto ("por pagar" o "pagado").
+- [ ] Tocar un paso hecho: sale la foto en grande.
+- [ ] Asignar: la hoja de siempre, con lo que se paga a la derecha de cada paso. Un paso ya empezado sale fijo ("ya empezó").
+- [ ] Un paso de la semana pasada sale con ↩ y la caja roja "Sigue en la lista de ... para este sábado".
+- [ ] Listos: debe el cliente, entrega, WhatsApp, Fotos, Venta y Marcar entregada.
+- [ ] Un aviso viejo de "Terminó ..." (produccion.html) abre el pedido en el Taller.
+- [ ] Pestaña Nómina lleva a la Nómina de siempre; desde ahí, Pedidos vuelve al Taller.
+
+**Vendedora**
+- [ ] Ve el Taller sin montos, sin Asignar, sin Nómina y sin el botón +.
+
 ## Reestructura de Costos, Depósito y Finanzas (v75 a v78, 8 nov 2026, Claude de Gualfredo)
 Antes: aplicar las migraciones v81, v81b, v82, v83 y v84 (en ese orden) y cerrar y abrir la app.
 

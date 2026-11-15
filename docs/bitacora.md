@@ -12,6 +12,14 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-15 · Claude de Gualfredo (Code, Taller lote 1)
+- Qué hizo: lote 1 del Taller (Gualfredo dio el OK). Menú nuevo `Inicio · Ventas · Catálogo · Taller · Costeador` (Costeador abre Costos; solo Ray y Gualfredo). Cotizaciones va dentro de Ventas con la etiqueta Ventas · Cotizaciones (Gualfredo: "haz como te sea más conveniente"). `taller.html` + `taller.js` (antes `produccion.js`): Pedidos agrupado por pedido con pasos de colores, filtros Todos · Por asignar · En proceso · Listos, drawer del pedido con foto y monto, hoja de asignar de siempre con el monto a la derecha y paso empezado fijo, marca ↩, Listos con Marcar entregada. `produccion.html` redirige (avisos viejos con `?abrir=` siguen sirviendo). Nómina lleva las pestañas Pedidos · Nómina; se rehace en el lote 3. Resumen llega en el lote 2. `?v=80`.
+- Migración `v86_gualfredo_montos_pasos` (lo que se paga por cada paso que falta, solo admin, solo lectura; usa `_monto_etapa`). Gualfredo aprobó mostrar los montos. Probada con `begin … rollback` en la base real. **Sin aplicar**: se aplica con Gualfredo presente. Sin ella la pantalla funciona sin esos montos.
+- Pruebas: test50 nueva; test21, test25, test27, test39 y test40 pasadas al Taller.
+- Rama o PR: `claude/lote-1-taller-costeador-t49naw` (sale de `gualfredo/taller-costeador`; esta sesión solo puede subir a esa rama).
+- Está tocando: Taller (`taller.html`, `taller.js`, `produccion.html`), menú (`sesion.js`, con cuidado), Inicio (tarjetas de módulos), Ventas y Cotizaciones (pestañas), Nómina (pestañas), `base.css` (`.tabs-mod`).
+- Pendientes: lote 2 (Resumen, foto del trabajo y enlace del aviso). El conteo "sin asignar" de Inicio todavía cuenta solo el paso actual de cada línea; se alinea con el criterio único en el lote 2. Vendedora: sus Listos y Marcar entregada en el lote 7.
+
 ## 2026-11-15 (tarde) · Claude de Gualfredo (chat)
 - Qué hizo: con Gualfredo y 3 rondas de consejo se definió **Taller › Corte** (plan de corte por herrero, de dónde sale cada pieza, Material con apartado/libre, Comprar, mensaje de WhatsApp al proveedor, ¿Llegó? con una parte, candado, barra dañada). ✅ Aprobado. El "Sábado" y las "Compras" salen del Costeador, que queda en Modelos · Precios. Tarea actualizada (§3B, con los cambios de base 🔴) y lienzo con 57 pantallas. **No se programó nada.**
 - Rama o PR: `gualfredo/taller-costeador` (PR #10, solo documentos).

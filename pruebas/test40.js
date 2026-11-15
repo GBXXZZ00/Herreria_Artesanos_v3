@@ -34,7 +34,7 @@ async function entrar(b,perfil,err,llamadas){
  await p.waitForSelector('#vInicio.entra');
  return p;
 }
-async function ficha(p){ await p.goto(H+'produccion.html');await p.waitForSelector('.vcard');await p.waitForTimeout(500);await p.click('.vcard');await p.waitForSelector('#sheetFicha.open');await p.waitForTimeout(500); }
+async function ficha(p){ await p.goto(H+'taller.html');await p.waitForSelector('.tl-card');await p.waitForTimeout(500);await p.click('.tl-card');await p.waitForSelector('#sheetFicha.open');await p.waitForTimeout(500); }
 (async()=>{ const b=await chromium.launch(); const err=[]; try{
  // 1. Gualfredo (lleva la madera)
  let ll=[]; let p=await entrar(b,{id:'u1',usuario:'gualfredo',nombre:'Gualfredo',rol:'admin',activo:true,lleva_madera:true,linea:'hierro'},err,ll);

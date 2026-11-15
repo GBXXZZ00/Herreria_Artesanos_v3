@@ -106,3 +106,4 @@ La clave queda guardada cifrada en GitHub: no se ve en el repo ni en los registr
 | 20261007020335 | v69_pieza_corregida_actualiza_venta |
 | 20261007021445 | v70_puertas_de_madera |
 | 20261007023130 | v70b_categoria_de_madera |
+| (sin aplicar) 20261115120000 | v86_gualfredo_montos_pasos · Taller: monto de cada paso pendiente (solo admin, lectura). Se aplica con Gualfredo presente. |

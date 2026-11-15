@@ -57,7 +57,7 @@
       { ref:'#sheetAccion [data-cerrar="sheetAccion"]', etiqueta:'Cerrar', mod:'ventas', t: () => txt('#accionTitulo'),
         b: () => { const a = txt('#accionTitulo'); return /confirmar pago/i.test(a) ? ['confirmar-un-pago-admin'] : /cancelar/i.test(a) ? ['cancelar-una-venta-admin'] : ['pagos']; } }
     ],
-    'produccion.html': [
+    'taller.html': [
       { ref:'#btnActualizar', etiqueta:'Actualizar', mod:'produccion', t:'El taller', b:['intro', 'los-pasos-de-cada-producto', 'la-lista', 'puertas-de-madera', 'normas', 'avisos-admin', 'avisos-vend'] },
       { ref:'#sheetFicha .sheet-x', flotante:true, mod:'produccion', t:'Este pedido en el taller', b:['la-ficha', 'asignar-el-trabajo-admin', 'puertas-de-madera', 'los-pasos-de-cada-producto'] },
       { ref:'#sheetTodo [data-cerrar="sheetTodo"]', etiqueta:'Cerrar', mod:'produccion', t:'Asignar trabajadores', b:['asignar-el-trabajo-admin'] },

@@ -72,24 +72,21 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  for(const d of '222222') await a.click(`#pinTeclado [data-t="${d}"]`);
  await a.waitForSelector('#vInicio.entra');
 
- await a.goto('http://127.0.0.1:8765/produccion.html');await a.waitForSelector('.vcard');
- ok('Se ven el pedido y la orden para exhibición',(await a.$$('.vcard')).length===2);
- ok('La orden interna dice "Para exhibición"',(await a.textContent('#lista')).includes('Para exhibición'));
- ok('El subtítulo cuenta las órdenes para exhibición',(await a.textContent('#subtitulo')).includes('1 para exhibición'));
- ok('Chip "Sin categoría · 1"',(await a.textContent('#chips')).includes('Sin categoría · 1'));
+ await a.goto('http://127.0.0.1:8765/taller.html');await a.waitForSelector('.tl-card');
+ ok('Se ven el pedido y la orden para exhibición',(await a.$$('.tl-card')).length===2);
+ ok('La orden interna dice "Exhibición"',(await a.textContent('#lista')).includes('Exhibición'));
+ ok('El subtítulo cuenta lo que hay en el taller',(await a.textContent('#subtitulo'))==='2 pedidos en el taller');
  await a.screenshot({path:'shots5/p1-lista.png'});
 
  // Ficha del pedido
- await a.click('.vcard[data-id="30"]');await a.waitForSelector('#sheetFicha.open');
+ await a.click('.tl-card[data-id="30"]');await a.waitForSelector('#sheetFicha.open');
  const ficha=await a.textContent('#fichaBody');
  ok('El producto con categoría la muestra',ficha.includes('Pago: General'));
  ok('El producto sin categoría avisa que primero hay que darla',ficha.includes('Primero dale una categoría de pago'));
  ok('La pieza sin etapas (ya hecha) no aparece',!ficha.includes('Puerta de exhibición vendida'));
- ok('La etapa terminada muestra lo que ganó',ficha.includes('Terminó · Jesús') && ficha.includes('$25'));
+ ok('La etapa terminada muestra lo que ganó',ficha.includes('Jesús · terminó') && ficha.includes('$25'));
  ok('Sin categoría no hay botón para asignar ese producto',!(await a.$('[data-asignar-todo="302"]')) && !(await a.$('[data-asignar-todo="304"]')));
- ok('Una etapa ya asignada sin categoría conserva al trabajador (sin "Marcar terminado")',(await a.$$eval('.e-chip',x=>x.map(c=>c.textContent))).some(t=>t.includes('Jesús')) && !(await a.$('[data-terminar]')));
- const mismaLinea=await a.$eval('.etapa.actual .e-linea',x=>{const n=x.querySelector('.e-nom').getBoundingClientRect(),b=x.lastElementChild.getBoundingClientRect();return Math.abs(n.top+n.height/2-(b.top+b.height/2))<8 && b.left>n.left;});
- ok('Quién lo hace (o "Por asignar") queda en la misma línea que la etapa',mismaLinea);
+ ok('Una etapa ya asignada sin categoría conserva al trabajador (sin "Marcar terminado")',ficha.includes('Jesús · ') && (await a.$$('#fichaBody .tl-paso')).length>1 && !(await a.$('[data-terminar]')));
  await a.screenshot({path:'shots5/p2-ficha.png'});
 
  // El botón gris lleva a elegir la categoría
@@ -101,7 +98,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Ahora sale "Asignar trabajadores" para ese producto',!!(await a.$('[data-asignar-todo="302"]')) && !(await a.$('.cat-falta[data-cat-item="302"]')));
  await a.click('[data-asignar-todo="302"]');await a.waitForSelector('#sheetTodo.open');
  await a.click('.at-op[data-eid="3004"][data-tid="t1"]');await a.click('#btnGuardarTodo');await a.waitForTimeout(700);
- ok('Asignar funciona y el trabajador queda a la derecha',llamadas.some(x=>x[0]==='asignar'&&x[1].eid===3004&&x[1].tid==='t1') && (await a.$$eval('#fichaBody .p-item',x=>x.map(c=>c.textContent))).some(t=>t.includes('Reja a medida') && t.includes('Jesús')));
+ ok('Asignar funciona y el trabajador queda a la derecha',llamadas.some(x=>x[0]==='asignar'&&x[1].eid===3004&&x[1].tid==='t1') && (await a.$$eval('#fichaBody .tl-unidad',x=>x.map(c=>c.textContent))).some(t=>t.includes('Reja a medida') && t.includes('Jesús')));
  await a.screenshot({path:'shots5/p3-asignado.png'});
  await a.click('#sheetFicha [data-cerrar="sheetFicha"]');await a.waitForTimeout(400);
 
@@ -137,12 +134,12 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  const p=co&&co[1].p;
  ok('Se manda con modelo, sede, cantidad, precio y categoría',p&&p.catalogo_id===1&&p.sede_id===2&&p.cantidad===2&&p.precio===500&&p.categoria_pago_id===7,p);
  ok('Y con las especificaciones elegidas',p&&p.especificaciones.color==='Negro'&&String(p.especificaciones.alto)==='2.1'&&p.especificaciones.manillon===true&&p.especificaciones.manillon_tipo==="H",p&&p.especificaciones);
- ok('Se abre la ficha de la orden nueva',!!(await a.$('#sheetFicha.open')) && (await a.textContent('#fichaBody')).includes('Para exhibición'));
+ ok('Se abre la ficha de la orden nueva',!!(await a.$('#sheetFicha.open')) && (await a.textContent('#fichaBody')).includes('Exhibición'));
  await a.screenshot({path:'shots5/p5-orden-ficha.png'});
  await a.click('[data-cancelar-orden="32"]');await a.waitForTimeout(800);
  const ca=llamadas.find(x=>x[0]==='cancelar');
  ok('Pregunta antes de cancelar y llama al servidor',a._dlg===1&&ca&&ca[1].vid===32,ca&&ca[1]);
- ok('La orden cancelada sale de la lista',(await a.$$('.vcard')).length===2);
+ ok('La orden cancelada sale de la lista',(await a.$$('.tl-card')).length===2);
 
  // Cambiar de tipo borra el modelo elegido
  await a.click('#btnNuevaOrden');await a.waitForSelector('#sheetOrden.open');
@@ -161,10 +158,12 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.click('#sheetOrden [data-cerrar="sheetOrden"]');await a.waitForTimeout(400);
 
  // Abrir desde un aviso y con filtro
- await a.goto('http://127.0.0.1:8765/produccion.html?abrir=31');await a.waitForSelector('#sheetFicha.open');
+ await a.goto('http://127.0.0.1:8765/taller.html?abrir=31');await a.waitForSelector('#sheetFicha.open');
  ok('?abrir=31 abre la ficha de esa orden',(await a.textContent('#fichaBody')).includes('Imperial'));
- await a.goto('http://127.0.0.1:8765/produccion.html?filtro=asignar');await a.waitForSelector('.vcard');
+ await a.goto('http://127.0.0.1:8765/taller.html?filtro=asignar');await a.waitForSelector('.tl-card');
  ok('?filtro=asignar deja activo "Por asignar"',(await a.textContent('.chip.active')).includes('Por asignar'));
+ await a.goto('http://127.0.0.1:8765/produccion.html?filtro=sincat');await a.waitForSelector('.tl-card');
+ ok('Enlace viejo ?filtro=sincat cae en "Por asignar" del Taller',a.url().includes('taller.html') && (await a.textContent('.chip.active')).includes('Por asignar'));
 
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

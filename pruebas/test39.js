@@ -30,12 +30,12 @@ const ventas=[{id:1047,fecha_entrega:null,interna:false,cliente:{nombre:'Raymund
  await p.goto(H+'index.html');await p.waitForSelector('.quien-btn');await p.click('.quien-btn');
  for(const d of '111111') await p.click(`#pinTeclado [data-t="${d}"]`);
  await p.waitForSelector('#vInicio.entra');
- await p.goto(H+'produccion.html');await p.waitForSelector('.vcard');await p.waitForTimeout(500);
- ok('La lista dice el producto con su cantidad',(await p.textContent('.vcard')).includes('Lineal Economico ×2'));
- await p.click('.vcard');await p.waitForSelector('#sheetFicha.open');await p.waitForTimeout(500);
- const noms=await p.$$eval('#fichaBody .p-item-nom',x=>x.map(n=>n.textContent.trim()));
+ await p.goto(H+'taller.html');await p.waitForSelector('.tl-card');await p.waitForTimeout(500);
+ ok('La tarjeta muestra cada puerta aparte',(await p.textContent('.tl-card')).includes('Lineal Economico 1 de 2') && (await p.textContent('.tl-card')).includes('Lineal Economico 2 de 2'));
+ await p.click('.tl-card');await p.waitForSelector('#sheetFicha.open');await p.waitForTimeout(500);
+ const noms=await p.$$eval('#fichaBody .tl-uh-t b',x=>x.map(n=>n.textContent.trim()));
  ok('Cada puerta sale aparte: 1 de 2 y 2 de 2',noms.length===2&&noms[0].includes('1 de 2')&&noms[1].includes('2 de 2'),noms);
- const pasos=await p.$$eval('#fichaBody .p-item',x=>x.map(it=>[...it.querySelectorAll('.e-nom')].map(n=>n.textContent.trim()).join('|')));
+ const pasos=await p.$$eval('#fichaBody .tl-unidad',x=>x.map(it=>[...it.querySelectorAll('.e-nom')].map(n=>n.textContent.trim()).join('|')));
  ok('Cada una con sus pasos: Hierro, Masilla y pintura, Detalles',pasos.length===2&&pasos.every(x=>x==='Hierro|Masilla y pintura|Detalles'),pasos);
  await p.screenshot({path:'shots6/u1-dos-puertas.png',fullPage:true});
  const bts=await p.$$eval('#fichaBody [data-asignar-todo]',x=>x.map(b=>b.dataset.asignarTodo));

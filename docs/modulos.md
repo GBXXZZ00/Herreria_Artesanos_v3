@@ -11,7 +11,7 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 |---|---|
 | `supabase-client.js` | Crea `window.db`. Única parte donde está la URL y la clave publicable. |
 | `comun.js` | `window.AH`: tipos de producto, especificaciones, formatos de dinero, hojas inferiores, toasts, `AH.imgMini`, `AH.subirFoto`, `AH.resumenSpecs`, `AH.PRODUCTOS_PAGO`, `AH.notaPago`. RPC `fotos_sin_mini`. |
-| `sesion.js` | Entrar con usuario y PIN, sesión guardada, menú de abajo. Esconde Producción a quien no es admin ni vendedor. Lee `perfiles`. |
+| `sesion.js` | Entrar con usuario y PIN, sesión guardada, menú de abajo. Menú de abajo: Inicio · Ventas · Catálogo · Taller · Costeador (Taller solo admin y vendedora; Costeador solo quien confirma pagos). Las pestañas `.tabs-mod` (Ventas · Cotizaciones, Taller · Nómina) cambian de pantalla sin apilar. Lee `perfiles`. |
 | `avisos.js` | Web Push: suscribir el teléfono (`push_suscripciones`). En iPhone solo con la app abierta desde el ícono. |
 | `ayuda.js` + `assets/css/ayuda.css` + `assets/ayuda/` | Botón "Ayuda" en cada pantalla con su parte del manual según el rol. Tabla `PAGINAS`. |
 | `img-compress.js` | Comprime fotos en el teléfono antes de subirlas. |
@@ -45,17 +45,18 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 - **Reglas:** arriba Cotización o Venta. La cotización vale 20 días y no pide detalles de fabricación; la venta los exige (hacia dónde abre, bloque, vidrio, ahumado). Se sugiere 50% de pago; menos avisa pero deja seguir. Manillón +$20. Combo Ecobel +$80. "Solo protección" pide su monto. Marco decorativo que el modelo no trae pide monto. "Ya está hecho, solo se entrega" (a medida) no va al taller. En fabricación: se edita y se agrega, no se quita; producto con pasos terminados bloqueado; el total no puede quedar por debajo de lo pagado; si edita la vendedora, aviso al admin.
 - **Pendiente:** dar "Listo" sin cambiar nada marca el producto como tocado.
 
-## Cotizaciones y Ventas (`cotizaciones.html`, `ventas.html` + `lista-ventas.js`)
+## Cotizaciones y Ventas (`cotizaciones.html`, `ventas.html` + `lista-ventas.js`) · Cotizaciones va dentro de Ventas con la etiqueta Ventas · Cotizaciones
 - **Para qué:** listas con filtros y la ficha de cada una: convertir en venta, registrar pagos, confirmar pagos, cambiar estado, cancelar con devolución, "Enviar PDF" y "Descargar PDF" siempre arriba en "Avisar al cliente", mensaje al cliente por WhatsApp con el enlace de seguimiento, avance de fabricación, "Cambios en el pedido".
 - **Roles:** admin y vendedora. Confirmar pagos solo Ray. Cancelar solo admin.
 - **Datos:** `ventas`, `venta_items`, `abonos`, `venta_cambios`; bucket `comprobantes`. RPC `convertir_en_venta`, `completar_detalles`, `registrar_abono`, `confirmar_abono`, `cambiar_estado_venta`, `cancelar_venta`, `marcar_paso`, `avance_venta`.
 - **Reglas:** estados Cotización, Confirmada, En fabricación (`en_produccion`), Lista, Entregada, Cancelada. Al confirmar Ray el pago pasa sola a fabricación y se crean los pasos. Al terminar el último paso pasa sola a Lista. No se entrega debiendo.
 
-## Producción (`produccion.html` + `produccion.js`)
-- **Para qué:** pedidos en fabricación y órdenes para exhibición, por producto y por unidad ("1 de 2"), con sus pasos, quién los hace y para qué sábado. "Asignar trabajadores" (una fila por rol, este sábado o el próximo). "Fabricar para exhibición".
-- **Roles:** admin asigna (Ray hierro y aluminio; la madera solo Gualfredo). Vendedora solo mira, sin montos. Gualfredo y la vendedora de madera marcan los pasos de madera con foto.
-- **Datos:** `ventas`, `catalogo`, `categorias_pago`, `perfiles`, `sedes`. RPC `produccion_lectura`, `asignar_etapas`, `asignar_categoria_item`, `crear_orden_exhibicion`, `cancelar_orden_exhibicion`, `terminar_etapa_madera`.
-- **Reglas:** sin categoría de pago no se asigna. Nadie escribe `etapas` directo, solo por funciones. Pasos por producto en `docs/claude/documentos/reglas-produccion.md`.
+## Taller › Pedidos (`taller.html` + `taller.js`) · antes Producción
+- **Para qué:** una tarjeta por pedido u orden de exhibición, con cada producto y unidad ("Bitral 1 de 2") y sus pasos como fichitas de colores (hecho, haciendo, asignado, sin asignar, espera, ↩). Filtros Todos · Por asignar · En proceso · Listos. Drawer del pedido con atajos (Venta, Seguimiento, ✂ Corte, Costeo), y por unidad sus pasos con quién, cuándo, foto y monto ("por pagar" o "pagado"); un solo Asignar por unidad (la hoja de siempre, con lo que se paga a la derecha). Listos para entregar con WhatsApp, Fotos, Venta y Marcar entregada. Fabricar para exhibición (+), categoría de pago y madera como antes.
+- **Quién:** admin todo; vendedora solo mira (Todos y En proceso, sin montos ni Asignar ni Nómina).
+- **Datos:** `ventas` (en fabricación y listas), `venta_items`, `etapas`, `abonos`, `sedes`, `catalogo`, `categorias_pago`, `perfiles`. RPC `produccion_lectura` (vendedora), `montos_pasos` (v86, lo que se paga por cada paso que falta, solo admin), `asignar_etapas`, `asignar_categoria_item`, `crear_orden_exhibicion`, `cancelar_orden_exhibicion`, `terminar_etapa_madera`, `cambiar_estado_venta`.
+- **Reglas:** "por asignar" cuenta todos los pasos sin trabajador. ↩ = paso con `para_el` anterior al sábado de esta semana y sin hacer; no se mueve solo. Que pasos distintos caigan en semanas distintas no se marca. Un paso ya empezado sale fijo en Asignar. Sin categoría de pago no se asigna. Nadie escribe `etapas` directo, solo por funciones. Pasos por producto en `docs/claude/documentos/reglas-produccion.md`.
+- **Enlaces viejos:** `produccion.html` redirige a `taller.html` con lo mismo (`?abrir=N` abre ese pedido; `?filtro=atrasados` cae en En proceso y `sincat` en Por asignar).
 
 ## Categorías de pago (`categorias-pago.html` + `categorias-pago.js`)
 - **Para qué:** cuánto se le paga al taller por cada trabajo de un producto, fijo o por m², y a qué modelos se aplica.
