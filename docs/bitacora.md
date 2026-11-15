@@ -12,6 +12,11 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-15 (tarde) · Claude de Gualfredo (chat)
+- Qué hizo: con Gualfredo y 3 rondas de consejo se definió **Taller › Corte** (plan de corte por herrero, de dónde sale cada pieza, Material con apartado/libre, Comprar, mensaje de WhatsApp al proveedor, ¿Llegó? con una parte, candado, barra dañada). ✅ Aprobado. El "Sábado" y las "Compras" salen del Costeador, que queda en Modelos · Precios. Tarea actualizada (§3B, con los cambios de base 🔴) y lienzo con 57 pantallas. **No se programó nada.**
+- Rama o PR: `gualfredo/taller-costeador` (PR #10, solo documentos).
+- Ojo Code: el Corte necesita migraciones antes de las pantallas (envío por herrero con copia, `corte_enviar` en una transacción, herrero en `compras_pedidas`, retazo en un solo plan abierto, teléfono normalizado). Se aplican con Gualfredo presente.
+
 ## 2026-11-15 · Claude de Gualfredo (chat)
 - Qué hizo: con Gualfredo definió el módulo **Taller** (Producción + Nómina, agrupado por pedido, ✅ aprobado), el **sello ENTREGADO** en la nota del cliente (✅ aprobado) y la propuesta del **Costeador** unificado (🟡 falta OK de Gualfredo y Ray). Consejo de 3 revisores (Ray, UI/UX, flujo y datos) sobre las dos cosas. Todo queda escrito para Code en `docs/tareas/2026-11-15-gualfredo-taller-y-costeador.md`, con maquetas iPhone en `docs/tareas/maquetas-2026-11-15-taller-costeador/` (T1 a T7 Taller, C1 a C5 Costeador y nota). **No se programó nada.**
 - Rama o PR: `gualfredo/taller-costeador` (solo documentos).

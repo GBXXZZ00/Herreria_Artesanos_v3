@@ -14,8 +14,9 @@ Rama sugerida: `gualfredo/taller-costeador` (sale de `main`). Maquetas: `docs/ta
 | Parte | Estado |
 |---|---|
 | **A. Taller** (Producción + Nómina) | ✅ **Aprobado por Gualfredo** el 15 nov. |
+| **A2. Taller › Corte** (plan por herrero, material, compras y mensaje al proveedor) | ✅ **Aprobado por Gualfredo** el 15 nov (maquetas K01 a K21, §3B). |
 | **B. Sello ENTREGADO en la nota del cliente** | ✅ **Aprobado por Gualfredo** el 15 nov. |
-| **C. Costeador** | 🟡 **Propuesta.** Gualfredo pidió dejarla escrita con todo el detalle. **Falta el OK de Gualfredo y de Ray a las maquetas C1 a C5 antes de programarla.** |
+| **C. Costeador** (ahora solo Modelos · Precios) | 🟡 **Propuesta.** Gualfredo pidió dejarla escrita con todo el detalle. **Falta el OK de Gualfredo y de Ray a las maquetas C1 a C5 antes de programarla.** |
 
 - ✅ Commits y push en la rama de trabajo. PR sin unir.
 - ✅ Probar migraciones contra la base real **solo** dentro de `begin … rollback`.
@@ -52,7 +53,7 @@ Rama sugerida: `gualfredo/taller-costeador` (sale de `main`). Maquetas: `docs/ta
 Datos de las maquetas: hoy = **jueves 19 nov**, semana lun 16 a sáb 21. Los números cuadran entre todas las pantallas; úsalos para las pruebas nuevas.
 
 ### 3.1 Pestañas
-**Resumen · Pedidos · Nómina** (vendedora: solo Pedidos). Arriba, título "Taller", subtítulo "Hoy jue 19 · semana 16 al 21 nov" y flechas ‹ › para ver otras semanas.
+**Resumen · Pedidos · Corte · Nómina** (vendedora: solo Pedidos; Corte es de §3B). Arriba, título "Taller", subtítulo "Hoy jue 19 · semana 16 al 21 nov" y flechas ‹ › para ver otras semanas.
 
 ### 3.2 Resumen (T1)
 En bloques numerados, de arriba hacia abajo:
@@ -136,6 +137,100 @@ Gualfredo pidió usar la hoja de asignar de Producción tal cual (captura de hoy
 
 ---
 
+## 3B. PARTE A2 · Taller › Corte ✅ (maquetas K01 a K21)
+
+Aprobado por Gualfredo el 15 nov, después de tres rondas con el consejo. **Reemplaza el "Sábado" y las "Compras" del Costeador (5.4 y 5.5 ya no van).** Las maquetas están en el lienzo (página Taller, filas "Corte") y en `maquetas-2026-11-15-taller-costeador/Final-1.png` a `Final-6.png`.
+
+**Cómo trabajan (para no inventar):**
+- Tienen material en el taller y **reponen** cuando falta. No compran por semana.
+- El herrero **sigue el plan de corte que le da Ray**.
+- El material se ve **por puerta** (en el pedido) y **sumado** (en Material).
+- Lo que se asigna sigue guardado **por sábado** (`etapas.para_el`), pero la pantalla se ve **por herrero**.
+
+### 3B.1 Pestaña Corte: dos vistas, **Por herrero · Material** (control segmentado teal)
+
+**Por herrero (K01)**
+- Arriba, tres números: puertas por cortar · enviado · sin enviar.
+- Una tarjeta "**N puertas sin asignar** · entregan esta semana o la próxima · Asignar" que abre K06.
+- Aviso rojo "Falta material para N° … · Ver en Material".
+- Una fila por herrero con lo que tiene de Hierro: sus puertas, su estado y **Abrir** (o **Cargar** si el modelo no tiene cortes, que lleva al Costeador).
+- Estados del herrero: Sin enviar (gris) · Enviado · cortando (verde) · Cambió · vuelve a enviar (rojo) · Sin cortes (gris).
+
+**Corte del herrero (K02), drawer**, de arriba hacia abajo:
+1. **Línea de estado.**
+2. **Una tarjeta por puerta**, con un color por puerta (teal oscuro y teal claro) y su número dentro de la barra.
+   - La lista de corte va en palabras ("Tubo 3"x1": 2 de 200 · 2 de 88"). Si una puerta repite modelo, sale "Igual que N° …".
+   - Cada tarjeta dice el material de esa puerta: "hay todo ✓" o "Falta … · se pide al enviar".
+   - **⋯** abre K05.
+3. **"De dónde sale el material"** por tubo, con etiquetas **TALLER** (teal), **R-12** (morado, retazo) y **NUEVA** (ámbar).
+   - Tocar una pieza abre K04: barra nueva / retazo / barra del taller, con "cabe" y "sobra".
+   - **La sugerencia no propone un retazo si no ahorra una barra.**
+   - La lámina va solo como lista, sin decir qué pedazo sobra: hoy la base no la descuenta.
+4. **Un solo botón:** "Enviar a Jesus y pedir N barras". Si no falta nada, "Enviar a Jesus".
+   - Debajo va "⋯ Más" (K03): Ver en PDF · Sugerir de nuevo (pregunta antes de borrar lo que Ray movió) · Deshacer envío (solo si no empezó) · Corregir lo que cortó · Reportar barra dañada.
+
+**Agregar y quitar**
+- **⋯ de la puerta (K05):** Pasarla a otro herrero · Pasarla al próximo sábado (lo apartado vuelve a libre) · Quitarla del plan. El plan se rehace solo; si ya se había enviado, el estado pasa a "Cambió · vuelve a enviar".
+- **Asignar puertas (K06):** filtros Sin asignar · De otro herrero. Cada puerta es una tarjeta con foto (`AH.imgMini`), "Modelo · 2 de 2", pedido, cliente, entrega, lo que se le paga y **Ver pedido N° …**. Las opciones de herrero muestran cuántas puertas tiene ya esa semana, y "¿Para cuándo?" ofrece este sábado o el próximo. Usa `asignar_etapas`.
+- **Después de enviar (K07):** línea de tiempo **por herrero**: Enviado · Cambio · Falta volver a enviar · Termina el Hierro (ahí bajan las barras). Botones **Volver a enviar** y **Deshacer envío**.
+- **Candado (K08):** si el herrero ya empezó el Hierro, el plan no se cambia. Después de que termine se usa **Corregir lo que cortó** (K10, `corte_corregir`). Mientras corta se puede **Reportar barra dañada** (K09): se escoge el material y la barra, y se reemplaza con una del taller o se suma a la compra.
+- **Avisos (K19):**
+  - pedido cancelado: sale del plan, lo apartado vuelve a libre y pide volver a enviar;
+  - el modelo cambió en el Costeador: el plan usa medidas viejas y ofrece Rehacer.
+  - Los avisos importantes también salen en Taller › Resumen.
+- **Estados (K20):** cargando con esqueletos, vacío ("Nadie tiene Hierro asignado"), error al enviar ("No se envió el corte ni se pidió la compra"), y el herrero sin corte.
+- **Herrero (K21):** en Mi trabajo, la pestaña **Qué cortar** muestra sus puertas, la lista de cada una, sus barras con TALLER/NUEVA y el número de cada retazo. No tiene botones nuevos. Ve **lo último que se le envió**, no lo que Ray está cambiando.
+
+**Material (K11)**
+- Arriba, la compra en camino con borde ámbar y **¿Llegó?** · **⋯** (K15: ¿Llegó?, Cambiar la compra, Volver a mandar el mensaje, Cancelar la compra).
+- Una tabla con **un solo encabezado**: Material · Hay · Apartado · Libre · Falta. "Apartado" se calcula desde los planes abiertos.
+  - Los retazos van como fichas moradas con su número y una ✕ para quitarlos.
+  - La lámina se cuenta en **hojas**.
+  - Si algo queda en 0, sale "quedas en 0".
+- Fila **Proveedores** (K18): lo que se le debe a cada uno y lo que viene en camino; al tocarlo se abre su ficha como hoy en Finanzas.
+- Abajo, **un solo Comprar**, más "+ Retazo encontrado" (K17) y "Contar barras" (K16: lo que hay de verdad, con la diferencia).
+
+**Comprar (K12)**
+- Saldos arriba; lo que falta para los cortes ya viene marcado; sugiere lo que va a quedar en 0, sin marcar.
+- "Donde sale más barato" (la app reparte por proveedor) o "Todo en un proveedor".
+- Botones "+ Material · + Proveedor · + Flete" y **Pedir compra**. La compra queda amarilla. Usa la lógica de `compra.js` y `compra_pedir`.
+
+**Mensaje al proveedor (K13)**
+- Después de **Pedir compra** o de **Enviar y pedir** se abre el mensaje ya escrito, que se puede editar.
+- Opciones: **Lo busco / Me lo traen** y **Hoy / Mañana**.
+- Arma la lista con nombre, calibre y largo de barra. Abajo: total estimado, WhatsApp del proveedor, **Enviar por WhatsApp** (`wa.me`), Copiar mensaje y Ver la compra.
+- Texto base: "Buenos días, le escribe Ray de Herrería Artesanos. Para {hoy|mañana} necesito: • … ¿Me confirma precio y si lo tiene? {Lo paso buscando|¿Me lo puede mandar?} {en la mañana}. Gracias."
+
+**¿Llegó? (K14)**
+- Todo / **Una parte** / Nada. Con "Una parte" se ponen las cantidades que llegaron y **lo que no vino sigue en camino, amarillo, en la misma compra**.
+- Factura, cómo se paga lo que llegó y cuenta. Al confirmar, las barras entran y quedan apartadas para el herrero de esa compra.
+
+### 3B.2 Cambios de base (el consejo los revisó contra v79 a v85)
+
+**🔴 Imprescindibles** (cada uno es una migración probada con rollback y sin aplicar):
+1. **Envío por herrero** en `cortes_planes`: por cada herrero, firma, hora y **copia de lo enviado**. `mi_hoja_corte` lee esa copia. El **candado** compara solo las barras de ese herrero, y `_corte_aplicar` no baja barras si la firma de lo asignado cambió (deja un aviso). Hoy, con una sola firma y un solo `aceptado` por sábado, cambiar o cancelar una puerta después de enviar baja barras que no tocaban.
+2. **`corte_enviar(p_sab, p_tid, p_plan, p_compra)`**: guarda el envío y pide la compra **en una sola transacción**. Hoy son dos llamadas, y si falla la segunda queda el corte enviado sin la compra.
+3. Agregar el **herrero** (`tid`) a `compras_pedidas`, para poder decir "para Jesus" y apartar lo que llega.
+4. Que **un retazo no quede apartado en dos planes abiertos** (de sábados distintos). Hoy solo se revisa dentro de un mismo plan.
+5. `proveedor_guardar` debe pasar el teléfono por `normalizar_telefono`, para que sirva `wa.me`.
+6. **¿Llegó? con una parte**: lo que no llegó queda en camino en la misma compra. Revisar si `compra_confirmar` ya lo permite; si no, ajustarlo. Cambiar y cancelar una compra pedida (`compra_anular`) desde Material.
+
+**🟡 Después:**
+- Tabla de eventos para la línea de tiempo (enviado, cambio, empezó).
+- Aviso de compra que queda sin puerta al mover o quitar una puerta.
+- Puertas de exhibición en "+ Puerta" (no tienen etapas de venta).
+- Lámina que se descuenta y deja su pedazo sobrante.
+- Plan que no dependa del sábado.
+- Registrar si el mensaje de WhatsApp se envió.
+
+**Se reusa:** `asignar_etapas`, `corte_datos`, `corte_plan_guardar`, `_corte_barra` (acepta el origen de cada barra en el JSON), `corte_manual`, `corte_corregir`, `retazo_agregar`, `retazo_quitar`, `_retazo_minimo`, disparador `corte_al_terminar_hierro`, `compra_pedir`, `compras_en_camino`, `compra_confirmar`, `compra_no_llego`, `compra_anular`, `material_precios`, `_saldo_proveedor`, `mi_hoja_corte`.
+
+**Textos que deben coincidir con la base:**
+- El mínimo de un retazo lo pone `_retazo_minimo` según el material, no un número fijo.
+- La lámina se cuenta en hojas.
+
+---
+
 ## 4. PARTE B · Sello ENTREGADO en la nota del cliente ✅ (maqueta C5)
 
 - En el PDF de la venta (`crearPDF` en `assets/js/ventas-comun.js`), cuando la venta está en estado `entregada`, poner un **sello grande verde** que diga **ENTREGADO**, girado unos −12°, con la fecha de entrega (`ventas.entregada_en`) debajo ("20 NOV 2026").
@@ -152,6 +247,8 @@ Gualfredo pidió usar la hoja de asignar de Producción tal cual (captura de hoy
 Idea: **el Costeador de Ray dentro de la app**, en un solo módulo, con los datos de Supabase y la misma fórmula. Depósito y Finanzas reciben la información por detrás. **Debería ser solo cambio de pantallas** (ver 5.7). Si en algún punto hace falta tocar la base, se avisa antes.
 
 ### 5.1 Pestañas
+**Cambio del 15 nov (tarde): el Costeador queda con dos pestañas, Modelos · Precios.** El "Sábado" (plan de corte) y las "Compras" pasaron a **Taller › Corte** (§3B). Lo de abajo sobre Sábado y Compras queda solo como historia.
+
 **Modelos · Sábado · Compras · Precios**. Solo teléfono por ahora; en computadora, más adelante, la franja del precio iría a la derecha como en el prototipo.
 
 ### 5.2 Modelos (C1)
@@ -206,7 +303,7 @@ Idea: **el Costeador de Ray dentro de la app**, en un solo módulo, con los dato
   - Se guarda con `costeo_guardar`, y el número que vale es el de la base.
 - **R4** es el mapa de qué se hace en cada pestaña y qué se queda en Taller, Finanzas, Depósito y Mi trabajo.
 
-### 5.4 Sábado (C3, completo en R3) · el plan de corte "como en el Costeador de Ray"
+### 5.4 ⛔ Reemplazado por §3B · Sábado (C3, completo en R3) · el plan de corte "como en el Costeador de Ray"
 - Encabezado "Plan del sáb 21 nov" con un atajo **Ir al Taller ›**.
 - **Asignado en el Taller:** una fila por modelo con los pedidos y el herrero ("N° 1200 · N° 1203 · Hierro de Jesus") y botones **− N +**.
   - ⚠️ Lo que Ray suma o resta a mano es **simulación**: cambia los números en pantalla pero **no** el plan real. Para fabricar de verdad se usa "+ Fabricar para exhibición" (`crear_orden_exhibicion`). Que se note: "simulando +1" en gris.
@@ -220,7 +317,7 @@ Idea: **el Costeador de Ray dentro de la app**, en un solo módulo, con los dato
   - Revisar que un Hierro **ya empezado** no desaparezca del plan antes de aceptarlo (`corte_datos` solo cuenta los pendientes).
 - Retazos "como en el Costeador": el plan sugerido de Ray **no** usa retazos (siempre barras nuevas, y dice qué sobra). Si la sugerencia de hoy (que sí usa retazos del Depósito) da menos barras, ofrecerlo como **una sola línea** debajo del perfil ("Hay un retazo R-12 de 1,20 m que sirve · Usar"). 🟡 **Confirmar con Gualfredo y Ray.**
 
-### 5.5 Compras (C3, segunda pantalla, y C4) · "como hoy", pero en un solo lugar
+### 5.5 ⛔ Reemplazado por §3B · Compras (C3, segunda pantalla, y C4) · "como hoy", pero en un solo lugar
 - **Comprar lo que falta** abre la hoja que ya existe (`compra.js`, `#sheetCompra`):
   - saldos arriba;
   - Comprar en: Más barato / un proveedor;
@@ -329,6 +426,12 @@ Gualfredo decidió no agregar revisión de foto, que Ray pueda pagar cuando quie
 
 ## 7. Lotes (en orden)
 
+**Nuevo orden con el Corte** (va después del lote 3 del Taller y antes del sello):
+- **3b · Corte, base:** las migraciones 🔴 de §3B.2, probadas con rollback y sin aplicar.
+- **3c · Corte, pantallas:** Por herrero, drawer del herrero, Asignar puertas, ⋯ de la puerta, Más, avisos, estados y Qué cortar (K01 a K10, K19 a K21).
+- **3d · Corte, material y compras:** Material, Comprar, Mensaje, ¿Llegó? con una parte, compra en camino, Contar, Retazo y Proveedores (K11 a K18). Quitar Depósito › Compras.
+
+
 1. **Menú y Taller › Pedidos y drawers** (T2, T3): `taller.html` con las pestañas, Pedidos agrupado por pedido, drawer del pedido, hoja de asignar de hoy, marca ↩ y redirecciones desde `produccion.html` y `nomina.html`.
 2. **Taller › Resumen** (T1) y **foto del trabajo** (T4), con el cambio del enlace del aviso.
    - Migración `vNN_gualfredo_aviso_trabajo`: parchear `marcar_etapa_terminada` y `terminar_etapa_madera` para que el aviso al admin vaya a `taller.html?trabajo=<eid>`. Probada con rollback, sin aplicar.
@@ -356,6 +459,7 @@ Al final de cada lote: su prueba, `node --check`, `?v=` nuevo y bitácora.
 - Agregar a `docs/claude/documentos/lista-de-pruebas.md` lo que Gualfredo y Ray deben probar en el teléfono.
 
 ## 9. Preguntas abiertas
+- Mensaje al proveedor: ¿firma Ray o "Herrería Artesanos"? (por ahora "le escribe Ray de Herrería Artesanos").
 - Gualfredo: ¿Cotizaciones entra en Ventas? (§2)
 - Gualfredo y Ray: OK a las maquetas del Costeador C1 a C4 y R1 a R4.
 - Gualfredo y Ray: ¿el Sábado sugiere usar retazos del Depósito en una línea o no los usa nunca? (§5.4)
