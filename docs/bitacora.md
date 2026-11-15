@@ -12,6 +12,18 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-15 (tarde) · Claude de Gualfredo (chat)
+- Qué hizo: con Gualfredo y 3 rondas de consejo se definió **Taller › Corte** (plan de corte por herrero, de dónde sale cada pieza, Material con apartado/libre, Comprar, mensaje de WhatsApp al proveedor, ¿Llegó? con una parte, candado, barra dañada). ✅ Aprobado. El "Sábado" y las "Compras" salen del Costeador, que queda en Modelos · Precios. Tarea actualizada (§3B, con los cambios de base 🔴) y lienzo con 57 pantallas. **No se programó nada.**
+- Rama o PR: `gualfredo/taller-costeador` (PR #10, solo documentos).
+- Ojo Code: el Corte necesita migraciones antes de las pantallas (envío por herrero con copia, `corte_enviar` en una transacción, herrero en `compras_pedidas`, retazo en un solo plan abierto, teléfono normalizado). Se aplican con Gualfredo presente.
+
+## 2026-11-15 · Claude de Gualfredo (chat)
+- Qué hizo: con Gualfredo definió el módulo **Taller** (Producción + Nómina, agrupado por pedido, ✅ aprobado), el **sello ENTREGADO** en la nota del cliente (✅ aprobado) y la propuesta del **Costeador** unificado (🟡 falta OK de Gualfredo y Ray). Consejo de 3 revisores (Ray, UI/UX, flujo y datos) sobre las dos cosas. Todo queda escrito para Code en `docs/tareas/2026-11-15-gualfredo-taller-y-costeador.md`, con maquetas iPhone en `docs/tareas/maquetas-2026-11-15-taller-costeador/` (T1 a T7 Taller, C1 a C5 Costeador y nota). **No se programó nada.**
+- Rama o PR: `gualfredo/taller-costeador` (solo documentos).
+- Está tocando: nada todavía. Code tocará Producción, Nómina, menú (`sesion.js`), PDF de la venta (`ventas-comun.js`) y, con OK, Costos, Depósito y Finanzas.
+- Ojo Ray: el Costeador propuesto son tus 3 pestañas más una de Compras (Modelos · Sábado · Compras · Precios). Mira C1 a C4 y di si va.
+- Pendientes: OK de Gualfredo y Ray al Costeador; dos migraciones pequeñas del Taller (enlace del aviso y pagar lo elegido) que se aplican con Gualfredo presente.
+
 ## 2026-11-08 · Claude de Gualfredo (Code, lote 7 publicado)
 - Qué hizo: Gualfredo corrió `docs/tareas/2026-11-08-aplicar-v85.sql` en el SQL Editor (el "Allow once" del conector de Supabase se venció dos veces aunque lo tocó a tiempo). Revisado en la base real: funciones y columnas de v85 presentes y Bitral en $223,22. PR #8 unido: sale en vivo con `?v=79`. v85 no sale en la lista de migraciones de Supabase; el archivo está en `supabase/migrations`.
 - Rama o PR: PR #8 unido; esta nota y la del PR #7 van en `gualfredo/bitacora-extras-publicado`.

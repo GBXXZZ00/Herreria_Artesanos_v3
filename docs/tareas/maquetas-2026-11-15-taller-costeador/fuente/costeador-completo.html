@@ -1,0 +1,243 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=390"><style>
+:root{--accent:#17555C;--accent-soft:rgba(23,85,92,.09);--ink:#1C1A17;--ink-soft:#6E6A64;--surface-2:#F7F6F4;--line:#E9E7E3;--danger:#B42318;--amber:#B7791F;--amber-soft:#FDF3E1;--ok:#1F7A4D;--ok-soft:#E7F4EC}
+*{box-sizing:border-box;margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;color:var(--ink);background:#fff;font-size:15px}
+.scr{width:390px;min-height:844px;position:relative;padding:14px 16px 96px;display:none}
+.scr.on{display:block}
+.top{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+.logo{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:15px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.sub{color:var(--ink-soft);font-size:14px;margin-top:2px}
+.tabs{display:flex;background:var(--surface-2);border-radius:14px;padding:4px;margin-bottom:14px}
+.tabs b{flex:1;text-align:center;font-size:14px;padding:9px 0;color:var(--ink-soft);font-weight:600;border-radius:11px;white-space:nowrap}
+.tabs b.on{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(28,26,23,.08)}
+.bento{display:grid;grid-template-columns:1.3fr 1fr;gap:8px;margin-bottom:16px}
+.bx{background:var(--surface-2);border-radius:16px;padding:12px 14px}
+.bx .n{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.bx .l{font-size:13px;color:var(--ink-soft);margin-top:2px}
+.bx.big{grid-row:span 2;background:var(--accent);color:#fff}
+.bx.big .l{color:rgba(255,255,255,.8)}
+.bx.big .n{font-size:32px}
+.bx.am{background:var(--amber-soft)} .bx.am .n{color:var(--amber)}
+.grp{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--ink-soft);margin:16px 0 6px;text-transform:none}
+.row{display:flex;align-items:center;gap:12px;padding:11px 0}
+.row+.row{border-top:1px solid var(--line)}
+.th{width:44px;height:44px;border-radius:10px;background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:11px;overflow:hidden}
+.th.ph{background:linear-gradient(160deg,#5b6770,#2f383f)}
+.rt{flex:1;min-width:0}.rt b{display:block;font-size:15px}.rt span{font-size:13px;color:var(--ink-soft)}
+.rr{text-align:right;font-size:14px;font-weight:700;white-space:nowrap}
+.rr small{display:block;font-weight:500;color:var(--ink-soft);font-size:12px}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft)}
+.pill.am{background:var(--amber-soft);color:var(--amber)}.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.ac{background:var(--accent-soft);color:var(--accent)}.pill.rj{background:#FDECEA;color:var(--danger)}
+.btn{display:block;text-align:center;background:var(--accent);color:#fff;font-weight:700;border-radius:14px;padding:14px;font-size:16px}
+.btn.sec{background:var(--surface-2);color:var(--ink)}
+.btn.sm{display:inline-block;padding:7px 14px;font-size:14px;border-radius:999px}
+.ck{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex-shrink:0}
+.ck.on{background:var(--accent);border-color:var(--accent);position:relative}
+.ck.on:after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.wk{background:var(--surface-2);border-radius:16px;padding:6px 14px;margin-bottom:10px}
+.wk h3{display:flex;justify-content:space-between;align-items:center;font-size:16px;padding:8px 0 4px}
+.foot{position:absolute;left:12px;right:12px;bottom:14px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:12px 14px;box-shadow:0 6px 24px rgba(28,26,23,.10)}
+.nav{display:flex;justify-content:space-around;font-size:11px;color:var(--ink-soft);font-weight:600}
+.nav span.on{color:var(--accent)}
+.chips{display:flex;gap:8px;overflow:hidden;margin-bottom:12px}
+.chips b{font-size:14px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;font-weight:600}
+.chips b.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hero{height:300px;border-radius:18px;background:linear-gradient(160deg,#6d7a83,#2c353b);position:relative;margin-bottom:14px;overflow:hidden}
+.hero .door{position:absolute;left:120px;top:24px;width:150px;height:260px;border:8px solid #1d2327;background:#3a4449}
+.hero .door i{position:absolute;left:14px;right:14px;height:6px;background:#9fb4bd}
+.hero .tag{position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:5px 10px;border-radius:999px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.kv div{background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.kv span{display:block;font-size:12px;color:var(--ink-soft)}.kv b{font-size:15px}
+.note{font-size:13px;color:var(--ink-soft);text-align:center;margin-top:10px}
+/* costeador */
+.price{position:sticky;top:0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:12px;box-shadow:0 4px 16px rgba(28,26,23,.06)}
+.price .big{font-size:30px;font-weight:800;letter-spacing:-.6px;color:var(--accent)}
+.lines{font-size:13px;color:var(--ink-soft);display:flex;justify-content:space-between;margin-top:4px}
+.opt{display:flex;gap:6px;margin-top:8px}.opt b{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--surface-2);font-weight:600}
+.perf{border-top:1px solid var(--line);padding:12px 0}
+.perf h4{display:flex;justify-content:space-between;font-size:15px}
+.perf .m{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink-soft);margin:2px 0 8px}
+.pz{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.in{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:15px;font-weight:700;text-align:right}
+.in.q{width:44px}.in.c{width:64px}.in.t{flex:1;text-align:left;font-weight:500;color:var(--ink)}
+.x{color:var(--ink-soft);font-size:13px}
+.bar{display:flex;height:20px;border-radius:5px;overflow:hidden;margin-top:6px;font-size:10px;color:#fff;font-weight:700}
+.bar i{display:flex;align-items:center;justify-content:center;background:#5f6b73;border-right:2px solid #fff;font-style:normal}
+.bar i:nth-child(even){background:#465158}
+.bar i.s{background:#EAD9CF;border:0}
+.blab{display:flex;justify-content:space-between;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-soft);margin-top:6px}
+.add{font-size:14px;color:var(--accent);font-weight:700;padding:4px 0}
+.stp{display:flex;align-items:center;gap:8px}
+.stp b{width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:18px}
+.stp em{font-style:normal;font-weight:800;font-size:17px;width:22px;text-align:center}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.tiles div{background:var(--surface-2);border-radius:14px;padding:10px 12px}
+.tiles b{font-size:20px;font-weight:800;display:block}.tiles span{font-size:12px;color:var(--ink-soft)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:12px;color:var(--ink-soft);text-align:right;font-weight:600;padding:6px 4px}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td{padding:9px 4px;border-top:1px solid var(--line);text-align:right}
+.tbl td .in{display:inline-block;min-width:52px;padding:6px 7px;font-size:13px}
+.tbl td.low .in{background:var(--ok-soft);color:var(--ok)}
+.ylw{background:var(--amber-soft);border-radius:14px;padding:10px 12px;font-size:13px;color:#7a5313;margin-bottom:10px}
+
+.scr{height:844px;overflow:hidden}
+.dim{position:absolute;inset:0;background:rgba(28,26,23,.38)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 20px;overflow:hidden}
+.handle{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.sh-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.sh-h h2{font-size:21px;font-weight:800;letter-spacing:-.3px}
+.close{width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:16px;flex-shrink:0}
+.ats{display:flex;gap:6px;overflow:hidden;margin:6px 0 10px}
+.ats b{font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:6px 11px;border-radius:999px;white-space:nowrap}
+.pc{border:1px solid var(--line);border-radius:16px;padding:11px 13px;margin-bottom:9px}
+.pc .t{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.pc .t b{font-size:15px}
+.prod{display:flex;flex-direction:column;align-items:flex-start;margin-top:8px;gap:5px}
+.prod>span{font-size:14px;font-weight:600;white-space:nowrap}
+.trk{display:flex;gap:4px}
+.trk i{font-style:normal;font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;white-space:nowrap}
+.trk .h{background:var(--accent);color:#fff}
+.trk .p{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.trk .a{background:var(--surface-2);color:var(--ink)}
+.trk .s{background:var(--amber-soft);color:var(--amber);box-shadow:inset 0 0 0 1.5px #E8C98F}
+.trk .w{background:#fff;color:#B5B0A8;box-shadow:inset 0 0 0 1px var(--line)}
+.pc .ft{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft)}
+.step{display:flex;align-items:center;gap:10px;padding:10px 0}
+.step+.step{border-top:1px solid var(--line)}
+.dot{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.dot.h{background:var(--accent);color:#fff}.dot.p{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}.dot.s{background:var(--amber-soft);color:var(--amber)}.dot.w{background:var(--surface-2);color:#B5B0A8}
+.mini{width:38px;height:38px;border-radius:9px;background:linear-gradient(160deg,#6d7a83,#2c353b);flex-shrink:0}
+.lbl{font-size:13px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px}
+.op{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:7px}
+.op.on{border-color:var(--accent);background:var(--accent-soft)}
+.op .rt b{font-size:15px}
+.rad{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0}
+.op.on .rad{border:6px solid var(--accent)}
+.seg{display:flex;gap:8px}.seg b{flex:1;text-align:center;border:1.5px solid var(--line);border-radius:12px;padding:10px 4px;font-size:14px}
+.seg b.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.fld{background:var(--surface-2);border-radius:12px;padding:12px;font-size:16px;font-weight:600}
+.lock{background:linear-gradient(170deg,#28484d,#0f2427);color:#fff}
+.lock .clock{text-align:center;font-size:76px;font-weight:300;margin-top:60px;letter-spacing:-2px}
+.lock .date{text-align:center;font-size:18px;opacity:.85}
+.push{background:rgba(255,255,255,.88);color:var(--ink);border-radius:20px;padding:12px 14px;margin-top:40px;display:flex;gap:10px}
+.push .ic{width:38px;height:38px;border-radius:9px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:13px;flex-shrink:0}
+.cap{position:absolute;left:0;right:0;bottom:30px;text-align:center;font-size:14px;opacity:.8}
+.bx.rd{background:#FDECEA}.bx.rd .n{color:var(--danger)}
+.wrow{display:flex;align-items:center;gap:12px;padding:12px 0}
+.wrow+.wrow{border-top:1px solid var(--line)}
+.av{width:42px;height:42px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+
+.sec{border-radius:18px;padding:12px 14px;margin-bottom:12px;background:var(--surface-2)}
+.sec.am{background:var(--amber-soft)}
+.sec h3{display:flex;justify-content:space-between;align-items:baseline;font-size:16px;margin-bottom:2px}
+.sec h3 a{font-size:13px;color:var(--accent);font-weight:700;text-decoration:none}
+.sec .big{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.sec .row{padding:9px 0}.sec .row+.row{border-top:1px solid rgba(28,26,23,.08)}
+.prog{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0 6px;gap:2px}
+.prog i{display:block}
+.leg{display:flex;gap:12px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap}
+.leg b{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:0}
+.tt{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+.tt th{font-size:12px;color:var(--ink-soft);font-weight:600;text-align:right;padding:4px 2px}
+.tt th:first-child,.tt td:first-child{text-align:left}
+.tt td{padding:8px 2px;text-align:right;border-top:1px solid rgba(28,26,23,.08)}
+.tt tr.tot td{font-weight:800;border-top:1.5px solid var(--ink)}
+.alrt{display:flex;gap:8px;margin-bottom:12px}
+.alrt div{flex:1;border-radius:14px;padding:9px 11px;font-size:13px;font-weight:600}
+.wkn{display:flex;align-items:center;gap:10px}.wkn span{width:30px;height:30px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+.trk .r{background:#FDECEA;color:var(--danger);box-shadow:inset 0 0 0 1.5px #F2B8B2}
+.chips{flex-wrap:wrap}
+.carry{display:flex;align-items:center;gap:8px;background:#FDECEA;color:var(--danger);border-radius:12px;padding:8px 11px;font-size:13px;font-weight:600;margin:8px 0 2px}
+
+.chips{flex-wrap:nowrap}
+.chips b{padding:7px 12px}
+.per{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.per b{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:999px;padding:5px 14px 5px 5px;font-size:15px;font-weight:700;color:var(--ink-soft)}
+.per b.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.per b i{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-style:normal;display:flex;align-items:center;justify-content:center;font-size:13px}
+.per b.no{padding:5px 14px}
+.per b.lk{opacity:.6}
+.stt{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px}
+.stt b{font-size:17px}.stt span{font-size:13px;color:var(--ink-soft)}
+.segd{display:flex;background:var(--surface-2);border-radius:14px;padding:4px}.segd b{flex:1;text-align:center;padding:10px;border-radius:11px;font-size:15px;color:var(--ink-soft)}
+.segd b.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(28,26,23,.1)}
+.btn.dk{background:var(--ink)}
+.uh{display:flex;justify-content:space-between;align-items:center;margin:14px 0 2px}
+.uh b{font-size:14px;color:var(--ink-soft)}
+.sk{background:linear-gradient(90deg,#F1EFEC,#F7F6F4,#F1EFEC);border-radius:10px}
+.state{border:1px dashed var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.state .tg{font-size:11px;font-weight:800;color:var(--ink-soft);letter-spacing:.4px;margin-bottom:8px}
+.toast{background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:center}
+.rtag{font-size:11px;font-weight:700;color:var(--danger);background:#FDECEA;padding:2px 7px;border-radius:6px;margin-left:4px}
+
+.strip{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(28,26,23,.08);padding:12px 16px 26px;border-radius:20px 20px 0 0}
+.strip .big{font-size:28px;font-weight:800;color:var(--accent);letter-spacing:-.5px}
+.acc{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid var(--line);font-size:15px}
+.acc b{font-size:15px}.acc span{color:var(--ink-soft);font-size:13px}
+.ln{display:flex;justify-content:space-between;font-size:14px;padding:5px 0}
+.ln.t{font-weight:800;border-top:1.5px solid var(--ink);margin-top:4px;padding-top:8px}
+.mrow{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.need{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;font-size:13px;gap:4px;margin:4px 0 2px}
+.need span{color:var(--ink-soft)}.need b{font-size:14px}
+.pdf{background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px 20px;position:relative;box-shadow:0 4px 14px rgba(28,26,23,.08);height:640px;overflow:hidden}
+.stamp{position:absolute;right:30px;top:420px;transform:rotate(-12deg);border:5px solid #1F7A4D;color:#1F7A4D;font-weight:900;font-size:40px;letter-spacing:3px;padding:6px 18px;border-radius:10px;opacity:.92;text-align:center;line-height:1}
+.stamp small{display:block;font-size:12px;letter-spacing:.5px;font-weight:800;margin-top:4px}
+
+.sec2{border-top:1px solid var(--line);padding:12px 0}
+.sec2 h4{display:flex;justify-content:space-between;font-size:15px;margin-bottom:6px}
+.sec2 h4 span{color:var(--ink-soft);font-weight:600;font-size:13px}
+.chp{display:inline-block;font-size:13px;font-weight:700;padding:6px 11px;border-radius:999px;border:1.5px solid var(--line);margin:0 4px 6px 0}
+.chp.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.rl{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:6px 0}
+.rl .in{min-width:44px;font-size:14px;padding:6px 8px}
+.del{color:#B5B0A8;font-size:16px;width:22px;text-align:center}
+.pz .in.t{font-size:14px}
+.pz.new .in{box-shadow:inset 0 0 0 2px var(--accent);background:#fff}
+.pz.hl .in{background:var(--amber-soft)}
+.bar i.n{background:var(--amber)!important;color:#fff}
+.kb{position:absolute;left:0;right:0;bottom:0;background:#D1D3D9;padding:8px 6px 26px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.kb b{background:#fff;border-radius:7px;text-align:center;padding:11px 0;font-size:22px;font-weight:500;box-shadow:0 1px 0 #898a8d}
+.cap2{background:var(--accent);color:#fff;border-radius:14px;padding:10px 12px;font-size:14px;font-weight:600;margin:8px 0}
+.cap2 small{display:block;font-weight:500;opacity:.85;margin-top:2px}
+.hoja{display:flex;height:70px;border:1.5px solid #8a949b;border-radius:4px;overflow:hidden;margin-top:6px}
+.hoja i{display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-style:normal;background:#5f6b73;border-right:2px solid #fff}
+.map{border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.map h3{font-size:16px;margin-bottom:6px;display:flex;justify-content:space-between}
+.map h3 span{font-size:12px;color:var(--ink-soft);font-weight:600}
+.map li{font-size:13.5px;margin:3px 0 3px 16px;color:var(--ink)}
+.map.out{background:var(--surface-2);border:0}
+</style></head><body><div class="scr" id="r1-ficha-completa" style="height:auto;overflow:visible;padding-bottom:0"><div class="top" style="justify-content:space-between;margin-bottom:6px"><span style="color:var(--accent);font-weight:700">‹ Modelos</span><span class="pill ok">Listo</span></div>
+<h1 style="font-size:24px">Modelo bitral</h1><div class="sub" style="margin-bottom:8px">M-01 · Puerta 200 × 100 cm · Complicado · catálogo $320</div>
+<div class="ats"><b>Cortes $39,69</b><b>Lámina $26,19</b><b>Vidrio $4,09</b><b>Pintura $29,77</b></div><div style="font-size:13px;font-weight:700;color:var(--ink-soft);margin:8px 0 0">CORTES · cantidad × cm × nota</div><div class="perf"><h4><span>Tubo 1" x 3" 0,90</span><span>$14,45</span></h4><div class="m">5,76 m / 1 barra / sobra 0,24 m · bastidor</div><div class="need" style="grid-template-columns:44px 14px 64px 1fr;margin:0 0 4px"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div><div class="pz "><span class="in q">2</span><span class="x">×</span><span class="in c">200</span><span class="in t">Bastidor largo</span><span class="del">✕</span></div><div class="pz "><span class="in q">2</span><span class="x">×</span><span class="in c">88</span><span class="in t">Bastidor ancho</span><span class="del">✕</span></div><div class="bar"><i class="" style="flex:200">200</i><i class="" style="flex:200">200</i><i class="" style="flex:88">88</i><i class="" style="flex:88">88</i><i class="s" style="flex:24"></i></div><div class="add" style="margin-top:6px">+ pieza</div></div><div class="perf"><h4><span>Tubo 1" x 2"</span><span>$3,63</span></h4><div class="m">1,94 m / 1 barra / sobra 4,06 m</div><div class="need" style="grid-template-columns:44px 14px 64px 1fr;margin:0 0 4px"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div><div class="pz "><span class="in q">1</span><span class="x">×</span><span class="in c">194</span><span class="in t">Divisor vertical</span><span class="del">✕</span></div><div class="bar"><i class="" style="flex:194">194</i><i class="s" style="flex:406"></i></div><div class="add" style="margin-top:6px">+ pieza</div></div><div class="perf"><h4><span>Platina 1/2" x 2 mm</span><span>$2,54</span></h4><div class="m">6,00 m / 1 barra / sobra 0</div><div class="need" style="grid-template-columns:44px 14px 64px 1fr;margin:0 0 4px"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div><div class="pz "><span class="in q">1</span><span class="x">×</span><span class="in c">600</span><span class="in t">Ranuras (frente) total</span><span class="del">✕</span></div><div class="bar"><i class="" style="flex:600">600</i></div><div class="add" style="margin-top:6px">+ pieza</div></div><div class="perf"><h4><span>Tubo 1/2" x 1/2" 0,70</span><span>$5,09</span></h4><div class="m">9,90 m / 2 barras / sobra 2,10 m</div><div class="need" style="grid-template-columns:44px 14px 64px 1fr;margin:0 0 4px"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div><div class="pz "><span class="in q">1</span><span class="x">×</span><span class="in c">600</span><span class="in t">Ranuras (atrás) total</span><span class="del">✕</span></div><div class="pz "><span class="in q">1</span><span class="x">×</span><span class="in c">390</span><span class="in t">Vitral largo total</span><span class="del">✕</span></div><div class="blab"><span>Barra 1</span><span>sobra 0</span></div><div class="bar"><i class="" style="flex:600">600</i></div><div class="blab"><span>Barra 2</span><span>sobra 2,10 m</span></div><div class="bar"><i class="" style="flex:390">390</i><i class="s" style="flex:210"></i></div><div class="add" style="margin-top:6px">+ pieza</div></div><div class="perf"><h4><span>Marco para puerta 10 · 0,70</span><span>$13,97</span></h4><div class="m">5,00 m / 1 barra de 5,10 m / sobra 0,10 m</div><div class="need" style="grid-template-columns:44px 14px 64px 1fr;margin:0 0 4px"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div><div class="pz "><span class="in q">1</span><span class="x">×</span><span class="in c">500</span><span class="in t">Marco</span><span class="del">✕</span></div><div class="bar"><i class="" style="flex:500">500</i><i class="s" style="flex:10"></i></div><div class="add" style="margin-top:6px">+ pieza</div></div><div class="add">+ perfil</div><div class="ylw" style="margin-top:6px">Pendiente de Ray: desglosar la platina (6 m) y el tubo 1/2" (6 m + 3,90 m) pieza por pieza.</div>
+<div class="sec2"><h4>Lámina <span>1,101 m² · 37 % de una 4×8 · $26,19</span></h4>
+<div><span class="chp on">Pulida C/14 (1,90 mm)</span><span class="chp">C/16</span><span class="chp">2 mm</span></div>
+<div class="pz"><span class="in q">1</span><span class="x">×</span><span class="in c">61,5</span><span class="x">×</span><span class="in c">179</span><span class="x" style="flex:1;text-align:right">1,101 m²</span><span class="del">✕</span></div><div class="add">+ pieza de lámina</div></div>
+<div class="sec2"><h4>Vidrio <span>0,284 m² · $4,09 · se compra cortado</span></h4>
+<div><span class="chp on">Vidrio 5 mm</span><span class="chp">Vidrio 4 mm</span></div>
+<div class="pz"><span class="in q">1</span><span class="x">×</span><span class="in c">184</span><span class="x">×</span><span class="in c">10</span><span class="x" style="flex:1;text-align:right">0,184 m²</span><span class="del">✕</span></div>
+<div class="pz"><span class="in q">5</span><span class="x">×</span><span class="in c">50</span><span class="x">×</span><span class="in c">4</span><span class="x" style="flex:1;text-align:right">0,100 m²</span><span class="del">✕</span></div><div class="add">+ pieza de vidrio</div></div>
+<div class="sec2"><h4>Pintura <span>$29,77 · puertas por galón</span></h4><div class="rl"><span>Fondo anticorrosivo</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">3</span><b>$7,73</b></span></div><div class="rl"><span>Esmalte</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">3</span><b>$8,51</b></span></div><div class="rl"><span>Masilla (3,5 kg)</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">3</span><b>$9,67</b></span></div><div class="rl"><span>Thinner</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">3</span><b>$3,87</b></span></div></div><div class="sec2"><h4>Consumibles <span>$14,40 · puertas por unidad</span></h4><div class="rl"><span>Electrodos (kg)</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">2</span><b>$1,74</b></span></div><div class="rl"><span>Disco de corte 14"</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">3</span><b>$2,32</b></span></div><div class="rl"><span>Disco de corte 7"</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">3</span><b>$0,39</b></span></div><div class="rl"><span>Disco flap</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">4</span><b>$0,29</b></span></div><div class="rl"><span>Disco de cartón</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">3</span><b>$0,39</b></span></div><div class="rl"><span>Lijas 40 · 80 · 100 · 120</span><span style="display:flex;gap:8px;align-items:center"><span class="x">por puerta</span><b>$9,28</b></span></div></div><div class="sec2"><h4>Herrajes <span>$44,08</span></h4><div class="rl"><span>Bisagra</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">3</span><b>$3,48</b></span></div><div class="rl"><span>Cerradura multilock de embutir</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">1</span><b>$17,40</b></span></div><div class="rl"><span>Manillón inox. 30 cm · incluido ✓</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">1</span><b>$23,20</b></span></div></div><div class="sec2"><h4>Mano de obra <span>$65,00 · categoría Complicado</span></h4><div class="rl"><span>Soldador / herrero</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">30</span><b>$30,00</b></span></div><div class="rl"><span>Masillador (masilla y pintura)</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">30</span><b>$30,00</b></span></div><div class="rl"><span>Ayudante (acabados y vidrios)</span><span style="display:flex;gap:8px;align-items:center"><span class="in" style="display:inline-block">5</span><b>$5,00</b></span></div></div><div class="sec2"><h4>Extras que lleva <span>se cobran aparte</span></h4><div><span class="chp">Protección</span><span class="chp">Vitrales</span><span class="chp">Yeso (sobremarco)</span><span class="chp">Marco decorativo</span></div></div>
+<div class="sec2"><h4>Fotos y notas <span>2 fotos</span></h4><div style="display:flex;gap:8px;margin-bottom:8px"><div class="mini" style="width:70px;height:90px"></div><div class="mini" style="width:70px;height:90px"></div><div class="mini" style="width:70px;height:90px;background:var(--surface-2);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;font-size:12px">+ foto</div></div>
+<div class="fld" style="font-weight:500;font-size:14px">Panel de lámina con 5 ranuras horizontales con vidrio y franja vertical de vidrio al lado. Manillón incluido.</div></div>
+<div class="sec2"><h4>Total del costo <span></span></h4><div class="rl"><span>Cortes</span><span style="display:flex;gap:8px;align-items:center"><b>$39,69</b></span></div><div class="rl"><span>Lámina</span><span style="display:flex;gap:8px;align-items:center"><b>$26,19</b></span></div><div class="rl"><span>Vidrio</span><span style="display:flex;gap:8px;align-items:center"><b>$4,09</b></span></div><div class="rl"><span>Pintura</span><span style="display:flex;gap:8px;align-items:center"><b>$29,77</b></span></div><div class="rl"><span>Consumibles</span><span style="display:flex;gap:8px;align-items:center"><b>$14,40</b></span></div><div class="rl"><span>Herrajes</span><span style="display:flex;gap:8px;align-items:center"><b>$44,08</b></span></div><div class="rl"><span>Mano de obra</span><span style="display:flex;gap:8px;align-items:center"><b>$65,00</b></span></div><div class="ln t"><span>Costo de la puerta</span><span>$223,22</span></div></div><div style="height:20px"></div><div class="strip" style="position:relative;margin:0 -16px -96px"><div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="sub" style="font-size:12px;margin:0">Precio sugerido · toca para ver más</div><div class="big">$326,79</div></div><div style="text-align:right"><span class="pill rj">$6,79 abajo</span><div class="sub" style="font-size:12px">catálogo $320</div></div></div></div></div><div class="scr" id="r2a" style=""><div class="top" style="justify-content:space-between;margin-bottom:6px"><span style="color:var(--accent);font-weight:700">‹ Modelos</span><span class="pill gris">Borrador</span></div>
+<h1 style="font-size:22px">Lineal 6 vidrios</h1><div class="sub" style="margin-bottom:6px">copia del Modelo bitral · cambias solo lo distinto</div><div class="cap2">1 · Toca "+ pieza" en el perfil<small>Sale una fila vacía y el teclado de números, igual que en tu Costeador.</small></div><div class="perf"><h4><span>Tubo 1" x 2"</span><span>$3,63</span></h4><div class="m">1,94 m / 1 barra / sobra 4,06 m</div><div class="need" style="grid-template-columns:44px 14px 64px 1fr;margin:0 0 4px"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div><div class="pz "><span class="in q">1</span><span class="x">×</span><span class="in c">194</span><span class="in t">Divisor vertical</span><span class="del">✕</span></div><div class="pz new"><span class="in q"></span><span class="x">×</span><span class="in c"></span><span class="in t">Nota (opcional)</span><span class="del">✕</span></div><div class="bar"><i class="" style="flex:194">194</i><i class="s" style="flex:406"></i></div><div class="add" style="margin-top:6px">+ pieza</div></div><div class="kb"><b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>,</b><b>0</b><b>⌫</b></div></div><div class="scr" id="r2b" style=""><div class="top" style="justify-content:space-between;margin-bottom:6px"><span style="color:var(--accent);font-weight:700">‹ Modelos</span><span class="pill gris">Borrador</span></div>
+<h1 style="font-size:22px">Lineal 6 vidrios</h1><div class="sub" style="margin-bottom:6px">copia del Modelo bitral · cambias solo lo distinto</div><div class="cap2">2 · Escribe cantidad y cm<small>La barra se redibuja sola y el precio de abajo cambia al momento.</small></div><div class="perf"><h4><span>Tubo 1" x 2"</span><span>$6,81</span></h4><div class="m">3,64 m / 1 barra / sobra 2,36 m</div><div class="need" style="grid-template-columns:44px 14px 64px 1fr;margin:0 0 4px"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div><div class="pz "><span class="in q">1</span><span class="x">×</span><span class="in c">194</span><span class="in t">Divisor vertical</span><span class="del">✕</span></div><div class="pz hl"><span class="in q">2</span><span class="x">×</span><span class="in c">85</span><span class="in t">Travesaño</span><span class="del">✕</span></div><div class="bar"><i class="" style="flex:194">194</i><i class="n" style="flex:85">85</i><i class="n" style="flex:85">85</i><i class="s" style="flex:236"></i></div><div class="add" style="margin-top:6px">+ pieza</div></div><div class="ln" style="font-size:13px;color:var(--ink-soft)"><span>Para quitar una pieza: ✕ al final de la fila.</span></div><div class="strip" style=""><div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="sub" style="font-size:12px;margin:0">Precio sugerido · toca para ver más</div><div class="big">$330,92</div></div><div style="text-align:right"><span class="pill rj">$10,92 abajo</span><div class="sub" style="font-size:12px">catálogo $320</div></div></div></div></div><div class="scr" id="r2c" style=""><div class="top" style="justify-content:space-between;margin-bottom:6px"><span style="color:var(--accent);font-weight:700">‹ Modelos</span><span class="pill gris">Borrador</span></div>
+<h1 style="font-size:22px">Lineal 6 vidrios</h1><div class="sub" style="margin-bottom:6px">copia del Modelo bitral · cambias solo lo distinto</div><div class="perf"><h4><span>Tubo 1" x 2"</span><span>$6,81</span></h4><div class="m">3,64 m / 1 barra / sobra 2,36 m</div><div class="need" style="grid-template-columns:44px 14px 64px 1fr;margin:0 0 4px"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div><div class="pz "><span class="in q">1</span><span class="x">×</span><span class="in c">194</span><span class="in t">Divisor vertical</span><span class="del">✕</span></div><div class="pz "><span class="in q">2</span><span class="x">×</span><span class="in c">85</span><span class="in t">Travesaño</span><span class="del">✕</span></div><div class="bar"><i class="" style="flex:194">194</i><i class="" style="flex:85">85</i><i class="" style="flex:85">85</i><i class="s" style="flex:236"></i></div><div class="add" style="margin-top:6px">+ pieza</div></div><div class="add">+ perfil</div><div class="dim"></div><div class="sheet" style="height:560px"><div class="handle"></div><div class="cap2" style="margin-top:0">3 · "+ perfil" abre la lista de materiales<small>Con buscador y precio; nada de listas desplegables.</small></div>
+<div class="fld" style="font-weight:500;color:var(--ink-soft);margin-bottom:8px">Buscar: tubo, platina, marco…</div>
+<div class="chips"><b class="on">Tubos</b><b>Platinas</b><b>Marcos</b><b>Ángulos</b></div>
+<div class="mrow"><div class="rt"><b>Tubo 1" x 1"</b><span>barra 6 m · C. y Ambiente</span></div><div class="rr">$6,43</div></div>
+<div class="mrow" style="background:var(--accent-soft);border-radius:10px;padding-left:8px;padding-right:8px"><div class="rt"><b>Tubo 1/2" x 1" 0,80</b><span>barra 6 m · C. y Ambiente</span></div><div class="rr">$4,34</div></div>
+<div class="mrow"><div class="rt"><b>Tubo 1" x 1 1/2" 0,90</b><span>barra 6 m</span></div><div class="rr">$6,70</div></div></div></div><div class="scr" id="r2d" style=""><div class="top" style="justify-content:space-between;margin-bottom:6px"><span style="color:var(--accent);font-weight:700">‹ Modelos</span><span class="pill gris">Borrador</span></div>
+<h1 style="font-size:22px">Lineal 6 vidrios</h1><div class="sub" style="margin-bottom:6px">copia del Modelo bitral · cambias solo lo distinto</div><div class="cap2">4 · El perfil nuevo sale abajo con su primera fila<small>"Para 3D" (qué es y si va vertical u horizontal) es opcional y queda plegado.</small></div><div class="perf"><h4><span>Tubo 1/2" x 1" 0,80</span><span>$1,51</span></h4><div class="m">1,80 m / 1 barra / sobra 4,20 m</div><div class="need" style="grid-template-columns:44px 14px 64px 1fr;margin:0 0 4px"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div><div class="pz hl"><span class="in q">6</span><span class="x">×</span><span class="in c">30</span><span class="in t">Marcos de los vidrios</span><span class="del">✕</span></div><div class="bar"><i class="n" style="flex:30">30</i><i class="n" style="flex:30">30</i><i class="n" style="flex:30">30</i><i class="n" style="flex:30">30</i><i class="n" style="flex:30">30</i><i class="n" style="flex:30">30</i><i class="s" style="flex:420"></i></div><div style="font-size:13px;color:var(--accent);font-weight:700;margin-top:6px">▸ Para 3D: qué es · V/H</div><div class="add" style="margin-top:6px">+ pieza</div></div><div class="add">+ perfil</div><div class="strip" style=""><div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="sub" style="font-size:12px;margin:0">Precio sugerido · toca para ver más</div><div class="big">$332,88</div></div><div style="text-align:right"><span class="pill rj">$12,88 abajo</span><div class="sub" style="font-size:12px">catálogo $320</div></div></div></div></div><div class="scr" id="r3-sabado-completo" style="height:auto;overflow:visible;padding-bottom:0"><div class="top"><div class="logo">HA</div><div><h1>Costeador</h1><div class="sub">Plan del sáb 21 nov</div></div></div>
+<div class="tabs"><b>Modelos</b><b class="on">Sábado</b><b>Compras</b><b>Precios</b></div>
+<div class="grp" style="margin-top:2px"><span>Asignado en el Taller</span><span style="color:var(--accent)">Ir al Taller ›</span></div>
+<div class="row"><div class="rt"><b>Modelo bitral</b><span>N° 1200 · N° 1203 · Hierro de Jesus</span></div><div class="stp"><b>−</b><em>2</em><b>+</b></div></div>
+<div class="tiles"><div><b>$72,21</b><span>Barras a comprar, con IVA</span></div><div><b>2,20 m²</b><span>Lámina · 0,74 de 4×8</span></div><div><b>0,57 m²</b><span>Vidrio cortado</span></div><div><b>$653,58</b><span>Venta · costo $446,45</span></div></div>
+<div class="perf"><h4><span>Tubo 1" x 3" 0,90</span><span>usa 11,52 m</span></h4><div class="need"><span>Necesitas</span><span>Hay</span><span>Comprar</span><span></span><b>2 barras</b><b>1</b><b style="color:var(--danger)">1</b></div><div class="blab"><span>Barra 1 · del Depósito</span><span>sobra 0</span></div><div class="bar"><i class="" style="flex:200">200</i><i class="" style="flex:200">200</i><i class="" style="flex:200">200</i></div><div class="blab"><span>Barra 2 · comprar</span><span>sobra 48 cm</span></div><div class="bar"><i class="" style="flex:200">200</i><i class="" style="flex:88">88</i><i class="" style="flex:88">88</i><i class="" style="flex:88">88</i><i class="" style="flex:88">88</i><i class="s" style="flex:48"></i></div><div class="sub" style="font-size:13px;margin-top:4px">Retazos que quedan: 48 cm</div></div><div class="perf"><h4><span>Tubo 1" x 2"</span><span>usa 3,88 m</span></h4><div class="need"><span>Necesitas</span><span>Hay</span><span>Comprar</span><span></span><b>1 barra</b><b>0</b><b style="color:var(--danger)">1</b></div><div class="bar"><i class="" style="flex:194">194</i><i class="" style="flex:194">194</i><i class="s" style="flex:212"></i></div><div class="sub" style="font-size:13px;margin-top:4px">Retazos que quedan: 2,12 m</div></div><div class="perf"><h4><span>Platina 1/2" x 2 mm</span><span>usa 12,00 m</span></h4><div class="need"><span>Necesitas</span><span>Hay</span><span>Comprar</span><span></span><b>2 barras</b><b>0</b><b style="color:var(--danger)">2</b></div><div class="blab"><span>Barra 1</span><span>sobra 0</span></div><div class="bar"><i class="" style="flex:600">600</i></div><div class="blab"><span>Barra 2</span><span>sobra 0</span></div><div class="bar"><i class="" style="flex:600">600</i></div></div><div class="perf"><h4><span>Tubo 1/2" x 1/2" 0,70</span><span>usa 19,80 m</span></h4><div class="need"><span>Necesitas</span><span>Hay</span><span>Comprar</span><span></span><b>4 barras</b><b>0</b><b style="color:var(--danger)">4</b></div><div class="blab"><span>Barra 1</span><span>sobra 0</span></div><div class="bar"><i class="" style="flex:600">600</i></div><div class="blab"><span>Barra 2</span><span>sobra 0</span></div><div class="bar"><i class="" style="flex:600">600</i></div><div class="blab"><span>Barra 3</span><span>sobra 2,10 m</span></div><div class="bar"><i class="" style="flex:390">390</i><i class="s" style="flex:210"></i></div><div class="blab"><span>Barra 4</span><span>sobra 2,10 m</span></div><div class="bar"><i class="" style="flex:390">390</i><i class="s" style="flex:210"></i></div><div class="sub" style="font-size:13px;margin-top:4px">Retazos que quedan: 2,10 m · 2,10 m</div></div><div class="perf"><h4><span>Marco para puerta 10</span><span>usa 10,00 m</span></h4><div class="need"><span>Necesitas</span><span>Hay</span><span>Comprar</span><span></span><b>2 barras</b><b>0</b><b style="color:var(--danger)">2</b></div><div class="blab"><span>Barra 1</span><span>sobra 10 cm</span></div><div class="bar"><i class="" style="flex:500">500</i><i class="s" style="flex:10"></i></div><div class="blab"><span>Barra 2</span><span>sobra 10 cm</span></div><div class="bar"><i class="" style="flex:500">500</i><i class="s" style="flex:10"></i></div></div><div class="perf"><h4><span>Lámina pulida C/14</span><span>2,20 m²</span></h4><div class="need"><span>Necesitas</span><span>Hay</span><span>Comprar</span><span></span><b>1 lámina 4×8</b><b>0</b><b style="color:var(--danger)">1</b></div><div class="hoja"><i style="flex:61.5">61,5×179</i><i style="flex:61.5">61,5×179</i><i style="flex:121;background:#EAD9CF;color:var(--ink-soft)">sobra</i></div></div>
+<div class="perf"><h4><span>Vidrio 5 mm · se pide cortado</span><span>0,57 m²</span></h4>
+<div class="rl"><span>184 × 10 cm</span><b>2 piezas</b></div><div class="rl"><span>50 × 4 cm</span><b>10 piezas</b></div></div>
+<div style="height:20px"></div>
+<div class="strip" style="position:relative;margin:0 -16px -96px"><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px"><span>10 barras · 1 lámina · vidrio</span><b>$72,21 + lámina</b></div><div class="btn">Comprar lo que falta</div><div style="display:flex;justify-content:space-between;margin-top:10px;font-size:13px"><span style="color:var(--accent);font-weight:700">Hoja de corte en PDF</span><span style="color:var(--ink-soft)">Ajustar ›</span></div></div></div><div class="scr" id="r4-mapa" style="height:auto;overflow:visible;padding-bottom:0"><div class="top"><div class="logo">HA</div><div><h1>Qué se hace dónde</h1><div class="sub">El Costeador de Ray, todo junto</div></div></div><div class="map "><h3>Costeador › Modelos<span>costear</span></h3><ul><li>Ver todos los modelos con su precio y si gana o pierde</li><li>+ Nuevo modelo o extra (copiar del Bitral, estándar o en blanco)</li><li>Escribir cortes en la fila: cant × cm × nota</li><li>Barras dibujadas por perfil, se redibujan solas</li><li>Lámina, vidrio, pintura, consumibles, herrajes, obra, extras, fotos y notas</li><li>Precio fijo abajo: proveedor, por metro o barra completa, desglose</li><li>Pasar el precio al Catálogo (crea el producto si es nuevo)</li></ul></div><div class="map "><h3>Costeador › Sábado<span>cortar</span></h3><ul><li>Lo asignado en el Taller para ese sábado (simular + o −)</li><li>Necesitas · hay · comprar por perfil</li><li>Barras dibujadas y retazos que quedan</li><li>Lámina en la hoja 4×8 y vidrio como lista de piezas</li><li>Comprar lo que falta · Hoja de corte en PDF</li><li>Ajustar (casi nunca): mover pieza, retazo encontrado, corregir corte</li></ul></div><div class="map "><h3>Costeador › Compras<span>comprar y pagar</span></h3><ul><li>Compra pedida en amarillo hasta que llega</li><li>¿Llegó?: lo que vino, factura, foto y cómo se paga</li><li>Cuánto le debes a cada proveedor y su estado de cuenta</li><li>Compras del mes · compra suelta</li></ul></div><div class="map "><h3>Costeador › Precios<span>precios</span></h3><ul><li>Tabla: material × proveedor, el más barato en verde</li><li>Guardar recalcula todos los modelos</li><li>+ Material · + Proveedor · Reglas (IVA, ganancia, puertas al mes)</li></ul></div><div class="map out"><h3>Se queda en otro lado<span></span></h3><ul><li>Taller: asignar, fotos, nómina y vales</li><li>Finanzas: cuentas, confirmar pagos de clientes, gastos fijos, cierre del mes</li><li>Depósito: consumibles y entregas a trabajadores</li><li>Mi trabajo: la hoja de corte del herrero</li></ul></div></div></body></html>

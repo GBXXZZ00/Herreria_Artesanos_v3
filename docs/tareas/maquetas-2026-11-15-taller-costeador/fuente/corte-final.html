@@ -1,0 +1,401 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=390"><style>
+:root{--accent:#17555C;--accent-soft:rgba(23,85,92,.09);--ink:#1C1A17;--ink-soft:#6E6A64;--surface-2:#F7F6F4;--line:#E9E7E3;--danger:#B42318;--amber:#B7791F;--amber-soft:#FDF3E1;--ok:#1F7A4D;--ok-soft:#E7F4EC}
+*{box-sizing:border-box;margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;color:var(--ink);background:#fff;font-size:15px}
+.scr{width:390px;min-height:844px;position:relative;padding:14px 16px 96px;display:none}
+.scr.on{display:block}
+.top{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+.logo{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:15px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.sub{color:var(--ink-soft);font-size:14px;margin-top:2px}
+.tabs{display:flex;background:var(--surface-2);border-radius:14px;padding:4px;margin-bottom:14px}
+.tabs b{flex:1;text-align:center;font-size:14px;padding:9px 0;color:var(--ink-soft);font-weight:600;border-radius:11px;white-space:nowrap}
+.tabs b.on{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(28,26,23,.08)}
+.bento{display:grid;grid-template-columns:1.3fr 1fr;gap:8px;margin-bottom:16px}
+.bx{background:var(--surface-2);border-radius:16px;padding:12px 14px}
+.bx .n{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.bx .l{font-size:13px;color:var(--ink-soft);margin-top:2px}
+.bx.big{grid-row:span 2;background:var(--accent);color:#fff}
+.bx.big .l{color:rgba(255,255,255,.8)}
+.bx.big .n{font-size:32px}
+.bx.am{background:var(--amber-soft)} .bx.am .n{color:var(--amber)}
+.grp{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--ink-soft);margin:16px 0 6px;text-transform:none}
+.row{display:flex;align-items:center;gap:12px;padding:11px 0}
+.row+.row{border-top:1px solid var(--line)}
+.th{width:44px;height:44px;border-radius:10px;background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:11px;overflow:hidden}
+.th.ph{background:linear-gradient(160deg,#5b6770,#2f383f)}
+.rt{flex:1;min-width:0}.rt b{display:block;font-size:15px}.rt span{font-size:13px;color:var(--ink-soft)}
+.rr{text-align:right;font-size:14px;font-weight:700;white-space:nowrap}
+.rr small{display:block;font-weight:500;color:var(--ink-soft);font-size:12px}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft)}
+.pill.am{background:var(--amber-soft);color:var(--amber)}.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.ac{background:var(--accent-soft);color:var(--accent)}.pill.rj{background:#FDECEA;color:var(--danger)}
+.btn{display:block;text-align:center;background:var(--accent);color:#fff;font-weight:700;border-radius:14px;padding:14px;font-size:16px}
+.btn.sec{background:var(--surface-2);color:var(--ink)}
+.btn.sm{display:inline-block;padding:7px 14px;font-size:14px;border-radius:999px}
+.ck{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex-shrink:0}
+.ck.on{background:var(--accent);border-color:var(--accent);position:relative}
+.ck.on:after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.wk{background:var(--surface-2);border-radius:16px;padding:6px 14px;margin-bottom:10px}
+.wk h3{display:flex;justify-content:space-between;align-items:center;font-size:16px;padding:8px 0 4px}
+.foot{position:absolute;left:12px;right:12px;bottom:14px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:12px 14px;box-shadow:0 6px 24px rgba(28,26,23,.10)}
+.nav{display:flex;justify-content:space-around;font-size:11px;color:var(--ink-soft);font-weight:600}
+.nav span.on{color:var(--accent)}
+.chips{display:flex;gap:8px;overflow:hidden;margin-bottom:12px}
+.chips b{font-size:14px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;font-weight:600}
+.chips b.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hero{height:300px;border-radius:18px;background:linear-gradient(160deg,#6d7a83,#2c353b);position:relative;margin-bottom:14px;overflow:hidden}
+.hero .door{position:absolute;left:120px;top:24px;width:150px;height:260px;border:8px solid #1d2327;background:#3a4449}
+.hero .door i{position:absolute;left:14px;right:14px;height:6px;background:#9fb4bd}
+.hero .tag{position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:5px 10px;border-radius:999px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.kv div{background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.kv span{display:block;font-size:12px;color:var(--ink-soft)}.kv b{font-size:15px}
+.note{font-size:13px;color:var(--ink-soft);text-align:center;margin-top:10px}
+/* costeador */
+.price{position:sticky;top:0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:12px;box-shadow:0 4px 16px rgba(28,26,23,.06)}
+.price .big{font-size:30px;font-weight:800;letter-spacing:-.6px;color:var(--accent)}
+.lines{font-size:13px;color:var(--ink-soft);display:flex;justify-content:space-between;margin-top:4px}
+.opt{display:flex;gap:6px;margin-top:8px}.opt b{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--surface-2);font-weight:600}
+.perf{border-top:1px solid var(--line);padding:12px 0}
+.perf h4{display:flex;justify-content:space-between;font-size:15px}
+.perf .m{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink-soft);margin:2px 0 8px}
+.pz{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.in{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:15px;font-weight:700;text-align:right}
+.in.q{width:44px}.in.c{width:64px}.in.t{flex:1;text-align:left;font-weight:500;color:var(--ink)}
+.x{color:var(--ink-soft);font-size:13px}
+.bar{display:flex;height:20px;border-radius:5px;overflow:hidden;margin-top:6px;font-size:10px;color:#fff;font-weight:700}
+.bar i{display:flex;align-items:center;justify-content:center;background:#5f6b73;border-right:2px solid #fff;font-style:normal}
+.bar i:nth-child(even){background:#465158}
+.bar i.s{background:#EAD9CF;border:0}
+.blab{display:flex;justify-content:space-between;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-soft);margin-top:6px}
+.add{font-size:14px;color:var(--accent);font-weight:700;padding:4px 0}
+.stp{display:flex;align-items:center;gap:8px}
+.stp b{width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:18px}
+.stp em{font-style:normal;font-weight:800;font-size:17px;width:22px;text-align:center}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.tiles div{background:var(--surface-2);border-radius:14px;padding:10px 12px}
+.tiles b{font-size:20px;font-weight:800;display:block}.tiles span{font-size:12px;color:var(--ink-soft)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:12px;color:var(--ink-soft);text-align:right;font-weight:600;padding:6px 4px}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td{padding:9px 4px;border-top:1px solid var(--line);text-align:right}
+.tbl td .in{display:inline-block;min-width:52px;padding:6px 7px;font-size:13px}
+.tbl td.low .in{background:var(--ok-soft);color:var(--ok)}
+.ylw{background:var(--amber-soft);border-radius:14px;padding:10px 12px;font-size:13px;color:#7a5313;margin-bottom:10px}
+
+.scr{height:844px;overflow:hidden}
+.dim{position:absolute;inset:0;background:rgba(28,26,23,.38)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 20px;overflow:hidden}
+.handle{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.sh-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.sh-h h2{font-size:21px;font-weight:800;letter-spacing:-.3px}
+.close{width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:16px;flex-shrink:0}
+.ats{display:flex;gap:6px;overflow:hidden;margin:6px 0 10px}
+.ats b{font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:6px 11px;border-radius:999px;white-space:nowrap}
+.pc{border:1px solid var(--line);border-radius:16px;padding:11px 13px;margin-bottom:9px}
+.pc .t{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.pc .t b{font-size:15px}
+.prod{display:flex;flex-direction:column;align-items:flex-start;margin-top:8px;gap:5px}
+.prod>span{font-size:14px;font-weight:600;white-space:nowrap}
+.trk{display:flex;gap:4px}
+.trk i{font-style:normal;font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;white-space:nowrap}
+.trk .h{background:var(--accent);color:#fff}
+.trk .p{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.trk .a{background:var(--surface-2);color:var(--ink)}
+.trk .s{background:var(--amber-soft);color:var(--amber);box-shadow:inset 0 0 0 1.5px #E8C98F}
+.trk .w{background:#fff;color:#B5B0A8;box-shadow:inset 0 0 0 1px var(--line)}
+.pc .ft{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft)}
+.step{display:flex;align-items:center;gap:10px;padding:10px 0}
+.step+.step{border-top:1px solid var(--line)}
+.dot{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.dot.h{background:var(--accent);color:#fff}.dot.p{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}.dot.s{background:var(--amber-soft);color:var(--amber)}.dot.w{background:var(--surface-2);color:#B5B0A8}
+.mini{width:38px;height:38px;border-radius:9px;background:linear-gradient(160deg,#6d7a83,#2c353b);flex-shrink:0}
+.lbl{font-size:13px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px}
+.op{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:7px}
+.op.on{border-color:var(--accent);background:var(--accent-soft)}
+.op .rt b{font-size:15px}
+.rad{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0}
+.op.on .rad{border:6px solid var(--accent)}
+.seg{display:flex;gap:8px}.seg b{flex:1;text-align:center;border:1.5px solid var(--line);border-radius:12px;padding:10px 4px;font-size:14px}
+.seg b.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.fld{background:var(--surface-2);border-radius:12px;padding:12px;font-size:16px;font-weight:600}
+.lock{background:linear-gradient(170deg,#28484d,#0f2427);color:#fff}
+.lock .clock{text-align:center;font-size:76px;font-weight:300;margin-top:60px;letter-spacing:-2px}
+.lock .date{text-align:center;font-size:18px;opacity:.85}
+.push{background:rgba(255,255,255,.88);color:var(--ink);border-radius:20px;padding:12px 14px;margin-top:40px;display:flex;gap:10px}
+.push .ic{width:38px;height:38px;border-radius:9px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:13px;flex-shrink:0}
+.cap{position:absolute;left:0;right:0;bottom:30px;text-align:center;font-size:14px;opacity:.8}
+.bx.rd{background:#FDECEA}.bx.rd .n{color:var(--danger)}
+.wrow{display:flex;align-items:center;gap:12px;padding:12px 0}
+.wrow+.wrow{border-top:1px solid var(--line)}
+.av{width:42px;height:42px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+
+.sec{border-radius:18px;padding:12px 14px;margin-bottom:12px;background:var(--surface-2)}
+.sec.am{background:var(--amber-soft)}
+.sec h3{display:flex;justify-content:space-between;align-items:baseline;font-size:16px;margin-bottom:2px}
+.sec h3 a{font-size:13px;color:var(--accent);font-weight:700;text-decoration:none}
+.sec .big{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.sec .row{padding:9px 0}.sec .row+.row{border-top:1px solid rgba(28,26,23,.08)}
+.prog{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0 6px;gap:2px}
+.prog i{display:block}
+.leg{display:flex;gap:12px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap}
+.leg b{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:0}
+.tt{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+.tt th{font-size:12px;color:var(--ink-soft);font-weight:600;text-align:right;padding:4px 2px}
+.tt th:first-child,.tt td:first-child{text-align:left}
+.tt td{padding:8px 2px;text-align:right;border-top:1px solid rgba(28,26,23,.08)}
+.tt tr.tot td{font-weight:800;border-top:1.5px solid var(--ink)}
+.alrt{display:flex;gap:8px;margin-bottom:12px}
+.alrt div{flex:1;border-radius:14px;padding:9px 11px;font-size:13px;font-weight:600}
+.wkn{display:flex;align-items:center;gap:10px}.wkn span{width:30px;height:30px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+.trk .r{background:#FDECEA;color:var(--danger);box-shadow:inset 0 0 0 1.5px #F2B8B2}
+.chips{flex-wrap:wrap}
+.carry{display:flex;align-items:center;gap:8px;background:#FDECEA;color:var(--danger);border-radius:12px;padding:8px 11px;font-size:13px;font-weight:600;margin:8px 0 2px}
+
+.chips{flex-wrap:nowrap}
+.chips b{padding:7px 12px}
+.per{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.per b{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:999px;padding:5px 14px 5px 5px;font-size:15px;font-weight:700;color:var(--ink-soft)}
+.per b.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.per b i{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-style:normal;display:flex;align-items:center;justify-content:center;font-size:13px}
+.per b.no{padding:5px 14px}
+.per b.lk{opacity:.6}
+.stt{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px}
+.stt b{font-size:17px}.stt span{font-size:13px;color:var(--ink-soft)}
+.segd{display:flex;background:var(--surface-2);border-radius:14px;padding:4px}.segd b{flex:1;text-align:center;padding:10px;border-radius:11px;font-size:15px;color:var(--ink-soft)}
+.segd b.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(28,26,23,.1)}
+.btn.dk{background:var(--ink)}
+.uh{display:flex;justify-content:space-between;align-items:center;margin:14px 0 2px}
+.uh b{font-size:14px;color:var(--ink-soft)}
+.sk{background:linear-gradient(90deg,#F1EFEC,#F7F6F4,#F1EFEC);border-radius:10px}
+.state{border:1px dashed var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.state .tg{font-size:11px;font-weight:800;color:var(--ink-soft);letter-spacing:.4px;margin-bottom:8px}
+.toast{background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:center}
+.rtag{font-size:11px;font-weight:700;color:var(--danger);background:#FDECEA;padding:2px 7px;border-radius:6px;margin-left:4px}
+
+.strip{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(28,26,23,.08);padding:12px 16px 26px;border-radius:20px 20px 0 0}
+.strip .big{font-size:28px;font-weight:800;color:var(--accent);letter-spacing:-.5px}
+.acc{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid var(--line);font-size:15px}
+.acc b{font-size:15px}.acc span{color:var(--ink-soft);font-size:13px}
+.ln{display:flex;justify-content:space-between;font-size:14px;padding:5px 0}
+.ln.t{font-weight:800;border-top:1.5px solid var(--ink);margin-top:4px;padding-top:8px}
+.mrow{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.need{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;font-size:13px;gap:4px;margin:4px 0 2px}
+.need span{color:var(--ink-soft)}.need b{font-size:14px}
+.pdf{background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px 20px;position:relative;box-shadow:0 4px 14px rgba(28,26,23,.08);height:640px;overflow:hidden}
+.stamp{position:absolute;right:30px;top:420px;transform:rotate(-12deg);border:5px solid #1F7A4D;color:#1F7A4D;font-weight:900;font-size:40px;letter-spacing:3px;padding:6px 18px;border-radius:10px;opacity:.92;text-align:center;line-height:1}
+.stamp small{display:block;font-size:12px;letter-spacing:.5px;font-weight:800;margin-top:4px}
+
+.sec2{border-top:1px solid var(--line);padding:12px 0}
+.sec2 h4{display:flex;justify-content:space-between;font-size:15px;margin-bottom:6px}
+.sec2 h4 span{color:var(--ink-soft);font-weight:600;font-size:13px}
+.chp{display:inline-block;font-size:13px;font-weight:700;padding:6px 11px;border-radius:999px;border:1.5px solid var(--line);margin:0 4px 6px 0}
+.chp.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.rl{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:6px 0}
+.rl .in{min-width:44px;font-size:14px;padding:6px 8px}
+.del{color:#B5B0A8;font-size:16px;width:22px;text-align:center}
+.pz .in.t{font-size:14px}
+.pz.new .in{box-shadow:inset 0 0 0 2px var(--accent);background:#fff}
+.pz.hl .in{background:var(--amber-soft)}
+.bar i.n{background:var(--amber)!important;color:#fff}
+.kb{position:absolute;left:0;right:0;bottom:0;background:#D1D3D9;padding:8px 6px 26px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.kb b{background:#fff;border-radius:7px;text-align:center;padding:11px 0;font-size:22px;font-weight:500;box-shadow:0 1px 0 #898a8d}
+.cap2{background:var(--accent);color:#fff;border-radius:14px;padding:10px 12px;font-size:14px;font-weight:600;margin:8px 0}
+.cap2 small{display:block;font-weight:500;opacity:.85;margin-top:2px}
+.hoja{display:flex;height:70px;border:1.5px solid #8a949b;border-radius:4px;overflow:hidden;margin-top:6px}
+.hoja i{display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-style:normal;background:#5f6b73;border-right:2px solid #fff}
+.map{border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.map h3{font-size:16px;margin-bottom:6px;display:flex;justify-content:space-between}
+.map h3 span{font-size:12px;color:var(--ink-soft);font-weight:600}
+.map li{font-size:13.5px;margin:3px 0 3px 16px;color:var(--ink)}
+.map.out{background:var(--surface-2);border:0}
+
+.steps{display:flex;gap:6px;margin:4px 0 12px}
+.steps div{flex:1;border-radius:12px;padding:8px 9px;background:var(--surface-2);font-size:12px;color:var(--ink-soft);font-weight:600}
+.steps div b{display:block;font-size:13px;color:var(--ink)}
+.steps div.on{background:var(--accent-soft);color:var(--accent)} .steps div.on b{color:var(--accent)}
+.steps div.ok{background:var(--ok-soft);color:var(--ok)} .steps div.ok b{color:var(--ok)}
+.door{border:1px solid var(--line);border-radius:16px;padding:12px 13px;margin-bottom:10px}
+.door .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.door .hd b{font-size:16px}
+.door .sw{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-1px}
+.cut{display:grid;grid-template-columns:1.2fr 1.5fr;gap:2px 10px;font-size:14px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.cut span{color:var(--ink-soft)} .cut b{font-weight:700}
+.tl{position:relative;padding-left:22px;margin:6px 0}
+.tl:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl div{position:relative;padding:6px 0;font-size:14px}
+.tl div:before{content:"";position:absolute;left:-20px;top:10px;width:12px;height:12px;border-radius:50%;background:var(--line)}
+.tl div.ok:before{background:var(--accent)} .tl div.now:before{background:#fff;box-shadow:inset 0 0 0 3px var(--accent)}
+.tl div span{display:block;font-size:12px;color:var(--ink-soft)}
+.hrow{display:flex;align-items:center;gap:12px;padding:13px 0}
+.hrow+.hrow{border-top:1px solid var(--line)}
+
+.src{display:flex;align-items:center;gap:8px;margin:6px 0 2px;font-size:13px}
+.src .tg{font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;white-space:nowrap}
+.tg.t{background:var(--accent-soft);color:var(--accent)} .tg.r{background:#EDE7F6;color:#5B3FA0} .tg.n{background:var(--amber-soft);color:var(--amber)}
+.src .ln2{flex:1;color:var(--ink-soft)}
+.pc2{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.pc2 i{font-style:normal;font-size:12px;font-weight:800;color:#fff;padding:4px 8px;border-radius:7px}
+.tip{background:var(--surface-2);border-radius:12px;padding:9px 11px;font-size:13px;margin-top:8px}
+.who{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+
+.vista{display:flex;border:1.5px solid var(--accent);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.vista b{flex:1;text-align:center;padding:8px 0;font-size:14px;color:var(--accent)}
+.vista b.on{background:var(--accent);color:#fff}
+.estado{display:flex;align-items:center;gap:8px;border-radius:12px;padding:9px 11px;font-size:14px;font-weight:600;margin:2px 0 10px}
+.estado.gris{background:var(--surface-2);color:var(--ink)} .estado.ok{background:var(--ok-soft);color:var(--ok)} .estado.am{background:var(--amber-soft);color:#7a5313} .estado.lock{background:#EEF0F2;color:#3b4650}
+.door .menu{color:var(--ink-soft);font-size:20px;line-height:1;padding:0 4px}
+.nn{font-size:10px;opacity:.85;margin-left:3px}
+.mini2{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;font-size:12.5px;gap:2px 4px;margin-top:4px}
+.mini2 span{color:var(--ink-soft)} .mini2 b{font-size:14px}
+.rtz{display:flex;align-items:center;justify-content:space-between;font-size:13.5px;padding:5px 0}
+.rtz .q{color:#B5B0A8;font-size:15px}
+.banner{border-radius:14px;padding:10px 12px;font-size:13.5px;margin-bottom:8px}
+.banner.rd{background:#FDECEA;color:#8a1c12}.banner.am{background:var(--amber-soft);color:#7a5313}
+
+.sc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.sc a{display:block;text-decoration:none;color:var(--ink);background:var(--surface-2);border-radius:14px;padding:10px 12px;font-size:13px}
+.sc a b{display:block;font-size:15px;margin-bottom:2px}
+.sc a.am{background:var(--amber-soft)} .sc a.am b{color:var(--amber)}
+.sc a.tl{background:var(--accent-soft)} .sc a.tl b{color:var(--accent)}
+.prow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+
+.mhead{display:grid;grid-template-columns:1.7fr .8fr 1fr .8fr .8fr;font-size:12px;color:var(--ink-soft);font-weight:700;padding:6px 0;border-bottom:1.5px solid var(--ink);position:sticky;top:0;background:#fff}
+.mrow2{display:grid;grid-template-columns:1.7fr .8fr 1fr .8fr .8fr;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.mrow2 b{font-size:15px}
+.mrow2 .nm{font-weight:700;font-size:14px;line-height:1.2}
+.mrow2 .nm span{display:block;font-weight:500;font-size:12px;color:var(--ink-soft)}
+.rzl{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.rzl span{display:inline-flex;align-items:center;gap:6px;background:#EDE7F6;color:#5B3FA0;border-radius:8px;padding:6px 6px 6px 9px;font-size:13px;font-weight:700}
+.rzl span i{font-style:normal;background:#fff;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#8a86a0;font-weight:500}
+.camino{border:1.5px solid #E8C98F;background:var(--amber-soft);border-radius:14px;padding:10px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.camino .btn{background:#fff;color:var(--amber);box-shadow:inset 0 0 0 1.5px var(--amber)}
+.link44{display:flex;align-items:center;justify-content:center;min-height:44px;font-size:14px;font-weight:700;color:var(--accent)}
+.cnt{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line)}
+.cnt .stp b{width:44px;height:44px}
+.qin{display:inline-block;min-width:48px;text-align:center;background:var(--surface-2);border-radius:10px;padding:8px;font-weight:800}
+.scr{display:block}</style></head><body><div class="scr" id="K01-Por-herrero" style="height:auto;overflow:visible;padding-bottom:20px;min-height:844px"><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div>
+<div class="bento" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="bx"><div class="n">4</div><div class="l">Puertas por cortar</div></div><div class="bx"><div class="n">1</div><div class="l">Enviado</div></div><div class="bx"><div class="n">2</div><div class="l">Sin enviar</div></div></div>
+<a class="pc" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;color:var(--ink)"><div><b style="font-size:15px;color:var(--ink)">2 puertas sin asignar</b><br><span style="font-size:13px;color:var(--ink-soft)">entregan esta semana o la próxima</span></div><span class="btn sm">Asignar</span></a>
+<div class="banner rd">Falta material para N° 1203. <u>Ver en Material ›</u></div>
+<div class="hrow"><div class="av">JE</div><div class="rt"><b>Jesus · 2 puertas</b><span>N° 1200 · N° 1203 · Modelo bitral</span><br><span class="pill" style="margin-top:4px">Sin enviar</span></div><div class="rr" style="color:var(--accent)">Abrir ›</div></div>
+<div class="hrow"><div class="av">JO</div><div class="rt"><b>José · 1 puerta</b><span>N° 1205 · Combo #1</span><br><span class="pill" style="margin-top:4px">Sin cortes · cárgalos en el Costeador</span></div><div class="rr" style="color:var(--accent)">Cargar ›</div></div>
+<div class="hrow"><div class="av">LU</div><div class="rt"><b>Luis · 1 puerta</b><span>N° 1198 · Lineal</span><br><span class="pill ok" style="margin-top:4px">Enviado · cortando</span></div><div class="rr" style="color:var(--accent)">Abrir ›</div></div>
+<div class="note" style="text-align:left">Asignas el Hierro → aquí revisas y escoges de dónde sale el material → envías → el herrero lo ve en Qué cortar.</div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="scr" id="K02-Corte-de-Jesus" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:810px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Corte de Jesus</h2><div class="sub">Hierro para el sáb 21 nov · 2 puertas</div></div><span class="close">✕</span></div>
+<div class="estado gris">● Sin enviar · revisa y envía</div><div class="door"><div class="hd"><div><b><span class="sw" style="background:#17555C"></span>N° 1200 · Bitral 2 de 2</b><div class="sub" style="font-size:13px">Ana Rincón · le toca primero</div></div><div style="display:flex;gap:6px;align-items:center"><span class="menu">⋯</span></div></div><div class="cut"><span>Tubo 3" x 1"</span><b>2 de 200 · 2 de 88</b><span>Tubo 2" x 1"</span><b>1 de 194</b><span>Platina 1/2"</span><b>1 de 600</b><span>Tubo 1/2" x 1/2"</span><b>1 de 600 · 1 de 390</b><span>Marco 10</span><b>1 de 500</b><span>Lámina C/14</span><b>1 de 61,5 × 179</b></div><div class="rl" style="margin-top:6px"><span style="color:var(--ok);font-weight:700">Material: hay todo ✓</span></div></div><div class="door"><div class="hd"><div><b><span class="sw" style="background:#6FAAB0"></span>N° 1203 · Bitral 1 de 2</b><div class="sub" style="font-size:13px">Ana Rincón · después</div></div><div style="display:flex;gap:6px;align-items:center"><span class="menu">⋯</span></div></div><div class="rl" style="margin-top:6px"><span>Igual que N° 1200</span><b style="color:var(--accent)">ver lista ▸</b></div><div class="rl" style="margin-top:6px;background:#FDECEA;border-radius:10px;padding:8px 10px"><span style="color:var(--danger);font-weight:700">Falta 1 tubo 3"x1" y 2 tubos 1/2"</span><span style="color:var(--danger);font-size:12px">se pide al enviar</span></div></div><div class="grp" style="margin-top:10px"><span>De dónde sale el material</span><span>toca una pieza</span></div><div style="display:flex;gap:14px;font-size:13px;margin:2px 0 6px"><span><b style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#17555C"></b> N° 1200</span><span><b style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#6FAAB0"></b> N° 1203</span></div><div class="perf"><h4><span>Tubo 3" x 1"</span><span style="font-size:13px;color:var(--ink-soft)">4 de 200 · 4 de 88</span></h4><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent)">TALLER</span><span class="ln2">barra de 6 m · sobra 0</span></div><div class="bar"><i style="flex:200;background:#17555C">200<span class=nn>·1200</span></i><i style="flex:200;background:#17555C">200<span class=nn>·1200</span></i><i style="flex:200;background:#6FAAB0">200<span class=nn>·1203</span></i></div><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--amber-soft);color:var(--amber)">NUEVA</span><span class="ln2">1 barra · guarda 48 cm</span></div><div class="bar"><i style="flex:200;background:#6FAAB0">200</i><i style="flex:88;background:#17555C">88</i><i style="flex:88;background:#17555C">88</i><i style="flex:88;background:#6FAAB0">88</i><i style="flex:88;background:#6FAAB0">88</i><i class="s" style="flex:48"></i></div></div><div class="perf"><h4><span>Tubo 1/2" x 1/2"</span><span style="font-size:13px;color:var(--ink-soft)">2 de 600 · 2 de 390</span></h4><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent)">TALLER</span><span class="ln2">2 barras</span></div><div class="bar"><i style="flex:600;background:#17555C">600<span class=nn>·1200</span></i></div><div class="bar"><i style="flex:600;background:#6FAAB0">600<span class=nn>·1203</span></i></div><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--amber-soft);color:var(--amber)">NUEVA</span><span class="ln2">2 barras · guardan 2,10 m</span></div><div class="bar"><i style="flex:390;background:#17555C">390<span class=nn>·1200</span></i><i class="s" style="flex:210"></i></div><div class="bar"><i style="flex:390;background:#6FAAB0">390<span class=nn>·1203</span></i><i class="s" style="flex:210"></i></div></div><div class="perf"><h4><span>Tubo 2" x 1" · Platina · Marco</span><span style="font-size:13px;color:var(--ink-soft)">todo del taller</span></h4><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent)">TALLER</span><span class="ln2">1 tubo 2"x1" · 2 platinas · 2 marcos</span></div></div><div class="perf"><h4><span>Lámina C/14</span><span style="font-size:13px;color:var(--ink-soft)">2 de 61,5 × 179</span></h4><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent)">TALLER</span><span class="ln2">1 lámina 4×8</span></div></div><div style="height:150px"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px;border-top:1px solid var(--line)"><div class="btn">Enviar a Jesus y pedir 3 barras</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><span class="sub" style="font-size:12px">Se envía el corte y se pide la compra juntos</span><span class="link44" style="color:var(--ink-soft)">⋯ Más</span></div></div></div></div><div class="scr" id="K03-Mas" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:460px"><div class="handle"></div><div class="sh-h"><div><h2>Más</h2><div class="sub">Corte de Jesus</div></div><span class="close">✕</span></div>
+<div class="acc" style="border-top:0"><b>Ver en PDF</b><span>para imprimir ›</span></div>
+<div class="acc"><b>Sugerir de nuevo</b><span>pregunta antes de borrar tus cambios ›</span></div>
+<div class="acc"><b>Deshacer envío</b><span>solo si no ha empezado ›</span></div>
+<div class="acc"><b>Corregir lo que cortó</b><span>después de terminar ›</span></div>
+<div class="acc"><b>Reportar barra dañada</b><span>mientras corta ›</span></div></div></div><div class="scr" id="K04-Pieza" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:620px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Pieza de 88 cm</h2><div class="sub">Tubo 3" x 1" · N° 1203 · Jesus</div></div><span class="close">✕</span></div>
+<div class="lbl">¿De dónde sale?</div>
+<div class="op on"><div class="rad"></div><div class="rt"><b>Barra nueva</b><span>la que se compra · ahí guardas 48 cm</span></div><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--amber-soft);color:var(--amber)">NUEVA</span></div>
+<div class="op"><div class="rad"></div><div class="rt"><b>Retazo R-12 · 1,20 m</b><span>cabe · sobran 32 cm</span></div><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:#EDE7F6;color:#5B3FA0">R-12</span></div>
+<div class="op" style="opacity:.55"><div class="rad"></div><div class="rt"><b>Barra del taller</b><span>ya está llena</span></div><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent)">TALLER</span></div>
+<div class="tip">Usar el R-12 no te ahorra la barra nueva: las otras piezas igual la necesitan.</div>
+<div class="btn" style="position:absolute;left:16px;right:16px;bottom:26px">Listo</div></div></div><div class="scr" id="K05-Puerta" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:600px"><div class="handle"></div>
+<div class="sh-h"><div><h2>N° 1203 · Bitral 1 de 2</h2><div class="sub">En el corte de Jesus</div></div><span class="close">✕</span></div>
+<div class="lbl">¿Qué quieres hacer?</div>
+<div class="op on"><div class="rad"></div><div class="rt"><b>Pasarla a otro herrero</b><span>sale del plan de Jesus y entra en el del otro</span></div></div>
+<div class="per" style="margin:0 0 6px 30px"><b class="on"><i>JO</i>José</b><b><i>LU</i>Luis</b></div>
+<div class="op"><div class="rad"></div><div class="rt"><b>Pasarla al próximo sábado</b><span>sáb 28 nov · lo apartado vuelve a libre</span></div></div>
+<div class="op"><div class="rad"></div><div class="rt"><b>Quitarla del plan</b><span>sigue asignada a Jesus, pero sin lista de corte</span></div></div>
+<div class="tip">El plan de Jesus se rehace solo. Si ya lo enviaste, te pide volver a enviarlo.</div>
+<div class="btn" style="position:absolute;left:16px;right:16px;bottom:26px">Pasar a José</div></div></div><div class="scr" id="K06-Asignar-puertas" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:800px"><div class="handle"></div><div class="sh-h"><div><h2>Asignar puertas</h2><div class="sub">Las que faltan por asignar o de otro herrero</div></div><span class="close">✕</span></div>
+<div class="chips"><b class="on">Sin asignar 2</b><b>De otro herrero</b></div>
+<div style="font-weight:700;margin:2px 0 8px">¿Para cuándo?</div>
+<div class="segd"><b class="on">Este sáb 21 nov</b><b>Próximo sáb 28 nov</b></div>
+<div class="door" style="margin-top:12px"><div style="display:flex;gap:12px"><div class="mini" style="width:64px;height:84px;border-radius:12px"></div><div class="rt"><b style="font-size:16px">Modelo bitral · 2 de 2</b><span style="display:block">N° 1203 · Ana Rincón · entrega sáb 28</span><span style="display:block">la 1 de 2 ya la tiene Jesus · $30</span><div class="ats" style="margin:6px 0 0"><b>Ver pedido N° 1203</b></div></div></div>
+<div class="per" style="margin-top:8px"><b class="on"><i>JE</i>Jesus · 2</b><b><i>JO</i>José · 1</b><b><i>LU</i>Luis · 1</b></div></div>
+<div class="door"><div style="display:flex;gap:12px"><div class="mini" style="width:64px;height:84px;border-radius:12px;background:linear-gradient(160deg,#8a6f55,#3d3026)"></div><div class="rt"><b style="font-size:16px">Lineal</b><span style="display:block">N° 1210 · Carlos Pérez · entrega vie 27</span><span style="display:block">$30</span><div class="ats" style="margin:6px 0 0"><b>Ver pedido N° 1210</b></div></div></div>
+<div class="per" style="margin-top:8px"><b><i>JE</i>Jesus · 2</b><b class="on"><i>JO</i>José · 1</b><b><i>LU</i>Luis · 1</b></div></div>
+<div class="sub" style="font-size:12px">El número es cuántas puertas tiene ya esa semana. Cada puerta entra sola al corte de su herrero.</div><div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px"><div class="btn">Asignar 2 puertas</div></div></div></div><div class="scr" id="K07-Enviado-cambio" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:760px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Corte de Jesus</h2><div class="sub">Hierro para el sáb 21 nov · 1 puerta</div></div><span class="close">✕</span></div>
+<div class="estado" style="background:#FDECEA;color:#8a1c12">⚠ Cambió: pasaste N° 1203 a José · vuelve a enviar</div>
+<div class="tl"><div class="ok">Enviado a Jesus<span>hoy 10:20 · 2 puertas</span></div><div class="ok">Cambio<span>hoy 11:05 · N° 1203 pasó a José</span></div><div class="now">Falta volver a enviar<span>Jesus todavía ve el plan viejo</span></div><div>Termina el Hierro de sus puertas<span>ahí bajan las barras del Depósito y se guardan los retazos</span></div></div><div class="door"><div class="hd"><div><b><span class="sw" style="background:#17555C"></span>N° 1200 · Bitral 2 de 2</b><div class="sub" style="font-size:13px">le toca primero</div></div><div style="display:flex;gap:6px;align-items:center"><span class="pill">sin empezar</span><span class="menu">⋯</span></div></div><div class="rl" style="margin-top:6px"><span style="color:var(--ok);font-weight:700">Material: hay todo ✓</span></div></div><div class="ats"><b>Ver pedido</b><b>Ver Qué cortar de Jesus</b></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px;border-top:1px solid var(--line)"><div class="btn">Volver a enviar a Jesus</div><div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px"><span class="link44">Deshacer envío</span><span class="link44" style="color:var(--ink-soft)">⋯ Más</span></div></div></div></div><div class="scr" id="K08-Candado" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:700px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Corte de Luis</h2><div class="sub">Hierro para el sáb 21 nov · 1 puerta</div></div><span class="close">✕</span></div>
+<div class="estado lock">🔒 Luis ya empezó a cortar · el plan no se puede cambiar</div>
+<div class="tl"><div class="ok">Enviado a Luis<span>ayer 4:10 pm</span></div><div class="ok">Luis empezó el Hierro<span>hoy 7:50 am</span></div><div class="now">Cortando<span>N° 1198 · Lineal</span></div><div>Termina el Hierro<span>bajan 3 barras del Depósito · entran R-25 y R-26</span></div></div>
+<div class="tip">Si cortó distinto o se dañó una barra, usa <b>Corregir lo que cortó</b> después de que termine. Así el Depósito queda bien.</div>
+<div class="ats" style="margin-top:10px"><b>Ver pedido N° 1198</b><b>Ver Qué cortar de Luis</b></div><div class="acc"><b style="color:var(--danger)">Reportar barra dañada</b><span>mientras corta ›</span></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px;border-top:1px solid var(--line)"><div class="btn sec">Corregir lo que cortó</div><div class="sub" style="font-size:12px;text-align:center;margin-top:6px">Se activa cuando Luis termina el Hierro</div></div></div></div><div class="scr" id="K09-Barra-danada" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:660px"><div class="handle"></div><div class="sh-h"><div><h2>Barra dañada</h2><div class="sub">Corte de Luis · está cortando</div></div><span class="close">✕</span></div>
+<div class="lbl">¿Qué material?</div><div class="chips"><b class="on">Tubo 3"x1"</b><b>Tubo 1/2"</b><b>Platina</b></div>
+<div class="lbl">¿Cuál barra?</div>
+<div class="op on"><div class="rad"></div><div class="rt"><b>Barra 2 · la nueva</b><span>200 · 88 · 88 · 88 · 88</span></div></div>
+<div class="op"><div class="rad"></div><div class="rt"><b>Barra 1 · la del taller</b><span>200 · 200 · 200</span></div></div>
+<div class="lbl">¿Con qué la reemplaza?</div><div class="seg"><b>Otra del taller</b><b class="on">Se compra</b></div>
+<div class="tip">No hay tubo 3"x1" libre: se suma 1 barra a la compra en camino y la dañada sale del Depósito.</div><div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px"><div class="btn">Reportar y reemplazar</div></div></div></div><div class="scr" id="K10-Corregir" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:700px"><div class="handle"></div><div class="sh-h"><div><h2>Corregir lo que cortó</h2><div class="sub">Luis terminó el Hierro · N° 1198</div></div><span class="close">✕</span></div>
+<div class="sub" style="font-size:13px;margin-bottom:6px">Cambia solo lo que fue distinto al plan. Lo demás queda como se envió.</div>
+<div class="perf"><h4><span>Tubo 3" x 1"</span><span style="font-size:13px;color:var(--ink-soft)">plan: 2 barras</span></h4>
+<div class="cnt" style="border:0"><span>Barras que usó</span><span class="stp"><b>−</b><em>3</em><b>+</b></span></div>
+<div class="cnt"><span>Retazo que guardó</span><span><span class="qin">R-25</span> <span class="qin">35 cm</span></span></div></div>
+<div class="perf"><h4><span>Tubo 1/2" x 1/2"</span><span style="font-size:13px;color:var(--ink-soft)">plan: 1 barra</span></h4><div class="cnt" style="border:0"><span>Barras que usó</span><span class="stp"><b>−</b><em>1</em><b>+</b></span></div></div>
+<div class="tip">El Depósito se ajusta: baja 1 barra más de tubo 3"x1" y entra R-25 de 35 cm.</div><div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px"><div class="btn">Guardar corrección</div></div></div></div><div class="scr" id="K11-Material" style="height:auto;overflow:visible;padding-bottom:20px;min-height:844px"><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · el material del taller</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="">Por herrero</b><b class="on">Material</b></div>
+<div class="camino"><div><b style="font-size:15px">En camino · Colores y Ambiente</b><br><span style="font-size:13px">3 barras · $21,23 · para Jesus</span></div><div style="display:flex;gap:6px"><span class="btn sm">¿Llegó?</span><span class="link44" style="color:var(--amber);min-height:36px">⋯</span></div></div>
+<div class="mhead"><span>Material</span><span>Hay</span><span>Apartado</span><span>Libre</span><span>Falta</span></div><div class="mrow2"><div class="nm">Tubo 3" x 1" 0,90<span>barras · 1 en camino</span></div><b>1</b><b>1</b><b>0</b><b style="color:var(--danger)">1</b><div class="rzl"><span>R-12 · 1,20 m<i>✕</i></span><span>R-09 · 0,40 m<i>✕</i></span></div></div><div class="mrow2"><div class="nm">Tubo 1/2" x 1/2" 0,70<span>barras · 2 en camino</span></div><b>2</b><b>2</b><b>0</b><b style="color:var(--danger)">2</b><div class="rzl"><span>R-17 · 2,10 m<i>✕</i></span><span>R-18 · 2,10 m<i>✕</i></span></div></div><div class="mrow2"><div class="nm">Tubo 2" x 1"<span>barras</span></div><b>3</b><b>1</b><b>2</b><b style="color:var(--ink)">·</b></div><div class="mrow2"><div class="nm">Platina 1/2" x 2 mm<span>barras</span></div><b>4</b><b>2</b><b>2</b><b style="color:var(--ink)">·</b></div><div class="mrow2"><div class="nm">Marco para puerta 10<span>barras · quedas en 0</span></div><b>2</b><b>2</b><b>0</b><b style="color:var(--ink)">·</b></div><div class="mrow2"><div class="nm">Lámina C/14 4×8<span>hojas</span></div><b>1</b><b>1</b><b>0</b><b style="color:var(--ink)">·</b></div><div class="prow" style="margin-top:6px"><div class="th">PR</div><div class="rt"><b>Proveedores</b><span>le debes $1.674,50 · 1 compra en camino</span></div><div class="rr" style="color:var(--accent)">Ver ›</div></div>
+<div style="height:16px"></div><div class="strip" style="position:relative;margin:0 -16px 0"><div class="btn">Comprar</div><div style="display:grid;grid-template-columns:1fr 1fr;margin-top:4px"><span class="link44">+ Retazo encontrado</span><span class="link44">Contar barras</span></div></div></div><div class="scr" id="K12-Comprar" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · el material del taller</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="">Por herrero</b><b class="on">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:800px"><div class="handle"></div><div class="sh-h"><div><h2>Comprar</h2><div class="sub">Queda en amarillo hasta que llegue</div></div><span class="close">✕</span></div>
+<div class="kv" style="margin:4px 0"><div><span>Tienes en cuentas</span><b>$2.550</b></div><div><span>Le debes a proveedores</span><b style="color:var(--danger)">$1.674,50</b></div></div>
+<div class="sub" style="font-size:13px;margin:6px 0">Ya viene marcado lo que falta para los cortes.</div>
+<div class="op on"><div class="rad"></div><div class="rt"><b>Donde sale más barato</b><span>la app reparte por proveedor</span></div></div>
+<div class="op"><div class="rad"></div><div class="rt"><b>Todo en un proveedor</b><span>Colores y A. · Torniplemaca</span></div></div>
+<div class="pc" style="margin-top:8px"><div class="t"><b>Colores y Ambiente</b><b>$18,30</b></div>
+<div class="cnt" style="border:0;padding:6px 0"><span><span class="ck on" style="display:inline-block;width:24px;height:24px;vertical-align:-6px;margin-right:8px"></span>Tubo 3" x 1" · <b>1</b></span><span>12,98</span></div>
+<div class="cnt" style="padding:6px 0"><span><span class="ck on" style="display:inline-block;width:24px;height:24px;vertical-align:-6px;margin-right:8px"></span>Tubo 1/2" 0,70 · <b>2</b></span><span>5,32</span></div>
+<div class="cnt" style="padding:6px 0;color:var(--ink-soft)"><span><span class="ck" style="display:inline-block;width:24px;height:24px;vertical-align:-6px;margin-right:8px"></span>Marco 10 · quedas en 0 · <b>2</b></span><span>24,56</span></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr"><span class="link44">+ Material</span><span class="link44">+ Proveedor</span><span class="link44">+ Flete</span></div><div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px"><div style="display:flex;justify-content:space-between;font-size:15px;margin-bottom:8px"><span>Total con IVA</span><b>$21,23</b></div><div class="btn">Pedir compra · $21,23</div></div></div></div><div class="scr" id="K13-Mensaje" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · el material del taller</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="">Por herrero</b><b class="on">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:800px"><div class="handle"></div><div class="sh-h"><div><h2>Mensaje para el proveedor</h2><div class="sub">Colores y Ambiente · compra pedida</div></div><span class="close">✕</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><div class="lbl" style="margin-top:0">¿Cómo llega?</div><div class="seg"><b class="on">Lo busco</b><b>Me lo traen</b></div></div><div><div class="lbl" style="margin-top:0">¿Cuándo?</div><div class="seg"><b>Hoy</b><b class="on">Mañana</b></div></div></div>
+<div class="lbl">Mensaje (lo puedes cambiar)</div>
+<div style="background:#E7F7E3;border-radius:16px 16px 16px 4px;padding:12px 14px;font-size:15px;line-height:1.45;white-space:pre-line">Buenos días, le escribe Ray de Herrería Artesanos. Para mañana necesito:
+
+• 1 tubo 3" x 1" calibre 0,90 (barra de 6 m)
+• 2 tubos 1/2" x 1/2" calibre 0,70 (barra de 6 m)
+
+¿Me confirma precio y si lo tiene? Lo paso buscando en la mañana. Gracias.</div>
+<div class="kv" style="margin-top:10px"><div><span>Total estimado</span><b>$21,23 con IVA</b></div><div><span>WhatsApp</span><b>0414-•••-•••</b></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr"><span class="link44">Copiar mensaje</span><span class="link44">Ver la compra</span></div><div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px"><div class="btn">Enviar por WhatsApp</div></div></div></div><div class="scr" id="K14-Llego" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · el material del taller</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="">Por herrero</b><b class="on">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:800px"><div class="handle"></div><div class="sh-h"><div><h2>¿Llegó la compra?</h2><div class="sub">Colores y Ambiente · pedida hoy · para Jesus</div></div><span class="close">✕</span></div>
+<div class="lbl">¿Llegó todo?</div><div class="seg"><b>Todo</b><b class="on">Una parte</b><b>Nada</b></div>
+<div class="lbl">Lo que llegó</div>
+<div class="cnt" style="border:0"><span>Tubo 3" x 1" · pediste 1</span><span class="stp"><b>−</b><em>1</em><b>+</b></span></div>
+<div class="cnt"><span>Tubo 1/2" 0,70 · pediste 2</span><span class="stp"><b>−</b><em>1</em><b>+</b></span></div>
+<div class="tip">Falta 1 tubo 1/2": sigue en camino, en amarillo, en la misma compra.</div>
+<div class="lbl">N° de factura</div><div class="fld">A-81</div>
+<div class="lbl">¿Cómo se paga lo que llegó? ($18,14)</div><div class="seg"><b class="on">Pagué</b><b>Lo debo</b><b>Una parte</b></div>
+<div class="op on" style="margin-top:8px"><div class="rad"></div><div class="rt"><b>Zelle</b><span>tienes $2.450</span></div></div><div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px"><div class="btn">Confirmar lo que llegó</div></div></div></div><div class="scr" id="K15-Compra-menu" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · el material del taller</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="">Por herrero</b><b class="on">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:520px"><div class="handle"></div><div class="sh-h"><div><h2>Compra en camino</h2><div class="sub">Colores y Ambiente · 3 barras · $21,23</div></div><span class="close">✕</span></div>
+<div class="acc" style="border-top:0"><b>¿Llegó?</b><span>todo, una parte o nada ›</span></div>
+<div class="acc"><b>Cambiar la compra</b><span>cantidades o proveedor ›</span></div>
+<div class="acc"><b>Volver a mandar el mensaje</b><span>WhatsApp ›</span></div>
+<div class="acc"><b style="color:var(--danger)">Cancelar la compra</b><span>no se va a comprar ›</span></div>
+<div class="tip">Si la cancelas, lo que faltaba vuelve a salir en rojo en Material y en el corte de Jesus.</div></div></div><div class="scr" id="K16-Contar" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · el material del taller</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="">Por herrero</b><b class="on">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:720px"><div class="handle"></div><div class="sh-h"><div><h2>Contar barras</h2><div class="sub">Escribe lo que hay de verdad en el taller</div></div><span class="close">✕</span></div>
+<div class="cnt" style="border:0"><span><b>Tubo 3" x 1"</b><br><span class="sub" style="font-size:12px">la app dice 1</span></span><span class="stp"><b>−</b><em>1</em><b>+</b></span></div>
+<div class="cnt"><span><b>Tubo 1/2" x 1/2"</b><br><span class="sub" style="font-size:12px">la app dice 2</span></span><span class="stp"><b>−</b><em>2</em><b>+</b></span></div>
+<div class="cnt"><span><b>Tubo 2" x 1"</b><br><span class="sub" style="font-size:12px">la app dice 3</span></span><span class="stp"><b>−</b><em style="color:var(--danger)">2</em><b>+</b></span></div>
+<div class="cnt"><span><b>Platina 1/2"</b><br><span class="sub" style="font-size:12px">la app dice 4</span></span><span class="stp"><b>−</b><em>4</em><b>+</b></span></div>
+<div class="cnt"><span><b>Marco 10</b><br><span class="sub" style="font-size:12px">la app dice 2</span></span><span class="stp"><b>−</b><em>2</em><b>+</b></span></div>
+<div class="tip">1 diferencia: tubo 2"x1" baja de 3 a 2. Queda anotado quién contó y cuándo.</div><div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:10px 16px 22px"><div class="btn">Guardar conteo</div></div></div></div><div class="scr" id="K17-Retazo" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · el material del taller</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="">Por herrero</b><b class="on">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:600px"><div class="handle"></div>
+<div class="sh-h"><div><h2>Retazo encontrado</h2><div class="sub">Entra con número para usarlo en un plan</div></div><span class="close">✕</span></div>
+<div class="lbl">Material</div><div class="chips" style="flex-wrap:wrap"><b class="on">Tubo 3"x1"</b><b>Tubo 2"x1"</b><b>Tubo 1/2"</b><b>Platina</b></div>
+<div class="lbl">Largo (cm)</div><div class="fld">95</div>
+<div class="tip">Sale como <b>R-27 · 95 cm</b>. Si es muy corto para las piezas de ese material, la app te avisa.</div>
+<div class="lbl" style="margin-top:14px">¿Un retazo ya no está?</div><div class="sub" style="font-size:13px">En Material toca la ✕ al lado del retazo. Si estaba apartado en un plan, el plan se rehace.</div>
+<div class="btn" style="position:absolute;left:16px;right:16px;bottom:26px">Guardar R-27</div></div></div><div class="scr" id="K18-Proveedores" style=""><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · el material del taller</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="">Por herrero</b><b class="on">Material</b></div><div style="position:absolute;inset:0;background:rgba(28,26,23,.38)"></div><div class="sheet" style="height:700px"><div class="handle"></div><div class="sh-h"><div><h2>Proveedores</h2><div class="sub">Lo que les debes y lo que viene en camino</div></div><span class="close">✕</span></div>
+<div class="kv" style="margin:4px 0 8px"><div><span>Le debes en total</span><b style="color:var(--danger)">$1.674,50</b></div><div><span>En camino</span><b>1 compra · $21,23</b></div></div>
+<div class="prow"><div class="th">CA</div><div class="rt"><b>Colores y Ambiente</b><span>en camino: 3 barras · el más barato en tubos</span></div><div class="rr" style="color:var(--ok)">$0 ›</div></div>
+<div class="prow"><div class="th">IT</div><div class="rt"><b>Torniplemaca</b><span>nota 00-2884 · 31 oct</span></div><div class="rr" style="color:var(--danger)">$1.674,50 ›</div></div>
+<div class="prow"><div class="th">+</div><div class="rt"><b style="color:var(--accent)">+ Proveedor</b><span>nombre y WhatsApp</span></div></div>
+<div class="tip" style="margin-top:10px">Toca uno para ver su estado de cuenta, pagarle o sacar el PDF. Sus precios se cambian en Costeador › Precios.</div></div></div><div class="scr" id="K19-Avisos" style="height:auto;overflow:visible;padding-bottom:20px;min-height:844px"><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Corte · Hierro para el sáb 21 nov</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div>
+<div class="banner rd"><b>N° 1203 cancelado.</b> Salió del plan de Jesus y lo apartado volvió a libre. <u>Volver a enviar a Jesus ›</u></div>
+<div class="banner" style="background:var(--surface-2)"><b>El Modelo bitral cambió en el Costeador.</b> El plan de Jesus usa las medidas viejas. <u>Rehacer ›</u></div>
+<div class="hrow"><div class="av">JE</div><div class="rt"><b>Jesus · 1 puerta</b><span>N° 1200 · Modelo bitral</span><br><span class="pill rj" style="margin-top:4px">Cambió · vuelve a enviar</span></div><div class="rr" style="color:var(--accent)">Abrir ›</div></div>
+<div class="hrow"><div class="av">JO</div><div class="rt"><b>José · 1 puerta</b><span>N° 1205 · Combo #1</span><br><span class="pill" style="margin-top:4px">Sin cortes · cárgalos en el Costeador</span></div><div class="rr" style="color:var(--accent)">Cargar ›</div></div>
+<div class="grp" style="margin-top:14px"><span>Sugerir de nuevo</span><span></span></div>
+<div class="pc"><b>¿Rehacer la sugerencia?</b><div class="sub" style="font-size:13px;margin:4px 0 10px">Moviste 2 piezas a mano. Si rehaces, se pierden esos cambios.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="btn sec">Dejar como está</div><div class="btn">Rehacer</div></div></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="scr" id="K20-Estados" style="height:auto;overflow:visible;padding-bottom:20px;min-height:844px"><div class="top"><div class="logo">HA</div><div><h1>Taller</h1><div class="sub">Cargando, vacío y error</div></div></div><div class="tabs"><b class="">Resumen</b><b class="">Pedidos</b><b class="on">Corte</b><b class="">Nómina</b></div><div class="vista"><b class="on">Por herrero</b><b class="">Material</b></div>
+<div class="state"><div class="tg">CARGANDO</div><div class="sk" style="height:18px;width:55%;margin-bottom:10px"></div><div class="sk" style="height:44px;width:100%;margin-bottom:8px"></div><div class="sk" style="height:44px;width:100%"></div></div>
+<div class="state" style="text-align:center"><div class="tg" style="text-align:left">VACÍO</div><b>Nadie tiene Hierro asignado</b><div class="sub" style="font-size:13px;margin:4px 0 10px">Asigna el Hierro en Pedidos y sale aquí solo.</div><span class="btn sm sec">Ir a Pedidos</span></div>
+<div class="state"><div class="tg">ERROR AL ENVIAR</div><div class="toast"><span style="font-size:18px">!</span><span>No se envió el corte ni se pidió la compra. Revisa la conexión y toca Enviar otra vez.</span></div></div>
+<div class="state"><div class="tg">HERRERO SIN CORTE</div><b>Qué cortar</b><div class="sub" style="font-size:13px">Ray todavía no te manda el corte de esta semana.</div></div><div class="foot"><div class="nav"><span>Inicio</span><span>Ventas</span><span>Catálogo</span><span class="on">Taller</span><span>Costeador</span></div></div></div><div class="scr" id="K21-Que-cortar" style="height:auto;overflow:visible;padding-bottom:20px;min-height:844px"><div class="top"><div class="logo">HA</div><div><h1>Mi trabajo</h1><div class="sub">Jesus · Hierro</div></div></div>
+<div class="tabs"><b>Mis trabajos</b><b class="on">Qué cortar</b><b>Mis pagos</b></div>
+<div class="pc" style="border:0;background:var(--surface-2)"><b>Ray te mandó el corte · hoy 11:20</b><div class="sub" style="font-size:13px">2 puertas. Corta así y guarda los retazos con su número.</div></div><div class="door"><div class="hd"><div><b><span class="sw" style="background:#17555C"></span>N° 1200 · Bitral 2 de 2</b><div class="sub" style="font-size:13px">la estás haciendo</div></div><div style="display:flex;gap:6px;align-items:center"><span class="pill ac">haciendo</span></div></div><div class="rl" style="margin-top:6px"><span>Lista de corte</span><b style="color:var(--accent)">ver ▸</b></div></div><div class="door"><div class="hd"><div><b><span class="sw" style="background:#6FAAB0"></span>N° 1203 · Bitral 1 de 2</b><div class="sub" style="font-size:13px">después de esta</div></div><div style="display:flex;gap:6px;align-items:center"><span class="pill">después</span></div></div><div class="rl" style="margin-top:6px"><span>Igual que N° 1200</span><b style="color:var(--accent)">ver ▸</b></div></div><div class="perf"><h4><span>Tubo 3" x 1"</span><span style="font-size:13px;color:var(--ink-soft)">2 barras</span></h4><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent)">TALLER</span><span class="ln2">sobra 0</span></div><div class="bar"><i style="flex:200;background:#17555C">200<span class=nn>·1200</span></i><i style="flex:200;background:#17555C">200<span class=nn>·1200</span></i><i style="flex:200;background:#6FAAB0">200<span class=nn>·1203</span></i></div><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--amber-soft);color:var(--amber)">NUEVA</span><span class="ln2">guarda R-21 · 48 cm</span></div><div class="bar"><i style="flex:200;background:#6FAAB0">200</i><i style="flex:88;background:#17555C">88</i><i style="flex:88;background:#17555C">88</i><i style="flex:88;background:#6FAAB0">88</i><i style="flex:88;background:#6FAAB0">88</i><i class="s" style="flex:48"></i></div></div><div class="perf"><h4><span>Tubo 1/2" x 1/2"</span><span style="font-size:13px;color:var(--ink-soft)">4 barras</span></h4><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent)">TALLER</span><span class="ln2">2 barras de 600</span></div><div class="src"><span style="font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--amber-soft);color:var(--amber)">NUEVA</span><span class="ln2">2 barras de 390 · guarda R-22 y R-23 · 2,10 m</span></div></div><div class="foot"><div class="nav"><span>Inicio</span><span class="on">Mi trabajo</span><span>Mis pagos</span></div></div></div></body></html>
