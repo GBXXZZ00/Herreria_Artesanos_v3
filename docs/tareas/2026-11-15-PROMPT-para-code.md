@@ -24,6 +24,7 @@ Eres el desarrollador de la App Artesanos (PWA de Herrería Artesanos: HTML, CSS
 8. ⏸ Costeador (Modelos · Precios, §5): **NO lo empieces** hasta que Gualfredo diga que Ray dio el OK.
 
 **Reglas que no se negocian:**
+- **Nada de "sábado" en pantalla:** se dice "Esta semana · 16 al 21 nov", "Próxima semana", "De la semana pasada" y "Corte de esta semana". Las fechas van sin día de la semana. La base sigue usando `para_el` por dentro (§0 de la tarea).
 - Stack: HTML, CSS con variables en `:root` y JS vainilla. Sin frameworks. En JS el cliente es `window.db`.
 - Diseño igual a las maquetas (salvo los retazos, que en las maquetas salen morados: van en gris con borde, ver §3B.1):
   - fondo claro y acento teal;

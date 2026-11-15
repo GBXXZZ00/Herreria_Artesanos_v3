@@ -11,6 +11,9 @@ Rama sugerida: `gualfredo/taller-costeador` (sale de `main`). Maquetas: `docs/ta
 
 ## 0. Estado de aprobación y permisos
 
+> **Regla de textos (Gualfredo, 15 nov): en pantalla NO se usa la palabra "sábado" para el corte, la asignación ni la nómina.** Se habla de **semanas**: "Esta semana · 16 al 21 nov", "Próxima semana", "De la semana pasada", "Corte de esta semana", "Por pagar". Las fechas van sin día de la semana ("entrega 21 nov"). Por dentro, la base sigue guardando la fecha `para_el` como hoy. Si las maquetas PNG del repo dicen "sáb", manda esta regla (el lienzo ya está corregido).
+
+
 | Parte | Estado |
 |---|---|
 | **A. Taller** (Producción + Nómina) | ✅ **Aprobado por Gualfredo** el 15 nov. |
