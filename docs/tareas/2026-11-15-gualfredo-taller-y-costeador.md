@@ -1,7 +1,7 @@
 # Tarea para Code: módulo Taller, sello ENTREGADO y Costeador unificado
 
 Fecha: 15 nov 2026 · Pedida por: Gualfredo · Escrita por: Claude de Gualfredo (en el chat con Gualfredo, con un consejo de 3 revisores)
-Rama sugerida: `gualfredo/taller-costeador` (sale de `main`). Maquetas: `docs/tareas/maquetas-2026-11-15-taller-costeador/` (PNG en tamaño iPhone 13 y su fuente HTML en `fuente/`).
+Rama sugerida: `gualfredo/taller-costeador` (sale de `main`). Maquetas: `docs/tareas/maquetas-2026-11-15-taller-costeador/` (PNG en tamaño iPhone 13 y su fuente HTML en `fuente/`): T1 a T7 Taller; C1 a C5 Costeador y nota; R1 a R4 Costeador completo para Ray (ficha entera, registrar pieza, Sábado entero y mapa).
 
 **Lee primero:** `CLAUDE.md`, la entrada más nueva de `docs/bitacora.md`, este archivo completo y las maquetas en orden (T1 a T7, después C1 a C5). Para el Costeador lee también `docs/claude/contexto-ray/LEEME.md` y el prototipo `docs/claude/contexto-ray/prototipo-costeador/costeador.html` (rama `ray/contexto-reestructuracion`, PR #6), y `docs/tareas/2026-11-08-gualfredo-reestructura-costos.md` (lo que ya se programó).
 
@@ -188,7 +188,23 @@ Idea: **el Costeador de Ray dentro de la app**, en un solo módulo, con los dato
   - Esto reemplaza la hoja "Precio" de hoy.
 - Guardado: se guarda solo al salir de cada campo, o con un botón **Guardar** fijo cuando hay cambios. Usa `costeo_guardar` como hoy. Nunca dos botones con el mismo propósito.
 
-### 5.4 Sábado (C3) · el plan de corte "como en el Costeador de Ray"
+### 5.3b Ficha completa y cómo se registra una pieza (R1, R2) · lo que pidió Ray
+- **R1** es la ficha del Bitral **completa y abierta**, con los datos reales de su Costeador:
+  - Los **5 perfiles**: tubo 3"x1" (2 × 200 y 2 × 88), tubo 2"x1" (1 × 194), platina 1/2" (1 × 600), tubo 1/2" 0,70 (1 × 600 y 1 × 390) y marco 10 (1 × 500).
+  - Lámina 1 × 61,5 × 179, vidrio 1 × 184 × 10 y 5 × 50 × 4.
+  - Pintura, consumibles, herrajes, mano de obra, extras, fotos y notas.
+  - El total por parte: cortes $39,69 · lámina $26,19 · vidrio $4,09 · pintura $29,77 · consumibles $14,40 · herrajes $44,08 · obra $65,00 = **$223,22**.
+  - El aviso amarillo de lo que Ray dejó pendiente (desglosar la platina y el tubo 1/2" pieza por pieza).
+  - **En la app las secciones de abajo salen cerradas**; R1 las muestra abiertas para revisar que no falta nada.
+- **R2**, registrar una pieza, igual que en el Costeador:
+  1. **+ pieza** agrega una fila vacía con el foco en Cant. y el teclado numérico.
+  2. Al escribir cantidad y cm, la barra se redibuja sola (lo nuevo en ámbar un momento) y la franja del precio cambia al instante con `costeo.js`. ✕ al final de la fila quita la pieza.
+  3. **+ perfil** abre el drawer de materiales (buscador, filtros, precio).
+  4. El perfil nuevo sale abajo con su primera fila; "Para 3D" queda plegado.
+  - Se guarda con `costeo_guardar`, y el número que vale es el de la base.
+- **R4** es el mapa de qué se hace en cada pestaña y qué se queda en Taller, Finanzas, Depósito y Mi trabajo.
+
+### 5.4 Sábado (C3, completo en R3) · el plan de corte "como en el Costeador de Ray"
 - Encabezado "Plan del sáb 21 nov" con un atajo **Ir al Taller ›**.
 - **Asignado en el Taller:** una fila por modelo con los pedidos y el herrero ("N° 1200 · N° 1203 · Hierro de Jesus") y botones **− N +**.
   - ⚠️ Lo que Ray suma o resta a mano es **simulación**: cambia los números en pantalla pero **no** el plan real. Para fabricar de verdad se usa "+ Fabricar para exhibición" (`crear_orden_exhibicion`). Que se note: "simulando +1" en gris.
@@ -339,7 +355,7 @@ Al final de cada lote: su prueba, `node --check`, `?v=` nuevo y bitácora.
 
 ## 9. Preguntas abiertas
 - Gualfredo: ¿Cotizaciones entra en Ventas? (§2)
-- Gualfredo y Ray: OK a las maquetas del Costeador C1 a C4.
+- Gualfredo y Ray: OK a las maquetas del Costeador C1 a C4 y R1 a R4.
 - Gualfredo y Ray: ¿el Sábado sugiere usar retazos del Depósito en una línea o no los usa nunca? (§5.4)
 - Ray: tabla de extras (lote 7) y si "Puerta Protección" es extra o producto.
 - ¿El sello lleva quién entregó? Solo si la app ya lo guarda (§4).
