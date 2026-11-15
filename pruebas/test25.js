@@ -72,7 +72,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  for(const d of '222222') await a.click(`#pinTeclado [data-t="${d}"]`);
  await a.waitForSelector('#vInicio.entra');
 
- await a.goto('http://127.0.0.1:8765/taller.html');await a.waitForSelector('.tl-card');
+ await a.goto('http://127.0.0.1:8765/taller.html?vista=pedidos');await a.waitForSelector('.tl-card');
  ok('Se ven el pedido y la orden para exhibición',(await a.$$('.tl-card')).length===2);
  ok('La orden interna dice "Exhibición"',(await a.textContent('#lista')).includes('Exhibición'));
  ok('El subtítulo cuenta lo que hay en el taller',(await a.textContent('#subtitulo'))==='2 pedidos en el taller');
@@ -103,7 +103,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  await a.click('#sheetFicha [data-cerrar="sheetFicha"]');await a.waitForTimeout(400);
 
  // Fabricar para exhibición: tipo, modelo, especificaciones
- await a.click('#btnNuevaOrden');await a.waitForSelector('#sheetOrden.open');
+ await a.click('#tabsTaller [data-vista="resumen"]');await a.click('[data-nueva-orden]');await a.waitForSelector('#sheetOrden.open');
  ok('Primero pregunta qué vas a fabricar (solo tipos con modelos)',(await a.$$('#ordenBody [data-g="__otipo"]')).length===2 && !(await a.$('#btnModelo')));
  await a.click('#btnCrearOrden');await a.waitForTimeout(200);
  ok('Sin tipo muestra el error',await a.isVisible('#eOTipo'));
@@ -142,7 +142,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('La orden cancelada sale de la lista',(await a.$$('.tl-card')).length===2);
 
  // Cambiar de tipo borra el modelo elegido
- await a.click('#btnNuevaOrden');await a.waitForSelector('#sheetOrden.open');
+ await a.click('#tabsTaller [data-vista="resumen"]');await a.click('[data-nueva-orden]');await a.waitForSelector('#sheetOrden.open');
  await a.click('#ordenBody [data-g="__otipo"][data-v="Ventana"]');
  await a.click('#btnModelo');await a.waitForSelector('#sheetModelos.open');
  await a.click('#listaModelos [data-mid="3"]');await a.waitForTimeout(400);

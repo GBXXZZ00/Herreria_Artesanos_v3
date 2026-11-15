@@ -12,6 +12,15 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-15 · Claude de Gualfredo (Code, Taller lote 2)
+- Qué hizo: lote 2 (Gualfredo: "Dalee"). Taller › Resumen (T1): avisos, Por asignar, Lo asignado esta semana con semanas ‹ ›, Por pagar (de `nomina_semana`), Vales y atajos; tocar un trabajador muestra sus trabajos con foto. Drawer del trabajo (T4) con foto grande, quién, cuánto, qué sigue y cuánto se le debe; se abre con `taller.html?trabajo=<id>` y tocando un paso hecho. El botón + flotante pasa a ser el atajo "+ Fabricar para exhibición" del Resumen. Inicio cuenta "sin asignar" con el criterio único (todos los pasos sin trabajador). `?v=81`.
+- Migración `v87_gualfredo_aviso_trabajo`: el aviso "Terminó …" de `marcar_etapa_terminada` y `terminar_etapa_madera` lleva a `taller.html?trabajo=<eid>` (se reemplaza solo ese texto en la definición actual). Probada con `begin … rollback`. **Sin aplicar.** Otros avisos con `produccion.html` siguen sirviendo con la redirección.
+- Ojo: `terminar_etapa_madera` ya tenía permiso para `anon` (la función exige sesión con `auth.uid()`, así que no es un riesgo). No se tocó.
+- Pruebas: test50 suma Resumen y trabajo; test21, 25, 28, 39 y 40 entran a Pedidos con `?vista=pedidos`.
+- Rama: `claude/lote-1-taller-costeador-t49naw`.
+- Está tocando: Taller, Inicio (conteo sin asignar).
+- Pendientes: lote 3 (Nómina con pagar lo marcado, vales e historial, sin el carpintero para Ray; migración `pagar_trabajador` con listas). En "Lo asignado" sale también el carpintero; en Nómina se esconde en el lote 3.
+
 ## 2026-11-15 · Claude de Gualfredo (Code, Taller lote 1)
 - Qué hizo: lote 1 del Taller (Gualfredo dio el OK). Menú nuevo `Inicio · Ventas · Catálogo · Taller · Costeador` (Costeador abre Costos; solo Ray y Gualfredo). Cotizaciones va dentro de Ventas con la etiqueta Ventas · Cotizaciones (Gualfredo: "haz como te sea más conveniente"). `taller.html` + `taller.js` (antes `produccion.js`): Pedidos agrupado por pedido con pasos de colores, filtros Todos · Por asignar · En proceso · Listos, drawer del pedido con foto y monto, hoja de asignar de siempre con el monto a la derecha y paso empezado fijo, marca ↩, Listos con Marcar entregada. `produccion.html` redirige (avisos viejos con `?abrir=` siguen sirviendo). Nómina lleva las pestañas Pedidos · Nómina; se rehace en el lote 3. Resumen llega en el lote 2. `?v=80`.
 - Migración `v86_gualfredo_montos_pasos` (lo que se paga por cada paso que falta, solo admin, solo lectura; usa `_monto_etapa`). Gualfredo aprobó mostrar los montos. Probada con `begin … rollback` en la base real. **Sin aplicar**: se aplica con Gualfredo presente. Sin ella la pantalla funciona sin esos montos.

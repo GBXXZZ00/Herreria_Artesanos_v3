@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=80">
+<link rel="stylesheet" href="assets/css/base.css?v=81">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -592,15 +592,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=80"></script>
-<script src="assets/js/supabase-client.js?v=80"></script>
-<script src="assets/js/img-compress.js?v=80"></script>
-<script src="assets/js/comun.js?v=80"></script>
-<script src="assets/js/avisos.js?v=80"></script>
-<script src="assets/js/sesion.js?v=80"></script>
-<script src="assets/js/ayuda.js?v=80"></script>
-<script src="assets/js/pdf-reporte.js?v=80"></script>
-<script src="assets/js/mi-trabajo.js?v=80"></script>
+<script src="assets/vendor/supabase.js?v=81"></script>
+<script src="assets/js/supabase-client.js?v=81"></script>
+<script src="assets/js/img-compress.js?v=81"></script>
+<script src="assets/js/comun.js?v=81"></script>
+<script src="assets/js/avisos.js?v=81"></script>
+<script src="assets/js/sesion.js?v=81"></script>
+<script src="assets/js/ayuda.js?v=81"></script>
+<script src="assets/js/pdf-reporte.js?v=81"></script>
+<script src="assets/js/mi-trabajo.js?v=81"></script>
 <script>
 (function(){
   'use strict';
@@ -954,13 +954,9 @@
       const et = it.etapas || [];
       if(!et.length) return;
       if(!it.categoria_pago_id) sinCat++;
-      const ramas = {};
-      et.forEach(e => (ramas[e.rama] = ramas[e.rama] || []).push(e));
       atrasados += et.filter(e => e.estado === 'pendiente' && e.trabajador_id && e.para_el && e.para_el < hoyIso).length;
-      Object.values(ramas).forEach(l => {
-        const act = l.sort((a, b) => a.orden - b.orden).find(e => e.estado === 'pendiente');
-        if(act && !act.trabajador_id) sinAsignar++;
-      });
+      // Criterio único del Taller: cuenta todos los pasos sin trabajador
+      sinAsignar += et.filter(e => e.estado === 'pendiente' && !e.trabajador_id).length;
     }));
     const en = $('cuenta-nomina');
     if(en){

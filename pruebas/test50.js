@@ -1,7 +1,9 @@
-// Taller › Pedidos (lote 1, maquetas T2 y T3) con los números de las maquetas: hoy jueves 19 nov 2026,
-// semana del 16 al 21. Todos 6 · Por asignar 3 · En proceso 3 · Listos 1, tarjeta por pedido con sus
-// pasos de colores, drawer del pedido con foto y monto, hoja de Asignar con lo que se paga, marca ↩,
-// Listos para entregar con Marcar entregada, menú nuevo, Ventas · Cotizaciones y producción.html que redirige.
+// Taller con los números de las maquetas: hoy jueves 19 nov 2026, semana del 16 al 21.
+// Lote 1 (T2, T3): Todos 6 · Por asignar 3 · En proceso 3 · Listos 1, tarjeta por pedido con sus pasos de
+// colores, drawer del pedido con foto y monto, hoja de Asignar con lo que se paga, marca ↩, Listos con
+// Marcar entregada, menú nuevo, Ventas · Cotizaciones y produccion.html que redirige.
+// Lote 2 (T1, T4): Resumen (13 pasos en 3 pedidos, 6 de 9 hechos, $210 por pagar, vales), semanas ‹ ›,
+// lo de la semana de un trabajador y el trabajo con su foto desde el aviso (taller.html?trabajo=ID).
 const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const HOY = new Date(2026, 10, 19, 10, 30);   // jue 19 nov 2026, 10:30 am
 const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -16,8 +18,28 @@ const trabajadores=[
   {id:'tj',nombre:'Jesus',especialidades:['herrero']},
   {id:'tl',nombre:'Luis Paz',especialidades:['masilla_pintura','acabados']},
   {id:'tp',nombre:'Pedro',especialidades:['acabados','ventanero']},
-  {id:'tc',nombre:'Carpintero',especialidades:['carpintero']}
+  {id:'tc',nombre:'Carpintero',especialidades:['carpintero']},
+  {id:'to',nombre:'José',especialidades:['herrero']}
 ];
+// Lo asignado para el sáb 21 (y lo de la semana pasada sin terminar): Jesus 4 (3 hechos), Luis Paz 4 (2 hechos, 1 ↩), Pedro 1 (1 hecho)
+const it=(nombre,venta_id,interna)=>({id:900+venta_id%100,nombre,venta_id,venta:{id:venta_id,interna:!!interna,estado:'en_produccion'}});
+let sid=8000;
+const S_=(tid,estado,extra)=>Object.assign({id:++sid,nombre:'Hierro',estado,trabajador_id:tid,trabajador:{nombre:(trabajadores.find(t=>t.id===tid)||{}).nombre},para_el:'2026-11-21',iniciada_en:null,foto:estado==='hecha'?GIF:null,terminada_en:estado==='hecha'?dia(18):null,monto:estado==='hecha'?30:null,pago_id:null,item:it('Modelo bitral',1200)},extra||{});
+const SEM=[S_('tj','hecha'),S_('tj','hecha'),S_('tj','hecha'),S_('tj','pendiente',{iniciada_en:hora(10,15)}),
+  S_('tl','hecha',{nombre:'Masilla y pintura'}),S_('tl','hecha',{nombre:'Masilla y pintura'}),S_('tl','pendiente',{nombre:'Masilla y pintura'}),
+  S_('tl','pendiente',{nombre:'Detalles',para_el:'2026-11-14',item:it('Lineal',1210,true)}),
+  S_('tp','hecha',{nombre:'Detalles'})];
+const SEM_PASADA=[S_('tj','hecha',{para_el:'2026-11-14'}),S_('tl','hecha',{para_el:'2026-11-14',nombre:'Masilla y pintura'})];
+const NOMINA={semana:'2026-11-21',puede_pagar:true,trabajadores:[
+  {id:'tj',nombre:'Jesus',trabajos:4,trabajos_monto:125,vales_monto:10,neto:115},
+  {id:'tl',nombre:'Luis Paz',trabajos:2,trabajos_monto:95,vales_monto:0,neto:95},
+  {id:'tp',nombre:'Pedro',trabajos:0,trabajos_monto:0,vales_monto:0,neto:0}]};
+const VALES=[{id:1,trabajador_id:'tl',monto:20,nota:'Pasaje de la semana',estado:'pendiente',creado_en:hora(8,10)},{id:2,trabajador_id:'tj',monto:10,nota:null,estado:'aprobado',creado_en:dia(17)}];
+const PAGOS=[{trabajador_id:'tp',monto:15,pagado_en:dia(18)}];
+const VIEJOS=[{id:7001,trabajador_id:'tj'}];
+// Un trabajo de un pedido que ya se entregó: se abre buscándolo en la base
+const VIEJO={id:9001,nombre:'Detalles',rama:'principal',orden:3,unidad:1,estado:'hecha',trabajador_id:'tp',foto:GIF,terminada_en:dia(14),monto:15,pago_id:4,trabajador:{nombre:'Pedro'},
+  item:{id:150,nombre:'Lineal',cantidad:1,venta_id:1150,venta:{id:1150,interna:false},etapas:[{id:9000,nombre:'Hierro',rama:'principal',orden:1,unidad:1,estado:'hecha',trabajador:{nombre:'Jesus'}},{id:9001,nombre:'Detalles',rama:'principal',orden:3,unidad:1,estado:'hecha',trabajador:{nombre:'Pedro'}}]}};
 const nom=id=>({nombre:(trabajadores.find(t=>t.id===id)||{}).nombre||''});
 let eid=5000;
 const P=(nombre,esp,extra)=>Object.assign({id:++eid,unidad:1,rama:'principal',nombre,orden:0,especialidad:esp,oficio:null,estado:'pendiente',trabajador_id:null,trabajador:null,foto:null,terminada_en:null,iniciada_en:null,para_el:null,monto:null,pago_id:null},extra||{});
@@ -73,9 +95,21 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
     return j(ventas.filter(v=>v.estado==='en_produccion').map(v=>({id:v.id,fecha_entrega:v.fecha_entrega,interna:v.interna,cliente:v.cliente?{nombre:v.cliente.nombre}:null,
       items:v.items.map(it=>({id:it.id,nombre:it.nombre,tipo:it.tipo,cantidad:it.cantidad,etapas:it.etapas.map(e=>{const x=Object.assign({},e);delete x.monto;delete x.pago_id;return x;})}))})));
   }
+  if(u.includes('/rpc/nomina_semana')) return rol==='admin'?j(NOMINA):j({message:'Solo un administrador ve la nómina'},400);
   if(u.includes('/rpc/'))return j([]);
+  if(u.includes('/rest/v1/etapas')){
+    if(rol!=='admin') return j({message:'permiso'},403);
+    llamadas.push(['etapas',u]);
+    if(u.includes('id=eq.9001')) return j(VIEJO);
+    if(u.includes('terminada_en=lt.')) return j(VIEJOS);
+    if(u.includes('para_el=eq.2026-11-14')) return j(SEM_PASADA);
+    if(u.includes('para_el')) return j(SEM);
+    return j([]);
+  }
+  if(u.includes('/rest/v1/vales')) return j(VALES);
+  if(u.includes('/rest/v1/pagos_trabajador')) return j(PAGOS);
   if(u.includes('/perfiles')){
-    if(u.includes('rol=eq.trabajador')) return j(trabajadores);
+    if(u.includes('rol=eq.trabajador')) return j(trabajadores.filter(t=>t.id!=='tc'));
     if(u.includes('select=lleva_madera')) return j({lleva_madera:false,linea:null});
     if(u.includes('id=eq')) return j({id:user,usuario:rol==='admin'?'raymundo':'yulimar',nombre:rol==='admin'?'Ray':'Yulimar',rol,sede_id:1,confirma_abonos:rol==='admin'});
     return j([{usuario:rol==='admin'?'raymundo':'yulimar',nombre:rol==='admin'?'Ray':'Yulimar',rol,orden:1}]);
@@ -100,6 +134,67 @@ const err=[];
  ok('Menú de abajo: Inicio · Ventas · Catálogo · Taller · Costeador',menu.join(' · ')==='Inicio · Ventas · Catálogo · Taller · Costeador',menu);
  ok('Inicio sigue teniendo Cotizaciones a mano',!!(await a.$('#modulos a[href="cotizaciones.html"]')));
 
+ // ===== Lote 2: Resumen (T1) =====
+ await a.goto('http://127.0.0.1:8765/taller.html');await a.waitForSelector('#rAsignado');await a.waitForTimeout(300);
+ ok('Abre en Resumen: "Hoy jue 19 · semana 16 al 21 nov"',(await a.textContent('#tabsTaller .on'))==='Resumen' && (await a.textContent('#subtitulo'))==='Hoy jue 19 · semana 16 al 21 nov',await a.textContent('#subtitulo'));
+ ok('Avisos: "1 entrega en 2 días ›" y "1 listo para entregar ›" (nada atrasado)',(await a.$$eval('.tl-alrt button',x=>x.map(b=>b.textContent))).join('|')==='1 entrega en 2 días ›|1 listo para entregar ›');
+ const pa=await a.textContent('#rPorAsignar');
+ ok('1 · Por asignar: "13 pasos en 3 pedidos"',(await a.textContent('#rPorAsignar .tl-big')).replace(/\s+/g,' ').trim()==='13 pasos en 3 pedidos');
+ ok('   una fila por pedido con su botón Asignar',(await a.$$eval('#rPorAsignar .tl-row b',x=>x.map(y=>y.textContent))).join('|')==='N° 1200 · Modelo bitral ×2|N° 1203 · Bitral ×2|N° 1205 · Combo #1' && (await a.$$('#rPorAsignar [data-asignar-pedido]')).length===3 && pa.includes('6 pasos · entrega sáb 28 nov'));
+ ok('2 · Lo asignado esta semana: "6 de 9 hechos"',(await a.textContent('#rAsignado .tl-big'))==='6 de 9 hechos');
+ ok('   leyenda: 6 hechos · 1 haciendo · 1 sin empezar · 1 de la semana pasada',(await a.textContent('#rAsignado .tl-leg'))==='6 hechos1 haciendo1 sin empezar1 de la semana pasada');
+ const filasA=await a.$$eval('#rAsignado tbody tr',x=>x.map(r=>[...r.cells].map(c=>c.textContent.trim()).join('·')));
+ ok('   tabla: Jesus 4/3/1 · Luis Paz 4/2/2 (1 ↩) · Pedro 1/1/0 · José 0',filasA.join('|')==='Jesus Hierro·4·3·1|Luis Paz Masilla·4·2·2 (1 ↩)|Pedro Detalles·1·1·0|José Hierro·0····',filasA);
+ ok('   línea roja: "↩ Detalles del Lineal (exhibición): era para el sáb 14 · Luis Paz"',(await a.textContent('#rAsignado .tl-arr'))==='↩ Detalles del Lineal (exhibición): era para el sáb 14 · Luis Paz');
+ ok('3 · Por pagar: "$210 trabajos $220 menos vales $10"',(await a.textContent('#rPorPagar .tl-big')).replace(/\s+/g,' ').trim()==='$210 trabajos $220 menos vales $10');
+ const filasP=await a.$$eval('#rPorPagar tbody tr',x=>x.map(r=>[...r.cells].map(c=>c.textContent.trim()).join('·')));
+ ok('   Jesus 1 ↩ · 4 · $125 · −$10 · $115; Luis Paz 2 · $95 · $95; Total $220 −$10 $210',filasP.join('|')==='Jesus1 ↩·4 · $125·−$10·$115|Luis Paz·2 · $95···$95|Total·$220·−$10·$210',filasP);
+ ok('   "Ya pagaste $15 esta semana (Pedro). Lo que no pagues pasa a la semana siguiente con ↩."',(await a.textContent('#rPorPagar .tl-nota'))==='Ya pagaste $15 esta semana (Pedro). Lo que no pagues pasa a la semana siguiente con ↩.');
+ const rv=await a.textContent('#rVales');
+ ok('4 · Vales: "Luis Paz pidió $20 · Pasaje de la semana · hoy 8:10 am" con Revisar, y "Jesus · $10 aprobado · se descuenta al pagarle"',rv.includes('Luis Paz pidió $20') && rv.includes('Pasaje de la semana · hoy 8:10 am') && (await a.getAttribute('#rVales a.tl-btn-sm','href'))==='nomina.html?t=tl' && rv.includes('Jesus · $10 aprobado') && rv.includes('mar 17 · se descuenta al pagarle'));
+ ok('Atajos: "✂ Plan de corte sáb 21" y "+ Fabricar para exhibición"',(await a.$$eval('#vResumen .tl-atajos > *',x=>x.map(y=>y.textContent))).join('|')==='✂ Plan de corte sáb 21|+ Fabricar para exhibición' && (await a.getAttribute('#vResumen .tl-atajos a','href'))==='costos.html?tab=semana&para=2026-11-21');
+ ok('Nada se sale de la pantalla en Resumen',await a.evaluate(()=>document.documentElement.scrollWidth<=390));
+ await a.screenshot({path:'shots5/t50-resumen.png',fullPage:true});
+ // Tocar un trabajador: sus trabajos de la semana con foto
+ await a.click('#rAsignado tr[data-trab="tl"]');await a.waitForSelector('#sheetTrabSem.open');await a.waitForTimeout(300);
+ ok('Luis Paz: sus 4 trabajos de la semana, el de la semana pasada con ↩',(await a.textContent('#trabSemTitulo'))==='Luis Paz' && (await a.$$('#trabSemBody .tl-paso')).length===4 && (await a.$$('#trabSemBody .tl-paso.r')).length===1 && (await a.$$('#trabSemBody .tl-mini img')).length===2);
+ await a.screenshot({path:'shots5/t50-trabajador-semana.png'});
+ await a.click('#sheetTrabSem [data-cerrar="sheetTrabSem"]');await a.waitForTimeout(300);
+ // Semana pasada con ‹
+ await a.click('#vResumen [data-sem="-1"]');await a.waitForTimeout(600);
+ ok('‹ muestra la semana del 9 al 14 nov con lo asignado ese sábado (2 de 2) y "Volver a esta semana"',(await a.textContent('.tl-semnav span'))==='Semana · 9 al 14 nov' && (await a.textContent('#rAsignado .tl-big'))==='2 de 2 hechos' && !(await a.$('#rPorPagar')) && !!(await a.$('[data-sem="0"]')));
+ await a.click('[data-sem="0"]');await a.waitForTimeout(600);
+ ok('   y vuelve a esta semana',(await a.textContent('#rAsignado .tl-big'))==='6 de 9 hechos');
+ // Asignar desde el Resumen abre la hoja de la primera unidad con pasos libres
+ await a.click('#rPorAsignar [data-asignar-pedido="1203"]');await a.waitForSelector('#sheetTodo.open');await a.waitForTimeout(200);
+ ok('Asignar del Resumen abre "Asignar: Bitral (1 de 2)"',(await a.textContent('#todoTitulo'))==='Asignar: Bitral (1 de 2)');
+ await a.click('#sheetTodo [data-cerrar="sheetTodo"]');await a.waitForTimeout(300);
+ // Aviso → Pedidos con su filtro
+ await a.click('.tl-alrt [data-ir-filtro="pronto"]');await a.waitForTimeout(300);
+ ok('"1 entrega en 2 días ›" abre Pedidos con ese filtro (solo N° 1200)',(await a.textContent('#tabsTaller .on'))==='Pedidos' && (await a.$$eval('.tl-card',x=>x.map(c=>c.dataset.id))).join()==='1200' && (await a.textContent('#chips .chip.active')).startsWith('Entregan en 2 días'));
+ await a.click('#tabsTaller [data-vista="resumen"]');await a.waitForTimeout(300);
+
+ // ===== Lote 2: el aviso "Terminó Hierro" abre el trabajo con su foto (T4) =====
+ await a.goto('http://127.0.0.1:8765/taller.html?trabajo=5001');await a.waitForSelector('#sheetTrabajo.open');await a.waitForTimeout(500);
+ ok('Aviso: "Hierro terminado" · "Modelo bitral · 1 de 2 · N° 1200"',(await a.textContent('#trabajoTitulo'))==='Hierro terminado' && (await a.textContent('#trabajoSub'))==='Modelo bitral · 1 de 2 · N° 1200');
+ ok('   foto grande: "Foto de Jesus · hoy 9:40 am · toca para ampliar"',(await a.textContent('#trabajoBody .tl-hero .tag'))==='Foto de Jesus · hoy 9:40 am · toca para ampliar');
+ const kv=await a.$$eval('#trabajoBody .tl-kv2 > div',x=>x.map(d=>d.querySelector('span').textContent+': '+d.querySelector('b').textContent));
+ ok('   Lo hizo Jesus · Se le paga $30 · Sigue Masilla · Luis Paz · Por pagar a Jesus $115',kv.join('|')==='Lo hizo: Jesus|Se le paga por esto: $30|Sigue: Masilla · Luis Paz|Por pagar a Jesus: $115',kv);
+ ok('   atajos "Ver pedido N° 1200" y "Nómina de Jesus" y la nota',(await a.$$eval('#trabajoBody .tl-atajos > *',x=>x.map(y=>y.textContent))).join('|')==='Ver pedido N° 1200|Nómina de Jesus' && (await a.textContent('#trabajoBody .tl-nota'))==='Ya se sumó a lo que le debes a Jesus. Lo pagas cuando quieras desde Nómina.');
+ ok('   sin botones de revisar ni de pagar este trabajo',!(await a.textContent('#trabajoBody')).includes('Bien hecho') && !(await a.textContent('#trabajoBody')).includes('Pagar este'));
+ ok('   se quita ?trabajo de la dirección',!a.url().includes('trabajo='));
+ await a.screenshot({path:'shots5/t50-trabajo.png'});
+ await a.click('#trabajoBody .tl-hero');await a.waitForTimeout(400);
+ ok('Tocar la foto la amplía',!!(await a.$('.visor.open')));
+ await a.click('.visor-x');await a.waitForTimeout(300);
+ await a.click('#trabajoBody [data-ver-pedido="1200"]');await a.waitForSelector('#sheetFicha.open');await a.waitForTimeout(300);
+ ok('"Ver pedido N° 1200" abre el pedido',(await a.textContent('#fichaBody .tl-dt'))==='N° 1200 · Ana Rincón' && !(await a.$('#sheetTrabajo.open')));
+ await a.click('#sheetFicha [data-cerrar="sheetFicha"]');await a.waitForTimeout(300);
+ // Un trabajo de un pedido ya entregado se busca en la base
+ await a.goto('http://127.0.0.1:8765/taller.html?trabajo=9001');await a.waitForSelector('#sheetTrabajo.open');await a.waitForTimeout(400);
+ ok('Trabajo de un pedido ya entregado: "Detalles terminado · Lineal · N° 1150", ya pagado',(await a.textContent('#trabajoTitulo'))==='Detalles terminado' && (await a.textContent('#trabajoSub'))==='Lineal · N° 1150' && (await a.textContent('#trabajoBody .tl-nota'))==='Este trabajo ya se le pagó.' && (await a.textContent('#trabajoBody')).includes('Nada: era el último paso'));
+ await a.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await a.waitForTimeout(300);
+
  // Enlace viejo de un aviso: produccion.html?abrir=1200 abre ese pedido en el Taller
  await a.goto('http://127.0.0.1:8765/produccion.html?abrir=1200');await a.waitForSelector('#sheetFicha.open');
  ok('produccion.html?abrir=N lleva al Taller con ese pedido abierto',a.url().includes('taller.html') && (await a.textContent('#fichaBody .tl-dt'))==='N° 1200 · Ana Rincón');
@@ -116,8 +211,8 @@ const err=[];
  ok('Toca un paso hecho para ver su foto en grande',f.includes('Toca un paso hecho para ver su foto en grande.'));
  await a.screenshot({path:'shots5/t50-drawer-1200.png'});
  await a.click('#fichaBody .tl-paso.h');await a.waitForTimeout(400);
- ok('Tocar el paso hecho abre la foto en grande',!!(await a.$('.visor.open')) && (await a.getAttribute('.visor img','src'))===GIF);
- await a.click('.visor-x');await a.waitForTimeout(400);
+ ok('Tocar el paso hecho abre el trabajo con su foto',!!(await a.$('#sheetTrabajo.open')) && (await a.textContent('#trabajoTitulo'))==='Hierro terminado');
+ await a.click('#sheetTrabajo [data-cerrar="sheetTrabajo"]');await a.waitForTimeout(400);
 
  // Hoja de asignar de siempre, con lo que se paga a la derecha
  if(!(await a.$('#sheetFicha.open'))){ await a.click('.tl-card[data-id="1200"]');await a.waitForSelector('#sheetFicha.open'); }
@@ -142,7 +237,7 @@ const err=[];
 
  // Pedidos (T2)
  ok('Título "Taller" y "6 pedidos en el taller"',(await a.textContent('.topbar-title'))==='Taller' && (await a.textContent('#subtitulo'))==='6 pedidos en el taller');
- ok('Pestañas Pedidos · Nómina',(await a.$$eval('#tabsTaller a',x=>x.map(y=>y.textContent))).join(' · ')==='Pedidos · Nómina');
+ ok('Pestañas Resumen · Pedidos · Nómina',(await a.$$eval('#tabsTaller > *',x=>x.map(y=>y.textContent))).join(' · ')==='Resumen · Pedidos · Nómina');
  const chips=await a.$$eval('#chips .chip',x=>x.map(y=>y.textContent));
  ok('Filtros en una línea: Todos 6 · Por asignar 3 · En proceso 3 · Listos 1',chips.join(' · ')==='Todos 6 · Por asignar 3 · En proceso 3 · Listos 1',chips);
  ok('Los filtros no saltan a otra línea',await a.$$eval('#chips .chip',x=>new Set(x.map(c=>Math.round(c.getBoundingClientRect().top))).size===1));
@@ -224,6 +319,7 @@ const err=[];
  const mv=await y.$$eval('#menuModulos .nav-item span',x=>x.map(s=>s.textContent));
  ok('Vendedora: Inicio · Ventas · Catálogo · Taller',mv.join(' · ')==='Inicio · Ventas · Catálogo · Taller',mv);
  await y.goto('http://127.0.0.1:8765/taller.html');await y.waitForSelector('.tl-card');
+ ok('Vendedora: abre en Pedidos, sin Resumen, sin nómina ni etapas leídas',await y.isHidden('#vResumen') && !llamadas.some(x=>x[0]==='etapas' && x[2]==='v'));
  ok('Vendedora: sin pestañas, sin botón Asignar y sin montos',!(await y.isVisible('#tabsTaller')) && !(await y.$('[data-asignar-pedido]')) && !(await y.textContent('#lista')).includes('$'));
  await y.click('.tl-card >> nth=0');await y.waitForSelector('#sheetFicha.open');
  ok('Vendedora: drawer sin Asignar, sin montos y sin Corte ni Costeo',!(await y.$('#fichaBody [data-asignar-todo]')) && !(await y.textContent('#fichaBody')).includes('$') && !(await y.textContent('#fichaBody')).includes('Costeo'));

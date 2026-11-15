@@ -30,7 +30,7 @@ const ventas=[{id:1047,fecha_entrega:null,interna:false,cliente:{nombre:'Raymund
  await p.goto(H+'index.html');await p.waitForSelector('.quien-btn');await p.click('.quien-btn');
  for(const d of '111111') await p.click(`#pinTeclado [data-t="${d}"]`);
  await p.waitForSelector('#vInicio.entra');
- await p.goto(H+'taller.html');await p.waitForSelector('.tl-card');await p.waitForTimeout(500);
+ await p.goto(H+'taller.html?vista=pedidos');await p.waitForSelector('.tl-card');await p.waitForTimeout(500);
  ok('La tarjeta muestra cada puerta aparte',(await p.textContent('.tl-card')).includes('Lineal Economico 1 de 2') && (await p.textContent('.tl-card')).includes('Lineal Economico 2 de 2'));
  await p.click('.tl-card');await p.waitForSelector('#sheetFicha.open');await p.waitForTimeout(500);
  const noms=await p.$$eval('#fichaBody .tl-uh-t b',x=>x.map(n=>n.textContent.trim()));

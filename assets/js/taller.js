@@ -31,13 +31,18 @@
   const esMadera = (it) => it.tipo === 'Puerta de Madera';
   const FILTROS_ADMIN = [ { id:'todos', t:'Todos' }, { id:'asignar', t:'Por asignar' }, { id:'proceso', t:'En proceso' }, { id:'listos', t:'Listos' } ];
   let FILTROS = FILTROS_ADMIN;
-  const SUBTITULO = { asignar:'Por asignar', proceso:'Pedidos en proceso', listos:'Listos para entregar' };
+  const SUBTITULO = { asignar:'Por asignar', proceso:'Pedidos en proceso', listos:'Listos para entregar', pronto:'Entregas en 2 días', tarde:'Pedidos atrasados' };
+  // Filtros que solo se abren desde los avisos del Resumen: salen como una ficha más mientras están activos
+  const FILTROS_AVISO = { pronto:'Entregan en 2 días', tarde:'Atrasados' };
   // Enlaces viejos (Inicio, avisos): atrasados y sin categoría caen en el filtro que los muestra
   const ALIAS = { atrasados:'proceso', sincat:'asignar' };
   const params = new URLSearchParams(location.search);
   let filtro = ALIAS[params.get('filtro')] || params.get('filtro') || 'todos';
-  if(!FILTROS.some(f => f.id === filtro)) filtro = 'todos';
+  if(!FILTROS.some(f => f.id === filtro) && !FILTROS_AVISO[filtro]) filtro = 'todos';
   let abrirAlCargar = Number(params.get('abrir') || params.get('pedido')) || null;
+  let trabajoAlCargar = Number(params.get('trabajo')) || null;
+  // Un enlace con filtro o pedido abre Pedidos; si no, el administrador empieza en Resumen
+  const pideVistaPedidos = params.get('vista') === 'pedidos' || params.has('filtro') || !!abrirAlCargar;
 
   // ---------------------------------------------------------------------------
   // Cálculos sobre las etapas de un pedido
@@ -183,6 +188,7 @@
       categorias = rc.data || [];
       await cargarMontos((rv.data || []).filter(v => v.estado === 'en_produccion').map(v => v.id));
       mostrarPedidos(rv.data || []);
+      await cargarResumen();
     } catch(e){
       const red = /fetch|network|Failed/i.test(String((e && e.message) || ''));
       $('lista').innerHTML = '<div class="vacio"><h3>No se pudo cargar</h3><p>Revisa tu internet y toca actualizar.</p></div>';
@@ -230,6 +236,7 @@
     });
     pintarChips();
     pintarLista();
+    if(vista === 'resumen' && R) pintarResumen();
     if(abrirAlCargar){
       const v = pedidos.find(x => x.id === abrirAlCargar);
       abrirAlCargar = null;
@@ -238,6 +245,12 @@
       if(v) pintarFicha(v);
       else toast('Ese pedido ya no está en el taller', 'error');
     }
+    if(trabajoAlCargar){
+      const eid = trabajoAlCargar;
+      trabajoAlCargar = null;
+      if(params.has('trabajo')){ try{ params.delete('trabajo'); history.replaceState(history.state, '', location.pathname + (params.toString() ? '?' + params : '')); } catch(e){} }
+      abrirTrabajo(eid);
+    }
   }
 
   const enFiltro = (v, f) => {
@@ -245,13 +258,18 @@
     if(f === 'asignar') return !r.lista && r.sinAsignar > 0;
     if(f === 'proceso') return !r.lista && r.asignados > 0;
     if(f === 'listos') return r.lista;
+    if(f === 'pronto' || f === 'tarde'){
+      if(r.lista || !v.fecha_entrega) return false;
+      const d = AV.diasHasta(v.fecha_entrega);
+      return f === 'tarde' ? d < 0 : d >= 0 && d <= 2;
+    }
     return true;
   };
   function pintarChips(){
     $('chips').innerHTML = FILTROS.map(f =>
-      `<button class="chip ${filtro === f.id ? 'active' : ''}" role="tab" aria-selected="${filtro === f.id}" data-f="${f.id}">${f.t} ${pedidos.filter(v => enFiltro(v, f.id)).length}</button>`).join('');
-    const n = pedidos.length;
-    $('subtitulo').textContent = SUBTITULO[filtro] || (n === 1 ? '1 pedido en el taller' : n + ' pedidos en el taller');
+      `<button class="chip ${filtro === f.id ? 'active' : ''}" role="tab" aria-selected="${filtro === f.id}" data-f="${f.id}">${f.t} ${pedidos.filter(v => enFiltro(v, f.id)).length}</button>`).join('')
+      + (FILTROS_AVISO[filtro] ? `<button class="chip active" role="tab" aria-selected="true" data-f="${filtro}">${FILTROS_AVISO[filtro]} ${pedidos.filter(v => enFiltro(v, filtro)).length}</button>` : '');
+    pintarSubtitulo();
   }
   $('chips').addEventListener('click', (e) => {
     const b = e.target.closest('.chip'); if(!b) return;
@@ -339,7 +357,7 @@
       }[filtro];
       cont.innerHTML = pedidos.length && vacio
         ? `<div class="vacio"><h3>${vacio[0]}</h3><p>${vacio[1]}</p>${vacio[2]}</div>`
-        : `<div class="vacio"><h3>El taller está libre</h3><p>Cuando un pedido pase a fabricación aparece aquí.${lectura ? '' : ' Con el botón + puedes fabricar algo para exhibición.'}</p></div>`;
+        : `<div class="vacio"><h3>El taller está libre</h3><p>Cuando un pedido pase a fabricación aparece aquí.${lectura ? '' : ' Desde Resumen puedes fabricar algo para exhibición.'}</p></div>`;
       return;
     }
     cont.innerHTML = vistos.map(tarjeta).join('')
@@ -450,7 +468,7 @@
     const btnMadera = puedeMadera && e.oficio === 'madera' && e.estado === 'pendiente' && !espera && e.trabajador_id
       ? `<button class="btn-madera" type="button" data-madera="${e.id}">Marcar terminado</button>` : '';
     const foto = st === 'h' && e.foto;
-    return `<div class="tl-paso ${st}"${foto ? ` data-foto="${esc(e.foto)}" role="button" tabindex="0" aria-label="Ver la foto de ${esc(e.nombre)}"` : ''}>
+    return `<div class="tl-paso ${st}"${st === 'h' ? ` data-trabajo="${e.id}" role="button" tabindex="0" aria-label="Ver ${esc(e.nombre)} terminado"` : ''}>
       <span class="tl-dot ${st}">${st === 'h' ? ICON_OK : st === 'r' ? ICON_VUELTA : n}</span>
       <div class="tl-pt"><b class="e-nom">${esc(e.nombre)}</b><span class="tl-ps">${sub}</span>${btnMadera}</div>
       ${foto ? `<span class="tl-mini">${imgMini(e.foto, 'Foto de ' + e.nombre)}</span>` : ''}${monto}
@@ -624,13 +642,13 @@
     if(bat){ abrirAsignarTodo(bat.dataset.asignarTodo); return; }
     const bm = e.target.closest('[data-madera]');
     if(bm){ abrirMadera(Number(bm.dataset.madera)); return; }
-    // Paso hecho: su foto en grande
-    const bf = e.target.closest('[data-foto]');
-    if(bf && !e.target.closest('a')){ verFoto(bf.dataset.foto); return; }
+    // Paso hecho: el trabajo con su foto grande, quién, cuánto y qué sigue
+    const bt = e.target.closest('[data-trabajo]');
+    if(bt && !e.target.closest('a,button')){ abrirTrabajo(Number(bt.dataset.trabajo)); return; }
   });
   $('fichaBody').addEventListener('keydown', (e) => {
-    const bf = (e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-foto]');
-    if(bf){ e.preventDefault(); verFoto(bf.dataset.foto); }
+    const bt = (e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-trabajo]');
+    if(bt){ e.preventDefault(); abrirTrabajo(Number(bt.dataset.trabajo)); }
   });
 
   // ---------------------------------------------------------------------------
@@ -828,7 +846,8 @@
     if($('desglose')) $('desglose').innerHTML = `Sugerido: <b>${dinero(c.total)}</b> · ${esc(c.texto)}`;
   }
 
-  $('btnNuevaOrden').addEventListener('click', async () => {
+  // Se abre desde el atajo "+ Fabricar para exhibición" del Resumen
+  async function abrirNuevaOrden(){
     try{ await cargarModelos(); }
     catch(err){ toast('No se pudieron cargar los modelos: ' + ((err && err.message) || ''), 'error'); return; }
     if(!tiposConModelos().length){ toast('No hay modelos en el catálogo para fabricar', 'error'); return; }
@@ -836,7 +855,7 @@
     pintarOrden();
     $('ordenBody').scrollTop = 0;
     abrirHoja('sheetOrden');
-  });
+  }
 
   $('ordenBody').addEventListener('click', (e) => {
     const o = orden; if(!o) return;
@@ -941,6 +960,314 @@
     }
   });
 
+
+  // ---------------------------------------------------------------------------
+  // Vistas: Resumen (administrador) y Pedidos. Nómina es otra pantalla.
+  // ---------------------------------------------------------------------------
+  let vista = 'resumen';
+  let semK = 0;          // semana vista: 0 esta, -1 la pasada, 1 la próxima
+  let R = null;          // datos del Resumen
+  const ESP_CORTO = { herrero:'Hierro', masilla_pintura:'Masilla', acabados:'Detalles', ventanero:'Aluminio', carpintero:'Madera' };
+  function masDias(f, n){ const [y, m, d] = String(f).slice(0, 10).split('-').map(Number); return iso(new Date(y, m - 1, d + n)); }
+  const sabVista = () => masDias(SAB.este, 7 * semK);
+  function rangoSemana(sab){
+    const lun = masDias(sab, -5);
+    const mes = (f) => { const [y, m, d] = f.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('es-VE', { month:'short' }).replace('.', ''); };
+    const dl = Number(lun.slice(8, 10)), ds = Number(sab.slice(8, 10));
+    return mes(lun) === mes(sab) ? `${dl} al ${ds} ${mes(sab)}` : `${dl} ${mes(lun)} al ${ds} ${mes(sab)}`;
+  }
+  function pintarSubtitulo(){
+    if(vista === 'resumen'){ $('subtitulo').textContent = `Hoy ${fechaDia(SAB.hoy)} · semana ${rangoSemana(SAB.este)}`; return; }
+    const n = pedidos.length;
+    $('subtitulo').textContent = SUBTITULO[filtro] || (n === 1 ? '1 pedido en el taller' : n + ' pedidos en el taller');
+  }
+  function ponerVista(v){
+    vista = v;
+    $('vResumen').classList.toggle('hidden', v !== 'resumen');
+    $('vPedidos').classList.toggle('hidden', v !== 'pedidos');
+    $('tabsTaller').querySelectorAll('[data-vista]').forEach(b => { const on = b.dataset.vista === v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+    pintarSubtitulo();
+    if(v === 'resumen') pintarResumen();
+  }
+  $('tabsTaller').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-vista]'); if(!b) return;
+    if(b.dataset.vista === vista){ window.scrollTo({ top:0, behavior:'smooth' }); return; }
+    ponerVista(b.dataset.vista); window.scrollTo({ top:0 });
+  });
+  function irAPedidos(f){
+    filtro = f; pintarChips(); pintarLista(); ponerVista('pedidos'); window.scrollTo({ top:0 });
+  }
+
+  // Lo que pide el Resumen además de los pedidos (todo lo puede leer un administrador)
+  function lunesTs(){ const [y, m, d] = masDias(SAB.este, -5).split('-').map(Number); return new Date(y, m - 1, d).toISOString(); }
+  async function cargarSemana(){
+    const sab = sabVista();
+    const q = db.from('etapas')
+      .select('id,nombre,estado,trabajador_id,para_el,iniciada_en,foto,terminada_en,monto,pago_id,trabajador:perfiles(nombre),item:venta_items(id,nombre,venta_id,venta:ventas(id,interna,estado))');
+    const { data, error } = await (semK === 0 ? q.or(`para_el.eq.${sab},and(para_el.lt.${sab},estado.eq.pendiente)`) : q.eq('para_el', sab));
+    if(error) throw error;
+    // Lo de esa semana, más (en esta semana) lo de sábados anteriores que no se terminó
+    return (data || []).filter(e => e.trabajador_id && e.item && !(e.item.venta && e.item.venta.estado === 'cancelada')
+      && (String(e.para_el).slice(0, 10) === sab || (semK === 0 && e.estado === 'pendiente' && String(e.para_el).slice(0, 10) < sab)));
+  }
+  let cargandoResumen = 0, cargandoResumenAhora = false;
+  async function cargarResumen(){
+    if(lectura) return;
+    const n = ++cargandoResumen;
+    cargandoResumenAhora = true;
+    const seguro = (p) => Promise.resolve(p).then(r => r, err => ({ error: err }));
+    const [rNom, rSem, rVal, rPag, rVie, rTra] = await Promise.all([
+      seguro(db.rpc('nomina_semana')),
+      seguro(cargarSemana().then(data => ({ data }))),
+      seguro(db.from('vales').select('id,trabajador_id,monto,nota,estado,creado_en').in('estado', ['pendiente', 'aprobado']).is('pago_id', null).order('creado_en', { ascending:false })),
+      seguro(db.from('pagos_trabajador').select('trabajador_id,monto,pagado_en').gte('pagado_en', lunesTs())),
+      seguro(db.from('etapas').select('id,trabajador_id').eq('estado', 'hecha').is('pago_id', null).lt('terminada_en', lunesTs())),
+      seguro(cargarTrabajadores().then(data => ({ data })))
+    ]);
+    if(n !== cargandoResumen) return;   // llegó una carga más nueva
+    cargandoResumenAhora = false;
+    const val = (r) => r && !r.error ? r.data : null;
+    R = { nom: val(rNom), sem: val(rSem), vales: val(rVal), pagos: val(rPag), viejos: val(rVie), trab: val(rTra) || [] };
+    if([rNom, rSem, rVal, rPag, rVie].some(r => r && r.error)) toast('Parte del resumen no se pudo cargar. Revisa la conexión y toca Actualizar.', 'error');
+    if(vista === 'resumen') pintarResumen();
+    if(trabajoActual && $('sheetTrabajo').classList.contains('open')) pintarTrabajo();
+  }
+  const nombreTrab = (tid) => {
+    const t = (R && R.trab || []).find(x => x.id === tid) || ((R && R.nom && R.nom.trabajadores) || []).find(x => x.id === tid);
+    return t ? t.nombre : 'Otro';
+  };
+  const plural = (n, uno, varios) => n === 1 ? uno : n + ' ' + varios;
+  const noCargo = '<p class="tl-nota">No se pudo cargar. Revisa la conexión y toca Actualizar.</p>';
+
+  function avisosHtml(){
+    const act = pedidos.filter(v => !v._resumen.lista && v.fecha_entrega);
+    const pronto = act.filter(v => { const d = AV.diasHasta(v.fecha_entrega); return d >= 0 && d <= 2; }).length;
+    const tarde = act.filter(v => AV.diasHasta(v.fecha_entrega) < 0).length;
+    const listos = pedidos.filter(v => v._resumen.lista).length;
+    const b = [];
+    if(pronto) b.push(`<button type="button" class="am" data-ir-filtro="pronto">${plural(pronto, '1 entrega', 'entregas')} en 2 días ›</button>`);
+    if(tarde) b.push(`<button type="button" class="rj" data-ir-filtro="tarde">${plural(tarde, '1 atrasado', 'atrasados')} ›</button>`);
+    if(listos) b.push(`<button type="button" class="ok" data-ir-filtro="listos">${plural(listos, '1 listo', 'listos')} para entregar ›</button>`);
+    return b.length ? `<div class="tl-alrt">${b.join('')}</div>` : '';
+  }
+  function porAsignarHtml(){
+    const pa = pedidos.filter(v => !v._resumen.lista && v._resumen.sinAsignar > 0);
+    const total = pa.reduce((a, v) => a + v._resumen.sinAsignar, 0);
+    if(!pa.length) return `<section class="tl-sec"><h3>1 · Por asignar</h3><p class="tl-nota">Nada por asignar. Todo lo que entró ya tiene quién lo haga.</p></section>`;
+    return `<section class="tl-sec am" id="rPorAsignar"><h3>1 · Por asignar <button type="button" data-ir-filtro="asignar">Ver en Pedidos ›</button></h3>
+      <p class="tl-big"><b>${plural(total, '1 paso', 'pasos')}</b> en ${plural(pa.length, '1 pedido', 'pedidos')}</p>
+      ${pa.map(v => `<div class="tl-row"><div><b>${esc(v.interna ? 'Exhibición · ' + v._prod : `N° ${v.id} · ${v._prod}`)}</b><span>${plural(v._resumen.sinAsignar, '1 paso', 'pasos')} · ${v.fecha_entrega ? 'entrega ' + esc(fechaDia(v.fecha_entrega, true)) : 'sin fecha'}</span></div>
+        ${primeraPorAsignar(v) ? `<button class="tl-btn-sm" type="button" data-asignar-pedido="${v.id}">Asignar</button>` : `<button class="tl-abrir" type="button" data-abrir="${v.id}">Abrir ›</button>`}</div>`).join('')}
+    </section>`;
+  }
+  const esArr = (e) => e.estado === 'pendiente' && String(e.para_el).slice(0, 10) < sabVista();
+  function asignadoHtml(){
+    const sab = sabVista();
+    const tit = semK === 0 ? 'Lo asignado esta semana' : semK < 0 ? 'Lo asignado esa semana' : 'Lo asignado la próxima semana';
+    const cab = `<h3>2 · ${tit} <button type="button" data-ir-filtro="proceso">Ver en Pedidos ›</button></h3>`;
+    if(!R.sem) return `<section class="tl-sec">${cab}${noCargo}</section>`;
+    const set = R.sem;
+    if(!set.length) return `<section class="tl-sec">${cab}<p class="tl-nota">Nada asignado para el ${esc(fechaDia(sab, true))}.</p></section>`;
+    const hechos = set.filter(e => e.estado === 'hecha').length;
+    const arr = set.filter(esArr);
+    const haciendo = set.filter(e => e.estado !== 'hecha' && e.iniciada_en && !esArr(e)).length;
+    const sinEmp = set.length - hechos - haciendo - arr.length;
+    const seg = (n, c) => n ? `<i class="${c}" style="flex:${n}"></i>` : '';
+    const por = {};
+    set.forEach(e => { const p = por[e.trabajador_id] = por[e.trabajador_id] || { asig:0, hecho:0, arr:0, nombre: e.trabajador ? e.trabajador.nombre : nombreTrab(e.trabajador_id) }; p.asig++; if(e.estado === 'hecha') p.hecho++; if(esArr(e)) p.arr++; });
+    const filas = (R.trab || []).map(t => ({ id:t.id, nombre:t.nombre, esp: ESP_CORTO[(t.especialidades || [])[0]] || '' }))
+      .concat(Object.keys(por).filter(id => !(R.trab || []).some(t => t.id === id)).map(id => ({ id, nombre: por[id].nombre, esp:'' })))
+      .map(t => Object.assign(t, por[t.id] || { asig:0, hecho:0, arr:0 }))
+      .sort((a, b) => b.asig - a.asig || a.nombre.localeCompare(b.nombre));
+    return `<section class="tl-sec" id="rAsignado">${cab}
+      <p class="tl-big"><b>${hechos} de ${set.length} hechos</b></p>
+      <div class="tl-prog" aria-hidden="true">${seg(hechos, 'c-h')}${seg(haciendo, 'c-p')}${seg(sinEmp, 'c-a')}${seg(arr.length, 'c-r')}</div>
+      <div class="tl-leg"><span><b class="c-h"></b>${hechos} ${hechos === 1 ? 'hecho' : 'hechos'}</span><span><b class="c-p"></b>${haciendo} haciendo</span><span><b class="c-a"></b>${sinEmp} sin empezar</span>${arr.length ? `<span><b class="c-r"></b>${arr.length} de la semana pasada</span>` : ''}</div>
+      <table class="tl-tt"><thead><tr><th>Trabajador</th><th>Asignado</th><th>Hecho</th><th>Falta</th></tr></thead><tbody>
+      ${filas.map(t => `<tr data-trab="${esc(t.id)}"><td><b>${esc(t.nombre)}</b>${t.esp ? ` <small>${esc(t.esp)}</small>` : ''}</td><td>${t.asig}</td><td>${t.asig ? t.hecho : '·'}</td>
+        <td>${t.asig ? (t.arr ? `<span class="falta-r">${t.asig - t.hecho} <small class="falta-r">(${t.arr} ↩)</small></span>` : t.asig - t.hecho) : '·'}</td></tr>`).join('')}
+      </tbody></table>
+      ${arr.map(e => `<p class="tl-arr">↩ ${esc(e.nombre)} del ${esc(e.item.nombre)} (${e.item.venta && e.item.venta.interna ? 'exhibición' : 'N° ' + esc(e.item.venta_id)}): era para el ${esc(fechaDia(e.para_el))} · ${esc(e.trabajador ? e.trabajador.nombre : nombreTrab(e.trabajador_id))}</p>`).join('')}
+      <p class="tl-nota">Toca un trabajador para ver sus trabajos con foto.</p>
+    </section>`;
+  }
+  function porPagarHtml(){
+    const cab = `<h3>3 · Por pagar <a href="nomina.html">Ir a Nómina ›</a></h3>`;
+    if(!R.nom) return `<section class="tl-sec">${cab}${noCargo}</section>`;
+    const filas = (R.nom.trabajadores || []).filter(t => Number(t.trabajos) > 0 || Number(t.vales_monto) > 0);
+    const viejos = {};
+    (R.viejos || []).forEach(e => { viejos[e.trabajador_id] = (viejos[e.trabajador_id] || 0) + 1; });
+    const tm = filas.reduce((a, t) => a + Number(t.trabajos_monto || 0), 0);
+    const vm = filas.reduce((a, t) => a + Number(t.vales_monto || 0), 0);
+    const pagos = R.pagos || [];
+    const pagado = pagos.reduce((a, p) => a + Number(p.monto || 0), 0);
+    const quienes = [...new Set(pagos.map(p => primerNombre(nombreTrab(p.trabajador_id))))];
+    const nota = (pagado > 0 ? `Ya pagaste ${dinero(pagado)} esta semana (${quienes.join(', ')}). ` : '') + 'Lo que no pagues pasa a la semana siguiente con ↩.';
+    if(!filas.length) return `<section class="tl-sec" id="rPorPagar">${cab}<p class="tl-big"><b class="teal">${dinero(0)}</b> todo al día</p><p class="tl-nota">${esc(nota)}</p></section>`;
+    return `<section class="tl-sec" id="rPorPagar">${cab}
+      <p class="tl-big"><b class="teal">${dinero(tm - vm)}</b> trabajos ${dinero(tm)}${vm ? ' menos vales ' + dinero(vm) : ''}</p>
+      <table class="tl-tt"><thead><tr><th>Trabajador</th><th>Trabajos</th><th>Vales</th><th>A pagar</th></tr></thead><tbody>
+      ${filas.map(t => `<tr data-href="nomina.html?t=${encodeURIComponent(t.id)}"><td><b>${esc(t.nombre)}</b>${viejos[t.id] ? `<span class="tl-rtag">${viejos[t.id]} ↩</span>` : ''}</td>
+        <td>${Number(t.trabajos)} · ${dinero(t.trabajos_monto)}</td><td class="${Number(t.vales_monto) ? 'neg' : ''}">${Number(t.vales_monto) ? '−' + dinero(t.vales_monto) : '·'}</td><td><b>${dinero(t.neto)}</b></td></tr>`).join('')}
+      <tr class="tot"><td>Total</td><td>${dinero(tm)}</td><td class="${vm ? 'neg' : ''}">${vm ? '−' + dinero(vm) : '·'}</td><td>${dinero(tm - vm)}</td></tr>
+      </tbody></table>
+      <p class="tl-nota">${esc(nota)}</p>
+    </section>`;
+  }
+  function valesHtml(){
+    const cab = `<h3>4 · Vales <a href="nomina.html">Ver vales ›</a></h3>`;
+    if(!R.vales) return `<section class="tl-sec">${cab}${noCargo}</section>`;
+    const pend = R.vales.filter(x => x.estado === 'pendiente'), apr = R.vales.filter(x => x.estado === 'aprobado');
+    if(!pend.length && !apr.length) return `<section class="tl-sec">${cab}<p class="tl-nota">Ningún vale por revisar.</p></section>`;
+    return `<section class="tl-sec" id="rVales">${cab}
+      ${pend.map(x => `<div class="tl-row"><div><b>${esc(nombreTrab(x.trabajador_id))} pidió ${dinero(x.monto)}</b><span>${x.nota ? esc(x.nota) + ' · ' : ''}${esc(cuando(x.creado_en))}</span></div>
+        <a class="tl-btn-sm" href="nomina.html?t=${encodeURIComponent(x.trabajador_id)}" style="display:inline-flex;align-items:center;text-decoration:none">Revisar</a></div>`).join('')}
+      ${apr.map(x => `<div class="tl-row"><div><b>${esc(primerNombre(nombreTrab(x.trabajador_id)))} · ${dinero(x.monto)} aprobado</b><span>${esc(fechaDia(diaDe(x.creado_en)))} · se descuenta al pagarle</span></div></div>`).join('')}
+    </section>`;
+  }
+  function pintarResumen(){
+    if(lectura) return;
+    const cont = $('vResumen');
+    if(!R){ cont.innerHTML = '<div class="tl-sk"></div><div class="tl-sk"></div><div class="tl-sk"></div>'; return; }
+    const sab = sabVista();
+    let h = `<div class="tl-semnav"><button type="button" data-sem="-1" aria-label="Semana anterior">‹</button>
+      <span>${semK === 0 ? 'Esta semana' : semK < 0 ? 'Semana' : 'Próxima semana'} · ${esc(rangoSemana(sab))}</span>
+      <button type="button" data-sem="1" aria-label="Semana siguiente"${semK >= 1 ? ' disabled' : ''}>›</button></div>`;
+    if(semK === 0){
+      h += avisosHtml() + porAsignarHtml() + asignadoHtml() + porPagarHtml() + valesHtml();
+      h += `<div class="tl-atajos">${verCostos ? `<a href="costos.html?tab=semana&para=${encodeURIComponent(SAB.este)}" data-sub>✂ Plan de corte ${esc(fechaDia(SAB.este))}</a>` : ''}<button type="button" data-nueva-orden>+ Fabricar para exhibición</button></div>`;
+    } else {
+      h += asignadoHtml() + '<button class="btn-secondary tl-volver" type="button" data-sem="0">Volver a esta semana</button>';
+    }
+    cont.innerHTML = h;
+  }
+  $('vResumen').addEventListener('click', async (e) => {
+    const s = e.target.closest('[data-sem]');
+    if(s){
+      const d = Number(s.dataset.sem);
+      semK = d === 0 ? 0 : Math.min(1, semK + d);
+      R = Object.assign({}, R, { sem:null });
+      pintarResumen();
+      try{ R.sem = await cargarSemana(); } catch(err){ toast('No se pudo cargar esa semana. Revisa la conexión.', 'error'); }
+      pintarResumen();
+      return;
+    }
+    const f = e.target.closest('[data-ir-filtro]');
+    if(f){ irAPedidos(f.dataset.irFiltro); return; }
+    const ba = e.target.closest('[data-asignar-pedido]');
+    if(ba){ const v = pedidos.find(x => String(x.id) === ba.dataset.asignarPedido); if(v) asignarDesdeTarjeta(v); return; }
+    const bo = e.target.closest('[data-abrir]');
+    if(bo){ const v = pedidos.find(x => String(x.id) === bo.dataset.abrir); if(v) pintarFicha(v); return; }
+    if(e.target.closest('[data-nueva-orden]')){ abrirNuevaOrden(); return; }
+    if(e.target.closest('a')) return;
+    const tr = e.target.closest('tr[data-trab]');
+    if(tr){ abrirTrabSem(tr.dataset.trab); return; }
+    const th = e.target.closest('tr[data-href]');
+    if(th) location.href = th.dataset.href;
+  });
+
+  // ---------------------------------------------------------------------------
+  // Lo de la semana de un trabajador (desde "Lo asignado esta semana")
+  // ---------------------------------------------------------------------------
+  function abrirTrabSem(tid){
+    const l = (R && R.sem || []).filter(e => e.trabajador_id === tid);
+    const nombre = nombreTrab(tid);
+    $('trabSemTitulo').textContent = nombre;
+    $('trabSemSub').textContent = 'Semana ' + rangoSemana(sabVista());
+    const est = (e) => e.estado === 'hecha' ? 'terminó ' + cuando(e.terminada_en) : esArr(e) ? 'era para el ' + fechaDia(e.para_el) + ' · no lo terminó' : e.iniciada_en ? 'lo está haciendo' : 'sin empezar';
+    $('trabSemBody').innerHTML = (l.length ? l.map(e => {
+      const st = e.estado === 'hecha' ? 'h' : esArr(e) ? 'r' : e.iniciada_en ? 'p' : 'a';
+      const ped = e.item.venta && e.item.venta.interna ? 'Exhibición' : 'N° ' + e.item.venta_id;
+      return `<div class="tl-paso ${st}"${st === 'h' ? ` data-trabajo="${e.id}" role="button" tabindex="0"` : ''}>
+        <span class="tl-dot ${st}">${st === 'h' ? ICON_OK : st === 'r' ? ICON_VUELTA : ''}</span>
+        <div class="tl-pt"><b class="e-nom">${esc(e.nombre)} · ${esc(e.item.nombre)}</b><span class="tl-ps">${esc(ped)} · ${esc(est(e))}</span></div>
+        ${e.foto ? `<span class="tl-mini">${imgMini(e.foto, 'Foto de ' + e.nombre)}</span>` : ''}
+        ${e.estado === 'hecha' && e.monto != null && Number(e.monto) ? `<span class="tl-monto">${dinero(e.monto)}</span>` : ''}
+      </div>`;
+    }).join('') : '<p class="tl-nota">No tiene nada asignado esta semana.</p>')
+      + `<div class="tl-atajos" style="margin-top:12px"><a href="nomina.html?t=${encodeURIComponent(tid)}">Nómina de ${esc(primerNombre(nombre))}</a></div>`;
+    abrirHoja('sheetTrabSem');
+  }
+  $('trabSemBody').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-trabajo]');
+    if(t) abrirTrabajo(Number(t.dataset.trabajo));
+  });
+
+  // ---------------------------------------------------------------------------
+  // Un trabajo con su foto (T4): desde el aviso "Terminó ..." (taller.html?trabajo=ID)
+  // o tocando un paso hecho
+  // ---------------------------------------------------------------------------
+  function buscarPaso(eid){
+    for(const v of pedidos) for(const it of (v.items || [])) for(const e of (it.etapas || [])) if(e.id === eid) return { v, it, e };
+    return null;
+  }
+  async function pasoDesdeBase(eid){
+    const { data, error } = await db.from('etapas')
+      .select('id,nombre,rama,orden,unidad,estado,trabajador_id,foto,terminada_en,monto,pago_id,trabajador:perfiles(nombre),item:venta_items(id,nombre,cantidad,venta_id,venta:ventas(id,interna),etapas(id,nombre,rama,orden,unidad,estado,trabajador_id,trabajador:perfiles(nombre)))')
+      .eq('id', eid).maybeSingle();
+    if(error) throw error;
+    if(!data || !data.item) return null;
+    const it = data.item, us = [...new Set((it.etapas || []).map(x => x.unidad || 1))];
+    const u = data.unidad || 1;
+    return {
+      v: { id: it.venta_id, interna: !!(it.venta && it.venta.interna) },
+      it: Object.assign({}, it, { etapas: (it.etapas || []).filter(x => (x.unidad || 1) === u), _unidad: us.length > 1 ? u : null, _de: us.length > 1 ? us.length : null }),
+      e: data
+    };
+  }
+  let trabajoActual = null;
+  async function abrirTrabajo(eid){
+    let info = buscarPaso(eid);
+    if(!info && !lectura){
+      try{ info = await pasoDesdeBase(eid); }
+      catch(err){ toast(/fetch|network|Failed/i.test(String(err && err.message)) ? 'Sin conexión. Revisa tu internet y vuelve a tocar el aviso.' : (err.message || 'No se pudo abrir ese trabajo'), 'error'); return; }
+    }
+    if(!info){ toast('Ese trabajo ya no está en el taller', 'error'); return; }
+    trabajoActual = info;
+    pintarTrabajo();
+    abrirHoja('sheetTrabajo');
+    if(!lectura && !R && !cargandoResumenAhora) cargarResumen();
+  }
+  function pintarTrabajo(){
+    const { v, it, e } = trabajoActual;
+    const quien = e.trabajador ? e.trabajador.nombre : '';
+    const hecha = e.estado === 'hecha';
+    $('trabajoTitulo').textContent = e.nombre + (hecha ? ' terminado' : ' sin terminar');
+    $('trabajoSub').textContent = it.nombre + (it._de ? ` · ${it._unidad} de ${it._de}` : '') + ' · ' + (v.interna ? 'Exhibición' : 'N° ' + v.id);
+    const hero = e.foto
+      ? `<button class="tl-hero" type="button" data-foto="${esc(e.foto)}"><img src="${esc(e.foto)}" alt="Foto de ${esc(e.nombre)}"><span class="tag">Foto de ${esc(primerNombre(quien) || 'quien lo hizo')}${e.terminada_en ? ' · ' + esc(cuando(e.terminada_en)) : ''} · toca para ampliar</span></button>`
+      : '<div class="tl-hero sin">Sin foto</div>';
+    // Sigue: el próximo paso pendiente de la misma línea (o de la unidad) y quién lo tiene
+    const pend = (it.etapas || []).filter(x => x.estado === 'pendiente' && x.id !== e.id);
+    const sig = pend.filter(x => x.rama === e.rama && x.orden > e.orden).sort((a, b) => a.orden - b.orden)[0] || pend.sort((a, b) => a.orden - b.orden)[0];
+    const sigTxt = sig ? `${NOMBRE_CORTO[sig.nombre] || sig.nombre} · ${sig.trabajador ? sig.trabajador.nombre : 'sin asignar'}` : 'Nada: era el último paso';
+    const kv = [`<div><span>Lo hizo</span><b>${esc(quien || 'Sin asignar')}</b></div>`];
+    if(!lectura){
+      const m = e.monto != null ? Number(e.monto) : montos[e.id] != null ? Number(montos[e.id]) : null;
+      kv.push(`<div><span>Se le paga por esto</span><b>${m != null ? dinero(m) : 'Sin monto todavía'}</b></div>`);
+    }
+    kv.push(`<div><span>Sigue</span><b>${esc(sigTxt)}</b></div>`);
+    if(!lectura && e.trabajador_id){
+      const t = R && R.nom && (R.nom.trabajadores || []).find(x => x.id === e.trabajador_id);
+      kv.push(`<div><span>Por pagar a ${esc(primerNombre(quien))}</span><b class="teal">${t ? dinero(t.neto) : '·'}</b></div>`);
+    }
+    const at = [`<button type="button" data-ver-pedido="${v.id}">${v.interna ? 'Ver la orden' : 'Ver pedido N° ' + v.id}</button>`];
+    if(!lectura && e.trabajador_id) at.push(`<a href="nomina.html?t=${encodeURIComponent(e.trabajador_id)}">Nómina de ${esc(primerNombre(quien))}</a>`);
+    const nota = lectura || !hecha ? '' : e.pago_id ? 'Este trabajo ya se le pagó.' : `Ya se sumó a lo que le debes a ${primerNombre(quien)}. Lo pagas cuando quieras desde Nómina.`;
+    $('trabajoBody').innerHTML = hero + `<div class="tl-kv2">${kv.join('')}</div><div class="tl-atajos">${at.join('')}</div>` + (nota ? `<p class="tl-nota" style="text-align:left">${esc(nota)}</p>` : '');
+  }
+  $('trabajoBody').addEventListener('click', (e) => {
+    const f = e.target.closest('[data-foto]');
+    if(f){ verFoto(f.dataset.foto); return; }
+    const p = e.target.closest('[data-ver-pedido]');
+    if(p){
+      const v = pedidos.find(x => String(x.id) === p.dataset.verPedido);
+      cerrarHoja('sheetTrabajo');
+      if(!v) location.href = 'ventas.html?abrir=' + encodeURIComponent(p.dataset.verPedido);
+      else if(!$('sheetFicha').classList.contains('open') || !pedidoActual || pedidoActual.id !== v.id) pintarFicha(v);
+    }
+  });
+
   $('btnActualizar').addEventListener('click', cargar);
 
   (async function(){
@@ -954,6 +1281,7 @@
       if(!FILTROS.some(f => f.id === filtro)) filtro = 'todos';
       document.body.classList.add('solo-lectura');
     }
+    ponerVista(lectura || pideVistaPedidos ? 'pedidos' : 'resumen');
     // Madera: quién la asigna y quién marca sus pasos (el servidor lo vuelve a revisar)
     try{
       const r = await db.from('perfiles').select('lleva_madera,linea').eq('id', p.id).maybeSingle();

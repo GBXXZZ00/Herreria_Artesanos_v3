@@ -13,13 +13,13 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Taller · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=80">
+<link rel="stylesheet" href="assets/css/base.css?v=81">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   .p-nuevo{color:#fff!important;background:var(--danger)!important}
   .p-unidad{display:inline-block;vertical-align:2px;margin-left:4px;font-size:11.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px}
   .at-sub{font-size:12.5px;color:var(--ink-soft);margin:-4px 0 8px}
-  .solo-lectura #btnNuevaOrden,.solo-lectura #tabsTaller{display:none}
+  .solo-lectura #tabsTaller{display:none}
   .btn-madera{display:flex;align-items:center;justify-content:center;height:40px;padding:0 16px;margin-top:8px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800;white-space:nowrap;transition:transform 130ms var(--ease-out)}
   .btn-madera:active{transform:scale(0.97)}
   .p-madera-nota{margin-top:12px;font-size:13.5px;color:var(--ink-soft)}
@@ -131,7 +131,7 @@
   .e-rama-inc{font-size:12.5px;color:var(--ink-soft);margin:0 0 4px}
   .tl-paso{display:flex;align-items:center;gap:11px;padding:10px 0}
   .tl-paso + .tl-paso{border-top:1px solid var(--line)}
-  .tl-paso[data-foto]{cursor:pointer}
+  .tl-paso[data-trabajo]{cursor:pointer}
   .tl-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--surface-2);color:var(--ink-soft)}
   .tl-dot.h{background:var(--accent);color:#fff}
   .tl-dot.p{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
@@ -158,6 +158,70 @@
   .at-op.fijo{opacity:.65}
   .e-tope{font-size:12px;font-weight:700;color:var(--ink-soft)}
   .e-tope.tarde{color:var(--danger)}
+  /* Taller › Resumen (maqueta T1) */
+  .tl-sk{height:150px;border-radius:18px;margin:0 18px 12px;background:var(--surface-2);animation:tlPulso 1.2s ease-in-out infinite alternate}
+  @keyframes tlPulso{from{opacity:.55}to{opacity:1}}
+  #vResumen{padding:0 18px}
+  #vResumen .tl-sk{margin:0 0 12px}
+  .tl-semnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 10px}
+  .tl-semnav span{font-size:14px;font-weight:700;color:var(--ink-soft);text-align:center;flex:1}
+  .tl-semnav button{width:44px;height:44px;border-radius:50%;background:var(--surface-2);color:var(--ink-soft);font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:transform 120ms var(--ease-out)}
+  .tl-semnav button:active{transform:scale(0.97)}
+  .tl-semnav button:disabled{opacity:.35}
+  .tl-alrt{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .tl-alrt button{flex:1 1 40%;min-height:44px;border-radius:14px;padding:8px 12px;font-size:14px;font-weight:700;text-align:left;transition:transform 120ms var(--ease-out)}
+  .tl-alrt button:active{transform:scale(0.97)}
+  .tl-alrt .am{background:#FDF3E1;color:var(--amber)}
+  .tl-alrt .rj{background:#FDECEA;color:var(--danger)}
+  .tl-alrt .ok{background:#E7F4EC;color:#1F7A4D}
+  .tl-sec{border-radius:18px;padding:13px 15px;margin-bottom:12px;background:var(--surface-2)}
+  .tl-sec.am{background:#FDF3E1}
+  .tl-sec h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:17px;font-weight:800;margin:0}
+  .tl-sec h3 button,.tl-sec h3 a{flex-shrink:0;font-size:14px;font-weight:700;color:var(--accent);text-decoration:none;min-height:32px}
+  .tl-big{font-size:15px;color:var(--ink-soft);margin:2px 0 4px}
+  .tl-big b{font-size:26px;font-weight:800;letter-spacing:-.4px;color:var(--ink)}
+  .tl-sec.am .tl-big b{color:var(--amber)}
+  .tl-big b.teal{color:var(--accent)}
+  .tl-row{display:flex;align-items:center;gap:10px;padding:10px 0}
+  .tl-row + .tl-row{border-top:1px solid rgba(28,26,23,.08)}
+  .tl-row > div{flex:1;min-width:0}
+  .tl-row b{display:block;font-size:15.5px;font-weight:800}
+  .tl-row span{font-size:13.5px;color:var(--ink-soft)}
+  .tl-prog{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0 6px;gap:2px;background:var(--surface)}
+  .tl-prog i{display:block;height:100%}
+  .tl-leg{display:flex;gap:6px 12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft)}
+  .tl-leg b{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px}
+  .c-h{background:var(--accent)}.c-p{background:#9AB5B8}.c-a{background:#DAD6CF}.c-r{background:#E3B8B0}
+  .tl-tt{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+  .tl-tt th{font-size:12.5px;color:var(--ink-soft);font-weight:600;text-align:right;padding:4px 2px}
+  .tl-tt th:first-child,.tl-tt td:first-child{text-align:left}
+  .tl-tt td{padding:9px 2px;text-align:right;border-top:1px solid rgba(28,26,23,.08)}
+  .tl-tt tr[data-trab]{cursor:pointer}
+  .tl-tt td small{font-weight:500;color:var(--ink-soft)}
+  .tl-tt .falta-r{color:var(--danger);font-weight:800}
+  .tl-tt tr.tot td{font-weight:800;border-top:1.5px solid var(--ink)}
+  .tl-tt .neg{color:var(--danger)}
+  .tl-rtag{display:inline-block;font-size:11.5px;font-weight:700;color:var(--danger);background:#FDECEA;padding:1px 7px;border-radius:6px;margin-left:5px}
+  .tl-arr{background:#FDECEA;color:var(--danger);border-radius:12px;padding:9px 11px;font-size:13.5px;font-weight:600;margin-top:8px;line-height:1.35}
+  .tl-sec .tl-nota{text-align:left;margin:10px 0 0}
+  .tl-btn-sm{flex-shrink:0;height:40px;padding:0 16px;border-radius:999px;background:var(--accent);color:#fff;font-size:15px;font-weight:800;white-space:nowrap;transition:transform 120ms var(--ease-out)}
+  .tl-btn-sm:active{transform:scale(0.97)}
+  .tl-atajos{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
+  .tl-atajos a,.tl-atajos button{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:700;white-space:nowrap;text-decoration:none;transition:transform 120ms var(--ease-out)}
+  .tl-atajos a:active,.tl-atajos button:active{transform:scale(0.97)}
+  .tl-volver{width:100%;margin-top:4px}
+  /* Trabajo terminado (T4) */
+  .tl-hero{position:relative;display:block;width:100%;aspect-ratio:4/3.4;border-radius:18px;overflow:hidden;background:var(--surface-2);margin-bottom:12px}
+  .tl-hero img{width:100%;height:100%;object-fit:cover}
+  .tl-hero .tag{position:absolute;left:10px;bottom:10px;background:rgba(28,26,23,.72);color:#fff;font-size:12.5px;padding:5px 11px;border-radius:999px;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tl-hero.sin{display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:14px}
+  .tl-kv2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .tl-kv2 div{background:var(--surface-2);border-radius:12px;padding:10px 12px;min-width:0}
+  .tl-kv2 span{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .tl-kv2 b{display:block;font-size:15.5px;font-weight:800;overflow-wrap:anywhere}
+  .tl-kv2 b.teal{color:var(--accent)}
+  .tl-paso-semana{display:flex;align-items:center;gap:10px;padding:10px 0}
+  .tl-paso-semana + .tl-paso-semana{border-top:1px solid var(--line)}
 </style>
 </head>
 <body data-requiere-sesion="si" data-modo="produccion">
@@ -175,20 +239,22 @@
 
 <main class="page">
   <nav class="tabs-mod" id="tabsTaller" aria-label="Partes del taller">
-    <a href="taller.html" class="on" aria-current="page">Pedidos</a>
+    <button type="button" data-vista="resumen" class="on" aria-pressed="true">Resumen</button>
+    <button type="button" data-vista="pedidos" aria-pressed="false">Pedidos</button>
     <a href="nomina.html">Nómina</a>
   </nav>
-  <div class="chips tl-chips" id="chips" role="tablist"></div>
-  <section class="vlista" id="lista" aria-live="polite">
-    <div class="sk-vcard"></div><div class="sk-vcard"></div><div class="sk-vcard"></div>
+  <section id="vResumen" aria-live="polite">
+    <div class="tl-sk"></div><div class="tl-sk"></div><div class="tl-sk"></div>
   </section>
+  <div id="vPedidos" class="hidden">
+    <div class="chips tl-chips" id="chips" role="tablist"></div>
+    <section class="vlista" id="lista" aria-live="polite">
+      <div class="sk-vcard"></div><div class="sk-vcard"></div><div class="sk-vcard"></div>
+    </section>
+  </div>
 </main>
 
 <div class="bottom-nav-wrap" id="menuModulos" data-activo="taller"></div>
-
-<button class="fab" id="btnNuevaOrden" aria-label="Fabricar para exhibición">
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-</button>
 
 <!-- Ficha del pedido: productos y sus etapas -->
 <div class="sheet-scrim" id="scrimFicha" data-cerrar="sheetFicha"></div>
@@ -269,17 +335,37 @@
   <div class="sheet-foot"><button class="btn-primary" type="button" id="btnMaderaOk" disabled>Primero toma la foto</button></div>
 </section>
 
+<!-- Un trabajo terminado con su foto (desde el aviso o tocando un paso hecho) -->
+<div class="sheet-scrim scrim-top" id="scrimTrabajo" data-cerrar="sheetTrabajo"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetTrabajo" role="dialog" aria-modal="true" aria-labelledby="trabajoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="trabajoTitulo">Trabajo</h2><p class="sheet-sub" id="trabajoSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetTrabajo" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="trabajoBody"></div>
+</section>
+
+<!-- Lo de la semana de un trabajador -->
+<div class="sheet-scrim scrim-top" id="scrimTrabSem" data-cerrar="sheetTrabSem"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetTrabSem" role="dialog" aria-modal="true" aria-labelledby="trabSemTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="trabSemTitulo">Trabajador</h2><p class="sheet-sub" id="trabSemSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetTrabSem" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="trabSemBody"></div>
+</section>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=80"></script>
-<script src="assets/js/supabase-client.js?v=80"></script>
-<script src="assets/js/img-compress.js?v=80"></script>
-<script src="assets/js/comun.js?v=80"></script>
-<script src="assets/js/avisos.js?v=80"></script>
-<script src="assets/js/sesion.js?v=80"></script>
-<script src="assets/js/ayuda.js?v=80"></script>
-<script src="assets/js/ventas-comun.js?v=80"></script>
-<script src="assets/js/specs-producto.js?v=80"></script>
-<script src="assets/js/taller.js?v=80"></script>
+<script src="assets/vendor/supabase.js?v=81"></script>
+<script src="assets/js/supabase-client.js?v=81"></script>
+<script src="assets/js/img-compress.js?v=81"></script>
+<script src="assets/js/comun.js?v=81"></script>
+<script src="assets/js/avisos.js?v=81"></script>
+<script src="assets/js/sesion.js?v=81"></script>
+<script src="assets/js/ayuda.js?v=81"></script>
+<script src="assets/js/ventas-comun.js?v=81"></script>
+<script src="assets/js/specs-producto.js?v=81"></script>
+<script src="assets/js/taller.js?v=81"></script>
 </body>
 </html>

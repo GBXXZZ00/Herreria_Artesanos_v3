@@ -5,7 +5,24 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
 
-## Taller › Pedidos, lote 1 (v80, 15 nov 2026, Claude de Gualfredo)
+## Taller › Resumen y foto del trabajo, lote 2 (v81, 15 nov 2026, Claude de Gualfredo)
+Antes: cerrar y abrir la app. La migración v87 (el aviso abre el trabajo) se aplica con Gualfredo presente; sin ella el aviso sigue abriendo el pedido.
+
+**Resumen (Ray o Gualfredo)**
+- [ ] Al entrar al Taller sale Resumen: "Hoy … · semana …".
+- [ ] Avisos de arriba (entregas en 2 días, atrasados, listos): cada uno abre Pedidos con ese filtro.
+- [ ] 1 Por asignar: cuántos pasos y en cuántos pedidos, con Asignar en cada pedido.
+- [ ] 2 Lo asignado esta semana: "N de M hechos", la barra y la tabla por trabajador; lo de la semana pasada en rojo con ↩. Tocar un trabajador muestra sus trabajos con foto.
+- [ ] ‹ muestra la semana pasada y "Volver a esta semana" regresa.
+- [ ] 3 Por pagar: el total igual al de Nómina, con ↩ al que se le deben trabajos de antes y lo que ya pagaste esta semana.
+- [ ] 4 Vales: Revisar lleva a la Nómina de ese trabajador.
+- [ ] Atajos Plan de corte y + Fabricar para exhibición (ya no está el botón + flotante).
+
+**Aviso y foto del trabajo**
+- [ ] Cuando un trabajador termina, el aviso "Terminó …" abre ese trabajo: foto grande, Lo hizo, Se le paga, Sigue y Por pagar. Tocar la foto la amplía.
+- [ ] En un pedido, tocar un paso hecho abre lo mismo.
+- [ ] Inicio: "N trabajos sin asignar" ahora cuenta todos los pasos sin trabajador.
+
 Antes: cerrar y abrir la app. La migración v86 (montos de cada paso) se aplica con Gualfredo presente; sin ella todo funciona, pero los pasos que faltan salen sin monto.
 
 **Menú (Ray o Gualfredo)**

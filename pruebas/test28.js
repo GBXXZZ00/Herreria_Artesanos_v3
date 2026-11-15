@@ -265,7 +265,7 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
 
  // ===== 4) Ray asigna Hierro a Jesús desde el pendiente de Inicio =====
  await r.goto(H+'index.html');await r.waitForSelector('.pend-fila');await r.waitForTimeout(800);
- ok('4. Inicio de Ray: "1 trabajo sin asignar" (naranja) y ya no hay pago por confirmar',(await texto(r,'.pend-fila.naranja')).includes('1 trabajo sin asignar')&&!(await r.$('.pend-fila.rojo')));
+ ok('4. Inicio de Ray: "4 trabajos sin asignar" (naranja) y ya no hay pago por confirmar',(await texto(r,'.pend-fila.naranja')).includes('4 trabajos sin asignar')&&!(await r.$('.pend-fila.rojo')));
  await r.click('.pend-fila.naranja');await r.waitForURL('**/taller.html**');await r.waitForSelector('.tl-card');
  ok('   El Taller muestra el pedido de Carla por asignar',(await texto(r,'#lista')).includes('Carla Prueba'));
  await r.screenshot({path:'shots5/e10-produccion.png'});
@@ -292,7 +292,7 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
    if(k===0){
      ok('    Ve lo que viene después (en gris, espera a otro paso)',(await jz.$$('.despues .dp.gris')).length===3);
      // Ray ve en Producción que Jesús lo está haciendo
-     await r.goto(H+'taller.html');await r.waitForSelector('.tl-card');await r.click('.tl-card');await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(300);
+     await r.goto(H+'taller.html?vista=pedidos');await r.waitForSelector('.tl-card');await r.click('.tl-card');await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(300);
      ok('    En el Taller, Ray ve que lo está haciendo en el Hierro',(await r.$$('#fichaBody .e-ahora')).length===1);
      await jz.screenshot({path:'shots5/e12-jesus-hoy.png'});
      await jz.click('.hoy-foto');await jz.waitForSelector('#sheetTrabajo.open');await jz.waitForTimeout(400);

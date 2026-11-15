@@ -127,7 +127,9 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  for(const d of '222222') await a.click(`#pinTeclado [data-t="${d}"]`);
  await a.waitForSelector('#vInicio.entra');
  ok('Admin sí ve "Taller" en el menú de abajo',!!(await a.$('a.nav-item[href="taller.html"]')));
- await a.click('a.nav-item[href="taller.html"]');await a.waitForSelector('.tl-card');
+ await a.click('a.nav-item[href="taller.html"]');await a.waitForSelector('#vResumen');
+ ok('El administrador entra al Taller por Resumen',(await a.textContent('#tabsTaller .on'))==='Resumen');
+ await a.click('#tabsTaller [data-vista="pedidos"]');await a.waitForSelector('.tl-card');
  ok('Lista muestra los 3 pedidos en taller',(await a.$$('.tl-card')).length===3);
  ok('El pedido atrasado se ordena primero, con su fecha en rojo',((await a.textContent('.tl-card'))||'').includes('Carlos Pérez') && !!(await a.$('.tl-card >> nth=0 >> .tl-pill.rj')));
  ok('Chip "Por asignar" cuenta los 2 pedidos con pasos sin trabajador',(await a.textContent('#chips')).includes('Por asignar 2'));
@@ -234,7 +236,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
      E(2015,'ventana','Instalar en la protección',2,'ventanero','instalar',{incluye:'La ventana en su protección',despues_de:['proteccion/3']})
    ]}
  ]});
- await a.reload();await a.waitForSelector('.tl-card');await a.waitForTimeout(400);
+ await a.goto('http://127.0.0.1:8765/taller.html?vista=pedidos');await a.waitForSelector('.tl-card');await a.waitForTimeout(400);
  await a.click('.tl-card >> text=Carmen Nueva');await a.waitForSelector('#sheetFicha.open');await a.waitForTimeout(300);
  const tn=await a.$$eval('#fichaBody .e-rama-tit',x=>x.map(t=>t.textContent));
  ok('Combo nuevo: "Puerta y protecciones" y "2 ventanas"; ventana: "Protección" y "Ventana"',tn.join('|')==='Puerta y protecciones|2 ventanas · 1.2 × 1 m c/u|Protección · 1.5 × 2 m|Ventana · 1.5 × 2 m',tn);

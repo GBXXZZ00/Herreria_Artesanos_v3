@@ -66,7 +66,7 @@ Idea general: la pantalla casi nunca escribe directo. Las reglas importantes (mo
 ## Funciones RPC que usa la app
 **Ventas:** `crear_venta(p)`, `actualizar_venta(vid, p)`, `convertir_en_venta(vid, a)`, `completar_detalles(vid, items)`, `editar_venta_fabricacion(vid, p)`, `registrar_abono(vid, a)`, `confirmar_abono(aid, llego, nota)` (solo Ray; si queda pagada pasa a fabricación), `cambiar_estado_venta(vid, nuevo, desde)`, `cancelar_venta(vid, motivo, metodo_devolucion)` (solo admin), `marcar_paso(vid, paso)`, `avance_venta(vid)`, `pagado_venta(vid)`, `seguimiento_publico(t)` (sin sesión).
 
-**Producción (Taller):** `produccion_lectura()`, `montos_pasos(p_ventas bigint[])` (v86: lo que se paga por cada paso pendiente con la regla de `_monto_etapa`, solo admin, solo lectura), `asignar_etapa(eid, tid, p_para)`, `asignar_etapas(p)`, `asignar_categoria_item(iid, cid)`, `crear_orden_exhibicion(p)`, `cancelar_orden_exhibicion(vid)`, `terminar_etapa_madera(eid, foto_url)`.
+**Producción (Taller):** `produccion_lectura()`, `montos_pasos(p_ventas bigint[])` (v86 · y v87: el aviso "Terminó …" de `marcar_etapa_terminada` y `terminar_etapa_madera` lleva a `taller.html?trabajo=<id del paso>`; lo que se paga por cada paso pendiente con la regla de `_monto_etapa`, solo admin, solo lectura), `asignar_etapa(eid, tid, p_para)`, `asignar_etapas(p)`, `asignar_categoria_item(iid, cid)`, `crear_orden_exhibicion(p)`, `cancelar_orden_exhibicion(vid)`, `terminar_etapa_madera(eid, foto_url)`.
 
 **Trabajador:** `mis_trabajos()`, `mis_pagos()`, `empezar_etapa(eid)`, `ordenar_mis_trabajos(p_ids)`, `marcar_etapa_terminada(eid, foto_url)`, `pedir_vale(p_monto, p_nota)`.
 
