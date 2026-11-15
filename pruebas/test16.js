@@ -150,13 +150,13 @@ const rpcs=[];
  ok('La venta dice En fabricación',(await p.textContent('#fichaBody .f-cab')).includes('En fabricación'));
  await p.$eval('#fichaBody',x=>{x.closest('.sheet').scrollTop=0;const b=x.closest('.sheet-body');if(b)b.scrollTop=0;});await w(300);await p.screenshot({path:'shots4/l5c-arriba.png'});
  await p.$eval('#fichaBody details[data-sec="productos"]',x=>x.scrollIntoView({block:'start'}));await w(300);await p.screenshot({path:'shots4/l5b-productos.png'});
- ok('Al final de Productos: Ver fabricación',(await p.getAttribute('#fichaBody a.f-ver-prod','href'))==='produccion.html?abrir=1'&&(await p.textContent('#fichaBody a.f-ver-prod'))==='Ver fabricación');
+ ok('Al final de Productos: Ver fabricación',(await p.getAttribute('#fichaBody a.f-ver-prod','href'))==='taller.html?abrir=1'&&(await p.textContent('#fichaBody a.f-ver-prod'))==='Ver fabricación');
  await p.screenshot({path:'shots4/l5-avance.png'});
- await p.click('#fichaBody a.f-ver-prod');await p.waitForURL('**/produccion.html*');await w(1200);
- ok('Llega a Producción',p.url().includes('produccion.html'),p.url());
+ await p.click('#fichaBody a.f-ver-prod');await p.waitForURL('**/taller.html*');await w(1200);
+ ok('Llega al Taller',p.url().includes('taller.html'),p.url());
  ok('Abre la ficha de ese pedido en Producción',await p.isVisible('#sheetFicha.open'));
  await p.goBack({waitUntil:'commit'});await w(600);
- ok('Atrás primero cierra la ficha de Producción',p.url().includes('produccion.html')&&!(await p.$('#sheetFicha.open')));
+ ok('Atrás primero cierra la ficha del Taller',p.url().includes('taller.html')&&!(await p.$('#sheetFicha.open')));
  await p.goBack({waitUntil:'commit'});await p.waitForURL('**/ventas.html*');await w(1800);
  ok('Atrás otra vez vuelve a la venta con su ficha abierta',await p.isVisible('#sheetFicha.open')&&(await p.textContent('#fichaBody')).includes('María González'),p.url());
  if(!(await p.$eval('#fichaBody details[data-sec="mas"]',x=>x.open))){await p.click('#fichaBody details[data-sec="mas"] summary');await w(300);}
