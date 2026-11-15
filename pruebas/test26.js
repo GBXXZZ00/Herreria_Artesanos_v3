@@ -188,7 +188,7 @@ async function entrar(b,user,rol,nombre){
  ok('La hoja de terminar dice cuál es',(await t.textContent('#terminarTTitulo'))==='Terminar Hierro' && (await t.textContent('#terminarTSub')).includes('Puerta Lineal · N° 40'));
  ok('Sin foto no se puede terminar',await t.isDisabled('#btnTConfirmar') && (await t.textContent('#tFotoAyuda'))==='La foto es obligatoria para terminar.' && (await t.textContent('#btnTFoto')).includes('Toca para tomar la foto'));
  await t.screenshot({path:'shots5/t3-terminar.png'});
- await t.setInputFiles('#tFotoInput',__dirname+'/foto-puerta.png');await t.waitForTimeout(500);
+ await t.setInputFiles('#tFotoInput',__dirname+'/foto-puerta.png');await t.waitForSelector('#btnTFoto img',{timeout:8000}).catch(()=>{});
  ok('Con la foto: se ve la foto y el botón dice cuánto suma',!(await t.isDisabled('#btnTConfirmar')) && !!(await t.$('#btnTFoto img')) && (await t.textContent('#btnTConfirmar'))==='Terminar · suma $25');
  await t.screenshot({path:'shots5/t3c-terminar-foto.png'});
  fallaTerminar=true;
