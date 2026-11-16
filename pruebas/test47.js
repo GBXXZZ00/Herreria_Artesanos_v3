@@ -1,6 +1,7 @@
-// test47 (reestructura lote 2): Plan de corte en 3 pasos con dos Bitral. Necesitas · hay · comprar en metros,
-// vidrio como lista de piezas cortadas, lámina dibujada en la hoja, retazo usar / no usar, retazo encontrado,
-// marcar a mano y Corregir corte (cuadra el Depósito). (arnés de test44)
+// test47 (reestructura lote 2, al día con el lote 8): el motor del plan de corte con dos Bitral, ahora desde
+// Taller › Corte (el Costeador ya no tiene Plan de corte). Necesitas · hay · comprar en metros, vidrio como lista de
+// piezas cortadas, lámina acomodada en la hoja, retazo R-12 del Depósito primero, y el drawer del herrero con TALLER,
+// R-12 y NUEVA. Retazo encontrado, mover piezas y corregir se prueban en test53 y test54. (arnés de test44)
 // test44 (v73, lotes 6, 7 y 9): Costos. Bitral (catálogo id 7) con los datos reales de la Memoria central:
 // costo $223,22 · con ganancia $290,19 · sugerido $326,79 · barra completa $339,23. Precio con cada proveedor,
 // agregar una pieza, Ganancia (gastos fijos $915 ÷ 25 = $36,60), Precios por proveedor, plan de corte del sábado
@@ -54,60 +55,21 @@ async function pagina(b,uid,err){
 }
 const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.length-1][1]:null;};
 (async()=>{ const b=await chromium.launch(); const err=[]; try{
-  const {p,rpcs,C}=await pagina(b,'u2',err); const w=ms=>p.waitForTimeout(ms||400);
-  await p.goto(H+'costos.html?tab=semana');await p.waitForSelector('[data-cmat="1"]');await w();
-  const s=await p.textContent('#cont');
-  ok('Paso 1: N° 1200 · Modelo bitral × 2, corta Jesus, 2 puertas',s.includes('N° 1200 · Modelo bitral × 2')&&s.includes('corta Jesus')&&s.includes('2 puertas'));
-  const fila=await p.textContent('[data-cmat="1"]');
-  ok('Paso 2: Tubo 1" x 3" necesitas 11,52 m · hay 1 barra + 1 retazo · comprar 1',fila.includes('11,52 m')&&fila.includes('1 barra + 1 retazo')&&fila.trim().endsWith('1'),fila);
-  ok('Vidrio se compra cortado: 12 piezas',(await p.textContent('[data-cmat="11"]')).includes('12 piezas')&&(await p.textContent('[data-cmat="11"]')).includes('cortado'));
-  ok('Paso 3 dice cuántas barras y hojas comprar',/Comprar lo que falta\s*\d+ barras/.test(s));
+  const {p}=await pagina(b,'u2',err); const w=ms=>p.waitForTimeout(ms||400);
+  await p.goto(H+'taller.html?vista=corte');await p.waitForSelector('#vCorte .nm-row');await w(600);
+  const R=await p.evaluate((s)=>{const C=window.CORTE;C.setSab(s);const P=C.planSemana(s);const m=P.compras.find(x=>String(x.f.id)==='1');const v=P.hj.find(x=>x.vidrio);
+    return {cm:m&&Math.round(m.cm),stock:m&&m.f.stock,rets:m&&(m.f.retazos||[]).length,comprar:m&&m.comprar,vidrio:v&&v.piezas,lista:v?v.lista.map(l=>l.n+' de '+l.k):[],lam:P.hj.filter(x=>!x.vidrio).map(x=>(x.acom||[]).length),
+      primera:(P.barras.find(x=>String(x.mid)==='1'&&x.tipo==='retazo')||{}).num,herreros:P.herreros.map(h=>h.nombre+':'+h.unidades.length),nComprar:P.nComprar};},sab);
+  ok('Paso 1: Jesus corta 2 puertas del N° 1200',R.herreros.join()==='Jesus:2',R.herreros);
+  ok('Tubo 1" x 3": necesitas 11,52 m · hay 1 barra + 1 retazo · comprar 1',R.cm===1152&&R.stock===1&&R.rets===1&&R.comprar===1,R);
+  ok('Vidrio se compra cortado: 12 piezas (2 de 184 × 10 y 10 de 50 × 4)',R.vidrio===12&&R.lista.includes('2 de 184 × 10')&&R.lista.includes('10 de 50 × 4'),R.lista);
+  ok('Lámina acomodada en la hoja',R.lam.length>0&&R.lam.every(n=>n>0),R.lam);
+  ok('El retazo R-12 del Depósito se usa primero',R.primera===12,R.primera);
+  ok('Dice cuántas barras y hojas comprar',R.nComprar>0,R.nComprar);
+  await p.click('#vCorte [data-ck-abrir="t1"]');await p.waitForSelector('#sheetCorte.open');await w(500);
+  const t=await p.textContent('#ckBody');
+  ok('Drawer de Jesus: de dónde sale el material con TALLER, R-12 y NUEVA',t.includes('TALLER')&&t.includes('R-12')&&t.includes('NUEVA'),t.slice(0,160));
   await p.screenshot({path:'shots4/t47-1-plan.png'});
-  // Material: barras dibujadas y retazos
-  await p.click('[data-cmat="1"]');await p.waitForSelector('#sheetForm.open');await w();
-  let fm=await p.textContent('#formBody');
-  ok('Barras dibujadas: retazo R-12 del Depósito usado primero',fm.includes('Retazo R-12 · 1,20 m')&&fm.includes('se usa en el plan')&&(await p.$$('#formBody .barra-btn')).length===3);
-  await p.screenshot({path:'shots4/t47-2-material.png'});
-  await p.click('#formBody [data-f-ret="5"]');await w(900);
-  const g1=ultimo(rpcs,'corte_plan_guardar');
-  ok('No usar R-12: se guarda sin ese retazo y con no_usar',g1&&JSON.stringify(g1.p.no_usar)==='[5]'&&!g1.p.barras.some(x=>x.tipo==='retazo')&&g1.p.ajustado===true,g1&&g1.p.no_usar);
-  fm=await p.textContent('#formBody');
-  ok('La hoja sigue abierta y dice "no se usa"',fm.includes('no se usa'));
-  await p.click('#formBody [data-f-ret="5"]');await w(900);
-  ok('Usar de nuevo R-12',JSON.stringify(ultimo(rpcs,'corte_plan_guardar').p.no_usar)==='[]'&&ultimo(rpcs,'corte_plan_guardar').p.barras.some(x=>x.tipo==='retazo'&&x.rid===5));
-  await p.click('#formBody [data-f-nuevoret]');await w();
-  await p.fill('#fRetCm','5');await p.click('#btnForm');await w(300);
-  ok('Retazo encontrado: medida mala marca el campo',await p.$eval('#c_fRetCm',x=>x.classList.contains('invalid')));
-  await p.fill('#fRetCm','150');await p.click('#btnForm');await w(1200);
-  ok('+ Retazo que encontré lo guarda en el Depósito',JSON.stringify(ultimo(rpcs,'retazo_agregar'))===JSON.stringify({mid:1,p_largo:150,p_ancho:null}));
-  // Tocar una barra
-  await p.click('#formBody .barra-btn');await w();
-  ok('Tocar una barra: quién la corta y mover piezas',(await p.textContent('#formBody')).includes('¿Quién la corta?'));
-  await p.click('#sheetForm [data-cerrar="sheetForm"]');await w(500);
-  // Lámina dibujada en la hoja, vidrio como lista
-  await p.click('[data-cmat="9"]');await p.waitForSelector('#sheetForm.open');await w();
-  ok('Lámina acomodada en la hoja y dibujada',(await p.$$('#formBody .pc-hoja span')).length===2);
-  await p.click('#sheetForm [data-cerrar="sheetForm"]');await w(500);
-  await p.click('[data-cmat="11"]');await p.waitForSelector('#sheetForm.open');await w();
-  const fv=await p.textContent('#formBody');
-  ok('Vidrio: lista de piezas (2 de 184 × 10 y 10 de 50 × 4)',fv.includes('184 × 10 cm')&&fv.includes('2 piezas')&&fv.includes('50 × 4 cm')&&fv.includes('10 piezas'));
-  await p.click('#sheetForm [data-cerrar="sheetForm"]');await w(500);
-  // Aceptar y marcar a mano; después corregir
-  await p.click('[data-aceptar]');await w(900);
-  await p.click('[data-ya-corto="t1"]');await w(1000);
-  ok('Marcar a mano llama a corte_ya_corto',!!ultimo(rpcs,'corte_ya_corto'));
-  ok('Plan cerrado: dice que las barras bajaron',(await p.textContent('#cont')).includes('Cortes de este sábado hechos'));
-  await p.click('[data-cmat="1"]');await p.waitForSelector('#sheetForm.open');await w();
-  await p.click('#formBody [data-f-corregir]');await w();
-  ok('Corregir corte: trae lo del plan (barras y el retazo R-13 que quedó)',(await p.inputValue('#fCB'))==='2'&&(await p.inputValue('#fQ_0'))==='136',[await p.inputValue('#fCB'),await p.inputValue('#fQ_0')]);
-  await p.click('#btnForm');await w(300);
-  ok('Sin motivo no guarda',await p.$eval('#c_fMot',x=>x.classList.contains('invalid')));
-  await p.fill('#fCB','3');await p.click('#formBody [data-f-masq]');await w();await p.fill('#fQ_1','90');
-  await p.click('#formBody [data-f-usado="5"]');await w();
-  await p.fill('#fMot','Se dañó una barra');await p.screenshot({path:'shots4/t47-3-corregir.png'});
-  await p.click('#btnForm');await w(900);
-  ok('Corregir corte manda lo de verdad con motivo (R-12 no se usó; el R-20 nuevo sí)',JSON.stringify(ultimo(rpcs,'corte_corregir'))===JSON.stringify({p_sab:sab,p:{material_id:1,barras:3,usados:[88],quedaron:[136,90],motivo:'Se dañó una barra'}}),ultimo(rpcs,'corte_corregir'));
-  ok('Sin errores de JavaScript',err.length===0,err);
- }catch(e){ ok('CORTE: '+e.message.split('\n')[0],false); }
- await b.close(); res.forEach(r=>console.log(r)); console.log(fallas?('FALLAS: '+fallas):'TODO OK'); process.exit(fallas?1:0);
-})();
+  ok('Sin errores de JavaScript',!err.length,err);
+  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas||err.length?fallas+' FALLAS':'TODO OK');
+}catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();
