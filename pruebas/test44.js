@@ -112,7 +112,7 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   const h=await pagina(b,'t1',err);
   await h.p.waitForSelector('.tj-corte',{timeout:8000}).catch(()=>{});
   const th=await h.p.textContent('#vistaTrabajo').catch(()=>'');
-  ok('Mi trabajo: el herrero ve su hoja de corte con el retazo a guardar',th.includes('Tu hoja de corte')&&th.includes('Guarda el retazo de 1,12 m'));
+  ok('Mi trabajo: el herrero ve su hoja de corte con el retazo a guardar',th.includes('Qué cortar')&&th.includes('guarda el retazo de 1,12 m'));
   await h.p.screenshot({path:'shots4/t44-3-hoja-herrero.png'});
   console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas||err.length?fallas+' FALLAS':'TODO OK');
 }catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

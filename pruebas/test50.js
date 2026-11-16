@@ -152,7 +152,7 @@ const err=[];
  ok('   "Ya pagaste $15 esta semana (Pedro). Lo que no pagues pasa a la semana siguiente con ↩."',(await a.textContent('#rPorPagar .tl-nota'))==='Ya pagaste $15 esta semana (Pedro). Lo que no pagues pasa a la semana siguiente con ↩.');
  const rv=await a.textContent('#rVales');
  ok('4 · Vales: "Luis Paz pidió $20 · Pasaje de la semana · hoy 8:10 am" con Revisar, y "Jesus · $10 aprobado · se descuenta al pagarle"',rv.includes('Luis Paz pidió $20') && rv.includes('Pasaje de la semana · hoy 8:10 am') && (await a.getAttribute('#rVales .tl-btn-sm','data-nomina-t'))==='tl' && rv.includes('Jesus · $10 aprobado') && rv.includes('mar 17 · se descuenta al pagarle'));
- ok('Atajos: "✂ Plan de corte sáb 21" y "+ Fabricar para exhibición"',(await a.$$eval('#vResumen .tl-atajos > *',x=>x.map(y=>y.textContent))).join('|')==='✂ Plan de corte sáb 21|+ Fabricar para exhibición' && (await a.getAttribute('#vResumen .tl-atajos a','href'))==='costos.html?tab=semana&para=2026-11-21');
+ ok('Atajos: "✂ Plan de corte sáb 21" y "+ Fabricar para exhibición"',(await a.$$eval('#vResumen .tl-atajos > *',x=>x.map(y=>y.textContent))).join('|')==='✂ Plan de corte sáb 21|+ Fabricar para exhibición' && !!(await a.$('#vResumen .tl-atajos [data-ir-corte]')));
  ok('Nada se sale de la pantalla en Resumen',await a.evaluate(()=>document.documentElement.scrollWidth<=390));
  await a.screenshot({path:'shots5/t50-resumen.png',fullPage:true});
  // Tocar un trabajador: sus trabajos de la semana con foto
@@ -201,7 +201,7 @@ const err=[];
  ok('   y se quita ?abrir de la dirección',!a.url().includes('abrir='));
  const f=await a.textContent('#fichaBody');
  ok('Drawer: "Entrega sáb 21 nov · en 2 días · pagado completo"',(await a.textContent('#fichaBody .tl-ds'))==='Entrega sáb 21 nov · en 2 días · pagado completo',await a.textContent('#fichaBody .tl-ds'));
- ok('Atajos Venta · Seguimiento · ✂ Corte · Costeo',(await a.$$eval('#fichaBody .tl-ats a',x=>x.map(y=>y.textContent))).join(' · ')==='Venta · Seguimiento · ✂ Corte · Costeo');
+ ok('Atajos Venta · Seguimiento · ✂ Corte · Costeo',(await a.$$eval('#fichaBody .tl-ats > *',x=>x.map(y=>y.textContent))).join(' · ')==='Venta · Seguimiento · ✂ Corte · Costeo');
  ok('   Costeo abre el modelo en el Costeador',(await a.getAttribute('#fichaBody .tl-ats a:has-text("Costeo")','href'))==='costos.html?modelo=7');
  ok('Una sección por unidad: "Modelo bitral · 1 de 2" y "· 2 de 2", cada una con un solo Asignar',(await a.$$eval('#fichaBody .tl-uh-t b',x=>x.map(y=>y.textContent))).join('|')==='Modelo bitral · 1 de 2|Modelo bitral · 2 de 2' && (await a.$$('#fichaBody [data-asignar-todo]')).length===2);
  ok('Hierro: "Jesus · terminó hoy 9:40 am", con su foto y "$30 por pagar"',f.includes('Jesus · terminó hoy 9:40 am') && !!(await a.$('#fichaBody .tl-paso.h .tl-mini img')) && (await a.textContent('#fichaBody .tl-paso.h .tl-monto')).replace(/\s/g,'').startsWith('$30') && (await a.textContent('#fichaBody .tl-paso.h .tl-monto small'))==='por pagar');
