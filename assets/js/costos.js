@@ -491,7 +491,7 @@
       if(!F.mid){ $('c_nvMod').classList.add('invalid'); return; }
       if(!F.kind || (F.kind === 'Otro' && !String(F.n || '').trim())){ ($(F.kind === 'Otro' ? 'c_nvN' : 'c_nvKind') || {}).classList.add('invalid'); return; }
       const mid = F.mid, kind = F.kind, n = String(F.n || '').trim();
-      cerrarHoja('sheetForm', true); F = null; abrirFicha(mid); abrirExtra('nuevo'); F.kind = kind; if(kind === 'Otro') F.n = n; pintarForm(); return;
+      cerrarHoja('sheetForm', true); F = null; abrirFicha(mid); abiertos.add('s-extras'); pintarFicha(); abrirExtra('nuevo'); F.kind = kind; if(kind === 'Otro') F.n = n; pintarForm(); return;
     }
     const nombre = String(F.nombre || '').trim();
     if(!nombre){ $('c_nvNom').classList.add('invalid'); return; }
@@ -849,7 +849,7 @@
     const md = e.target.closest('[data-modelo]'); if(md){ const id = isNaN(+md.dataset.modelo) ? md.dataset.modelo : +md.dataset.modelo; return abrirFicha(id); }
     const ir = e.target.closest('[data-ir]'); if(ir){ const id = ir.dataset.ir; if(id !== 's-cortes' && !abiertos.has(id)){ abiertos.add(id); pintarFicha(); } const s = $(id); if(s) s.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
     if(e.target.closest('[data-nuevo-modelo]')){ const b = conCortes()[0]; return abrirForm({ t:'nuevo', que:'modelo', nombre:'', tipo:'Puerta Multilock', modo:b ? 'copiar' : 'estandar', de:b ? b.id : null, mid:null, kind:null, n:'', bm:'' }); }
-    const xd = e.target.closest('[data-extra-de]'); if(xd){ const id = isNaN(+xd.dataset.extraDe) ? xd.dataset.extraDe : +xd.dataset.extraDe; abrirFicha(id); if(D().costeo[id]) abrirExtra(+xd.dataset.i); return; }
+    const xd = e.target.closest('[data-extra-de]'); if(xd){ const id = isNaN(+xd.dataset.extraDe) ? xd.dataset.extraDe : +xd.dataset.extraDe; abrirFicha(id); abiertos.add('s-extras'); pintarFicha(); if(D().costeo[id]) abrirExtra(+xd.dataset.i); return; }
     // ---- Ficha: cortes en la fila, acordeones y franja del precio
     if(e.target.closest('[data-salir-ficha]')){ if(sucio() && !confirm('Tienes cortes sin guardar. ¿Salir sin guardarlos?')) return; if(sucio()){ D().costeo[sel].piezas = JSON.parse(GUARD); } franja = false; cerrarHoja('sheetFicha', true); pintar(); return; }
     let fb;
@@ -883,7 +883,7 @@
     const ac = e.target.closest('[data-acc]'); if(ac){ const c = D().costeo[sel]; if(ac.dataset.acc === 'nuevo') return abrirForm({ t:'acc', k:null, nuevo:true, cant:1 }); return abrirForm({ t:'acc', k:ac.dataset.acc, k0:ac.dataset.acc, cant:c.acc[ac.dataset.acc] }); }
     const rd = e.target.closest('[data-rend]'); if(rd && D().costeo[sel]){ const it = D().insumos.find(y => String(y.id) === rd.dataset.rend); if(!it) return; const pr = Number((D().costeo[sel].rend || {})[it.id]) || 0; return abrirForm({ t:'rend', id:it.id, r:pr || it.r || '', propio:!!pr }); }
     const ex = e.target.closest('[data-extra]'); if(ex && D().costeo[sel]) return abrirExtra(ex.dataset.extra === 'nuevo' ? 'nuevo' : +ex.dataset.extra);
-    const xp = e.target.closest('[data-extra-pend]'); if(xp){ const id = +xp.dataset.extraPend; abrirFicha(id); if(D().costeo[id]) abrirExtraClave(xp.dataset.k); return; }
+    const xp = e.target.closest('[data-extra-pend]'); if(xp){ const id = +xp.dataset.extraPend; abrirFicha(id); abiertos.add('s-extras'); pintarFicha(); if(D().costeo[id]) abrirExtraClave(xp.dataset.k); return; }
     if(e.target.closest('[data-reglas]')) return abrirForm({ t:'reglas' });
     const mt = e.target.closest('[data-mat]'); if(mt){ if(mt.dataset.mat === 'nuevo') return abrirForm({ t:'matnuevo', tipo:filPrecios === 'perfiles' || !esFabP(filPrecios) ? 'hierro' : filPrecios }); const f = fabDe(mt.dataset.mat); return abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
     const ins = e.target.closest('[data-insumo]'); if(ins) return abrirForm({ t:'insumo', id:ins.dataset.insumo, grupo:filPrecios });
@@ -909,7 +909,7 @@
     try{ await X.cargar(); prov = D().prov; if(window.CORTE) await window.CORTE.cargar(); if(window.COMPRA) await window.COMPRA.cargar().catch(() => {}); if(window.COMPRA) window.COMPRA.alCambiar(() => recargar().catch(() => {})); }
     catch(e){ $('cont').innerHTML = `<div class="caja-amar" style="margin:16px 0">${esc(errTxt(e))}</div><button class="btn-secondary" type="button" data-recargar style="width:100%">Reintentar</button>`; document.addEventListener('click', (ev) => { if(ev.target.closest('[data-recargar]')) location.reload(); }); return; }
     pintar();
-    const mq = q.get('modelo'); if(mq){ const id = isNaN(+mq) ? mq : +mq; if(modelo(id)){ abrirFicha(id); if(q.get('extra') && D().costeo[id]) abrirExtraClave(q.get('extra')); } }
+    const mq = q.get('modelo'); if(mq){ const id = isNaN(+mq) ? mq : +mq; if(modelo(id)){ abrirFicha(id); if(q.get('extra') && D().costeo[id]){ abiertos.add('s-extras'); pintarFicha(); abrirExtraClave(q.get('extra')); } } }
     const mat = q.get('material'); if(mat && tab === 'materiales'){ const f = fabDe(mat); if(f) abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
   })();
 })();

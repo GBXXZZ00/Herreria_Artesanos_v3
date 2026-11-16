@@ -1,7 +1,7 @@
 // test49 (reestructura lote 7): Extras de punta a punta. Costos: extra con sus cortes (+ Pieza, Copiar de otro
 // modelo), mano de obra de la protección por categoría, manillón sin cortes, oculto, grupo "Extras vendidos sin
-// costear" y protección incluida si el Catálogo la trae tildada. Plan de corte: los cortes del extra entran al plan;
-// el extra sin cortes sale con aviso y "Cortar a mano". Inicio: aviso. Mi trabajo: "córtalo como siempre".
+// costear" y protección incluida si el Catálogo la trae tildada. Taller › Corte: los cortes del extra entran al plan;
+// el extra sin cortes sale en el drawer del herrero y viaja con el envío ("córtalo como siempre"). Inicio: aviso. Mi trabajo: "córtalo como siempre".
 // Venta: el manillón toma el precio de Costos. (arnés de test47)
 const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const fs=require('fs');
@@ -111,21 +111,17 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   // ===== Plan de corte: Bitral con protección (con cortes) y marco decorativo (sin cortes)
   m1.extras=[{id:11,n:'Marco decorativo',v:0,piezas:[],ofrecer:true,sin_cortes:false,mano:null},{id:12,n:'Protección',v:0,piezas:[[3,2,150]],ofrecer:true,sin_cortes:false,mano:null}];
   m1.actualizado_en='2026-11-08T10:00:00';
-  await p.goto(H+'costos.html?tab=semana');await p.waitForSelector('[data-cmat="1"]');await w();
-  s=await p.textContent('#cont');
-  ok('Plan: los cortes de la protección entran (Tubo 1" x 1")',!!(await p.$('[data-cmat="3"]')));
-  const P=await p.evaluate(()=>{const P=CORTE.planSemana(CORTE.sab);return {ext:P.asign.map(u=>u.ext.map(e=>e.n)),falta:P.asign.map(u=>u.extFalta.map(x=>x.k)),f:P.firma};});
+  await p.goto(H+'taller.html?vista=corte');await p.waitForSelector('#vCorte .nm-row');await w(600);
+  const P=await p.evaluate((sb)=>{const C=window.CORTE;C.setSab(sb);const P=C.planSemana(sb);return {ext:P.asign.map(u=>u.ext.map(e=>e.n)),falta:P.asign.map(u=>u.extFalta.map(x=>x.k)),f:P.firma,t3:P.compras.some(m=>String(m.f.id)==='3')};},sab);
+  ok('Plan: los cortes de la protección entran (Tubo 1" x 1")',P.t3,P);
   ok('Solo la unidad que pidió protección la lleva',JSON.stringify(P.ext)==='[["Protección"],[]]'&&JSON.stringify(P.falta)==='[[],["marco_decorativo"]]'&&P.f.includes('+proteccion'),P);
-  ok('Aviso: Marco decorativo del N° 1200 (2 de 2) sin cortes',s.includes('Marco decorativo del N° 1200 (2 de 2) sin cortes: no entra al plan.'));
-  ok('Cargar cortes va al extra del modelo',!!(await p.$('a[href*="modelo=7&extra=marco_decorativo&volver=semana"]')));
+  await p.click('#vCorte [data-ck-abrir="t1"]');await p.waitForSelector('#sheetCorte.open');await w(500);
+  s=await p.textContent('#ckBody');
+  ok('Drawer de Jesus: Marco decorativo sin cortes, córtalo como siempre',s.includes('Marco decorativo: sin cortes, córtalo como siempre'));
   await p.screenshot({path:'shots4/t49-2-plan.png'});
-  await p.click('[data-extra-mano="901"]');await w(900);
-  g=ultimo(rpcs,'corte_plan_guardar');
-  ok('Cortar a mano guarda el extra para la hoja de Jesus',g&&JSON.stringify(g.p.extras_mano)===JSON.stringify([{eid:901,k:'marco_decorativo',extra:'Marco decorativo',etq:'N° 1200 (2 de 2) · Modelo bitral',tid:'t1'}]),g&&g.p.extras_mano);
-  s=await p.textContent('#cont');
-  ok('Después: Jesus lo corta a mano esta semana',s.includes('Jesus lo corta a mano esta semana')&&!(await p.$('[data-extra-mano="901"]')));
-  await p.click('[data-hoja-h="t1"]');await p.waitForSelector('#sheetDet.open');await w();
-  ok('Hoja del herrero: Marco decorativo, córtalo como siempre',(await p.textContent('#detBody')).includes('Marco decorativo: no tiene plan. Córtalo como siempre.'));
+  await p.click('[data-ck-enviar]');await w(900);
+  g=ultimo(rpcs,'corte_enviar');
+  ok('Al enviar, el extra sin cortes va para la hoja de Jesus',g&&JSON.stringify(g.p_plan.extras_mano)===JSON.stringify([{eid:901,k:'marco_decorativo',extra:'Marco decorativo',etq:'N° 1200 (2 de 2) · Modelo bitral',tid:'t1'}]),g&&g.p_plan&&g.p_plan.extras_mano);
   // ===== Venta: el manillón toma el precio de Costos
   await p.goto(H+'venta.html');await w(1500);
   const mp=await p.evaluate(()=>{try{return SpecsProducto.calcular({tipo:'Puerta Multilock',estado:{manillon:'Recto'}},{id:7,precio_base:320,especificaciones_base:{}}).texto;}catch(e){return 'ERR '+e.message;}});

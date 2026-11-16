@@ -19,6 +19,8 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
   - Precios (C4): tabla material × proveedor con el precio escrito en la celda y el más barato en verde, un solo "Guardar precios (N cambios)", + Material, + Proveedor y Reglas.
   - Finanzas: la ficha del proveedor ya no lista precios (lleva a Costeador › Precios). Enlaces y textos viejos a "Costos › Semana" apuntan a Taller › Corte.
 - Sin migraciones. El cálculo (`costeo.js`) no se tocó: Bitral $223,22 · $290,19 · $326,79 · $339,23 (test44).
+- Corregido en Taller › Corte: el extra que se vendió sin cortes (marco decorativo, protección) salía en el drawer del herrero pero no le llegaba a su "Qué cortar"; ahora viaja con el envío ("córtalo como siempre"). Al venir de un extra, la ficha abre sola el acordeón Extras.
+- Pruebas: test46, test47, test48 y test49 se pasaron al Costeador nuevo y a Taller › Corte (el plan de corte ya no está en el Costeador). Batería completa: todo OK salvo test46 y test49, que se arreglaron y pasan solas.
 - Pendiente por decidir (no se tocó la base): que + Nuevo cree el modelo en el Catálogo oculto hasta tener foto, con su tipo y medida, pide cambiar `costeo_pasar_catalogo` (hoy crea el producto al pasarlo al catálogo, con medida 2 × 1). Esconder Depósito › Fabricación para Ray: no se hizo, se pregunta antes.
 - Pruebas: test55 nueva; test44 al día (franja, cortes en la fila, Precios en tabla). `?v=86`.
 - Está tocando: Costeador (`costos.html`, `costos.js`), Finanzas (ficha del proveedor).
