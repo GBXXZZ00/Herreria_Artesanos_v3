@@ -151,7 +151,7 @@ const err=[];
  ok('   Jesus 1 ↩ · 4 · $125 · −$10 · $115; Luis Paz 2 · $95 · $95; Total $220 −$10 $210',filasP.join('|')==='Jesus1 ↩·4 · $125·−$10·$115|Luis Paz·2 · $95···$95|Total·$220·−$10·$210',filasP);
  ok('   "Ya pagaste $15 esta semana (Pedro). Lo que no pagues pasa a la semana siguiente con ↩."',(await a.textContent('#rPorPagar .tl-nota'))==='Ya pagaste $15 esta semana (Pedro). Lo que no pagues pasa a la semana siguiente con ↩.');
  const rv=await a.textContent('#rVales');
- ok('4 · Vales: "Luis Paz pidió $20 · Pasaje de la semana · hoy 8:10 am" con Revisar, y "Jesus · $10 aprobado · se descuenta al pagarle"',rv.includes('Luis Paz pidió $20') && rv.includes('Pasaje de la semana · hoy 8:10 am') && (await a.getAttribute('#rVales a.tl-btn-sm','href'))==='nomina.html?t=tl' && rv.includes('Jesus · $10 aprobado') && rv.includes('mar 17 · se descuenta al pagarle'));
+ ok('4 · Vales: "Luis Paz pidió $20 · Pasaje de la semana · hoy 8:10 am" con Revisar, y "Jesus · $10 aprobado · se descuenta al pagarle"',rv.includes('Luis Paz pidió $20') && rv.includes('Pasaje de la semana · hoy 8:10 am') && (await a.getAttribute('#rVales .tl-btn-sm','data-nomina-t'))==='tl' && rv.includes('Jesus · $10 aprobado') && rv.includes('mar 17 · se descuenta al pagarle'));
  ok('Atajos: "✂ Plan de corte sáb 21" y "+ Fabricar para exhibición"',(await a.$$eval('#vResumen .tl-atajos > *',x=>x.map(y=>y.textContent))).join('|')==='✂ Plan de corte sáb 21|+ Fabricar para exhibición' && (await a.getAttribute('#vResumen .tl-atajos a','href'))==='costos.html?tab=semana&para=2026-11-21');
  ok('Nada se sale de la pantalla en Resumen',await a.evaluate(()=>document.documentElement.scrollWidth<=390));
  await a.screenshot({path:'shots5/t50-resumen.png',fullPage:true});
@@ -302,8 +302,8 @@ const err=[];
  ok('   y "Ver lo asignado" lleva a En proceso',(await a.getAttribute('#chips .chip.active','data-f'))==='proceso');
 
  // Pestaña Nómina y vuelta a Pedidos sin apilar
- await a.click('#tabsTaller a[href="nomina.html"]');await a.waitForURL('**/nomina.html');await a.waitForTimeout(400);
- ok('Nómina tiene las pestañas con Pedidos y el menú marca Taller',(await a.textContent('.tabs-mod .on'))==='Nómina' && (await a.textContent('#menuModulos .nav-item.active span'))==='Taller');
+ await a.click('#tabsTaller [data-vista="nomina"]');await a.waitForSelector('.nm-row');await a.waitForTimeout(400);
+ ok('La pestaña Nómina se abre dentro del Taller y el menú marca Taller',(await a.textContent('#tabsTaller .on'))==='Nómina' && await a.isVisible('#vNomina') && (await a.textContent('#menuModulos .nav-item.active span'))==='Taller');
 
  // Ventas · Cotizaciones
  await a.goto('http://127.0.0.1:8765/ventas.html');await a.waitForTimeout(500);

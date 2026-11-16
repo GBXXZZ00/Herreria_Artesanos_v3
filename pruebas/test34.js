@@ -63,14 +63,14 @@ async function pagina(b,uid,st){
  // ===== 2) Nómina: trabajo sin monto =====
  const s2={rpcs:[],err:[]};const n=await pagina(b,'u1',s2);const wn=ms=>n.waitForTimeout(ms||400);
  await n.goto(H+'nomina.html?t=t1');await n.waitForSelector('#sheetTrab.open');await wn(800);
- ok('Nómina: dice que se tocan para resolver',(await n.textContent('#trabBody')).includes('Tócalos para resolverlo'));
- await n.click('[data-item="701"]');await wn(900);
+ ok('Nómina: dice que se toca para ponerle el monto',(await n.textContent('#trabBody')).includes('tócalo para ponérselo'));
+ await n.click('[data-item="701"] .nm-tx');await wn(900);
  ok('Sin categoría: elige la categoría ahí mismo',(await n.$$('#itemBody [data-cat-item]')).length===2);
  await n.screenshot({path:'shots5/a2-nomina-atajo.png'});
  await n.click('#itemBody [data-cid="4"]');await wn(900);
  const ac=s2.rpcs.find(x=>x[0]==='asignar_categoria_item');
  ok('Pone la categoría al producto y recarga',ac&&ac[1].iid===55&&ac[1].cid===4&&(await n.textContent('#toast')).includes('Ya tiene su monto'),ac&&ac[1]);
- await n.click('[data-item="702"]');await wn(600);
+ await n.click('[data-item="702"] .nm-tx');await wn(600);
  ok('Con categoría pero sin tarifa: lleva a poner la tarifa',(await n.getAttribute('#itemBody a[href^="categorias-pago.html"]','href'))==='categorias-pago.html?editar=4');
  await n.goto(H+'categorias-pago.html?editar=4');await wn(1200);
  ok('Categorías: ?editar abre esa categoría',await n.isVisible('#sheetFicha')&&(await n.inputValue('#fNombre'))==='Puertas');

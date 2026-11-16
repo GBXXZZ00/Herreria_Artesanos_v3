@@ -1,6 +1,6 @@
-// Nómina: quién la ve y quién paga, vales que piden (solo Ray aprueba, aquí mismo), vale en
-// bolívares, trabajos sin monto, lo del domingo para la próxima semana, montos que cambiaron y
-// el recibo de un trabajo (con la foto en otro color avisada).
+// Taller › Nómina (antes nomina.html): quién la ve y quién paga, vales que piden (solo Ray aprueba,
+// en su hoja), vale en bolívares, trabajos sin monto (no se pueden marcar), lo del domingo en la misma
+// lista, montos que cambiaron y el recibo de un trabajo (con la foto en otro color avisada).
 const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
 const now=Math.floor(Date.now()/1000);
@@ -31,65 +31,73 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{const r
       if(a.tid==='t3'&&valesPedro)f.vales=[{id:9,monto:valesPedro,nota:'medicinas',fecha:hace(0),monto_bs:400,tasa:40}];return j(f); }
     if(name==='anotar_vale'){ valesPedro=a.p_monto;return j({id:9}); }
     if(name==='resolver_vale'){ if(!P.confirma_abonos)return j({message:'Solo Ray aprueba los vales'},400); fichaPedro.vale_pendiente=null; return j(null); }
-    if(name==='pagar_trabajador'){ if(cambio)return j({message:'Los montos cambiaron mientras lo veías. Revisa de nuevo'},400); return j({id:1,monto:a.esperado}); }
+    if(name==='pagar_trabajador'||name==='pagar_lo_marcado'){ if(cambio)return j({message:'Los montos cambiaron mientras lo veías. Revisa de nuevo'},400); return j({id:1,monto:a.esperado}); }
     return j(null);}
   return j([]);});}
 async function entrar(b,user,pin){const ctx=await b.newContext({...devices['iPhone 13']});await mock(ctx,user);const p=await ctx.newPage();p._e=[];p.on('pageerror',e=>p._e.push(e.message));p.on('dialog',d=>d.accept());
   await p.goto('http://127.0.0.1:8765/index.html');await p.waitForSelector('.quien-btn');await p.click('.quien-btn');for(const d of pin)await p.click(`#pinTeclado [data-t="${d}"]`);await p.waitForSelector('#vInicio.entra');return p;}
-const txt=async(p,s)=>((await p.textContent(s))||'').replace(/\s+/g,' ');
+const txt=async(p,s)=>((await p.innerText(s))||'').replace(/\s+/g,' ').trim();
 
 (async()=>{ const b=await chromium.launch(); const pags=[]; try{
- // Vendedora y trabajador no entran
+ // Vendedora y trabajador no ven la Nómina
  const y=await entrar(b,'u3','333333');pags.push(y);
- ok('La vendedora no ve Nómina en su Inicio',!(await y.$('a.ini-tile[href="nomina.html"]')));
- await y.goto('http://127.0.0.1:8765/nomina.html');await y.waitForURL('**/index.html',{timeout:8000});
- ok('La vendedora no puede entrar a nomina.html',y.url().includes('index.html'));
+ ok('La vendedora no ve Nómina en su Inicio',!(await y.$('a.ini-tile[href="taller.html?vista=nomina"]')));
+ await y.goto('http://127.0.0.1:8765/nomina.html');await y.waitForTimeout(1500);
+ ok('La vendedora que abre nomina.html cae en Pedidos del Taller, sin pestaña Nómina',y.url().includes('taller.html') && !(await y.isVisible('#tabsTaller')) && !(await y.isVisible('#vNomina')));
  const t=await entrar(b,'u5','555555');pags.push(t);
  await t.goto('http://127.0.0.1:8765/nomina.html',{waitUntil:'commit'}).catch(()=>{});await t.waitForURL('**/index.html',{timeout:8000}).catch(()=>{});await t.waitForTimeout(800);
  ok('El trabajador tampoco',t.url().includes('index.html'));
 
  // Gualfredo: ve todo pero no paga
  const g=await entrar(b,'u1','111111');pags.push(g);
- await g.waitForSelector('a.ini-tile[href="nomina.html"]');
- await g.click('a.ini-tile[href="nomina.html"]');await g.waitForSelector('.n-card');
- ok('Gualfredo ve la lista con cada trabajador y su último pago',(await g.$$('.n-card')).length===2 && (await txt(g,'.n-card >> nth=1')).includes('$60'));
- await g.click('.n-card >> nth=0');await g.waitForSelector('#sheetTrab.open');
- ok('Gualfredo no tiene botón de pagar ni de anotar vale',!(await g.$('#btnPagar')) && !(await g.$('#btnAnotarVale')) && (await txt(g,'#trabFoot')).includes('Solo Ray'));
+ await g.waitForSelector('a.ini-tile[href="taller.html?vista=nomina"]');
+ await g.click('a.ini-tile[href="taller.html?vista=nomina"]');await g.waitForSelector('.nm-row');
+ ok('Gualfredo ve la lista con cada trabajador',(await g.$$('.nm-lista .nm-row')).length===2);
+ await g.click('.nm-row[data-trab="t2"]');await g.waitForSelector('#sheetTrab.open');await g.waitForTimeout(300);
+ ok('Gualfredo no tiene botón de pagar ni casillas: "A Luis le paga Ray."',!(await g.$('#btnPagar')) && !(await g.$('#trabBody .nm-ck')) && (await txt(g,'#trabFoot'))==='A Luis le paga Ray.');
+ await g.click('#trabTabs [data-tab="vales"]');await g.waitForTimeout(200);
+ ok('   ni anotar vale',!(await g.$('#btnAnotarVale')));
  await g.click('#sheetTrab [data-cerrar="sheetTrab"]');await g.waitForTimeout(400);
- await g.click('.n-card >> nth=1');await g.waitForSelector('#sheetTrab.open');await g.waitForTimeout(300);
- ok('Gualfredo ve el vale que pidió Pedro pero sin botones: "Lo decide Ray o Gualfredo"',!!(await g.$('.vp')) && !(await g.$('.vp [data-resolver]')) && (await txt(g,'.vp')).includes('Lo decide Ray o Gualfredo'));
+ await g.click('.nm-row[data-trab="t3"]');await g.waitForSelector('#sheetTrab.open');await g.waitForTimeout(300);
+ await g.click('#trabBody [data-revisar-vale]');await g.waitForSelector('#sheetValeRev.open');await g.waitForTimeout(200);
+ ok('Gualfredo ve el vale que pidió Pedro pero sin botones: "Lo decide quien le paga a Pedro."',!(await g.$('#valeRevFoot [data-resolver]')) && (await txt(g,'#valeRevFoot'))==='Lo decide quien le paga a Pedro.');
 
  // Ray
  const r=await entrar(b,'u2','222222');pags.push(r);
- await r.click('a.ini-tile[href="nomina.html"]');await r.waitForSelector('.n-card');
+ await r.click('a.ini-tile[href="taller.html?vista=nomina"]');await r.waitForSelector('.nm-row');
  await r.screenshot({path:'shots5/n1-lista.png'});
- await r.click('.n-card >> nth=0');await r.waitForSelector('#sheetTrab.open');await r.waitForTimeout(400);
+ ok('La lista dice que Luis tiene 1 trabajo sin monto',(await txt(r,'.nm-row[data-trab="t2"]')).includes('1 sin monto'));
+ await r.click('.nm-row[data-trab="t2"]');await r.waitForSelector('#sheetTrab.open');await r.waitForTimeout(400);
  const fl=await txt(r,'#trabBody');
- ok('Trabajo sin monto: dice "Por definir" y avisa qué hacer',fl.includes('Por definir') && fl.includes('Tócalos para resolverlo'));
- ok('Con un trabajo sin monto no deja pagar',await r.$eval('#btnPagar',x=>x.disabled) && (await txt(r,'#btnPagar'))==='Falta el monto de un trabajo' && (await txt(r,'.n-card >> nth=0')).includes('1 sin monto'));
- ok('Lo terminado el domingo sale aparte, para la próxima semana',fl.includes('Para la próxima semana') && fl.includes('Portón Real') && fl.includes('refresco'));
+ ok('Trabajo sin monto: dice "Sin monto", su casilla no se puede marcar y avisa qué hacer',fl.includes('Sin monto') && await r.$eval('[data-ck-e="72"]',x=>x.disabled) && fl.includes('tócalo para ponérselo'));
+ ok('Lo terminado el domingo sale en la misma lista y se puede pagar ya',fl.includes('Portón Real') && fl.includes('refresco') && !!(await r.$('[data-ck-e="73"].on')));
+ ok('Se paga lo que sí tiene monto: $10 + $40 − vale $3 = $47',(await txt(r,'#btnPagar'))==='Pagar $47 a Luis');
  await r.screenshot({path:'shots5/n2-luis.png'});
- await r.click('#trabBody [data-item="71"]');await r.waitForSelector('#sheetItem.open');await r.waitForTimeout(300);
+ await r.click('#trabBody [data-item="71"] .nm-tx');await r.waitForSelector('#sheetItem.open');await r.waitForTimeout(300);
  const it=await txt(r,'#itemBody');
  ok('Ficha del trabajo: cliente, pedido, pago, categoría y especificaciones',it.includes('María González') && it.includes('N° 16') && it.includes('$10') && it.includes('Ventanas') && it.includes('1 × 1.2 m'));
  ok('   la foto es de su color: sin aviso',!(await r.$('#itemBody .foto-otra')));
  await r.click('#sheetItem [data-cerrar="sheetItem"]');await r.waitForTimeout(400);
- await r.click('#trabBody [data-item="72"]');await r.waitForSelector('#sheetItem.open');await r.waitForTimeout(300);
+ await r.click('#trabBody [data-item="72"] .nm-tx');await r.waitForSelector('#sheetItem.open');await r.waitForTimeout(300);
  ok('Si la foto es de otro color lo dice sobre la foto',(await txt(r,'#itemBody .foto-otra'))==='Foto en blanco · el tuyo va en NEGRO');
  await r.click('#sheetItem [data-cerrar="sheetItem"]');await r.waitForTimeout(400);
  await r.click('#sheetTrab [data-cerrar="sheetTrab"]');await r.waitForTimeout(400);
 
  // Pedro: exhibición, vale pendiente, anotar vale en Bs
- await r.click('.n-card >> nth=1');await r.waitForSelector('#sheetTrab.open');await r.waitForTimeout(300);
+ await r.click('.nm-row[data-trab="t3"]');await r.waitForSelector('#sheetTrab.open');await r.waitForTimeout(300);
  const fp=await txt(r,'#trabBody');
  ok('Un trabajo para exhibición dice "Exhibición" y la sede',fp.includes('Exhibición · Sede Cumbres'));
- ok('La lista dice que Pedro pide un vale',(await txt(r,'.n-card >> nth=1')).includes('pide vale $8'));
- ok('El vale que pidió sale arriba con Aprobar y Rechazar, y todavía no descuenta',(await txt(r,'.vp')).includes('Pide un vale · pasaje') && (await txt(r,'.vp')).includes('$8') && !!(await r.$('.vp [data-resolver="si"]')) && !!(await r.$('.vp [data-resolver="no"]')) && (await txt(r,'.ct b'))==='$15');
+ ok('La lista dice que Pedro pidió un vale',(await txt(r,'.nm-row[data-trab="t3"]')).includes('Pidió vale $8 · revisar'));
+ ok('El vale que pidió sale arriba con Revisar, y todavía no descuenta',(await txt(r,'#trabBody .nm-vp')).includes('Pidió vale $8') && (await txt(r,'#trabBody .nm-vp')).includes('pasaje') && (await txt(r,'#btnPagar'))==='Pagar $15 a Pedro');
+ await r.click('#trabBody [data-revisar-vale]');await r.waitForSelector('#sheetValeRev.open');await r.waitForTimeout(200);
+ ok('La hoja del vale tiene Aprobar y No aprobar',!!(await r.$('#valeRevFoot [data-resolver="si"]')) && !!(await r.$('#valeRevFoot [data-resolver="no"]')));
  await r.screenshot({path:'shots5/n3b-vale-pedido.png'});
- await r.click('.vp [data-resolver="si"]');await r.waitForTimeout(900);
+ await r.click('#valeRevFoot [data-resolver="si"]');await r.waitForTimeout(900);
  const rs=llamadas.find(x=>x[0]==='resolver_vale');
- ok('Aprobar llama al servidor con el vale y se quita de arriba',rs && rs[1].vid===5 && rs[1].aprobar===true && rs[2]==='u2' && !(await r.$('.vp')),rs&&rs[1]);
+ ok('Aprobar llama al servidor con el vale y se quita de arriba',rs && rs[1].vid===5 && rs[1].aprobar===true && rs[2]==='u2' && !(await r.$('#trabBody .nm-vp')),rs&&rs[1]);
+ await r.click('#trabTabs [data-tab="vales"]');await r.waitForTimeout(200);
  await r.click('#btnAnotarVale');await r.waitForSelector('#sheetVale.open');
+ ok('Desde el trabajador no pregunta a quién',!(await r.isVisible('#campoValeQuien')) && (await r.textContent('#valeTitulo'))==='Vale para Pedro');
  await r.click('#btnGuardarVale');await r.waitForTimeout(200);
  ok('Sin monto: error debajo del campo',await r.isVisible('#campoValeMonto .field-error'));
  await r.click('#btnValeBs');await r.fill('#valeBs','400');await r.fill('#valeTasa','40');await r.waitForTimeout(100);
@@ -98,20 +106,21 @@ const txt=async(p,s)=>((await p.textContent(s))||'').replace(/\s+/g,' ');
  await r.click('#btnGuardarVale');await r.waitForTimeout(900);
  const av=llamadas.find(x=>x[0]==='anotar_vale');
  ok('Se anota con dólares, Bs y tasa',av && av[1].tid==='t3' && av[1].p_monto===10 && av[1].p_bs===400 && av[1].p_tasa===40 && av[1].p_nota==='medicinas',av&&av[1]);
- ok('El vale sale en rojo con sus bolívares y el total baja a $5',(await txt(r,'#trabBody')).includes('dado en Bs 400 (a 40)') && (await txt(r,'.ct b'))==='$5' && (await txt(r,'#btnPagar'))==='Marcar pagado $5');
+ await r.click('#trabTabs [data-tab="pagar"]');await r.waitForTimeout(200);
+ ok('El vale sale en rojo con sus bolívares y el total baja a $5',(await txt(r,'#trabBody')).includes('en Bs 400 a 40') && (await txt(r,'#trabFoot .nm-tot')).endsWith('$5,00') && (await txt(r,'#btnPagar'))==='Pagar $5 a Pedro');
  await r.screenshot({path:'shots5/n4-pedro.png'});
  // Montos cambiaron
  cambio=true;
- await r.click('#btnPagar');await r.waitForTimeout(900);
+ await r.click('#btnPagar');await r.waitForSelector('#sheetSalida.open');await r.click('#btnSalida');await r.waitForTimeout(900);
  ok('Si algo cambió mientras lo veía, avisa y no paga',(await txt(r,'#toast')).includes('Los montos cambiaron'));
  cambio=false;
- await r.click('#btnPagar');await r.waitForTimeout(900);
- const pg=llamadas.filter(x=>x[0]==='pagar_trabajador').pop();
- ok('Paga con el monto que vio',pg && pg[1].tid==='t3' && pg[1].esperado===5,pg&&pg[1]);
+ await r.click('#btnSalida');await r.waitForTimeout(900);
+ const pg=llamadas.filter(x=>x[0]==='pagar_lo_marcado').pop();
+ ok('Paga lo marcado con el monto que vio',pg && pg[1].tid==='t3' && pg[1].esperado===5 && pg[1].p_etapas.join()==='81' && pg[1].p_vales.join()==='9',pg&&pg[1]);
  // El aviso "Vale pedido" abre nomina.html?t=ID directo en ese trabajador
  await r.goto('http://127.0.0.1:8765/nomina.html?t='+LUIS_UUID);await r.waitForSelector('#sheetTrab.open',{timeout:8000}).catch(()=>{});
- ok('nomina.html?t=ID abre la ficha de ese trabajador',!!(await r.$('#sheetTrab.open')) && (await txt(r,'#trabNombre'))==='Luis');
- await r.goto('http://127.0.0.1:8765/nomina.html?t=no-existe');await r.waitForTimeout(1200);
+ ok('nomina.html?t=ID abre la ficha de ese trabajador en el Taller',!!(await r.$('#sheetTrab.open')) && (await txt(r,'#trabNombre'))==='Luis' && r.url().includes('taller.html'));
+ await r.goto('http://127.0.0.1:8765/nomina.html?t=no-existe');await r.waitForTimeout(1500);
  ok('Un enlace mal copiado dice "No se encontró ese trabajador"',(await txt(r,'#toast')).includes('No se encontró ese trabajador'));
  const errs=pags.flatMap(p=>p._e);
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(errs));console.log(fallas?fallas+' FALLAS':'TODO OK');

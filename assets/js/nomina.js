@@ -505,7 +505,6 @@
     SAL.guardando = true; $('btnSalida').disabled = true;
     try{
       if(SAL.modo === 'pago'){
-        if(pagando) return;
         pagando = true;
         const { data, error } = await db.rpc('pagar_lo_marcado', { tid: SAL.tid, esperado: SAL.neto, p_etapas: SAL.etapas, p_vales: SAL.vales });
         if(error) throw error;

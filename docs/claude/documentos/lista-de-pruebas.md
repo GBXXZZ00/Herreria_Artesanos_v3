@@ -5,7 +5,23 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
 
-## Taller › Resumen y foto del trabajo, lote 2 (v81, 15 nov 2026, Claude de Gualfredo)
+## Taller › Nómina, lote 3 (v82, 16 nov 2026, Claude de Gualfredo)
+Antes: cerrar y abrir la app. La migración v88 (`pagar_lo_marcado`) se aplica con Gualfredo presente: sin ella, Pagar dice que falta un cambio en la base.
+
+**Nómina (Ray)**
+- [ ] En el Taller, pestaña Nómina: Por pagar y Ya pagado esta semana; una fila por trabajador. El carpintero no te sale.
+- [ ] Un trabajador con algo de la semana pasada dice "1 de la semana pasada"; el que pidió vale dice "Pidió vale · revisar".
+- [ ] Abrir a uno: todo marcado. Desmarca un trabajo: el total y el botón "Pagar $… a …" cambian.
+- [ ] Pagar: elige la cuenta y Confirmar pago. Le llega el aviso, sale en Finanzas y lo desmarcado sigue ahí con ↩.
+- [ ] Historial: cada pago con su cuenta, quién pagó y sus trabajos.
+- [ ] Vale que pidió: Revisar, Aprobar vale (pregunta de qué cuenta salió) o No aprobar.
+- [ ] + Vale desde la lista: primero a quién, después el monto (en dólares o bolívares).
+- [ ] Un aviso viejo de "Vale pedido" (nomina.html) abre su vale en el Taller.
+
+**Gualfredo**
+- [ ] Ve al carpintero y le paga. A los demás les paga Ray: sin casillas ni botón de pagar.
+
+ (v81, 15 nov 2026, Claude de Gualfredo)
 Antes: cerrar y abrir la app. La migración v87 (el aviso abre el trabajo) se aplica con Gualfredo presente; sin ella el aviso sigue abriendo el pedido.
 
 **Resumen (Ray o Gualfredo)**

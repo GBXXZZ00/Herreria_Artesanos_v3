@@ -108,3 +108,4 @@ La clave queda guardada cifrada en GitHub: no se ve en el repo ni en los registr
 | 20261007023130 | v70b_categoria_de_madera |
 | (sin aplicar) 20261115120000 | v86_gualfredo_montos_pasos · Taller: monto de cada paso pendiente (solo admin, lectura). Se aplica con Gualfredo presente. |
 | (sin aplicar) 20261115130000 | v87_gualfredo_aviso_trabajo · el aviso "Terminó …" abre taller.html?trabajo=<id>. Se aplica con Gualfredo presente. |
+| (sin aplicar) 20261115140000 | v88_gualfredo_pagar_lo_marcado · Nómina: pagar solo lo marcado (función nueva, sin drop). Se aplica con Gualfredo presente. |

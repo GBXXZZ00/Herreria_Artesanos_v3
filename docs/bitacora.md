@@ -12,6 +12,14 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 3)
+- Qué hizo: lote 3 (Gualfredo: "Dale"). La Nómina pasa a ser una pestaña del Taller (`nomina.js` reescrito, `nomina.html` redirige; `?t=ID` y `&que=vale` siguen abriendo al trabajador o su vale). Drawer del trabajador con Por pagar (casillas: se paga lo marcado, cuando sea; lo desmarcado queda con ↩), Historial y Vales; hoja Pagar con la cuenta y Confirmar pago; hoja del vale con Aprobar / No aprobar; + Vale eligiendo a quién; historial de todos. Al carpintero solo lo ve quien lleva la madera (Nómina, Resumen e Inicio). La ayuda de arriba abre el manual de la nómina en esa pestaña. `?v=82`.
+- Migración `v88_gualfredo_pagar_lo_marcado`: función nueva `pagar_lo_marcado` con las validaciones de `pagar_trabajador` (que queda igual). Primero la escribí reemplazando `pagar_trabajador` con un `drop`: el conector le pidió "Permitir" a Gualfredo dos veces y se venció. Se cambió a función con nombre nuevo y quedó la regla en `CLAUDE.md` (sin `drop` en las migraciones). Probada con `begin … rollback` (paga solo lo marcado, monto que no cuadra, trabajo de otro, nada marcado, pagar dos veces). **Sin aplicar.**
+- Pruebas: test51 nueva; test28, test30, test34, test37 y test50 ajustadas.
+- Rama: `claude/lote-1-taller-costeador-t49naw`.
+- Está tocando: Taller (Nómina), Inicio (total de nómina), Mi trabajo (enlace a Nómina), ayuda.
+- Pendientes: lote 3b (Corte, base: migraciones de §3B.2).
+
 ## 2026-11-15 · Claude de Gualfredo (Code, Taller lote 2)
 - Qué hizo: lote 2 (Gualfredo: "Dalee"). Taller › Resumen (T1): avisos, Por asignar, Lo asignado esta semana con semanas ‹ ›, Por pagar (de `nomina_semana`), Vales y atajos; tocar un trabajador muestra sus trabajos con foto. Drawer del trabajo (T4) con foto grande, quién, cuánto, qué sigue y cuánto se le debe; se abre con `taller.html?trabajo=<id>` y tocando un paso hecho. El botón + flotante pasa a ser el atajo "+ Fabricar para exhibición" del Resumen. Inicio cuenta "sin asignar" con el criterio único (todos los pasos sin trabajador). `?v=81`.
 - Migración `v87_gualfredo_aviso_trabajo`: el aviso "Terminó …" de `marcar_etapa_terminada` y `terminar_etapa_madera` lleva a `taller.html?trabajo=<eid>` (se reemplaza solo ese texto en la definición actual). Probada con `begin … rollback`. **Sin aplicar.** Otros avisos con `produccion.html` siguen sirviendo con la redirección.

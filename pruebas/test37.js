@@ -116,7 +116,7 @@ async function cerrarAyuda(p){ await p.click('#sheetAyuda [data-cerrar="sheetAyu
   if(pg==='venta.html') await p.screenshot({path:'shots6/a11-venta-hoja.png'});
   await cerrarAyuda(p);
  }
- for(const [pg,mod] of [['cotizaciones.html','cotizaciones'],['ventas.html','ventas'],['produccion.html','produccion'],['nomina.html','nomina'],['deposito.html','deposito']]){
+ for(const [pg,mod] of [['cotizaciones.html','cotizaciones'],['ventas.html','ventas'],['produccion.html','produccion'],['taller.html?vista=nomina','nomina'],['deposito.html','deposito']]){
   await p.goto(H+pg); await w(1500);
   ok(pg+': Ayuda al lado de Actualizar',await p.$eval('#btnActualizar',x=>x.parentElement.classList.contains('ayuda-col')));
   await abrirAyuda(p,'.topbar .ayuda-btn');

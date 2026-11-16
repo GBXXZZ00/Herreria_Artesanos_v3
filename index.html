@@ -961,7 +961,9 @@
     const en = $('cuenta-nomina');
     if(en){
       const l = (rNom && rNom.data && rNom.data.trabajadores) || null;
-      const total = l ? l.reduce((a, t) => a + Math.max(0, Number(t.neto) || 0), 0) : 0;
+      // Como en la Nómina: al carpintero solo lo cuenta quien lleva la madera (es quien le paga)
+      const pf = (await window.Sesion.perfil().catch(() => null)) || {};
+      const total = l ? l.filter(t => pf.lleva_madera || !(t.especialidades || []).includes('carpintero')).reduce((a, t) => a + Math.max(0, Number(t.neto) || 0), 0) : 0;
       en.innerHTML = !l ? 'Pagos de la semana' : total > 0 ? `<span class="num">${window.AH.dinero(total)} por pagar</span>` : 'Semana al día';
     }
     const ep = $('cuenta-taller');

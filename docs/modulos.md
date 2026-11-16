@@ -70,11 +70,11 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 - **Reglas:** una categoría es de un solo producto (Puerta, Portón, Ventana, Combo, Madera) y solo muestra sus trabajos. Masilla y pintura un solo monto. Aluminio por ventana. Extra de protección aparte. Madera un monto por puerta. Cambiar una tarifa recalcula los pasos no pagados (`categoria_recalcular`).
 - **Pendiente:** bug sin reproducir "se queda marcado el último monto".
 
-## Nómina (`nomina.html` + `nomina.js`)
-- **Para qué:** lo que se le debe a cada trabajador esta semana (lunes a sábado, se paga el sábado), sus vales y su historial. Enlace directo `nomina.html?t=ID`.
-- **Roles:** admin ve. Solo Ray paga, aprueba vales y anota vales; al carpintero le paga quien lleva la madera (`_puede_pagar_a`).
-- **Datos:** `categorias_pago`. RPC `nomina_semana`, `nomina_trabajador`, `pagar_trabajador`, `anotar_vale`, `resolver_vale`, `asignar_categoria_item`.
-- **Reglas:** un trabajo sin monto sale "Por definir". Lo del domingo pasa a la semana siguiente. Vales pueden ser en bolívares (se guarda tasa). Los pagos y vales hechos no se tocan (triggers `pago_protegido`, `vale_protegido`, `etapa_protegida`).
+## Taller › Nómina (`taller.html` + `nomina.js`, lote 3) · antes `nomina.html`
+- **Para qué:** Por pagar (trabajos menos vales) y lo ya pagado esta semana; una fila por trabajador con ↩ si se le deben trabajos de semanas anteriores y "Pidió vale · revisar". Drawer del trabajador con Por pagar (casillas: se paga lo marcado, el día que sea; lo desmarcado queda con ↩), Historial (cada pago con su cuenta, quién pagó y sus trabajos) y Vales. Hoja Pagar con "¿De qué cuenta salió?" y Confirmar pago. Hoja del vale con Aprobar / No aprobar. + Vale (elige a quién), Categorías de pago e Historial de todos.
+- **Quién:** administradores. Paga y aprueba quien le paga a ese trabajador (`_puede_pagar_a`: el carpintero, quien lleva la madera; los demás, Ray). Al carpintero solo lo ve quien lleva la madera (también en el Resumen y en Inicio).
+- **Datos:** RPC `nomina_semana`, `nomina_trabajador`, `pagar_lo_marcado` (v88), `resolver_vale`, `anotar_vale`, `nomina_salida`, `vale_salida`, `movimiento_ubicar`; tablas `etapas`, `pagos_trabajador`, `movimientos`, `cuentas` (lectura).
+- **Enlaces viejos:** `nomina.html` redirige a `taller.html?vista=nomina` (con `&t=ID` abre a ese trabajador; `&que=vale`, su vale por revisar).
 
 ## Depósito (`deposito.html` + `deposito.js`)
 - **Para qué:** materiales por unidad (discos, sierras, pintura), entregas a trabajadores, compras y revisión de Ray.

@@ -5,6 +5,7 @@
 // pruebas/manual/construir.py desde los manuales. Nada se descarga hasta que se toca Ayuda.
 (function(){
   'use strict';
+  const enNomina = () => { const n = document.getElementById('vNomina'); return !!n && !n.classList.contains('hidden'); };
   const src = (document.currentScript && document.currentScript.src) || '';
   const V = (src && new URL(src).searchParams.get('v')) || '1';
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -60,7 +61,9 @@
     'taller.html': [
       { ref:'#sheetTrab [data-cerrar="sheetTrab"]', etiqueta:'Cerrar', mod:'nomina', t:'Pagar y vales', b:['pagarle-a-un-trabajador', 'vales'] },
       { ref:'#sheetVale [data-cerrar="sheetVale"]', etiqueta:'Cerrar', mod:'nomina', t:'Anotar un vale', b:['vales'] },
-      { ref:'#btnActualizar', etiqueta:'Actualizar', mod:'produccion', t:'El taller', b:['intro', 'los-pasos-de-cada-producto', 'la-lista', 'puertas-de-madera', 'normas', 'avisos-admin', 'avisos-vend'] },
+      // En la pestaña Nómina abre el manual de la nómina; en las demás, el del taller
+      { ref:'#btnActualizar', etiqueta:'Actualizar', mod: () => enNomina() ? 'nomina' : 'produccion', t: () => enNomina() ? 'La nómina de la semana' : 'El taller',
+        b: () => enNomina() ? ['intro', 'como-se-calcula', 'la-lista-de-la-semana', 'normas', 'avisos'] : ['intro', 'los-pasos-de-cada-producto', 'la-lista', 'puertas-de-madera', 'normas', 'avisos-admin', 'avisos-vend'] },
       { ref:'#sheetFicha .sheet-x', flotante:true, mod:'produccion', t:'Este pedido en el taller', b:['la-ficha', 'asignar-el-trabajo-admin', 'puertas-de-madera', 'los-pasos-de-cada-producto'] },
       { ref:'#sheetTodo [data-cerrar="sheetTodo"]', etiqueta:'Cerrar', mod:'produccion', t:'Asignar trabajadores', b:['asignar-el-trabajo-admin'] },
       { ref:'#sheetCatItem [data-cerrar="sheetCatItem"]', etiqueta:'Cerrar', mod:'admin', t:'Categoría de pago', b:['categorias-de-pago'] },
