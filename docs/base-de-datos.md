@@ -148,3 +148,13 @@ Todo se lee solo por quien confirma pagos (`_es_ray()`: Ray y Gualfredo) salvo D
 - Cualquiera con sesión puede subir a `catalogo-fotos` y `etapas-fotos` (también un trabajador al catálogo).
 
 Nada de esto se ha cambiado: queda para un PR aparte.
+
+## Corte por herrero y compras (lote 4, v89 a v94, 16 nov 2026, Claude de Gualfredo · sin aplicar)
+- `cortes_planes.enviados` = `{ tid: { firma, en, por, barras } }`: lo que se le envió a cada herrero. La firma es la de sus pasos de Hierro de ese sábado (`_corte_firma_tid`). El herrero ve esa copia (`mi_hoja_corte`) y es lo que se baja al terminar (`_corte_aplicar`); si la firma cambió después de enviar, no se baja nada y el plan queda con aviso.
+- Candado por herrero en `corte_plan_guardar` y `corte_plan_reiniciar`: si ya cortó o empezó el Hierro (`_corte_empezo`), su parte no cambia; la de los demás sí.
+- `corte_enviar(p_sab, p_tid, p_plan, p_compra)`: guarda el plan, el envío y la compra en una sola transacción. `corte_deshacer_envio(p_sab, p_tid)`: solo si no empezó.
+- `corte_datos().planes[sab].enviados[tid]` trae `firma_hoy` y `empezo` para saber si "cambió · vuelve a enviar".
+- `compras_pedidas.tid`: el herrero de la compra (`compra_pedir` lo recibe en `p.tid`; `compras_en_camino` lo devuelve con `herrero`, y a cada proveedor con su `telefono`).
+- Un retazo no puede estar en dos planes abiertos (`corte_plan_guardar`).
+- `proveedor_guardar` normaliza el teléfono (`normalizar_telefono`) para `wa.me`.
+- `compra_confirmar`: cada lugar puede traer `quedan` (lo que no llegó): sigue en camino en la misma compra (`_compra_queda_en_camino`). `compra_pedida_cambiar(pid, p)` cambia lo pedido a un lugar en camino; cancelar es `compra_no_llego`.

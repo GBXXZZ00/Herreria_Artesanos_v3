@@ -12,6 +12,14 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 4 · Corte, base)
+- Qué hizo: las 6 migraciones 🔴 de §3B.2 (Gualfredo: "Dale"). v89 envío por herrero (`cortes_planes.enviados` con firma, hora y copia; candado por herrero; `_corte_aplicar` no baja barras si cambió lo asignado; `mi_hoja_corte` lee la copia; `corte_deshacer_envio`; `corte_datos` trae los envíos). v90 herrero en `compras_pedidas`. v91 `corte_enviar` (plan, envío y compra en una transacción). v92 un retazo en un solo plan abierto. v93 teléfono del proveedor normalizado. v94 ¿Llegó? con una parte (`quedan`) y `compra_pedida_cambiar`. Sin `drop`. Sin cambios de pantalla (van en los lotes 5 y 6).
+- Probadas juntas con `begin … rollback` en la base real (16 casos): enviar, hoja del herrero con la copia, cambio sin empezar, candado, deshacer y rehacer con el corte empezado, firma cambiada, bajar barras con lo enviado, enviar y pedir, compra que falla sin dejar el envío, retazo en dos planes, teléfono, llegó una parte, cambiar compra, herrero y teléfono en camino. Todas bien. **Sin aplicar.**
+- Ojo Ray: `corte_plan_guardar`, `_corte_plan_guardar_v82`, `_corte_aplicar`, `corte_plan_reiniciar`, `mi_hoja_corte`, `corte_datos`, `compra_pedir`, `compra_confirmar`, `compras_en_camino` y `proveedor_guardar` cambian (mismos datos de entrada). Hoy no hay planes ni compras pedidas guardados en la base.
+- Rama: `claude/lote-1-taller-costeador-t49naw`.
+- Está tocando: base del Corte y de compras.
+- Pendientes: lote 5 (Corte, pantallas K01 a K10, K19 a K21).
+
 ## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 3)
 - Qué hizo: lote 3 (Gualfredo: "Dale"). La Nómina pasa a ser una pestaña del Taller (`nomina.js` reescrito, `nomina.html` redirige; `?t=ID` y `&que=vale` siguen abriendo al trabajador o su vale). Drawer del trabajador con Por pagar (casillas: se paga lo marcado, cuando sea; lo desmarcado queda con ↩), Historial y Vales; hoja Pagar con la cuenta y Confirmar pago; hoja del vale con Aprobar / No aprobar; + Vale eligiendo a quién; historial de todos. Al carpintero solo lo ve quien lleva la madera (Nómina, Resumen e Inicio). La ayuda de arriba abre el manual de la nómina en esa pestaña. `?v=82`.
 - Migración `v88_gualfredo_pagar_lo_marcado`: función nueva `pagar_lo_marcado` con las validaciones de `pagar_trabajador` (que queda igual). Primero la escribí reemplazando `pagar_trabajador` con un `drop`: el conector le pidió "Permitir" a Gualfredo dos veces y se venció. Se cambió a función con nombre nuevo y quedó la regla en `CLAUDE.md` (sin `drop` en las migraciones). Probada con `begin … rollback` (paga solo lo marcado, monto que no cuadra, trabajo de otro, nada marcado, pagar dos veces). **Sin aplicar.**
