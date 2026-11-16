@@ -408,14 +408,18 @@
   let pedidoActual = null;
   // El Hierro asignado entra al plan de corte de ese sábado; Costeo abre el modelo (solo Ray o Gualfredo)
   let verCostos = false;
-  if(window.Sesion) window.Sesion.perfil().then(p => { verCostos = !!(p && p.confirma_abonos); }).catch(() => {});
+  if(window.Sesion) window.Sesion.perfil().then(p => {
+    verCostos = !!(p && p.confirma_abonos);
+    // Corte: solo Ray y Gualfredo. Se lee en segundo plano para que sus avisos salgan en el Resumen.
+    if(verCostos && !lectura){ $('tabCorte').classList.remove('hidden'); if(window.TallerCorte && !window.TallerCorte.cargado) window.TallerCorte.recargar(); }
+  }).catch(() => {});
   function atajosHtml(v){
     const a = [];
     if(!v.interna) a.push(`<a href="ventas.html?abrir=${v.id}" data-sub>Venta</a>`);
     if(!v.interna && v.token_seguimiento) a.push(`<a href="seguimiento.html?t=${encodeURIComponent(v.token_seguimiento)}" target="_blank" rel="noopener">Seguimiento</a>`);
     if(!lectura && verCostos){
       const sab = [...new Set((v.items || []).flatMap(it => (it.etapas || []).filter(e => e.oficio === 'hierro' && e.estado === 'pendiente' && e.trabajador_id && e.para_el).map(e => String(e.para_el).slice(0, 10))))].sort()[0];
-      a.push(`<a href="costos.html?tab=semana${sab ? '&para=' + encodeURIComponent(sab) : ''}" data-sub>✂ Corte</a>`);
+      a.push(`<button type="button" data-ir-corte>✂ Corte</button>`);
       const mod = (itemsFabrica(v).find(it => it.catalogo && it.catalogo.id) || {}).catalogo;
       if(mod) a.push(`<a href="costos.html?modelo=${encodeURIComponent(mod.id)}" data-sub>Costeo</a>`);
     }
@@ -980,6 +984,7 @@
   }
   function pintarSubtitulo(){
     if(vista === 'resumen' || vista === 'nomina'){ $('subtitulo').textContent = `Hoy ${fechaDia(SAB.hoy)} · semana ${rangoSemana(SAB.este)}`; return; }
+    if(vista === 'corte'){ $('subtitulo').textContent = 'Corte · Hierro por herrero'; return; }
     const n = pedidos.length;
     $('subtitulo').textContent = SUBTITULO[filtro] || (n === 1 ? '1 pedido en el taller' : n + ' pedidos en el taller');
   }
@@ -988,10 +993,13 @@
     $('vResumen').classList.toggle('hidden', v !== 'resumen');
     $('vPedidos').classList.toggle('hidden', v !== 'pedidos');
     $('vNomina').classList.toggle('hidden', v !== 'nomina');
+    $('vCorte').classList.toggle('hidden', v !== 'corte');
     $('tabsTaller').querySelectorAll('[data-vista]').forEach(b => { const on = b.dataset.vista === v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
     pintarSubtitulo();
     if(v === 'resumen') pintarResumen();
     if(v === 'nomina' && window.Nomina) window.Nomina.mostrar();
+    // El corte se vuelve a leer cada vez que se abre: pudo cambiar lo asignado
+    if(v === 'corte' && window.TallerCorte){ if(window.TallerCorte.cargado) window.TallerCorte.recargar(); else window.TallerCorte.mostrar(); }
   }
   // Abre la Nómina y, si se dice, a un trabajador ('vale': su vale por revisar)
   function irNomina(tid, que){
@@ -1000,6 +1008,8 @@
     if(tid && window.Nomina) window.Nomina.abrir(tid, que);
   }
   document.addEventListener('click', (e) => {
+    const c = e.target.closest('[data-ir-corte]');
+    if(c){ e.preventDefault(); ['sheetTrabajo', 'sheetTrabSem', 'sheetFicha'].forEach(id => { if($(id).classList.contains('open')) cerrarHoja(id, true); }); ponerVista('corte'); window.scrollTo({ top:0 }); return; }
     const b = e.target.closest('[data-nomina-t],[data-ir-nomina]');
     if(!b) return;
     e.preventDefault();
@@ -1066,6 +1076,9 @@
     if(pronto) b.push(`<button type="button" class="am" data-ir-filtro="pronto">${plural(pronto, '1 entrega', 'entregas')} en 2 días ›</button>`);
     if(tarde) b.push(`<button type="button" class="rj" data-ir-filtro="tarde">${plural(tarde, '1 atrasado', 'atrasados')} ›</button>`);
     if(listos) b.push(`<button type="button" class="ok" data-ir-filtro="listos">${plural(listos, '1 listo', 'listos')} para entregar ›</button>`);
+    // Los avisos importantes del Corte (puerta que salió del plan, cambió después de enviar, no se bajaron barras)
+    const ac = verCostos && window.TallerCorte ? window.TallerCorte.avisos() : [];
+    if(ac.length) b.push(`<button type="button" class="rj" data-ir-corte>⚠ Corte: ${esc(ac[0])}${ac.length > 1 ? ' y ' + plural(ac.length - 1, '1 más', 'más') : ''} ›</button>`);
     return b.length ? `<div class="tl-alrt">${b.join('')}</div>` : '';
   }
   function porAsignarHtml(){
@@ -1154,7 +1167,7 @@
       <button type="button" data-sem="1" aria-label="Semana siguiente"${semK >= 1 ? ' disabled' : ''}>›</button></div>`;
     if(semK === 0){
       h += avisosHtml() + porAsignarHtml() + asignadoHtml() + porPagarHtml() + valesHtml();
-      h += `<div class="tl-atajos">${verCostos ? `<a href="costos.html?tab=semana&para=${encodeURIComponent(SAB.este)}" data-sub>✂ Plan de corte ${esc(fechaDia(SAB.este))}</a>` : ''}<button type="button" data-nueva-orden>+ Fabricar para exhibición</button></div>`;
+      h += `<div class="tl-atajos">${verCostos ? `<button type="button" data-ir-corte>✂ Plan de corte ${esc(fechaDia(SAB.este))}</button>` : ''}<button type="button" data-nueva-orden>+ Fabricar para exhibición</button></div>`;
     } else {
       h += asignadoHtml() + '<button class="btn-secondary tl-volver" type="button" data-sem="0">Volver a esta semana</button>';
     }
@@ -1286,8 +1299,10 @@
     }
   });
 
-  $('btnActualizar').addEventListener('click', () => { cargar(); if(vista === 'nomina' && window.Nomina) window.Nomina.recargar(); });
-  window.Taller = { refrescarResumen: () => cargarResumen() };
+  $('btnActualizar').addEventListener('click', () => { cargar(); if(vista === 'nomina' && window.Nomina) window.Nomina.recargar(); if(vista === 'corte' && window.TallerCorte) window.TallerCorte.recargar(); });
+  window.Taller = { refrescarResumen: () => cargarResumen(), repintarResumen: () => { if(vista === 'resumen') pintarResumen(); },
+    irA: (v) => ponerVista(v), recargar: () => cargar(), montoDe: (eid) => montos[eid] != null ? Number(montos[eid]) : null,
+    abrirPedido: (vid) => { const v = pedidos.find(x => x.id === vid); if(v) pintarFicha(v); else location.href = 'ventas.html?abrir=' + encodeURIComponent(vid); } };
 
   (async function(){
     const p = await S.requerir();
@@ -1301,6 +1316,7 @@
       document.body.classList.add('solo-lectura');
     }
     ponerVista(lectura || pideVistaPedidos ? 'pedidos' : 'resumen');
+    if(!lectura && p.confirma_abonos){ $('tabCorte').classList.remove('hidden'); if(params.get('vista') === 'corte') ponerVista('corte'); }
     // Madera: quién la asigna y quién marca sus pasos (el servidor lo vuelve a revisar)
     try{
       const r = await db.from('perfiles').select('lleva_madera,linea').eq('id', p.id).maybeSingle();

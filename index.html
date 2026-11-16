@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=82">
+<link rel="stylesheet" href="assets/css/base.css?v=83">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -327,6 +327,12 @@
   .pz-n{font-weight:800;color:var(--ink);min-width:14px;text-align:right}
   /* Hoja de corte del herrero (Costos › Semana) */
   .tj-corte{border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0}
+  .tj-corte-m span{float:right;font-weight:600;color:var(--ink-soft);font-size:12.5px}
+  .tj-corte-t{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .tj-tag{font-size:11px;font-weight:800;border-radius:6px;padding:1px 6px}
+  .tj-tag.taller{background:var(--accent-soft);color:var(--accent)}
+  .tj-tag.nueva{background:#FDF3E1;color:var(--amber)}
+  .tj-tag.ret{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink-soft)}
   .tj-corte-h{list-style:none;cursor:pointer;display:block}
   .tj-corte-h::-webkit-details-marker{display:none}
   .tj-corte-h b{display:block;font-size:17px}
@@ -592,15 +598,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=82"></script>
-<script src="assets/js/supabase-client.js?v=82"></script>
-<script src="assets/js/img-compress.js?v=82"></script>
-<script src="assets/js/comun.js?v=82"></script>
-<script src="assets/js/avisos.js?v=82"></script>
-<script src="assets/js/sesion.js?v=82"></script>
-<script src="assets/js/ayuda.js?v=82"></script>
-<script src="assets/js/pdf-reporte.js?v=82"></script>
-<script src="assets/js/mi-trabajo.js?v=82"></script>
+<script src="assets/vendor/supabase.js?v=83"></script>
+<script src="assets/js/supabase-client.js?v=83"></script>
+<script src="assets/js/img-compress.js?v=83"></script>
+<script src="assets/js/comun.js?v=83"></script>
+<script src="assets/js/avisos.js?v=83"></script>
+<script src="assets/js/sesion.js?v=83"></script>
+<script src="assets/js/ayuda.js?v=83"></script>
+<script src="assets/js/pdf-reporte.js?v=83"></script>
+<script src="assets/js/mi-trabajo.js?v=83"></script>
 <script>
 (function(){
   'use strict';

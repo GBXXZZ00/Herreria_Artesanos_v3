@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Taller · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=82">
+<link rel="stylesheet" href="assets/css/base.css?v=83">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   .p-nuevo{color:#fff!important;background:var(--danger)!important}
@@ -305,6 +305,88 @@
   .nm-montofijo{background:var(--surface-2);border-radius:12px;padding:12px 14px;font-size:17px;font-weight:700}
   .det-name{font-size:19px;font-weight:800}
   .det-type{font-size:13.5px;color:var(--ink-soft)}
+  /* Taller › Corte (K01 a K10) */
+  #vCorte{padding:0 18px}
+  .ck-sab{margin:2px 0 12px}
+  .ck-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .ck-nums div{background:var(--surface-2);border-radius:16px;padding:10px 12px}
+  .ck-nums b{display:block;font-size:26px;font-weight:800}
+  .ck-nums span{font-size:13px;color:var(--ink-soft)}
+  .ck-card{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+  .ck-card > div{flex:1;min-width:0}
+  .ck-card b{display:block;font-size:16px}
+  .ck-card span{font-size:13.5px;color:var(--ink-soft)}
+  .ck-aviso{background:var(--surface-2);border-radius:14px;padding:10px 12px;font-size:14px;line-height:1.4;margin-bottom:10px}
+  .ck-aviso.rj{background:#FDECEA;color:var(--danger)}
+  .ck-link{color:inherit;font-weight:700;text-decoration:underline;min-height:32px}
+  .ck-lista .nm-row{align-items:center}
+  .nm-tx > .ck-e{display:inline-block;margin-top:5px}
+  .ck-e.gris,.ck-e.sin{background:var(--surface-2);color:var(--ink-soft)}
+  .ck-e.ok{background:#E7F4EC;color:#1F7A4D}
+  .ck-e.rj{background:#FDECEA;color:var(--danger)}
+  .ck-estado{background:var(--surface-2);border-radius:12px;padding:9px 12px;font-size:14.5px;font-weight:600;margin-bottom:12px}
+  .ck-estado.ok{background:#E7F4EC;color:#1F7A4D}
+  .ck-estado.rj{background:#FDECEA;color:var(--danger)}
+  .ck-estado.lock{color:var(--ink-soft)}
+  .ck-tiempo{list-style:none;padding:0;margin:0 0 12px}
+  .ck-tiempo li{position:relative;padding:0 0 10px 22px}
+  .ck-tiempo li::before{content:'';position:absolute;left:3px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+  .ck-tiempo li.a::before{background:var(--surface);box-shadow:inset 0 0 0 2px var(--accent)}
+  .ck-tiempo li.w::before{background:var(--line)}
+  .ck-tiempo b{display:block;font-size:14.5px}
+  .ck-tiempo span{font-size:12.5px;color:var(--ink-soft)}
+  .ck-puerta{border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+  .ck-ph{display:flex;align-items:flex-start;gap:10px}
+  .ck-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0;margin-top:4px}
+  .ck-mas{flex-shrink:0;width:40px;height:32px;border-radius:10px;font-size:20px;color:var(--ink-soft);transition:transform 120ms var(--ease-out)}
+  .ck-mas:active{transform:scale(0.97)}
+  .ck-lista-c{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px}
+  .ck-lista-c span{color:var(--ink-soft)}
+  .ck-igual{margin-top:10px}
+  .ck-igual summary{display:flex;justify-content:space-between;list-style:none;cursor:pointer;font-size:14.5px}
+  .ck-igual summary::-webkit-details-marker{display:none}
+  .ck-igual summary span{color:var(--accent);font-weight:700}
+  .ck-mat{font-size:14px;font-weight:700;margin-top:10px;border-radius:10px}
+  .ck-mat.ok{color:var(--accent)}
+  .ck-mat.rj{color:var(--danger);background:#FDECEA;padding:8px 10px}
+  .ck-sinc{font-size:14px;color:var(--ink-soft);margin-top:8px}
+  .ck-sinc a{color:var(--accent);font-weight:700}
+  .ck-tit{display:flex;justify-content:space-between;font-size:14px;color:var(--ink-soft);margin:14px 0 4px}
+  .ck-leg{margin-bottom:6px}
+  .ck-m{border-top:1px solid var(--line);padding:10px 0}
+  .ck-mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .ck-mh b{font-size:15.5px}
+  .ck-mh span{font-size:13px;color:var(--ink-soft)}
+  .ck-b{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft);margin:8px 0 4px}
+  .ck-tag{flex-shrink:0;font-size:11.5px;font-weight:800;border-radius:6px;padding:2px 7px}
+  .ck-tag.taller{background:var(--accent-soft);color:var(--accent)}
+  .ck-tag.nueva{background:#FDF3E1;color:var(--amber)}
+  .ck-tag.ret{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink-soft)}
+  .ck-barra{display:flex;height:30px;border-radius:6px;overflow:hidden;gap:2px}
+  .ck-pz{min-width:0;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;transition:transform 120ms var(--ease-out)}
+  .ck-pz small{font-size:10px;opacity:.85}
+  .ck-pz:active{transform:scale(0.97)}
+  .ck-sob{background:#EAD9CF}
+  .ck-pie{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--ink-soft)}
+  .ck-pie .ck-link{text-decoration:none;color:var(--ink);white-space:nowrap}
+  .ck-nota{background:var(--surface-2);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.4;margin-top:10px}
+  .nm-cta .ck-tag{margin-left:auto}
+  .nm-cta:disabled{opacity:.5}
+  .ck-hs{margin:4px 0 6px 32px}
+  .ck-as{border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:10px}
+  .ck-ash{display:flex;gap:10px;margin-bottom:10px}
+  .ck-asf{width:56px;height:56px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0}
+  .ck-ash .ck-link{color:var(--accent);text-decoration:none;font-size:14px}
+  .ck-mrow{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:52px;text-align:left;border-bottom:1px solid var(--line)}
+  .ck-mrow b{font-size:16px}
+  .ck-mrow span{font-size:13.5px;color:var(--ink-soft);text-align:right}
+  .ck-mrow:disabled{opacity:.45}
+  .ck-co{border-bottom:1px solid var(--line);padding:10px 0}
+  .ck-step{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .ck-step span{flex:1;font-size:15px}
+  .ck-step button{width:44px;height:44px;border-radius:12px;background:var(--surface-2);font-size:20px;font-weight:700;transition:transform 120ms var(--ease-out)}
+  .ck-step button:active{transform:scale(0.97)}
+  .ck-step b{min-width:28px;text-align:center;font-size:18px}
 </style>
 </head>
 <body data-requiere-sesion="si" data-modo="produccion">
@@ -324,11 +406,13 @@
   <nav class="tabs-mod" id="tabsTaller" aria-label="Partes del taller">
     <button type="button" data-vista="resumen" class="on" aria-pressed="true">Resumen</button>
     <button type="button" data-vista="pedidos" aria-pressed="false">Pedidos</button>
+    <button type="button" data-vista="corte" aria-pressed="false" class="hidden" id="tabCorte">Corte</button>
     <button type="button" data-vista="nomina" aria-pressed="false">Nómina</button>
   </nav>
   <section id="vResumen" aria-live="polite">
     <div class="tl-sk"></div><div class="tl-sk"></div><div class="tl-sk"></div>
   </section>
+  <section id="vCorte" class="hidden" aria-live="polite"></section>
   <section id="vNomina" class="hidden" aria-live="polite">
     <div class="tl-sk"></div><div class="tl-sk"></div>
   </section>
@@ -539,18 +623,78 @@
   <div class="sheet-body" id="histBody"></div>
 </section>
 
+<!-- Taller › Corte (K02 a K10) -->
+<div class="sheet-scrim" id="scrimCorte" data-cerrar="sheetCorte"></div>
+<section class="sheet" id="sheetCorte" role="dialog" aria-modal="true" aria-labelledby="ckTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckTitulo"></h2><p class="sheet-sub" id="ckSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCorte" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckBody"></div>
+  <div class="sheet-foot" id="ckFoot"></div>
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkPieza" data-cerrar="sheetCkPieza"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCkPieza" role="dialog" aria-modal="true" aria-labelledby="ckPzTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckPzTitulo"></h2><p class="sheet-sub" id="ckPzSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCkPieza" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckPzBody"></div>
+  <div class="sheet-foot"><button class="btn-primary nm-teal" type="button" id="btnCkPieza">Listo</button></div>
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkPuerta" data-cerrar="sheetCkPuerta"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCkPuerta" role="dialog" aria-modal="true" aria-labelledby="ckPuTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckPuTitulo"></h2><p class="sheet-sub" id="ckPuSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCkPuerta" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckPuBody"></div>
+  <div class="sheet-foot"><button class="btn-primary nm-teal" type="button" id="btnCkPuerta">Listo</button></div>
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkAsignar" data-cerrar="sheetCkAsignar"></div>
+<section class="sheet sheet-top" id="sheetCkAsignar" role="dialog" aria-modal="true" aria-labelledby="ckAsTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckAsTitulo">Asignar puertas</h2><p class="sheet-sub" id="ckAsSub">Las que faltan por asignar o de otro herrero</p></div>
+    <button class="icon-btn" data-cerrar="sheetCkAsignar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckAsBody"></div>
+  <div class="sheet-foot"><button class="btn-primary nm-teal" type="button" id="btnCkAsignar" disabled>Asignar</button></div>
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkMas" data-cerrar="sheetCkMas"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCkMas" role="dialog" aria-modal="true" aria-labelledby="ckMasTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckMasTitulo">Más</h2><p class="sheet-sub" id="ckMasSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCkMas" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckMasBody"></div>
+  
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkCorregir" data-cerrar="sheetCkCorregir"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCkCorregir" role="dialog" aria-modal="true" aria-labelledby="ckCoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckCoTitulo">Corregir lo que cortó</h2><p class="sheet-sub" id="ckCoSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCkCorregir" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckCoBody"></div>
+  <div class="sheet-foot"><button class="btn-primary nm-teal" type="button" id="btnCkCorregir">Guardar corrección</button></div>
+</section>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=82"></script>
-<script src="assets/js/supabase-client.js?v=82"></script>
-<script src="assets/js/img-compress.js?v=82"></script>
-<script src="assets/js/comun.js?v=82"></script>
-<script src="assets/js/avisos.js?v=82"></script>
-<script src="assets/js/sesion.js?v=82"></script>
-<script src="assets/js/ayuda.js?v=82"></script>
-<script src="assets/js/ventas-comun.js?v=82"></script>
-<script src="assets/js/specs-producto.js?v=82"></script>
-<script src="assets/js/nomina.js?v=82"></script>
-<script src="assets/js/taller.js?v=82"></script>
+<script src="assets/vendor/supabase.js?v=83"></script>
+<script src="assets/js/supabase-client.js?v=83"></script>
+<script src="assets/js/img-compress.js?v=83"></script>
+<script src="assets/js/comun.js?v=83"></script>
+<script src="assets/js/avisos.js?v=83"></script>
+<script src="assets/js/sesion.js?v=83"></script>
+<script src="assets/js/ayuda.js?v=83"></script>
+<script src="assets/js/ventas-comun.js?v=83"></script>
+<script src="assets/js/specs-producto.js?v=83"></script>
+<script src="assets/js/pdf-reporte.js?v=83"></script>
+<script src="assets/js/costeo.js?v=83"></script>
+<script src="assets/js/corte.js?v=83"></script>
+<script src="assets/js/taller-corte.js?v=83"></script>
+<script src="assets/js/nomina.js?v=83"></script>
+<script src="assets/js/taller.js?v=83"></script>
 </body>
 </html>

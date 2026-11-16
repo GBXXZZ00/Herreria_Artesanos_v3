@@ -5,6 +5,23 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
 
+## Taller › Corte, lote 5 (v83, 16 nov 2026, Claude de Gualfredo)
+Antes: aplicar v89 a v94 con Gualfredo presente (sin ellas el Corte no envía).
+
+**Corte (Ray o Gualfredo)**
+- [ ] En el Taller sale la pestaña Corte. Este sábado o el próximo.
+- [ ] Números de arriba, puertas sin asignar (Asignar puertas) y el aviso de material que falta.
+- [ ] Abrir un herrero: una tarjeta por puerta con su lista; la repetida dice "Igual que N° …".
+- [ ] "De dónde sale el material": TALLER, NUEVA o el retazo. Tocar una pieza y moverla a otra barra o retazo.
+- [ ] Enviar a … y pedir N barras: el herrero lo ve en Mi trabajo y la compra queda pedida.
+- [ ] Cambiar algo después de enviar: sale "Cambió · vuelve a enviar".
+- [ ] ⋯ de una puerta: pasarla a otro herrero, al próximo sábado o quitarla del plan.
+- [ ] Más: PDF, Sugerir de nuevo, Deshacer envío (si no empezó) y Corregir lo que cortó (cuando termina).
+- [ ] Si el herrero ya empezó, su plan queda con candado.
+
+**Herrero**
+- [ ] En su Inicio, "Qué cortar · te lo mandó Ray …" con sus puertas y barras. Si no le llegó: "Ray todavía no te manda el corte de esta semana."
+
 ## Taller › Nómina, lote 3 (v82, 16 nov 2026, Claude de Gualfredo)
 Antes: cerrar y abrir la app. La migración v88 (`pagar_lo_marcado`) se aplica con Gualfredo presente: sin ella, Pagar dice que falta un cambio en la base.
 

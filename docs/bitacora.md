@@ -12,6 +12,15 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 5 · Corte, pantallas)
+- Qué hizo: Taller › Corte (K01 a K08, K10, K19 a K21; Gualfredo: "Dale"). Pestaña Corte solo para Ray y Gualfredo, con el motor de siempre (`corte.js` + `costeo.js`; a `corte.js` solo se le agregó qué exporta). Por herrero, drawer del herrero, mover una pieza, ⋯ de la puerta, asignar puertas, Más, línea de tiempo, candado, corregir, avisos (también en el Resumen), vacío y error. Mi trabajo del herrero: "Qué cortar" con lo último que se le envió. Los atajos ✂ Corte del pedido y del Resumen abren esta pestaña. `?v=83`.
+- No quedó: K09 "Reportar barra dañada" necesita una función nueva en la base (bajar una barra del depósito o sumarla a la compra): se propone a Gualfredo antes de hacerla. La vista Material va en el lote 6.
+- Ojo seguridad (de antes, no de este lote): varias funciones internas (`_fab_mover`, `_generar_etapas`, `_precio_poner`, `_avisar_usuario`, `_compra_lineas_poner`, `_a_produccion_si_pagada`, `_mes_calcular` y las de saldos) se pueden llamar desde la app con cualquier sesión y no revisan el rol. Se propone a Gualfredo una migración que les quite el permiso a la app (las funciones que las usan siguen igual).
+- Pruebas: test53 nueva; test50 ajustada.
+- Rama: `claude/lote-1-taller-costeador-t49naw`.
+- Está tocando: Taller (Corte), `corte.js` (exporta más), Mi trabajo (Qué cortar).
+- Pendientes: lote 6 (Material, Comprar, mensaje, ¿Llegó?, Proveedores; quitar Depósito › Compras).
+
 ## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 4 · Corte, base)
 - Qué hizo: las 6 migraciones 🔴 de §3B.2 (Gualfredo: "Dale"). v89 envío por herrero (`cortes_planes.enviados` con firma, hora y copia; candado por herrero; `_corte_aplicar` no baja barras si cambió lo asignado; `mi_hoja_corte` lee la copia; `corte_deshacer_envio`; `corte_datos` trae los envíos). v90 herrero en `compras_pedidas`. v91 `corte_enviar` (plan, envío y compra en una transacción). v92 un retazo en un solo plan abierto. v93 teléfono del proveedor normalizado. v94 ¿Llegó? con una parte (`quedan`) y `compra_pedida_cambiar`. Sin `drop`. Sin cambios de pantalla (van en los lotes 5 y 6).
 - Probadas juntas con `begin … rollback` en la base real (16 casos): enviar, hoja del herrero con la copia, cambio sin empezar, candado, deshacer y rehacer con el corte empezado, firma cambiada, bajar barras con lo enviado, enviar y pedir, compra que falla sin dejar el envío, retazo en dos planes, teléfono, llegó una parte, cambiar compra, herrero y teléfono en camino. Todas bien. **Sin aplicar.**

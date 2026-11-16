@@ -458,5 +458,8 @@
     return false;
   }
 
-  window.CORTE = { cargar, html, despues, click, form, clickForm, guardarForm, necesita, planSemana, alcanza, sabados, get sab(){ return semSab; } };
+  // Para Taller › Corte: el mismo motor (la sugerencia, mover una pieza, la hoja del herrero y su PDF)
+  function setSab(s){ semSab = s; }
+  window.CORTE = { cargar, html, despues, click, form, clickForm, guardarForm, necesita, planSemana, alcanza, sabados, get sab(){ return semSab; },
+    setSab, datos:() => C, moverPieza, limpiar, piezasDe, fabDe, nomMat, minRet, retazosLibres, hojaHerrero, pdfHoja, reglas, mTxt, num, COLORES };
 })();

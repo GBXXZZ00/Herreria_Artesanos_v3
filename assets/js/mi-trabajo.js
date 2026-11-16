@@ -59,22 +59,34 @@
   const mTxt = (cm) => (Number(cm) / 100).toLocaleString('es-VE', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' m';
   const minRet = (b) => Number(b.minimo) || 50;
   const etqBarra = (b) => b.tipo === 'retazo' ? 'Retazo' + (b.num ? ' R-' + b.num : '') + ' · ' + mTxt(b.largo) : 'Barra ' + (b.n || '') + (b.comprar ? ' (nueva)' : '');
+  // Qué cortar (K21): lo último que se le envió. Sus puertas, la lista de cada una y sus barras con TALLER (del
+  // depósito), NUEVA (la que se compra) o el número del retazo. No tiene botones nuevos.
+  const cuandoEnvio = (ts) => { const d = new Date(ts); if(isNaN(d)) return ''; const h = d.getHours(), hh = ((h % 12) || 12) + ':' + String(d.getMinutes()).padStart(2, '0') + (h < 12 ? ' am' : ' pm');
+    const hoy = new Date(); return d.toDateString() === hoy.toDateString() ? 'hoy ' + hh : window.AH.sabadoCorto(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')).replace('sáb ', '') + ' ' + hh; };
+  const tagBarra = (b) => b.tipo === 'retazo' ? `<span class="tj-tag ret">R-${esc(b.num || '?')}</span>` : b.comprar ? '<span class="tj-tag nueva">NUEVA</span>' : '<span class="tj-tag taller">TALLER</span>';
   function hojaCorteHtml(){
-    return hojasCorte.filter(h => !h.cortado && ((h.barras || []).length || (h.manual || []).length || (h.extras_mano || []).length)).map((h, hi) => {
+    const hs = hojasCorte.filter(h => !h.cortado && ((h.barras || []).length || (h.manual || []).length || (h.extras_mano || []).length));
+    // Herrero con Hierro por hacer y sin corte enviado
+    if(!hs.length) return trabajos.some(t => t.oficio === 'hierro' && t.estado !== 'hecha')
+      ? '<section class="tj-corte"><div class="tj-corte-h"><b>Qué cortar</b><span>Ray todavía no te manda el corte de esta semana.</span></div></section>' : '';
+    return hs.map((h, hi) => {
       const porMat = {}; (h.barras || []).forEach(b => (porMat[b.material || 'Material'] ||= []).push(b));
-      const nb = (h.barras || []).length, puertas = {};
+      const puertas = {};
       (h.barras || []).forEach(b => (b.piezas || []).forEach(x => { if(x.etq && !puertas[x.etq]) puertas[x.etq] = x.color || '#6F7C7E'; }));
-      return `<details class="tj-corte" aria-label="Hoja de corte"><summary class="tj-corte-h"><b>Tu hoja de corte</b><span>Para el ${esc(window.AH.sabadoCorto(h.sab))} · ${nb === 1 ? '1 barra o retazo' : nb + ' barras y retazos'} · toca para ver</span></summary>
-        <button class="btn-secondary" type="button" data-hoja-pdf="${hi}" style="width:100%;margin:10px 0 4px">Descargar PDF</button>
-        <p class="tj-corte-n">Corta primero los retazos. Medidas de las piezas en cm. Un color por puerta. Al terminar tu paso de Hierro, la app descuenta las barras y guarda los retazos sola.</p>
-        <div class="tj-leg">${Object.entries(puertas).map(([e, c]) => `<span><i style="background:${esc(c)}"></i>${esc(e)}</span>`).join('')}</div>
-        ${Object.entries(porMat).map(([mat, bs]) => `<div class="tj-corte-m">${esc(mat)}</div>${bs.map(b => `<div class="tj-corte-b"><b>${esc(etqBarra(b))}</b>
+      const nP = Object.keys(puertas).length + (h.manual || []).length;
+      return `<section class="tj-corte" aria-label="Qué cortar">
+        <div class="tj-corte-h"><b>Qué cortar${h.enviado_en ? ' · te lo mandó Ray ' + esc(cuandoEnvio(h.enviado_en)) : ''}</b><span>Para el ${esc(window.AH.sabadoCorto(h.sab))} · ${nP === 1 ? '1 puerta' : nP + ' puertas'}. Corta así y guarda los retazos con su número.</span></div>
+        <div class="tj-leg">${Object.entries(puertas).map(([e, c], i) => `<span><i style="background:${esc(c)}"></i>${esc(e)}${i === 0 ? ' · primero' : ''}</span>`).join('')}</div>
+        ${Object.entries(porMat).map(([mat, bs]) => `<div class="tj-corte-m">${esc(mat)}<span>${bs.length === 1 ? '1 barra' : bs.length + ' barras'}</span></div>${bs.map(b => `<div class="tj-corte-b">
+          <span class="tj-corte-t">${tagBarra(b)}${esc(b.tipo === 'retazo' ? 'retazo de ' + mTxt(b.largo) : 'barra de ' + mTxt(b.largo))} · ${Number(b.libre) >= minRet(b) ? 'guarda el retazo de ' + mTxt(b.libre) : 'sobra ' + mTxt(b.libre)}</span>
           <span class="tj-barra">${(b.piezas || []).map(x => `<span style="flex:${Number(x.cm)};background:${esc(x.color || '#6F7C7E')}">${x.cm}</span>`).join('')}${Number(b.libre) > 0 ? `<span class="tj-sob" style="flex:${Number(b.libre)}"></span>` : ''}</span>
-          <span>${(b.piezas || []).map(x => `${x.cm} · ${esc(x.etq || '')}`).join('<br>')}${Number(b.libre) >= minRet(b) ? '<br><b>Guarda el retazo de ' + mTxt(b.libre) + '</b>' : ''}</span></div>`).join('')}`).join('')}
+          <span>${(b.piezas || []).map(x => `${x.cm} · ${esc(x.etq || '')}`).join('<br>')}</span></div>`).join('')}`).join('')}
         ${(h.pasar || []).length ? `<div class="tj-corte-m">Pásale a tu compañero</div>${h.pasar.map(x => `<div class="tj-corte-b"><span>${x.cm} cm · ${esc(x.etq || '')} → ${esc(x.a || '')}</span></div>`).join('')}` : ''}
         ${(h.manual || []).map(u => `<div class="tj-corte-m">N° ${esc(u.venta)} · ${esc(u.nombre)}</div><div class="tj-corte-b"><span>Este modelo no tiene plan. Córtalo como siempre.</span></div>`).join('')}
         ${(h.extras_mano || []).map(x => `<div class="tj-corte-m">${esc(x.etq || '')}</div><div class="tj-corte-b"><span>${esc(x.extra || 'Extra')}: no tiene plan. Córtalo como siempre.</span></div>`).join('')}
-      </details>`; }).join('');
+        <p class="tj-corte-n">Al terminar tu Hierro, la app descuenta las barras y guarda los retazos sola.</p>
+        <button class="btn-secondary" type="button" data-hoja-pdf="${hi}" style="width:100%;margin-top:8px">Descargar PDF</button>
+      </section>`; }).join('');
   }
   // PDF de la hoja de corte (mismo diseño del PDF de la venta)
   async function pdfHojaCorte(i){

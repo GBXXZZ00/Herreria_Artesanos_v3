@@ -237,7 +237,7 @@ const err=[];
 
  // Pedidos (T2)
  ok('Título "Taller" y "6 pedidos en el taller"',(await a.textContent('.topbar-title'))==='Taller' && (await a.textContent('#subtitulo'))==='6 pedidos en el taller');
- ok('Pestañas Resumen · Pedidos · Nómina',(await a.$$eval('#tabsTaller > *',x=>x.map(y=>y.textContent))).join(' · ')==='Resumen · Pedidos · Nómina');
+ ok('Pestañas Resumen · Pedidos · Corte · Nómina (Corte solo para Ray)',(await a.$$eval('#tabsTaller > *:not(.hidden)',x=>x.map(y=>y.textContent))).join(' · ')==='Resumen · Pedidos · Corte · Nómina');
  const chips=await a.$$eval('#chips .chip',x=>x.map(y=>y.textContent));
  ok('Filtros en una línea: Todos 6 · Por asignar 3 · En proceso 3 · Listos 1',chips.join(' · ')==='Todos 6 · Por asignar 3 · En proceso 3 · Listos 1',chips);
  ok('Los filtros no saltan a otra línea',await a.$$eval('#chips .chip',x=>new Set(x.map(c=>Math.round(c.getBoundingClientRect().top))).size===1));
