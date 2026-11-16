@@ -901,7 +901,7 @@
     if(!que || !p) return;
     try{ history.replaceState(history.state, '', location.pathname); } catch(e){}
     if(p.rol === 'trabajador' && (que === 'trabajos' || que === 'pagos' || que === 'historial')) ver(que);
-    if(p.rol === 'admin' && que === 'vales') location.href = 'nomina.html';
+    if(p.rol === 'admin' && que === 'vales') location.href = 'taller.html?vista=nomina';
   }
 
   window.Trabajo = {

@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Taller · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=81">
+<link rel="stylesheet" href="assets/css/base.css?v=82">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   .p-nuevo{color:#fff!important;background:var(--danger)!important}
@@ -222,6 +222,89 @@
   .tl-kv2 b.teal{color:var(--accent)}
   .tl-paso-semana{display:flex;align-items:center;gap:10px;padding:10px 0}
   .tl-paso-semana + .tl-paso-semana{border-top:1px solid var(--line)}
+  /* Nómina (T5, T6): de la Nómina de siempre */
+  .foto-otra{position:absolute;z-index:2;left:12px;top:12px;max-width:calc(100% - 24px);padding:6px 11px;border-radius:999px;background:rgba(28,26,23,0.78);color:#fff;font-size:12.5px;font-weight:800;line-height:1.25}
+  .aviso-m{font-size:12.5px;color:#8A5A00;margin-top:8px}
+  .solo-ray{text-align:center;font-size:13px;color:var(--ink-soft);margin-top:10px}
+  .d-parte{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:800;margin-top:12px}
+  .d-datos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .d-dato{background:var(--surface-2);border-radius:14px;padding:10px 12px;min-width:0}
+  .d-dato span{display:block;font-size:12px;color:var(--ink-soft);font-weight:700}
+  .d-dato b{display:block;font-size:15px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .d-suya{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--ink-soft)}
+  .d-suya button{width:56px;height:56px;border-radius:12px;overflow:hidden;background:var(--surface-2);flex-shrink:0}
+  .d-suya img{width:100%;height:100%;object-fit:cover}
+  .d-link{display:flex;align-items:center;justify-content:center;height:50px;margin-top:16px;border:1.5px solid var(--line-strong);border-radius:14px;font-weight:700;color:var(--accent);text-decoration:none;transition:transform 130ms var(--ease-out)}
+  .d-link:active{transform:scale(0.98)}
+  .bs-caja{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #vNomina{padding:0 18px}
+  .nm-bento{display:grid;grid-template-columns:1.3fr 1fr;gap:8px;margin-bottom:14px}
+  .nm-big{background:var(--accent);color:#fff;border-radius:18px;padding:12px 15px}
+  .nm-big span,.nm-big small{display:block;font-size:13.5px;color:rgba(255,255,255,.85)}
+  .nm-big b{display:block;font-size:32px;font-weight:800;letter-spacing:-.6px}
+  .nm-sm{background:var(--surface-2);border-radius:18px;padding:12px 15px}
+  .nm-sm b{display:block;font-size:24px;font-weight:800;letter-spacing:-.4px}
+  .nm-sm span{display:block;font-size:13.5px;color:var(--ink-soft)}
+  .nm-cab{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--ink-soft);margin:4px 0 2px}
+  .nm-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 0;text-align:left;transition:transform 120ms var(--ease-out)}
+  .nm-row + .nm-row{border-top:1px solid var(--line)}
+  .nm-row:active{transform:scale(0.98)}
+  .nm-av{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .nm-tx{flex:1;min-width:0;display:block}
+  .nm-tx > b{display:block;font-size:16px;font-weight:800}
+  .nm-tx > span{display:block;font-size:13.5px;color:var(--ink-soft);margin-top:1px}
+  .nm-tx > .nm-tag{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 9px;margin-top:4px;margin-right:4px}
+  .nm-tag.rj{background:#FDECEA;color:var(--danger)}
+  .nm-tag.am{background:#FDF3E1;color:var(--amber)}
+  .nm-m{flex-shrink:0;font-size:16px;font-weight:800;color:var(--accent);white-space:nowrap}
+  .nm-m.dia{font-size:15px}
+  .nm-tabs{padding:2px 0;margin:0 0 6px}
+  .nm-tabs .chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+  .nm-it{display:flex;align-items:center;gap:11px;padding:11px 0}
+  .nm-it + .nm-it{border-top:1px solid var(--line)}
+  .nm-it[data-item]{cursor:pointer}
+  .nm-ck{width:28px;height:28px;border-radius:8px;border:2px solid var(--line-strong);background:var(--surface);color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 120ms var(--ease-out)}
+  .nm-ck:active{transform:scale(0.92)}
+  .nm-ck.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .nm-ck:disabled{opacity:.4}
+  .nm-foto{width:46px;height:46px;border-radius:10px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:12px}
+  .nm-foto img{width:100%;height:100%;object-fit:cover}
+  .nm-it .nm-tx > b{font-size:15px}
+  .nm-vuelta{display:inline-block;font-size:12px;color:var(--danger);background:#FDECEA;border-radius:6px;padding:0 6px;margin-left:4px}
+  .nm-ped{color:var(--ink-soft);text-decoration:underline}
+  .nm-im{flex-shrink:0;font-size:15.5px;font-weight:800;white-space:nowrap}
+  .nm-im.gris{color:var(--ink-soft);font-size:13px}
+  .nm-im.rojo{color:var(--danger)}
+  .nm-tit{font-size:14px;font-weight:800;color:var(--ink-soft);margin:14px 0 2px}
+  .nm-reloj{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);flex-shrink:0;position:relative}
+  .nm-reloj::after{content:'';position:absolute;left:11px;top:11px;width:3px;height:3px;border-radius:50%;background:var(--accent)}
+  .nm-vp{display:flex;align-items:center;gap:10px;background:#FDF3E1;border-radius:14px;padding:10px 12px;margin:2px 0 6px}
+  .nm-tot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14.5px;color:var(--ink-soft);margin-bottom:10px}
+  .nm-tot b{font-size:17px;color:var(--ink)}
+  .nm-nota{font-size:13px;color:var(--ink-soft);text-align:center;margin-top:8px}
+  .nm-nota:empty{display:none}
+  .nm-rec{border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
+  .nm-rec summary{list-style:none;display:flex;align-items:flex-start;gap:10px;padding:12px 14px;cursor:pointer}
+  .nm-rec summary::-webkit-details-marker{display:none}
+  .nm-rm{font-size:17px;font-weight:800;white-space:nowrap}
+  .nm-rec-b{padding:0 14px 6px}
+  .nm-motivo{border:1px solid var(--line);border-radius:14px;padding:10px 13px;margin-bottom:10px}
+  .nm-motivo span{display:block;font-size:13px;color:var(--ink-soft)}
+  .nm-motivo b{font-size:16px}
+  .nm-pie2{display:flex;flex-direction:column;gap:8px}
+  .nm-pie2 .btn-secondary{width:100%}
+  .nm-no{color:var(--danger)}
+  .nm-cuentas{display:flex;flex-direction:column;gap:8px}
+  .nm-cta{display:flex;align-items:center;gap:12px;width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:14px;text-align:left;background:var(--surface);transition:transform 120ms var(--ease-out)}
+  .nm-cta:active{transform:scale(0.98)}
+  .nm-cta.on{border-color:var(--accent);background:var(--accent-soft)}
+  .nm-rad{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-strong);flex-shrink:0}
+  .nm-cta.on .nm-rad{border:6px solid var(--accent)}
+  .nm-teal{background:var(--accent)!important}
+  .nm-nw{white-space:nowrap}
+  .nm-montofijo{background:var(--surface-2);border-radius:12px;padding:12px 14px;font-size:17px;font-weight:700}
+  .det-name{font-size:19px;font-weight:800}
+  .det-type{font-size:13.5px;color:var(--ink-soft)}
 </style>
 </head>
 <body data-requiere-sesion="si" data-modo="produccion">
@@ -241,10 +324,13 @@
   <nav class="tabs-mod" id="tabsTaller" aria-label="Partes del taller">
     <button type="button" data-vista="resumen" class="on" aria-pressed="true">Resumen</button>
     <button type="button" data-vista="pedidos" aria-pressed="false">Pedidos</button>
-    <a href="nomina.html">Nómina</a>
+    <button type="button" data-vista="nomina" aria-pressed="false">Nómina</button>
   </nav>
   <section id="vResumen" aria-live="polite">
     <div class="tl-sk"></div><div class="tl-sk"></div><div class="tl-sk"></div>
+  </section>
+  <section id="vNomina" class="hidden" aria-live="polite">
+    <div class="tl-sk"></div><div class="tl-sk"></div>
   </section>
   <div id="vPedidos" class="hidden">
     <div class="chips tl-chips" id="chips" role="tablist"></div>
@@ -355,17 +441,116 @@
   <div class="sheet-body" id="trabSemBody"></div>
 </section>
 
+<!-- Nómina: drawer del trabajador (Por pagar · Historial · Vales) -->
+<div class="sheet-scrim scrim-top" id="scrimTrab" data-cerrar="sheetTrab"></div>
+<section class="sheet sheet-top" id="sheetTrab" role="dialog" aria-modal="true" aria-labelledby="trabNombre">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="trabNombre">Trabajador</h2><p class="sheet-sub" id="trabSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetTrab" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="chips nm-tabs" id="trabTabs" role="tablist">
+      <button class="chip active" type="button" role="tab" data-tab="pagar">Por pagar</button>
+      <button class="chip" type="button" role="tab" data-tab="historial">Historial</button>
+      <button class="chip" type="button" role="tab" data-tab="vales">Vales</button>
+    </div>
+    <div id="trabBody"></div>
+  </div>
+  <div class="sheet-foot" id="trabFoot"></div>
+</section>
+
+<!-- Un trabajo: de qué cliente y pedido es -->
+<div class="sheet-scrim scrim-top" id="scrimItem" data-cerrar="sheetItem"></div>
+<section class="sheet sheet-hero sheet-top" id="sheetItem" role="dialog" aria-modal="true" aria-label="Trabajo">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetItem" aria-label="Cerrar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sheet-body" id="itemBody"></div>
+</section>
+
+<!-- Anotar un vale (Ray) -->
+<div class="sheet-scrim scrim-top" id="scrimVale" data-cerrar="sheetVale"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetVale" role="dialog" aria-modal="true" aria-labelledby="valeTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="valeTitulo">Anotar un vale</h2>
+    <button class="icon-btn" data-cerrar="sheetVale" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field hidden" id="campoValeQuien">
+      <span class="field-label">¿A quién?</span>
+      <div class="opts" id="valeQuien" style="--cols:2"></div>
+      <p class="field-error">Elige a quién le das el vale</p>
+    </div>
+    <div class="field" id="campoValeMonto">
+      <label class="field-label" for="valeMonto">Monto en dólares</label>
+      <div class="input-affix"><span class="affix">$</span><input class="input" id="valeMonto" type="text" inputmode="decimal" autocomplete="off"></div>
+      <p class="field-error">Escribe un monto mayor a 0</p>
+    </div>
+    <div class="field">
+      <label class="field-label" for="valeNota">Para qué (opcional)</label>
+      <input class="input" id="valeNota" type="text" maxlength="120" autocomplete="off">
+    </div>
+    <button class="tchip" type="button" id="btnValeBs" aria-pressed="false"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Se dio en bolívares</button>
+    <div class="bs-caja hidden" id="cajaBs" style="margin-top:12px">
+      <div class="field" id="campoValeBs">
+        <label class="field-label" for="valeBs">Bolívares</label>
+        <input class="input" id="valeBs" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+      <div class="field" id="campoValeTasa">
+        <label class="field-label" for="valeTasa">Tasa (Bs por $)</label>
+        <input class="input" id="valeTasa" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+    </div>
+    <p class="field-hint" id="valeAyuda">Queda aprobado y se descuenta en su próximo pago.</p>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarVale">Anotar vale</button></div>
+</section>
+
+<!-- Revisar el vale que pidió (T6) -->
+<div class="sheet-scrim scrim-top" id="scrimValeRev" data-cerrar="sheetValeRev"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetValeRev" role="dialog" aria-modal="true" aria-labelledby="valeRevTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="valeRevTitulo">Vale</h2><p class="sheet-sub" id="valeRevSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetValeRev" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="valeRevBody"></div>
+  <div class="sheet-foot nm-pie2" id="valeRevFoot"></div>
+</section>
+
+<!-- Pagar: de qué cuenta salió y Confirmar pago (también ubica la salida de un vale) -->
+<div class="sheet-scrim scrim-top" id="scrimSalida" data-cerrar="sheetSalida"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetSalida" role="dialog" aria-modal="true" aria-labelledby="salTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="salTitulo">¿De qué cuenta salió?</h2><p class="sheet-sub" id="salSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetSalida" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="salBody"></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnSalida">Guardar</button><p class="nm-nota" id="salNota"></p></div>
+</section>
+
+<!-- Historial de todos los pagos -->
+<div class="sheet-scrim scrim-top" id="scrimHist" data-cerrar="sheetHist"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetHist" role="dialog" aria-modal="true" aria-labelledby="histTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="histTitulo">Historial de pagos</h2><p class="sheet-sub">Los últimos pagos de nómina</p></div>
+    <button class="icon-btn" data-cerrar="sheetHist" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="histBody"></div>
+</section>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=81"></script>
-<script src="assets/js/supabase-client.js?v=81"></script>
-<script src="assets/js/img-compress.js?v=81"></script>
-<script src="assets/js/comun.js?v=81"></script>
-<script src="assets/js/avisos.js?v=81"></script>
-<script src="assets/js/sesion.js?v=81"></script>
-<script src="assets/js/ayuda.js?v=81"></script>
-<script src="assets/js/ventas-comun.js?v=81"></script>
-<script src="assets/js/specs-producto.js?v=81"></script>
-<script src="assets/js/taller.js?v=81"></script>
+<script src="assets/vendor/supabase.js?v=82"></script>
+<script src="assets/js/supabase-client.js?v=82"></script>
+<script src="assets/js/img-compress.js?v=82"></script>
+<script src="assets/js/comun.js?v=82"></script>
+<script src="assets/js/avisos.js?v=82"></script>
+<script src="assets/js/sesion.js?v=82"></script>
+<script src="assets/js/ayuda.js?v=82"></script>
+<script src="assets/js/ventas-comun.js?v=82"></script>
+<script src="assets/js/specs-producto.js?v=82"></script>
+<script src="assets/js/nomina.js?v=82"></script>
+<script src="assets/js/taller.js?v=82"></script>
 </body>
 </html>

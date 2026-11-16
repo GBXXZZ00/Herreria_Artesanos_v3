@@ -58,16 +58,13 @@
         b: () => { const a = txt('#accionTitulo'); return /confirmar pago/i.test(a) ? ['confirmar-un-pago-admin'] : /cancelar/i.test(a) ? ['cancelar-una-venta-admin'] : ['pagos']; } }
     ],
     'taller.html': [
+      { ref:'#sheetTrab [data-cerrar="sheetTrab"]', etiqueta:'Cerrar', mod:'nomina', t:'Pagar y vales', b:['pagarle-a-un-trabajador', 'vales'] },
+      { ref:'#sheetVale [data-cerrar="sheetVale"]', etiqueta:'Cerrar', mod:'nomina', t:'Anotar un vale', b:['vales'] },
       { ref:'#btnActualizar', etiqueta:'Actualizar', mod:'produccion', t:'El taller', b:['intro', 'los-pasos-de-cada-producto', 'la-lista', 'puertas-de-madera', 'normas', 'avisos-admin', 'avisos-vend'] },
       { ref:'#sheetFicha .sheet-x', flotante:true, mod:'produccion', t:'Este pedido en el taller', b:['la-ficha', 'asignar-el-trabajo-admin', 'puertas-de-madera', 'los-pasos-de-cada-producto'] },
       { ref:'#sheetTodo [data-cerrar="sheetTodo"]', etiqueta:'Cerrar', mod:'produccion', t:'Asignar trabajadores', b:['asignar-el-trabajo-admin'] },
       { ref:'#sheetCatItem [data-cerrar="sheetCatItem"]', etiqueta:'Cerrar', mod:'admin', t:'Categoría de pago', b:['categorias-de-pago'] },
       { ref:'#sheetOrden [data-cerrar="sheetOrden"]', etiqueta:'Cerrar', mod:'produccion', t:'Fabricar para exhibición', b:['fabricar-para-exhibicion-admin'] }
-    ],
-    'nomina.html': [
-      { ref:'#btnActualizar', etiqueta:'Actualizar', mod:'nomina', t:'La nómina de la semana', b:['intro', 'como-se-calcula', 'la-lista-de-la-semana', 'normas', 'avisos'] },
-      { ref:'#sheetTrab [data-cerrar="sheetTrab"]', etiqueta:'Cerrar', mod:'nomina', t:'Pagar y vales', b:['pagarle-a-un-trabajador', 'vales'] },
-      { ref:'#sheetVale [data-cerrar="sheetVale"]', etiqueta:'Cerrar', mod:'nomina', t:'Anotar un vale', b:['vales'] }
     ],
     'deposito.html': [
       { ref:'#btnActualizar', etiqueta:'Actualizar', mod:'deposito', t:'El depósito',

@@ -43,6 +43,8 @@
   let trabajoAlCargar = Number(params.get('trabajo')) || null;
   // Un enlace con filtro o pedido abre Pedidos; si no, el administrador empieza en Resumen
   const pideVistaPedidos = params.get('vista') === 'pedidos' || params.has('filtro') || !!abrirAlCargar;
+  const pideNomina = params.get('vista') === 'nomina';
+  const trabNomina = params.get('t') || params.get('trabajador');
 
   // ---------------------------------------------------------------------------
   // Cálculos sobre las etapas de un pedido
@@ -977,7 +979,7 @@
     return mes(lun) === mes(sab) ? `${dl} al ${ds} ${mes(sab)}` : `${dl} ${mes(lun)} al ${ds} ${mes(sab)}`;
   }
   function pintarSubtitulo(){
-    if(vista === 'resumen'){ $('subtitulo').textContent = `Hoy ${fechaDia(SAB.hoy)} · semana ${rangoSemana(SAB.este)}`; return; }
+    if(vista === 'resumen' || vista === 'nomina'){ $('subtitulo').textContent = `Hoy ${fechaDia(SAB.hoy)} · semana ${rangoSemana(SAB.este)}`; return; }
     const n = pedidos.length;
     $('subtitulo').textContent = SUBTITULO[filtro] || (n === 1 ? '1 pedido en el taller' : n + ' pedidos en el taller');
   }
@@ -985,10 +987,24 @@
     vista = v;
     $('vResumen').classList.toggle('hidden', v !== 'resumen');
     $('vPedidos').classList.toggle('hidden', v !== 'pedidos');
+    $('vNomina').classList.toggle('hidden', v !== 'nomina');
     $('tabsTaller').querySelectorAll('[data-vista]').forEach(b => { const on = b.dataset.vista === v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
     pintarSubtitulo();
     if(v === 'resumen') pintarResumen();
+    if(v === 'nomina' && window.Nomina) window.Nomina.mostrar();
   }
+  // Abre la Nómina y, si se dice, a un trabajador ('vale': su vale por revisar)
+  function irNomina(tid, que){
+    ponerVista('nomina'); window.scrollTo({ top:0 });
+    ['sheetTrabajo', 'sheetTrabSem', 'sheetFicha'].forEach(id => { if($(id).classList.contains('open')) cerrarHoja(id, true); });
+    if(tid && window.Nomina) window.Nomina.abrir(tid, que);
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-nomina-t],[data-ir-nomina]');
+    if(!b) return;
+    e.preventDefault();
+    irNomina(b.dataset.nominaT || null, b.dataset.que || null);
+  });
   $('tabsTaller').addEventListener('click', (e) => {
     const b = e.target.closest('[data-vista]'); if(!b) return;
     if(b.dataset.vista === vista){ window.scrollTo({ top:0, behavior:'smooth' }); return; }
@@ -1032,6 +1048,8 @@
     if(vista === 'resumen') pintarResumen();
     if(trabajoActual && $('sheetTrabajo').classList.contains('open')) pintarTrabajo();
   }
+  // Al carpintero solo lo ve quien lleva la madera (es quien le paga)
+  const verTrab = (t) => !window.Nomina || window.Nomina.seVe(t);
   const nombreTrab = (tid) => {
     const t = (R && R.trab || []).find(x => x.id === tid) || ((R && R.nom && R.nom.trabajadores) || []).find(x => x.id === tid);
     return t ? t.nombre : 'Otro';
@@ -1075,7 +1093,7 @@
     const seg = (n, c) => n ? `<i class="${c}" style="flex:${n}"></i>` : '';
     const por = {};
     set.forEach(e => { const p = por[e.trabajador_id] = por[e.trabajador_id] || { asig:0, hecho:0, arr:0, nombre: e.trabajador ? e.trabajador.nombre : nombreTrab(e.trabajador_id) }; p.asig++; if(e.estado === 'hecha') p.hecho++; if(esArr(e)) p.arr++; });
-    const filas = (R.trab || []).map(t => ({ id:t.id, nombre:t.nombre, esp: ESP_CORTO[(t.especialidades || [])[0]] || '' }))
+    const filas = (R.trab || []).filter(verTrab).map(t => ({ id:t.id, nombre:t.nombre, esp: ESP_CORTO[(t.especialidades || [])[0]] || '' }))
       .concat(Object.keys(por).filter(id => !(R.trab || []).some(t => t.id === id)).map(id => ({ id, nombre: por[id].nombre, esp:'' })))
       .map(t => Object.assign(t, por[t.id] || { asig:0, hecho:0, arr:0 }))
       .sort((a, b) => b.asig - a.asig || a.nombre.localeCompare(b.nombre));
@@ -1092,14 +1110,14 @@
     </section>`;
   }
   function porPagarHtml(){
-    const cab = `<h3>3 · Por pagar <a href="nomina.html">Ir a Nómina ›</a></h3>`;
+    const cab = `<h3>3 · Por pagar <button type="button" data-ir-nomina>Ir a Nómina ›</button></h3>`;
     if(!R.nom) return `<section class="tl-sec">${cab}${noCargo}</section>`;
-    const filas = (R.nom.trabajadores || []).filter(t => Number(t.trabajos) > 0 || Number(t.vales_monto) > 0);
+    const filas = (R.nom.trabajadores || []).filter(t => (Number(t.trabajos) > 0 || Number(t.vales_monto) > 0) && verTrab(t));
     const viejos = {};
     (R.viejos || []).forEach(e => { viejos[e.trabajador_id] = (viejos[e.trabajador_id] || 0) + 1; });
     const tm = filas.reduce((a, t) => a + Number(t.trabajos_monto || 0), 0);
     const vm = filas.reduce((a, t) => a + Number(t.vales_monto || 0), 0);
-    const pagos = R.pagos || [];
+    const pagos = (R.pagos || []).filter(p => verTrab((R.nom.trabajadores || []).find(t => t.id === p.trabajador_id) || {}));
     const pagado = pagos.reduce((a, p) => a + Number(p.monto || 0), 0);
     const quienes = [...new Set(pagos.map(p => primerNombre(nombreTrab(p.trabajador_id))))];
     const nota = (pagado > 0 ? `Ya pagaste ${dinero(pagado)} esta semana (${quienes.join(', ')}). ` : '') + 'Lo que no pagues pasa a la semana siguiente con ↩.';
@@ -1107,7 +1125,7 @@
     return `<section class="tl-sec" id="rPorPagar">${cab}
       <p class="tl-big"><b class="teal">${dinero(tm - vm)}</b> trabajos ${dinero(tm)}${vm ? ' menos vales ' + dinero(vm) : ''}</p>
       <table class="tl-tt"><thead><tr><th>Trabajador</th><th>Trabajos</th><th>Vales</th><th>A pagar</th></tr></thead><tbody>
-      ${filas.map(t => `<tr data-href="nomina.html?t=${encodeURIComponent(t.id)}"><td><b>${esc(t.nombre)}</b>${viejos[t.id] ? `<span class="tl-rtag">${viejos[t.id]} ↩</span>` : ''}</td>
+      ${filas.map(t => `<tr data-nomina-t="${esc(t.id)}"><td><b>${esc(t.nombre)}</b>${viejos[t.id] ? `<span class="tl-rtag">${viejos[t.id]} ↩</span>` : ''}</td>
         <td>${Number(t.trabajos)} · ${dinero(t.trabajos_monto)}</td><td class="${Number(t.vales_monto) ? 'neg' : ''}">${Number(t.vales_monto) ? '−' + dinero(t.vales_monto) : '·'}</td><td><b>${dinero(t.neto)}</b></td></tr>`).join('')}
       <tr class="tot"><td>Total</td><td>${dinero(tm)}</td><td class="${vm ? 'neg' : ''}">${vm ? '−' + dinero(vm) : '·'}</td><td>${dinero(tm - vm)}</td></tr>
       </tbody></table>
@@ -1115,13 +1133,14 @@
     </section>`;
   }
   function valesHtml(){
-    const cab = `<h3>4 · Vales <a href="nomina.html">Ver vales ›</a></h3>`;
+    const cab = `<h3>4 · Vales <button type="button" data-ir-nomina>Ver vales ›</button></h3>`;
     if(!R.vales) return `<section class="tl-sec">${cab}${noCargo}</section>`;
-    const pend = R.vales.filter(x => x.estado === 'pendiente'), apr = R.vales.filter(x => x.estado === 'aprobado');
+    const vis = R.vales.filter(x => verTrab((R.trab || []).find(t => t.id === x.trabajador_id) || {}));
+    const pend = vis.filter(x => x.estado === 'pendiente'), apr = vis.filter(x => x.estado === 'aprobado');
     if(!pend.length && !apr.length) return `<section class="tl-sec">${cab}<p class="tl-nota">Ningún vale por revisar.</p></section>`;
     return `<section class="tl-sec" id="rVales">${cab}
       ${pend.map(x => `<div class="tl-row"><div><b>${esc(nombreTrab(x.trabajador_id))} pidió ${dinero(x.monto)}</b><span>${x.nota ? esc(x.nota) + ' · ' : ''}${esc(cuando(x.creado_en))}</span></div>
-        <a class="tl-btn-sm" href="nomina.html?t=${encodeURIComponent(x.trabajador_id)}" style="display:inline-flex;align-items:center;text-decoration:none">Revisar</a></div>`).join('')}
+        <button class="tl-btn-sm" type="button" data-nomina-t="${esc(x.trabajador_id)}" data-que="vale">Revisar</button></div>`).join('')}
       ${apr.map(x => `<div class="tl-row"><div><b>${esc(primerNombre(nombreTrab(x.trabajador_id)))} · ${dinero(x.monto)} aprobado</b><span>${esc(fechaDia(diaDe(x.creado_en)))} · se descuenta al pagarle</span></div></div>`).join('')}
     </section>`;
   }
@@ -1162,8 +1181,7 @@
     if(e.target.closest('a')) return;
     const tr = e.target.closest('tr[data-trab]');
     if(tr){ abrirTrabSem(tr.dataset.trab); return; }
-    const th = e.target.closest('tr[data-href]');
-    if(th) location.href = th.dataset.href;
+
   });
 
   // ---------------------------------------------------------------------------
@@ -1185,7 +1203,7 @@
         ${e.estado === 'hecha' && e.monto != null && Number(e.monto) ? `<span class="tl-monto">${dinero(e.monto)}</span>` : ''}
       </div>`;
     }).join('') : '<p class="tl-nota">No tiene nada asignado esta semana.</p>')
-      + `<div class="tl-atajos" style="margin-top:12px"><a href="nomina.html?t=${encodeURIComponent(tid)}">Nómina de ${esc(primerNombre(nombre))}</a></div>`;
+      + `<div class="tl-atajos" style="margin-top:12px"><button type="button" data-nomina-t="${esc(tid)}">Nómina de ${esc(primerNombre(nombre))}</button></div>`;
     abrirHoja('sheetTrabSem');
   }
   $('trabSemBody').addEventListener('click', (e) => {
@@ -1252,7 +1270,7 @@
       kv.push(`<div><span>Por pagar a ${esc(primerNombre(quien))}</span><b class="teal">${t ? dinero(t.neto) : '·'}</b></div>`);
     }
     const at = [`<button type="button" data-ver-pedido="${v.id}">${v.interna ? 'Ver la orden' : 'Ver pedido N° ' + v.id}</button>`];
-    if(!lectura && e.trabajador_id) at.push(`<a href="nomina.html?t=${encodeURIComponent(e.trabajador_id)}">Nómina de ${esc(primerNombre(quien))}</a>`);
+    if(!lectura && e.trabajador_id) at.push(`<button type="button" data-nomina-t="${esc(e.trabajador_id)}">Nómina de ${esc(primerNombre(quien))}</button>`);
     const nota = lectura || !hecha ? '' : e.pago_id ? 'Este trabajo ya se le pagó.' : `Ya se sumó a lo que le debes a ${primerNombre(quien)}. Lo pagas cuando quieras desde Nómina.`;
     $('trabajoBody').innerHTML = hero + `<div class="tl-kv2">${kv.join('')}</div><div class="tl-atajos">${at.join('')}</div>` + (nota ? `<p class="tl-nota" style="text-align:left">${esc(nota)}</p>` : '');
   }
@@ -1268,7 +1286,8 @@
     }
   });
 
-  $('btnActualizar').addEventListener('click', cargar);
+  $('btnActualizar').addEventListener('click', () => { cargar(); if(vista === 'nomina' && window.Nomina) window.Nomina.recargar(); });
+  window.Taller = { refrescarResumen: () => cargarResumen() };
 
   (async function(){
     const p = await S.requerir();
@@ -1288,6 +1307,13 @@
       if(r.error) toast('No se pudo revisar lo de madera. Toca actualizar.', 'error');
       if(r.data){ llevaMadera = !!r.data.lleva_madera; puedeMadera = llevaMadera || (p.rol === 'vendedor' && r.data.linea === 'madera'); }
     } catch(e){}
+    if(window.Nomina) window.Nomina.iniciar({ llevaMadera });
+    // taller.html?vista=nomina (y &t=ID desde el aviso de un vale o un enlace viejo de nomina.html)
+    if(!lectura && pideNomina){
+      ponerVista('nomina');
+      if(trabNomina) window.Nomina.abrir(trabNomina, params.get('que') || null);
+      try{ ['vista', 't', 'trabajador', 'que'].forEach(k => params.delete(k)); history.replaceState(history.state, '', location.pathname + (params.toString() ? '?' + params : '')); } catch(e){}
+    }
     cargar();
   })();
 })();

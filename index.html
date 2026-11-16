@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=81">
+<link rel="stylesheet" href="assets/css/base.css?v=82">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -592,15 +592,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=81"></script>
-<script src="assets/js/supabase-client.js?v=81"></script>
-<script src="assets/js/img-compress.js?v=81"></script>
-<script src="assets/js/comun.js?v=81"></script>
-<script src="assets/js/avisos.js?v=81"></script>
-<script src="assets/js/sesion.js?v=81"></script>
-<script src="assets/js/ayuda.js?v=81"></script>
-<script src="assets/js/pdf-reporte.js?v=81"></script>
-<script src="assets/js/mi-trabajo.js?v=81"></script>
+<script src="assets/vendor/supabase.js?v=82"></script>
+<script src="assets/js/supabase-client.js?v=82"></script>
+<script src="assets/js/img-compress.js?v=82"></script>
+<script src="assets/js/comun.js?v=82"></script>
+<script src="assets/js/avisos.js?v=82"></script>
+<script src="assets/js/sesion.js?v=82"></script>
+<script src="assets/js/ayuda.js?v=82"></script>
+<script src="assets/js/pdf-reporte.js?v=82"></script>
+<script src="assets/js/mi-trabajo.js?v=82"></script>
 <script>
 (function(){
   'use strict';
@@ -745,7 +745,7 @@
     const ICON_COT = '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>';
     const mods = [{ id:'cotizaciones', nombre:'Cotizaciones', href:'cotizaciones.html', listo:true, icon:ICON_COT }]
       .concat(S.MODULOS.filter(m => m.id !== 'inicio' && !m.costeador && (!m.roles || !p || !p.rol || m.roles.includes(p.rol))));
-    if(p && p.rol === 'admin') mods.push({ id:'nomina', nombre:'Nómina', href:'nomina.html', listo:true, icon:ICON_NOMINA });
+    if(p && p.rol === 'admin') mods.push({ id:'nomina', nombre:'Nómina', href:'taller.html?vista=nomina', listo:true, icon:ICON_NOMINA });
     if(p && (p.rol === 'admin' || p.rol === 'vendedor')) mods.push({ id:'deposito', nombre:'Depósito', href:'deposito.html', listo:true, icon:ICON_DEPOSITO });
     // Finanzas y Costos: solo quien confirma pagos (Ray o Gualfredo). La vendedora no ve dinero ni costos.
     if(p && p.confirma_abonos) mods.push({ id:'finanzas', nombre:'Finanzas', href:'finanzas.html', listo:true, icon:ICON_FINANZAS }, { id:'costos', nombre:'Costeador', href:'costos.html', listo:true, icon:ICON_COSTOS });
@@ -976,7 +976,7 @@
       const uno = vales.length === 1 || vales.every(v => v.trabajador_id === vales[0].trabajador_id);
       pend.push({ color:'verde', icono:'vale', titulo: plural(vales.length, '1 vale por aprobar', 'vales por aprobar'),
         detalle: (uno ? ((vales[0].trabajador || {}).nombre || '') + ' ' : '') + window.AH.dinero(total),
-        href: 'nomina.html' + (uno ? '?t=' + encodeURIComponent(vales[0].trabajador_id) : '') });
+        href: 'taller.html?vista=nomina' + (uno ? '&t=' + encodeURIComponent(vales[0].trabajador_id) + '&que=vale' : '') });
     }
     // Modelos vendidos en un color que no tiene foto en el catálogo
     const sinFoto = new Map();
