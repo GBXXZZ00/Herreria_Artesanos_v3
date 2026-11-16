@@ -318,7 +318,7 @@ async function entrar(b,user,rol,nombre){
  const a=await entrar(b,'u2','admin','Ray');a.on('pageerror',e=>err.push('admin:'+e.message));
  await a.waitForSelector('.pend-fila');await a.waitForTimeout(500);
  const av=await a.textContent('#avisosAdmin');
- ok('Admin ve "1 vale por aprobar" y lleva a la Nómina de Jesús',av.includes('1 vale por aprobar') && av.includes('Jesús') && !!(await a.$('a.pend-fila.verde[href="nomina.html?t=u5"]')));
+ ok('Admin ve "1 vale por aprobar" y lleva a la Nómina de Jesús',av.includes('1 vale por aprobar') && av.includes('Jesús') && !!(await a.$('a.pend-fila.verde[href="taller.html?vista=nomina&t=u5&que=vale"]')));
  ok('Admin ve "1 trabajo sin asignar"',av.includes('1 trabajo sin asignar'));
  ok('Admin ve "1 trabajo pasó su sábado" en amarillo y lleva a En proceso',(await a.textContent('.pend-fila.amarillo')).includes('1 trabajo pasó su sábado') && !!(await a.$('a.pend-fila.amarillo[href="taller.html?filtro=proceso"]')));
  ok('Admin ve el modelo vendido en un color sin foto, y lleva a editarlo',av.includes('1 modelo sin foto en un color') && av.includes('Combo Lineal en negro') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=12"]')));
@@ -341,8 +341,8 @@ async function entrar(b,user,rol,nombre){
  await a.click('[data-pend-toggle]');await a.waitForTimeout(300);
  ok('Otro toque los vuelve a mostrar',await a.isVisible('.pend-lista') && (await a.textContent('.pend-accion'))==='Ocultar');
  // Un aviso viejo de vale (index.html?ver=vales) lleva a Nómina
- await a.goto('http://127.0.0.1:8765/index.html?ver=vales');await a.waitForURL('**/nomina.html',{timeout:8000}).catch(()=>{});
- ok('Un aviso viejo de vale abre Nómina',a.url().includes('nomina.html'));
+ await a.goto('http://127.0.0.1:8765/index.html?ver=vales');await a.waitForURL('**/taller.html**',{timeout:8000}).catch(()=>{});
+ ok('Un aviso viejo de vale abre Nómina',a.url().includes("taller.html"));
 
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();
