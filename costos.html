@@ -100,6 +100,27 @@
   .fr-scrim{position:fixed;inset:0;background:rgba(28,26,23,.38);z-index:0}
   .fr-panel{position:relative;z-index:1;max-height:78vh;overflow-y:auto;background:var(--bg);border-radius:22px 22px 0 0;margin:-14px -18px 0;padding:14px 18px 4px}
   .fr-panel .btn-primary{width:100%;background:var(--accent)}
+  /* Precios (lote 8, C4): tabla material × proveedor */
+  .pre-wrap{margin:0 -2px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .pre{width:100%;border-collapse:collapse}
+  .pre th,.pre td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .pre thead th{font-size:12px;font-weight:800;color:var(--ink-soft);text-align:right;white-space:nowrap}
+  .pre thead th:first-child{text-align:left}
+  .pre tbody th{text-align:left;font-weight:400}
+  .pre-wrap.ancha .pre th:first-child{position:sticky;left:0;background:var(--bg);z-index:1;min-width:150px}
+  .pre-mat{display:block;width:100%;text-align:left;padding:2px 0;transition:transform 120ms var(--ease-out)}
+  .pre-mat:active{transform:scale(0.98)}
+  .pre-mat b{display:block;font-size:14.5px;line-height:1.25}
+  .pre-mat small{display:block;font-size:12px;color:var(--ink-soft)}
+  .pre-in{width:84px;height:44px;border:0;border-radius:10px;background:var(--surface-2);font:inherit;font-size:16px;font-weight:800;text-align:right;padding:0 10px;color:var(--ink);float:right}
+  .pre-in:focus{outline:2px solid var(--accent);outline-offset:0}
+  .pre-in.barato{background:#E6F2EA;color:#1B6B3A}
+  .pre-in.mal{outline:2px solid var(--danger)}
+  .pre-atajos{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:10px -2px 0;padding:2px}
+  .pre-atajos::-webkit-scrollbar{display:none}
+  .pre-atajos .fx{color:var(--accent);background:var(--accent-soft);border-color:transparent}
+  .pre-pie{position:sticky;bottom:calc(84px + var(--safe-b, 0px));margin-top:14px;padding:10px 0;background:var(--bg)}
+  .pre-pie .btn-primary{width:100%;background:var(--accent)}
   /* Plan de corte en 3 pasos */
   .pc-paso{display:flex;align-items:center;gap:8px;margin:18px 0 6px}
   .pc-paso b{font-size:17px}

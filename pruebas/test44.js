@@ -94,13 +94,19 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   const cg=ultimo(rpcs,'costeo_guardar');
   ok('Guardar manda el costeo completo con la pieza nueva, qué es y H',cg&&cg.p.catalogo_id===7&&cg.p.piezas.length===8&&cg.p.piezas[7][2]===150&&cg.p.piezas[7][3]==='Travesaño de abajo'&&cg.p.piezas[7][4]==='Travesaño'&&cg.p.piezas[7][5]==='H',cg&&cg.p.piezas[7]);
   await p.click('[data-salir-ficha]');await w(500);
-  // Precios
+  // Precios (C4): tabla material × proveedor, el más barato en verde, un solo Guardar
   await p.click('#tabs [data-tab="materiales"]');await w();
-  const pr=await p.textContent('#cont');
-  ok('Precios por material: el más barato y la comparación (Torniplemaca $9.50, Colores $9.69)',pr.includes('2 proveedores')&&pr.includes('$9.50')&&pr.includes('$9.69')&&pr.includes('más caro'));
-  await p.click('[data-vprecios="proveedor"]');await w();
-  const pp=await p.textContent('#cont');
-  ok('Precios por proveedor: lo que vende cada uno',pp.includes('Inversiones Torniplemaca')&&pp.includes('el más barato'));
+  const cab=await p.$$eval('#cont .pre thead th',x=>x.map(t=>t.textContent));
+  ok('Precios: tabla Material · Colores y Ambiente · Torniplemaca',cab.join('|')==='Material|Colores y Ambiente|Torniplemaca',cab);
+  ok('Tubo 1" x 2": Colores 9.69 y Torniplemaca 9.50, el más barato en verde',(await p.inputValue('[data-pre="f:2:1"]'))==='9.69'&&(await p.inputValue('[data-pre="f:2:2"]'))==='9.50'&&await p.$eval('[data-pre="f:2:2"]',x=>x.classList.contains('barato')));
+  ok('Sin cambios no hay botón de guardar',await p.$eval('#prePie',x=>x.classList.contains('hidden')));
+  await p.fill('[data-pre="f:2:1"]','9.40');await w(150);
+  ok('Al escribir: Guardar precios (1 cambio) y el verde pasa a Colores',(await p.textContent('#prePie')).includes('Guardar precios (1 cambio)')&&await p.$eval('[data-pre="f:2:1"]',x=>x.classList.contains('barato')));
+  await p.screenshot({path:'shots4/t44-2-precios.png'});
+  await p.click('[data-guardar-precios]');await w(800);
+  ok('Guardar precios: material_precio_guardar con el precio nuevo',JSON.stringify(ultimo(rpcs,'material_precio_guardar'))===JSON.stringify({p:{material_id:2,proveedor_id:1,precio:9.4,espesor:'0,90 mm'}}),ultimo(rpcs,'material_precio_guardar'));
+  await p.click('#filtrosL [data-filp="Accesorios"]');await w();
+  ok('Herrajes: un solo precio por herraje',(await p.$$eval('#cont .pre thead th',x=>x.length))===2&&(await p.$$('#cont [data-pre^="i:"]')).length>0);
   // El plan de corte y la hoja del herrero se prueban en Taller › Corte (test47 y test53)
   ok('El Costeador ya no tiene la pestaña Plan de corte',!(await p.$('#tabs [data-tab="semana"]')));
   console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas||err.length?fallas+' FALLAS':'TODO OK');

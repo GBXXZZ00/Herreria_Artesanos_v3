@@ -34,7 +34,7 @@
   if(q.get('tab') === 'semana'){ location.replace('taller.html?vista=corte'); return; }
   let tab = TABS.includes(q.get('tab')) ? q.get('tab') : 'modelos', filtro = 'Todos', busca = '';
   let sel = null, prov = null, modo = 'metro', F = null, ocupado = false, ini = null;
-  let filPrecios = 'hierro', vistaPrecios = 'material';
+  let filPrecios = 'perfiles';
   window.CostosApp = { get prov(){ return prov; }, set prov(v){ prov = v; }, pintar:() => pintar(), recargar:() => recargar(), abrirCorte:(o) => abrirForm(Object.assign({ t:'corte' }, o)), repintarForm:() => { if(F && F.t === 'corte') pintarForm(); } };
 
   const modelo = (id) => D().catalogo.find(x => String(x.id) === String(id)) || D().enDiseno.find(x => String(x.id) === String(id));
@@ -306,43 +306,86 @@
   }
 
   // ================= Precios =================
-  const FILP = { hierro:'Hierro', hojas:'Lámina y vidrio', aluminio:'Aluminio', 'Pintura y masilla':'Pintura', Consumibles:'Consumibles', Accesorios:'Herrajes' };
+  // Precios (C4): tabla material × proveedor, el precio sin IVA se escribe en la celda; el más barato en verde.
+  // Un solo "Guardar precios (N cambios)". Pintura, consumibles y herrajes tienen un solo precio.
+  const FILP = { perfiles:'Perfiles', laminas:'Láminas', vidrio:'Vidrio', aluminio:'Aluminio', 'Pintura y masilla':'Pintura', Consumibles:'Consumibles', Accesorios:'Herrajes' };
+  const esFabP = (k) => ['perfiles','laminas','vidrio','aluminio'].includes(k);
+  const matsP = (k) => D().fab.filter(f => f.activo && (k === 'perfiles' ? f.tipo === 'hierro' && f.pres === 'barra' : f.tipo === k));
+  let PRE = {};   // cambios sin guardar: 'f:mid:prov' o 'i:id' -> texto
   function pintarFiltrosPrecios(){
     $('filtros').querySelector('.mostrar-t').textContent = 'Ver';
-    $('filtrosL').innerHTML = Object.entries(FILP).map(([k, t]) => `<button type="button" class="fx ${k === filPrecios ? 'on' : ''}" data-filp="${esc(k)}">${t}</button>`).join('');
+    const ks = Object.keys(FILP).filter(k => !esFabP(k) || matsP(k).length || k === 'perfiles');
+    if(!ks.includes(filPrecios)) filPrecios = 'perfiles';
+    $('filtrosL').innerHTML = ks.map(k => `<button type="button" class="fx ${k === filPrecios ? 'on' : ''}" data-filp="${esc(k)}">${FILP[k]}</button>`).join('');
   }
   const pn = (k) => provNom(k);
+  const valPre = (k, base) => PRE[k] != null ? PRE[k] : base;
+  const nCambios = () => Object.keys(PRE).length;
+  const txtGuardarP = () => 'Guardar precios (' + (nCambios() === 1 ? '1 cambio' : nCambios() + ' cambios') + ')';
+  const dos = (v) => v === '' || v == null || !isFinite(Number(v)) ? '' : Number(v).toFixed(2);
   function secPrecios(){
     const d = D(), R = d.reglas;
-    $('subtitulo').textContent = 'Precios sin IVA por proveedor';
+    $('subtitulo').textContent = 'Precios sin IVA, como en la factura';
     let h = '';
-    const esFab = ['hierro','hojas','aluminio'].includes(filPrecios);
-    if(esFab){
-      const tipos = filPrecios === 'hojas' ? ['laminas','vidrio'] : [filPrecios];
-      const activos = d.fab.filter(f => f.activo && tipos.includes(f.tipo));
-      h += `<div class="opts" style="--cols:2;margin-bottom:6px"><button class="opt ${vistaPrecios === 'material' ? 'selected' : ''}" type="button" data-vprecios="material">Por material</button><button class="opt ${vistaPrecios === 'proveedor' ? 'selected' : ''}" type="button" data-vprecios="proveedor">Por proveedor</button></div>`;
-      if(vistaPrecios === 'proveedor'){
-        d.proveedores.forEach(p => {
-          const L = activos.filter(f => f.precios && f.precios[p.id]); if(!L.length) return;
-          h += `<div class="grp-t"><span>${esc(p.nombre)}</span><span>${plural(L.length, '1 material', 'materiales')}</span></div>` + L.map(f => { const v = f.precios[p.id], otros = Object.entries(f.precios).filter(([k]) => String(k) !== String(p.id)).map(([, o]) => Number(o.p)), min = otros.length ? Math.min(...otros) : null;
-            return `<button class="ln" type="button" data-mat="${f.id}"><span class="ln-t">${esc(f.nombre)}</span><span class="ln-v">${dinero(v.p)}</span><span class="ln-s">${v.esp ? esc(v.esp) + ' · ' : ''}${min == null ? 'solo lo vende este' : Number(v.p) <= min ? 'el más barato' : 'otro lo vende a ' + dinero(min)}</span></button>`; }).join('');
-        });
-        if(!activos.some(f => Object.keys(f.precios || {}).length)) h += '<p class="mat-s" style="margin:8px 2px">Todavía no hay precios de este tipo.</p>';
-      } else {
-        h += activos.map(f => { const ps = Object.entries(f.precios || {}).map(([k, v]) => ({ k, p:Number(v.p) })).sort((a, b) => a.p - b.p);
-          const sub = (f.pres === 'barra' ? '' : '') + (ps.length > 1 ? pn(ps[0].k) + ' el más barato · ' + ps.length + ' proveedores' : ps.length ? pn(ps[0].k) : 'Sin precio todavía') + (f.pres === 'barra' ? ' · barra ' + num(f.largo) + ' cm' : f.hoja ? ' · hoja ' + num(f.hoja[0]) + ' × ' + num(f.hoja[1]) : '');
-          const otro = ps.length > 1 ? ps.slice(1).map(o => pn(o.k) + ' ' + dinero(o.p) + ' (' + Math.round((o.p - ps[0].p) / ps[0].p * 100) + ' % más caro)').join(' · ') : '';
-          return `<button class="ln" type="button" data-mat="${f.id}"><span class="ln-t">${esc(f.nombre)}</span><span class="ln-v">${ps.length ? dinero(ps[0].p) : '<span style="color:var(--danger)">Falta</span>'}</span><span class="ln-s">${esc(sub)}${otro ? '<br>' + esc(otro) : ''}</span></button>`; }).join('') || '<p class="mat-s" style="margin:8px 2px">No hay materiales de este tipo.</p>';
-      }
-      h += '<button class="btn-nuevo" type="button" data-mat="nuevo">+ Material nuevo</button>';
+    if(esFabP(filPrecios)){
+      const tipo = filPrecios === 'perfiles' ? 'hierro' : filPrecios, L = matsP(filPrecios);
+      const provs = d.proveedores.filter(p => (p.tipos || []).includes(tipo) || L.some(f => (f.precios || {})[p.id]));
+      h += `<div class="pre-wrap${provs.length >= 4 ? ' ancha' : ''}"><table class="pre"><thead><tr><th>Material</th>${provs.map(p => `<th>${esc(pn(p.id))}</th>`).join('')}</tr></thead><tbody>
+        ${L.map(f => `<tr data-pre-fila="${f.id}"><th><button type="button" class="pre-mat" data-mat="${f.id}"><b>${esc(f.nombre)}</b><small>${f.pres === 'barra' ? 'barra ' + num(f.largo / 100) + ' m' : f.hoja ? 'hoja ' + num(f.hoja[0]) + ' × ' + num(f.hoja[1]) : ''}</small></button></th>
+          ${provs.map(p => { const act = (f.precios || {})[p.id], k = 'f:' + f.id + ':' + p.id;
+            return `<td><input class="pre-in" data-pre="${k}" inputmode="decimal" value="${esc(valPre(k, act ? dos(act.p) : ''))}" placeholder="·" aria-label="${esc(f.nombre)} en ${esc(pn(p.id))}"></td>`; }).join('')}</tr>`).join('')
+        || `<tr><td colspan="${provs.length + 1}"><p class="mat-s" style="margin:8px 2px">No hay materiales de este tipo.</p></td></tr>`}</tbody></table></div>`;
     } else {
       const L = d.insumos.filter(i => i.grupo === filPrecios);
-      h += L.map(i => `<button class="ln" type="button" data-insumo="${i.id}"><span class="ln-t">${esc(i.nombre)}</span><span class="ln-v">${dinero(i.p)}</span><span class="ln-s">${i.grupo === 'Accesorios' ? 'Por unidad, sin IVA' : i.r ? 'Rinde ' + num(i.r) + (Number(i.r) === 1 ? ' puerta' : ' puertas') + ' (general)' : 'Sin rendimiento general: lo pone cada modelo'}</span></button>`).join('') || '<p class="mat-s" style="margin:8px 2px">No hay nada aquí todavía.</p>';
-      h += `<button class="btn-nuevo" type="button" data-insumo="nuevo">+ ${filPrecios === 'Accesorios' ? 'Herraje' : filPrecios === 'Consumibles' ? 'Consumible' : 'Pintura o masilla'} nuevo</button>`;
+      h += `<div class="pre-wrap"><table class="pre"><thead><tr><th>${filPrecios === 'Accesorios' ? 'Herraje' : 'Material'}</th><th>Precio</th></tr></thead><tbody>
+        ${L.map(i => { const k = 'i:' + i.id; return `<tr><th><button type="button" class="pre-mat" data-insumo="${i.id}"><b>${esc(i.nombre)}</b><small>${i.grupo === 'Accesorios' ? 'por unidad' : i.r ? 'rinde ' + num(i.r) + (Number(i.r) === 1 ? ' puerta' : ' puertas') : 'lo pone cada modelo'}</small></button></th>
+          <td><input class="pre-in" data-pre="${k}" inputmode="decimal" value="${esc(valPre(k, dos(i.p)))}" aria-label="Precio de ${esc(i.nombre)}"></td></tr>`; }).join('')
+        || '<tr><td colspan="2"><p class="mat-s" style="margin:8px 2px">No hay nada aquí todavía.</p></td></tr>'}</tbody></table></div>`;
     }
-    h += `<button class="regla" type="button" data-reglas style="margin-top:14px;border-top:1px solid var(--line)"><span class="grow"><span class="mat-t">Reglas</span><span class="mat-s">IVA ${num(R.iva)} % · ganancia ${num(R.ganancia)} % · gastos ${dinero(R.gastosMes)} ÷ ${R.puertasMes} puertas · corte ${num(R.corte)} cm · despunte ${num(R.despunte)} cm</span></span>${CHEV}</button>`;
-    h += '<button class="btn-secondary" type="button" data-pdf-precios style="width:100%;margin-top:10px">Lista de precios en PDF</button>';
+    h += `<p class="mat-s" style="margin:10px 2px 0">${esFabP(filPrecios) ? 'En verde el más barato. ' : ''}Al guardar se recalculan todos los modelos.</p>
+      <div class="pre-atajos">${esFabP(filPrecios) ? '<button class="fx" type="button" data-mat="nuevo">+ Material</button>' : `<button class="fx" type="button" data-insumo="nuevo">+ ${filPrecios === 'Accesorios' ? 'Herraje' : filPrecios === 'Consumibles' ? 'Consumible' : 'Pintura o masilla'}</button>`}<button class="fx" type="button" data-prov-nuevo>+ Proveedor</button><button class="fx" type="button" data-reglas>Reglas: IVA ${num(R.iva)} % · ganancia ${num(R.ganancia)} %</button></div>
+      <button class="btn-secondary" type="button" data-pdf-precios style="width:100%;margin-top:12px">Lista de precios en PDF</button>
+      <div class="pre-pie${nCambios() ? '' : ' hidden'}" id="prePie"><button class="btn-primary" type="button" data-guardar-precios>${txtGuardarP()}</button></div>`;
+    setTimeout(marcarBaratos, 0);
     return h;
+  }
+  // El más barato de cada fila en verde (con lo que está escrito, aunque no se haya guardado)
+  function marcarBaratos(){
+    document.querySelectorAll('#cont tr[data-pre-fila]').forEach(tr => {
+      const ins = [...tr.querySelectorAll('.pre-in')], vs = ins.map(i => numLibre(i.value)), min = Math.min(...vs.filter(v => v > 0));
+      ins.forEach((i, j) => i.classList.toggle('barato', vs[j] > 0 && vs[j] === min && vs.filter(v => v > 0).length > 1));
+    });
+  }
+  function cambioPrecio(el){
+    const k = el.dataset.pre, [t, a, b] = k.split(':');
+    const base = t === 'f' ? (((fabDe(a) || {}).precios || {})[b] || {}).p : (D().insumos.find(i => String(i.id) === a) || {}).p;
+    const v = String(el.value).trim();
+    if(v === '' && base != null) delete PRE[k];          // borrar no quita el precio: se queda el de antes
+    else if(base != null && numLibre(v) === Number(base)) delete PRE[k];
+    else if(v === '') delete PRE[k];
+    else PRE[k] = v;
+    el.classList.toggle('mal', v !== '' && !(numLibre(v) > 0));
+    const pie = $('prePie'); if(pie){ pie.classList.toggle('hidden', !nCambios()); pie.querySelector('button').textContent = txtGuardarP(); }
+    marcarBaratos();
+  }
+  async function guardarPrecios(){
+    const ks = Object.keys(PRE);
+    for(const k of ks) if(!(numLibre(PRE[k]) > 0)){ const el = document.querySelector(`[data-pre="${k}"]`); if(el){ el.classList.add('mal'); el.focus(); } toast('Revisa ese precio: escribe un número mayor que 0', 'error'); return; }
+    if(ocupado) return; ocupado = true;
+    const btn = document.querySelector('[data-guardar-precios]'); if(btn) btn.disabled = true;
+    let hechos = 0;
+    try{
+      for(const k of ks){
+        const [t, a, b] = k.split(':'), v = Math.round(numLibre(PRE[k]) * 100) / 100;
+        if(t === 'f'){ const act = ((fabDe(a) || {}).precios || {})[b] || {}; await X.rpc('material_precio_guardar', { p:{ material_id:Number(a), proveedor_id:Number(b), precio:v, espesor:act.esp || null } }); }
+        else { const i = D().insumos.find(y => String(y.id) === a); await X.rpc('costeo_insumo_guardar', { p:{ id:i.id, nombre:i.nombre, grupo:i.grupo, precio:v, rendimiento:Number(i.r) > 0 ? Number(i.r) : null } }); }
+        delete PRE[k]; hechos++;
+      }
+      toast(hechos === 1 ? 'Precio guardado. Los modelos se recalcularon.' : hechos + ' precios guardados. Los modelos se recalcularon.');
+    } catch(e){
+      const m = String((e && e.message) || '');
+      toast(/fetch|network|Failed/i.test(m) ? 'No se guardaron los precios. Revisa la conexión y toca Guardar otra vez.' : (m || 'No se guardaron los precios'), 'error');
+    } finally { ocupado = false; try{ await recargar(); } catch(_){} }
   }
   async function pdfPrecios(){
     const d = D(), b = [];
@@ -462,9 +505,27 @@
     const ok = await hacer(async () => { const r = await X.guardarCosteo('nuevo'); nid = 'd' + r.id; }, 'Creado en diseño. Escribe o cambia sus cortes.');
     if(ok && nid){ cerrarHoja('sheetForm', true); F = null; filtro = 'Todos'; pintar(); abrirFicha(nid); }
   }
+  function leerProv(){ const a = $('pvNom'), b = $('pvTel'); if(a) F.nombre = a.value; if(b) F.tel = b.value; }
+  function pintarProvNuevo(){
+    $('formTitulo').textContent = 'Proveedor nuevo';
+    $('formBody').innerHTML = `<div class="field" id="c_pvNom"><label class="field-label" for="pvNom">Nombre</label><input class="input" id="pvNom" maxlength="80" value="${esc(F.nombre)}" autocomplete="off"><div class="field-error">Escribe el nombre</div></div>
+      <div class="field"><label class="field-label" for="pvTel">WhatsApp</label><input class="input" id="pvTel" inputmode="tel" maxlength="20" value="${esc(F.tel)}" autocomplete="off"></div>
+      <div class="field"><span class="field-label">Qué vende</span><div class="fi-opc">${Object.entries(TIPO).map(([v, t]) => `<button class="fx ${F.tipos.includes(v) ? 'on' : ''}" type="button" data-pv-tipo="${v}">${t}</button>`).join('')}</div></div>
+      <div class="field"><span class="field-label">¿Cobra IVA?</span>${opts([['si','Sí'],['no','No']], F.iva ? 'si' : 'no', 'data-pv-iva')}</div>
+      <p class="mat-s" style="margin:0 2px">Su ficha y su estado de cuenta quedan en Finanzas. Sus precios se escriben aquí, en la tabla.</p>`;
+    $('formFoot').innerHTML = '<button class="btn-primary" type="button" data-pv-guardar style="flex:1">Guardar proveedor</button>'; $('formFoot').style.display = 'flex';
+  }
+  async function guardarProv(){
+    leerProv();
+    if(!String(F.nombre).trim()){ $('c_pvNom').classList.add('invalid'); return; }
+    if(!F.tipos.length){ toast('Elige qué vende', 'error'); return; }
+    const ok = await hacer(() => X.rpc('proveedor_guardar', { p:{ nombre:F.nombre.trim(), telefono:String(F.tel || '').trim(), tipos:F.tipos.slice(), cobra_iva:!!F.iva } }), 'Proveedor guardado. Escribe sus precios en la tabla.');
+    if(ok){ cerrarHoja('sheetForm', true); F = null; pintar(); }
+  }
   function pintarForm(){
     if(F.t === 'perfil') return pintarPerfil();
     if(F.t === 'nuevo') return pintarNuevo();
+    if(F.t === 'provnuevo') return pintarProvNuevo();
     $('formFoot').style.display = 'flex';
     const d = D(); let h = '', boton = 'Guardar', borrar = false, txtBorrar = 'Quitar';
     if(F.t === 'pieza' || F.t === 'hoja'){
@@ -735,10 +796,11 @@
   // ================= Eventos =================
   document.addEventListener('click', async (e) => {
     if(!D()) return;
-    const t = e.target.closest('#tabs [data-tab]'); if(t){ tab = t.dataset.tab; pintar(); window.scrollTo(0, 0); return; }
+    const t = e.target.closest('#tabs [data-tab]'); if(t){ if(t.dataset.tab !== tab && nCambios() && !confirm('Tienes precios sin guardar. ¿Salir sin guardarlos?')) return; if(t.dataset.tab !== tab) PRE = {}; tab = t.dataset.tab; pintar(); window.scrollTo(0, 0); return; }
     const fl = e.target.closest('[data-filtro]'); if(fl){ filtro = fl.dataset.filtro; pintar(); return; }
     const fp = e.target.closest('[data-filp]'); if(fp){ filPrecios = fp.dataset.filp; pintar(); return; }
-    const vp = e.target.closest('[data-vprecios]'); if(vp){ vistaPrecios = vp.dataset.vprecios; pintar(); return; }
+    if(e.target.closest('[data-guardar-precios]')) return guardarPrecios();
+    if(e.target.closest('[data-prov-nuevo]')) return abrirForm({ t:'provnuevo', nombre:'', tel:'', tipos:['hierro'], iva:false });
     if(e.target.closest('[data-pdf-precios]')) return pdfPrecios();
     if(window.CORTE && tab === 'semana' && !e.target.closest('#sheetFicha') && window.CORTE.click(e)) return;
     if(e.target.closest('#btnForm')) return guardar();
@@ -756,6 +818,13 @@
       if((b = e.target.closest('[data-nv-mod]'))){ leerNuevo(); F.mid = isNaN(+b.dataset.nvMod) ? b.dataset.nvMod : +b.dataset.nvMod; pintarForm(); return; }
       if((b = e.target.closest('[data-nv-kind]'))){ leerNuevo(); F.kind = b.dataset.nvKind; pintarForm(); return; }
       if(e.target.closest('[data-nv-crear]')) return crearNuevo();
+      return;
+    }
+    if(F && e.target.closest('#sheetForm') && F.t === 'provnuevo'){
+      let b;
+      if((b = e.target.closest('[data-pv-tipo]'))){ leerProv(); const t = b.dataset.pvTipo; F.tipos = F.tipos.includes(t) ? F.tipos.filter(x => x !== t) : F.tipos.concat([t]); pintarForm(); return; }
+      if((b = e.target.closest('[data-pv-iva]'))){ leerProv(); F.iva = b.dataset.pvIva === 'si'; pintarForm(); return; }
+      if(e.target.closest('[data-pv-guardar]')) return guardarProv();
       return;
     }
     if(F && e.target.closest('#sheetForm')){
@@ -816,10 +885,11 @@
     const ex = e.target.closest('[data-extra]'); if(ex && D().costeo[sel]) return abrirExtra(ex.dataset.extra === 'nuevo' ? 'nuevo' : +ex.dataset.extra);
     const xp = e.target.closest('[data-extra-pend]'); if(xp){ const id = +xp.dataset.extraPend; abrirFicha(id); if(D().costeo[id]) abrirExtraClave(xp.dataset.k); return; }
     if(e.target.closest('[data-reglas]')) return abrirForm({ t:'reglas' });
-    const mt = e.target.closest('[data-mat]'); if(mt){ if(mt.dataset.mat === 'nuevo') return abrirForm({ t:'matnuevo', tipo:filPrecios === 'hojas' ? 'laminas' : filPrecios }); const f = fabDe(mt.dataset.mat); return abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
+    const mt = e.target.closest('[data-mat]'); if(mt){ if(mt.dataset.mat === 'nuevo') return abrirForm({ t:'matnuevo', tipo:filPrecios === 'perfiles' || !esFabP(filPrecios) ? 'hierro' : filPrecios }); const f = fabDe(mt.dataset.mat); return abrirForm({ t:'mat', id:f.id, precios:JSON.parse(JSON.stringify(f.precios || {})), fijo:f.fijo }); }
     const ins = e.target.closest('[data-insumo]'); if(ins) return abrirForm({ t:'insumo', id:ins.dataset.insumo, grupo:filPrecios });
   });
   document.addEventListener('input', (e) => {
+    if(e.target.matches && e.target.matches('#cont [data-pre]')){ cambioPrecio(e.target); return; }
     if(e.target.matches && e.target.matches('#fichaBody [data-pz]')){ const [i, k] = e.target.dataset.pz.split(':'); if(BOR[+i]){ BOR[+i][k] = e.target.value; refrescar(); } return; }
     if(e.target.id === 'buscaModelo'){ busca = e.target.value; const l = $('modLista'); if(l) l.innerHTML = listaModelos(lista().filter(FIL[filtro] || FIL.Todos).filter(o => { const t = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); return !busca || t(o.m.nombre).includes(t(busca)); })); return; }
     if(!F) return;
