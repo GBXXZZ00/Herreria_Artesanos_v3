@@ -12,6 +12,10 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-16 · Claude de Gualfredo (Code, migraciones del Taller aplicadas)
+- Con Gualfredo presente ("hagamos la migración pues"): se aplicaron v86 a v96 en orden con el conector (mismo nombre). Revisado después: `corte_datos`, `compras_en_camino`, `costos_datos`, `montos_pasos`, `mi_hoja_corte` y `finanzas_avisos` responden; `_fab_mover` ya no se llama desde la app.
+- Se une el PR #11. Ray dio el OK al Costeador: sigue el lote 8.
+
 ## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 7 · vendedora y sello ENTREGADO)
 - Qué hizo: la vendedora en el Taller ve Todos · En proceso · **Listos** (sin montos, sin Asignar), con Marcar entregada; sus Listos se leen de `ventas` (sin migración). **Sello ENTREGADO** verde y girado con la fecha de entrega en el PDF de la venta entregada (`crearPDF`); antes de entregada, igual que siempre. Sin quién entregó (la app no lo guarda). Los estados (esqueletos, vacíos y errores) ya estaban de los lotes 1 a 6. `?v=85`.
 - Pruebas: test52 nueva. Batería completa en dos mitades (test14 a test54): todas TODO OK; test21 y test36 se ajustaron (todavía esperaban la vendedora sin Listos y el botón + viejo) y pasan solas. test26 pasó.
