@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/img/icon-192.png">
 <title>Taller · Herrería Artesanos</title>
-<link rel="stylesheet" href="assets/css/base.css?v=83">
+<link rel="stylesheet" href="assets/css/base.css?v=84">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
   .p-nuevo{color:#fff!important;background:var(--danger)!important}
@@ -308,6 +308,61 @@
   /* Taller › Corte (K01 a K10) */
   #vCorte{padding:0 18px}
   .ck-sab{margin:2px 0 12px}
+  /* Corte › Material (lote 6, K09 y K11 a K18) */
+  /* Lo que usan las hojas de compra.js (Comprar y ¿Llegó?) y las de Material */
+  .fi-opc{display:flex;flex-wrap:wrap;gap:8px}
+  .fx{flex-shrink:0;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);font-size:14px;font-weight:700;color:var(--ink-soft);white-space:nowrap;transition:transform 120ms var(--ease-out)}
+  .fx:active{transform:scale(0.97)}
+  .fx.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .fx:disabled{opacity:.45}
+  .ln{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 2px;width:100%;text-align:left}
+  .ln + .ln{border-top:1px solid var(--line)}
+  .ln-t{font-size:14.5px;font-weight:700}
+  .ln-s{font-size:12.5px;color:var(--ink-soft)}
+  .ln-v{font-size:14.5px;font-weight:800;text-align:right;white-space:nowrap}
+  .mat-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:18px 2px 4px}
+  .caja-amar{margin-top:6px;padding:10px 12px;border-radius:12px;background:#FDF3E1;color:var(--amber);font-size:13px;font-weight:700;line-height:1.4}
+  .caja-rara{margin-top:12px;padding:12px 14px;border-radius:14px;background:#FDF1EF;color:var(--danger);font-size:14px;font-weight:700;line-height:1.4}
+  .btn-mini{display:inline-flex;align-items:center;height:38px;padding:0 14px;border-radius:12px;background:var(--danger);color:#fff;font-size:14px;font-weight:800}
+  .btn-mini.sec2{background:var(--surface);color:var(--accent);border:1px solid var(--line-strong)}
+  .ck-vista{margin:2px 0 10px}
+  .mt-camino{display:flex;align-items:center;gap:8px;border:1.5px solid var(--amber);background:#FDF3E1;border-radius:16px;padding:10px 12px;margin-bottom:10px}
+  .mt-cam-t{flex:1;min-width:0}
+  .mt-cam-t b{display:block;font-size:15px}
+  .mt-cam-t span{display:block;font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .mt-amb{background:var(--amber)}
+  .mt-dots{width:44px;height:44px;flex-shrink:0;border-radius:12px;font-size:20px;font-weight:800;color:var(--ink);transition:transform 120ms var(--ease-out)}
+  .mt-dots:active{transform:scale(0.97)}
+  .mt-tabla{border:1px solid var(--line);border-radius:16px;padding:2px 12px;margin:4px 0 10px}
+  .mt-fila{display:grid;grid-template-columns:minmax(0,1fr) 34px 54px 38px 38px;gap:4px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:15px;font-weight:700;text-align:center}
+  .mt-fila > span:first-child{text-align:left;font-weight:400}
+  .mt-cab{border-top:0;font-size:11.5px;font-weight:700;color:var(--ink-soft);padding:9px 0 6px}
+  .mt-cab > span:first-child{font-weight:700}
+  .mt-nom b{display:block;font-size:14.5px;font-weight:700}
+  .mt-nom small{display:block;font-size:12px;color:var(--ink-soft);margin-top:1px}
+  .mt-rojo{color:var(--danger);font-weight:800}
+  .mt-gris{color:var(--ink-soft)}
+  .mt-rets{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 10px}
+  .mt-ret{display:inline-flex;align-items:center;gap:2px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--ink-soft);color:var(--ink);border-radius:8px;padding:0 0 0 8px;font-size:12.5px;font-weight:700}
+  .mt-ret button{width:36px;height:36px;font-size:13px;color:var(--ink-soft);transition:transform 120ms var(--ease-out)}
+  .mt-ret button:active{transform:scale(0.97)}
+  .mt-provs{border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin-bottom:12px}
+  .mt-pie .btn-primary{width:100%}
+  .mt-links{display:grid;grid-template-columns:1fr 1fr;margin-top:4px}
+  .mt-links .ck-link{min-height:44px;text-align:center;justify-content:center}
+  .mt-msg{height:auto;min-height:180px;padding-top:10px;padding-bottom:10px;resize:vertical;font-size:15px;line-height:1.45}
+  .mt-dato{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+  .mt-dato span{color:var(--ink-soft)}
+  .mt-wa{display:flex;align-items:center;justify-content:center;text-decoration:none;width:100%}
+  .mt-peligro{background:var(--danger);width:100%}
+  .mt-barra{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px;transition:transform 120ms var(--ease-out)}
+  .mt-barra:active{transform:scale(0.97)}
+  .mt-barra.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .mt-barra b{display:block;font-size:15px}
+  .mt-barra span{display:block;font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .mt-cont{padding:6px 0 10px;border-bottom:1px solid var(--line)}
+  .mt-nums b{font-size:18px}
   .ck-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
   .ck-nums div{background:var(--surface-2);border-radius:16px;padding:10px 12px}
   .ck-nums b{display:block;font-size:26px;font-weight:800}
@@ -681,20 +736,22 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=83"></script>
-<script src="assets/js/supabase-client.js?v=83"></script>
-<script src="assets/js/img-compress.js?v=83"></script>
-<script src="assets/js/comun.js?v=83"></script>
-<script src="assets/js/avisos.js?v=83"></script>
-<script src="assets/js/sesion.js?v=83"></script>
-<script src="assets/js/ayuda.js?v=83"></script>
-<script src="assets/js/ventas-comun.js?v=83"></script>
-<script src="assets/js/specs-producto.js?v=83"></script>
-<script src="assets/js/pdf-reporte.js?v=83"></script>
-<script src="assets/js/costeo.js?v=83"></script>
-<script src="assets/js/corte.js?v=83"></script>
-<script src="assets/js/taller-corte.js?v=83"></script>
-<script src="assets/js/nomina.js?v=83"></script>
-<script src="assets/js/taller.js?v=83"></script>
+<script src="assets/vendor/supabase.js?v=84"></script>
+<script src="assets/js/supabase-client.js?v=84"></script>
+<script src="assets/js/img-compress.js?v=84"></script>
+<script src="assets/js/comun.js?v=84"></script>
+<script src="assets/js/avisos.js?v=84"></script>
+<script src="assets/js/sesion.js?v=84"></script>
+<script src="assets/js/ayuda.js?v=84"></script>
+<script src="assets/js/ventas-comun.js?v=84"></script>
+<script src="assets/js/specs-producto.js?v=84"></script>
+<script src="assets/js/pdf-reporte.js?v=84"></script>
+<script src="assets/js/costeo.js?v=84"></script>
+<script src="assets/js/corte.js?v=84"></script>
+<script src="assets/js/compra.js?v=84"></script>
+<script src="assets/js/taller-corte.js?v=84"></script>
+<script src="assets/js/taller-material.js?v=84"></script>
+<script src="assets/js/nomina.js?v=84"></script>
+<script src="assets/js/taller.js?v=84"></script>
 </body>
 </html>

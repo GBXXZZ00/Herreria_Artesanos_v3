@@ -81,7 +81,15 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 - **Datos:** RPC `nomina_semana`, `nomina_trabajador`, `pagar_lo_marcado` (v88), `resolver_vale`, `anotar_vale`, `nomina_salida`, `vale_salida`, `movimiento_ubicar`; tablas `etapas`, `pagos_trabajador`, `movimientos`, `cuentas` (lectura).
 - **Enlaces viejos:** `nomina.html` redirige a `taller.html?vista=nomina` (con `&t=ID` abre a ese trabajador; `&que=vale`, su vale por revisar).
 
+## Taller › Corte › Material (`taller-material.js` + `compra.js`, lote 6) · solo Ray y Gualfredo
+- **Para qué:** el material del taller y sus compras. Arriba lo que viene en camino (amarillo, ¿Llegó? y ⋯: cambiar, volver a mandar el mensaje, cancelar). Tabla Material · Hay · Apartado · Libre · Falta (apartado = los planes de este sábado y el próximo), retazos con su número y ✕, Proveedores (deuda, en camino, + Proveedor; cada uno abre su ficha en Finanzas). Abajo un solo Comprar (lo que falta marcado, lo que queda en 0 sugerido), + Retazo encontrado y Contar barras.
+- **Mensaje al proveedor:** después de pedir (en Material o al enviar un corte con compra) sale el mensaje ya escrito (Lo busco / Me lo traen, Hoy / Mañana) para mandarlo por WhatsApp (`wa.me`).
+- **¿Llegó?:** Todo · Una parte · Nada por proveedor; con una parte, lo que no vino sigue en camino en la misma compra.
+- **Barra dañada:** en ⋯ Más del corte de un herrero ya enviado: material, cuál barra y si se reemplaza con otra del taller o se compra (`corte_barra_danada`).
+- **Datos:** `compras_en_camino`, `compra_pedir`, `compra_confirmar` (con `quedan`), `compra_pedida_cambiar`, `compra_no_llego`, `conteo_guardar`, `retazo_agregar`, `retazo_quitar`, `proveedor_guardar`, `corte_barra_danada`.
+
 ## Depósito (`deposito.html` + `deposito.js`)
+- **Lote 6:** se quitó la pestaña Compras (y "Cargar compra"): comprar y ¿Llegó? viven en Taller › Corte › Material. Quedan Consumibles y Fabricación. El enlace de una factura desde Finanzas (`deposito.html?tab=compras&compra=ID`) abre esa factura sobre Fabricación.
 - **Para qué:** materiales por unidad (discos, sierras, pintura), entregas a trabajadores, compras y revisión de Ray.
 - **Roles:** admin y vendedora entregan. Solo admin agrega materiales y compra. Solo Ray revisa (aprueba o cuestiona). La vendedora no ve costos.
 - **Datos:** todo por RPC: `deposito_resumen`, `deposito_entregar`, `deposito_revisar`, `deposito_comprar`, `deposito_comprar_varios`, `deposito_material_guardar`, `deposito_pedir_reponer`, `deposito_trabajos`.

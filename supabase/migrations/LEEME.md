@@ -115,3 +115,5 @@ La clave queda guardada cifrada en GitHub: no se ve en el repo ni en los registr
 | (sin aplicar) 20261116100300 | v92_gualfredo_retazo_un_plan · un retazo en un solo plan abierto |
 | (sin aplicar) 20261116100400 | v93_gualfredo_proveedor_telefono · teléfono del proveedor para wa.me |
 | (sin aplicar) 20261116100500 | v94_gualfredo_compra_parte · ¿Llegó? con una parte y cambiar compra pedida |
+| (sin aplicar) 20261116110000 | v95_gualfredo_cerrar_funciones_internas · la app no llama funciones internas |
+| (sin aplicar) 20261116110100 | v96_gualfredo_barra_danada · reportar barra dañada desde el Corte |

@@ -5,6 +5,26 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
 
+## Taller › Corte › Material, lote 6 (v84, 16 nov 2026, Claude de Gualfredo)
+Antes: aplicar v89 a v96 con Gualfredo presente.
+
+**Material (Ray o Gualfredo)**
+- [ ] Corte › Material: la compra en camino en amarillo con ¿Llegó? y ⋯.
+- [ ] La tabla Hay · Apartado · Libre · Falta cuadra con lo que hay en el taller. Lo que falta sale en rojo.
+- [ ] Tocar la ✕ de un retazo que ya no está: sale del Depósito.
+- [ ] Comprar: lo que falta viene marcado; lo que queda en 0 se puede sumar. Pedir compra.
+- [ ] Sale el mensaje para el proveedor: cambiar Lo busco / Me lo traen y Hoy / Mañana, y Enviar por WhatsApp (abre el chat del proveedor con el texto).
+- [ ] ⋯ de la compra: Cambiar la compra (cantidades o proveedor) y Cancelar la compra (pide el motivo).
+- [ ] ¿Llegó? con Una parte: lo que no vino sigue en camino en amarillo en la misma compra.
+- [ ] Contar barras: la diferencia se ve antes de guardar.
+- [ ] + Retazo encontrado: sale en la tabla con su número.
+- [ ] Proveedores: lo que se debe; tocar uno abre su ficha en Finanzas; + Proveedor con WhatsApp.
+- [ ] Enviar un corte que pide compra: sale el mensaje para el proveedor.
+- [ ] ⋯ Más del corte enviado: Reportar barra dañada (otra del taller o se compra). El Depósito baja 1.
+
+**Depósito**
+- [ ] Ya no hay pestaña Compras. Desde Finanzas, tocar una factura de un proveedor la abre.
+
 ## Taller › Corte, lote 5 (v83, 16 nov 2026, Claude de Gualfredo)
 Antes: aplicar v89 a v94 con Gualfredo presente (sin ellas el Corte no envía).
 

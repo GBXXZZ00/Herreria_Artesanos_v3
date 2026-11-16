@@ -24,6 +24,7 @@
   let SAB = sabados(), sab = SAB.este;
   let cargado = false, cargando = false, error = false, trabajadores = [];
   let abierto = null;            // tid del drawer abierto
+  let vista = new URLSearchParams(location.search).get('ver') === 'material' ? 'material' : 'herrero';   // Por herrero · Material (lote 6)
   let ocupado = false;
 
   // ---------- Datos ----------
@@ -31,7 +32,7 @@
     if(cargando) return;
     cargando = true; error = false;
     try{
-      const [, rt] = await Promise.all([K().cargar(), trabajadores.length ? null : db.from('perfiles').select('id,nombre,especialidades').eq('rol', 'trabajador').eq('activo', true).order('nombre')]);
+      const [, , rt] = await Promise.all([K().cargar(), window.COMPRA ? window.COMPRA.cargar().catch(() => null) : null, trabajadores.length ? null : db.from('perfiles').select('id,nombre,especialidades').eq('rol', 'trabajador').eq('activo', true).order('nombre')]);
       if(rt && !rt.error) trabajadores = rt.data || [];
       cargado = true;
     } catch(e){ error = true; toast(errTxt(e), 'error'); }
@@ -70,8 +71,13 @@
     const tabsSab = `<div class="seg ck-sab" role="radiogroup" aria-label="Sábado">
       <button type="button" class="seg-op ${sab === SAB.este ? 'on' : ''}" data-ck-sab="${SAB.este}" role="radio" aria-checked="${sab === SAB.este}">Este ${esc(sabadoCorto(SAB.este))}</button>
       <button type="button" class="seg-op ${sab === SAB.proximo ? 'on' : ''}" data-ck-sab="${SAB.proximo}" role="radio" aria-checked="${sab === SAB.proximo}">Próximo ${esc(sabadoCorto(SAB.proximo))}</button></div>`;
+    const segVista = `<div class="seg ck-vista" role="radiogroup" aria-label="Qué ver">
+      <button type="button" class="seg-op ${vista === 'herrero' ? 'on' : ''}" data-ck-vista="herrero" role="radio" aria-checked="${vista === 'herrero'}">Por herrero</button>
+      <button type="button" class="seg-op ${vista === 'material' ? 'on' : ''}" data-ck-vista="material" role="radio" aria-checked="${vista === 'material'}">Material</button></div>`;
+    const sub = $('subtitulo'); if(sub) sub.textContent = vista === 'material' ? 'Corte · el material del taller' : 'Corte · Hierro por herrero';
+    if(cargado && vista === 'material' && window.TallerMaterial){ window.TallerMaterial.pintar(cont, segVista); return; }
     if(!cargado){
-      cont.innerHTML = tabsSab + (error ? '<div class="vacio"><h3>No se pudo cargar el corte</h3><p>Revisa la conexión y toca Actualizar.</p></div>'
+      cont.innerHTML = segVista + (vista === 'material' ? '' : tabsSab) + (error ? '<div class="vacio"><h3>No se pudo cargar el corte</h3><p>Revisa la conexión y toca Actualizar.</p></div>'
         : '<div class="tl-sk"></div><div class="tl-sk"></div>');
       return;
     }
@@ -79,7 +85,7 @@
     try{ P = plan(); } catch(e){ cont.innerHTML = tabsSab + '<div class="vacio"><h3>No se pudo armar el plan</h3><p>' + esc(errTxt(e)) + '</p></div>'; return; }
     const hs = P.herreros;
     const pend = P.pendientes.filter(u => !u.entrega || String(u.entrega) <= isoL(new Date(Date.now() + 15 * 864e5)));
-    let h = tabsSab;
+    let h = segVista + tabsSab;
     // Avisos (K19)
     const avisos = [];
     if(P.aviso) avisos.push(`<div class="ck-aviso rj">${esc(P.aviso)}</div>`);
@@ -111,6 +117,7 @@
   }
   $('vCorte').addEventListener('click', async (e) => {
     const s = e.target.closest('[data-ck-sab]'); if(s){ sab = s.dataset.ckSab; pintar(); return; }
+    const v = e.target.closest('[data-ck-vista]'); if(v){ vista = v.dataset.ckVista; pintar(); return; }
     const a = e.target.closest('[data-ck-abrir]'); if(a){ abrirHerrero(a.dataset.ckAbrir); return; }
     const c = e.target.closest('[data-ck-cargar]'); if(c){ location.href = 'costos.html?modelo=' + encodeURIComponent(c.dataset.ckCargar); return; }
     if(e.target.closest('[data-ck-asignar]')){ abrirAsignar(); return; }
@@ -233,10 +240,12 @@
     if(compra && compra.falta){ toast('Ningún proveedor tiene precio de ' + compra.material + '. Ponlo en Costeador › Precios y vuelve a enviar.', 'error'); return; }
     ocupado = true; btn.disabled = true;
     try{
-      const { error } = await db.rpc('corte_enviar', { p_sab:sab, p_tid:x.tid, p_plan:datosPlan(P), p_compra:compra });
+      const { data, error } = await db.rpc('corte_enviar', { p_sab:sab, p_tid:x.tid, p_plan:datosPlan(P), p_compra:compra });
       if(error) throw error;
       toast(compra ? `Enviado a ${primerNombre(x.nombre)} y se pidió la compra. Lo ve en Mi trabajo.` : `Enviado a ${primerNombre(x.nombre)}. Lo ve en Mi trabajo.`);
       await cargar();
+      // Se pidió la compra: el mensaje para el proveedor, ya escrito (K13)
+      if(data && data.compra && data.compra.grupo && window.TallerMaterial) window.TallerMaterial.abrirMensaje(data.compra.grupo);
     } catch(e){
       const m = String((e && e.message) || '');
       toast(/fetch|network|Failed/i.test(m) ? 'No se envió el corte ni se pidió la compra. Revisa la conexión y toca Enviar otra vez.' : (m || 'No se envió el corte'), 'error');
@@ -394,6 +403,7 @@
       + fila('rehacer', 'Sugerir de nuevo', P.ajustado ? 'pregunta antes de borrar tus cambios' : 'vuelve a la sugerencia', empezo)
       + (env ? fila('deshacer', 'Deshacer envío', 'solo si no ha empezado', empezo) : '')
       + fila('corregir', 'Corregir lo que cortó', 'después de terminar', !x.entregado)
+      + (env ? fila('danada', 'Reportar barra dañada', 'mientras corta', x.entregado) : '')
       + '<div id="ckRehacer"></div>';
     abrirHoja('sheetCkMas');
   }
@@ -410,6 +420,8 @@
       }
       if(k === 'deshacer'){ if(await llamar('corte_deshacer_envio', { p_sab:sab, p_tid:abierto }, 'Envío deshecho. Ya no lo ve en Mi trabajo.')){ cerrarHoja('sheetCkMas', true); await cargar(); } return; }
       if(k === 'corregir'){ cerrarHoja('sheetCkMas', true); abrirCorregir(); return; }
+      if(k === 'danada'){ const x = plan().herreros.find(h => String(h.tid) === String(abierto)), env = enviados()[abierto];
+        cerrarHoja('sheetCkMas', true); if(x && env && window.TallerMaterial) window.TallerMaterial.abrirDanada({ sab, tid:x.tid, nombre:x.nombre, barras:env.barras || [], empezo:!!env.empezo }); return; }
     }
     if(e.target.closest('[data-ck-no]')){ $('ckRehacer').innerHTML = ''; return; }
     if(e.target.closest('[data-ck-si]')){ cerrarHoja('sheetCkMas', true); await rehacer(); }
@@ -463,5 +475,6 @@
     } catch(e){ return []; }
   }
 
-  window.TallerCorte = { mostrar(){ if(!cargado) cargar(); else pintar(); }, recargar:cargar, avisos, get cargado(){ return cargado; } };
+  window.TallerCorte = { mostrar(){ if(!cargado) cargar(); else pintar(); }, recargar:cargar, avisos, get cargado(){ return cargado; }, get sab(){ return sab; },
+    repintar(){ if(!$('vCorte').classList.contains('hidden')) pintar(); }, verMaterial(){ vista = 'material'; if(window.Taller && window.Taller.irA) window.Taller.irA('corte'); pintar(); } };
 })();

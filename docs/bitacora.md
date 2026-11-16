@@ -12,6 +12,15 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 6 · Corte, material y compras)
+- Qué hizo (Gualfredo: "Dale lo que falta"): Taller › Corte con dos vistas, Por herrero y **Material** (K11 a K18): compra en camino con ¿Llegó? y ⋯ (cambiar, volver a mandar el mensaje, cancelar), tabla Hay · Apartado · Libre · Falta con retazos, Proveedores, Comprar (lo que falta marcado, lo que queda en 0 sugerido), mensaje al proveedor por WhatsApp (también al enviar un corte con compra), contar barras, retazo encontrado y **barra dañada** (K09). `compra.js`: ¿Llegó? con Todo · Una parte · Nada (lo que no vino sigue en camino, `quedan`); el botón "No llegó" pasó a ser "Nada". **Depósito sin Compras** (dos pestañas; la factura desde Finanzas se abre directo). `?v=84`.
+- Migraciones nuevas (sin aplicar, probadas con rollback): v95 (la app ya no llama 12 funciones internas; **con cuidado**: reglas de permisos) y v96 (`corte_barra_danada`).
+- Ojo: `_avisar_usuario` y `_a_produccion_si_pagada` siguen abiertas porque `cambiar_estado_venta` y `actualizar_venta` no son security definer. Queda para otro PR.
+- Pruebas: test54 nueva; test43, test48 y test53 ajustadas. 42, 44 (Bitral), 50, 53, 54 TODO OK.
+- Rama: `claude/lote-1-taller-costeador-t49naw`. Plan para seguir: `docs/tareas/2026-11-16-plan-lotes-6-7-para-code.md`.
+- Está tocando: Taller (Corte, Material), `compra.js`, Depósito.
+- Pendientes: lote 7 (vendedora, estados, sello ENTREGADO), batería completa, PR sin unir. Costeador espera el OK de Ray.
+
 ## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 5 · Corte, pantallas)
 - Qué hizo: Taller › Corte (K01 a K08, K10, K19 a K21; Gualfredo: "Dale"). Pestaña Corte solo para Ray y Gualfredo, con el motor de siempre (`corte.js` + `costeo.js`; a `corte.js` solo se le agregó qué exporta). Por herrero, drawer del herrero, mover una pieza, ⋯ de la puerta, asignar puertas, Más, línea de tiempo, candado, corregir, avisos (también en el Resumen), vacío y error. Mi trabajo del herrero: "Qué cortar" con lo último que se le envió. Los atajos ✂ Corte del pedido y del Resumen abren esta pestaña. `?v=83`.
 - No quedó: K09 "Reportar barra dañada" necesita una función nueva en la base (bajar una barra del depósito o sumarla a la compra): se propone a Gualfredo antes de hacerla. La vista Material va en el lote 6.

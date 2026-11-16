@@ -158,3 +158,7 @@ Nada de esto se ha cambiado: queda para un PR aparte.
 - Un retazo no puede estar en dos planes abiertos (`corte_plan_guardar`).
 - `proveedor_guardar` normaliza el teléfono (`normalizar_telefono`) para `wa.me`.
 - `compra_confirmar`: cada lugar puede traer `quedan` (lo que no llegó): sigue en camino en la misma compra (`_compra_queda_en_camino`). `compra_pedida_cambiar(pid, p)` cambia lo pedido a un lugar en camino; cancelar es `compra_no_llego`.
+
+## Seguridad y barra dañada (lote 6, v95 y v96, 16 nov 2026, Claude de Gualfredo · sin aplicar)
+- v95: la app ya no puede llamar directo a 12 funciones internas (`_fab_mover`, `_generar_etapas`, `_precio_poner`, `_compra_lineas_poner`, `_mes_calcular`, `_gasto_real_por_puerta`, `_pagos_por_ubicar`, `_precio_costeo`, `_prov_costeo`, `_saldo_cuenta`, `_saldo_proveedor`, `_categoria_sirve`). Las funciones de la app que las usan son security definer y siguen igual. `_avisar_usuario` y `_a_produccion_si_pagada` quedan abiertas porque `cambiar_estado_venta` y `actualizar_venta` corren con el permiso del usuario (pendiente: pasarlas a security definer en otro PR).
+- v96: `corte_barra_danada(p_sab, p_tid, p_mid, p_barra, p_compra)` (solo Ray o Gualfredo, el herrero debe tener el corte enviado): baja 1 barra del Depósito (motivo `ajuste`); con `p_compra` suma 1 a la compra en camino de ese herrero (o pide una nueva con el precio más barato); sin compra exige que quede otra en el taller. Lo anota en `enviados[tid].danadas`.

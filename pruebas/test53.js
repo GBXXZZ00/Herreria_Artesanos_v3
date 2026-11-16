@@ -98,7 +98,7 @@ const txt=async(p,s)=>((await p.innerText(s))||'').replace(/\s+/g,' ').trim();
   // Más (K03): deshacer envío
   if(!(await p.$('#sheetCorte.open'))){ await p.click('#vCorte [data-ck-abrir="t1"]');await p.waitForSelector('#sheetCorte.open'); }
   await w(300);await p.click('[data-ck-masmenu]');await p.waitForSelector('#sheetCkMas.open');await w(200);
-  ok('Más: Ver en PDF · Sugerir de nuevo · Deshacer envío · Corregir lo que cortó',(await p.$$eval('#ckMasBody .ck-mrow b',x=>x.map(y=>y.textContent))).join(' · ')==='Ver en PDF · Sugerir de nuevo · Deshacer envío · Corregir lo que cortó');
+  ok('Más: Ver en PDF · Sugerir de nuevo · Deshacer envío · Corregir lo que cortó · Reportar barra dañada',(await p.$$eval('#ckMasBody .ck-mrow b',x=>x.map(y=>y.textContent))).join(' · ')==='Ver en PDF · Sugerir de nuevo · Deshacer envío · Corregir lo que cortó · Reportar barra dañada');
   await p.screenshot({path:'shots5/t53-mas.png'});
   await p.click('[data-ck-m="deshacer"]');await w(900);
   ok('Deshacer envío llama a corte_deshacer_envio',!!ultimo(rpcs,'corte_deshacer_envio') && ultimo(rpcs,'corte_deshacer_envio').p_tid==='t1');
