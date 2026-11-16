@@ -145,7 +145,7 @@ function mock(ctx,user){return ctx.route('**/*.supabase.co/**',async r=>{
         vales:DB.vales.filter(x=>x.trabajador_id===t.id&&x.estado==='aprobado'&&!x.pago_id).map(valeNom),vale_pendiente:(v=>v?valeNom(v):null)(DB.vales.find(x=>x.trabajador_id===t.id&&x.estado==='pendiente')),
         pagos:DB.pagos.filter(q=>q.trabajador_id===t.id).map(recibo).reverse()});
     }
-    if(name==='pagar_trabajador'){
+    if(name==='pagar_trabajador'||name==='pagar_lo_marcado'){
       if(!P.confirma_abonos)return j({message:'Solo Ray marca los pagos de nómina'},400);
       const tr=DB.etapas.filter(e=>e.trabajador_id===a.tid&&e.estado==='hecha'&&!e.pago_id), va=DB.vales.filter(x=>x.trabajador_id===a.tid&&x.estado==='aprobado'&&!x.pago_id);
       const tm=tr.reduce((q,e)=>q+e.monto,0), vm=va.reduce((q,x)=>q+x.monto,0);
@@ -265,12 +265,12 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
 
  // ===== 4) Ray asigna Hierro a Jesús desde el pendiente de Inicio =====
  await r.goto(H+'index.html');await r.waitForSelector('.pend-fila');await r.waitForTimeout(800);
- ok('4. Inicio de Ray: "1 trabajo sin asignar" (naranja) y ya no hay pago por confirmar',(await texto(r,'.pend-fila.naranja')).includes('1 trabajo sin asignar')&&!(await r.$('.pend-fila.rojo')));
- await r.click('.pend-fila.naranja');await r.waitForURL('**/produccion.html**');await r.waitForSelector('.vcard');
- ok('   Producción muestra el pedido de Carla por asignar',(await texto(r,'#lista')).includes('Carla Prueba'));
+ ok('4. Inicio de Ray: "4 trabajos sin asignar" (naranja) y ya no hay pago por confirmar',(await texto(r,'.pend-fila.naranja')).includes('4 trabajos sin asignar')&&!(await r.$('.pend-fila.rojo')));
+ await r.click('.pend-fila.naranja');await r.waitForURL('**/taller.html**');await r.waitForSelector('.tl-card');
+ ok('   El Taller muestra el pedido de Carla por asignar',(await texto(r,'#lista')).includes('Carla Prueba'));
  await r.screenshot({path:'shots5/e10-produccion.png'});
- await r.goto(H+'produccion.html?abrir='+v.id);await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(800);
- ok('   En la ficha hay un solo botón "Asignar trabajadores" y ningún "Marcar terminado"',(await r.$$('#fichaBody [data-asignar-todo]')).length===1 && !(await r.$('#fichaBody [data-terminar]')));
+ await r.goto(H+'taller.html?abrir='+v.id);await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(800);
+ ok('   En la ficha hay un solo botón "Asignar" y ningún "Marcar terminado"',(await r.$$('#fichaBody [data-asignar-todo]')).length===1 && !(await r.$('#fichaBody [data-terminar]')));
  await r.click('#fichaBody [data-asignar-todo]');await r.waitForSelector('#sheetTodo.open');await r.waitForTimeout(300);
  ok('   La hoja junta Masilla y pintura en una sola fila (la misma persona)',(await r.$$eval('#todoBody .at-nom',x=>x.map(y=>y.textContent.trim()))).join('|')==='Hierro|Masilla y pintura|Detalles');
  for(const b of await r.$$('#todoBody .at-op[data-tid="u5"]')) await b.click();
@@ -292,8 +292,8 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
    if(k===0){
      ok('    Ve lo que viene después (en gris, espera a otro paso)',(await jz.$$('.despues .dp.gris')).length===3);
      // Ray ve en Producción que Jesús lo está haciendo
-     await r.goto(H+'produccion.html');await r.waitForSelector('.vcard');await r.click('.vcard');await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(300);
-     ok('    En Producción, Ray ve "Lo está haciendo ahora" en el Hierro',(await r.$$('#fichaBody .e-ahora')).length===1);
+     await r.goto(H+'taller.html?vista=pedidos');await r.waitForSelector('.tl-card');await r.click('.tl-card');await r.waitForSelector('#sheetFicha.open');await r.waitForTimeout(300);
+     ok('    En el Taller, Ray ve que lo está haciendo en el Hierro',(await r.$$('#fichaBody .e-ahora')).length===1);
      await jz.screenshot({path:'shots5/e12-jesus-hoy.png'});
      await jz.click('.hoy-foto');await jz.waitForSelector('#sheetTrabajo.open');await jz.waitForTimeout(400);
      const dj=await texto(jz,'#trabajoBody');
@@ -335,11 +335,11 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  await jz.click('#btnPedirVale');await jz.waitForTimeout(900);
  await r.goto(H+'index.html');await r.waitForSelector('.pend-fila.verde');await r.waitForTimeout(500);
  ok('   Ray ve "1 vale por aprobar · Jesús $10" (verde)',(await texto(r,'.pend-fila.verde')).includes('1 vale por aprobar')&&(await texto(r,'.pend-fila.verde')).includes('Jesús $10'));
- await r.click('.pend-fila.verde');await r.waitForURL('**/nomina.html?t=u5');await r.waitForSelector('#sheetTrab.open');await r.waitForTimeout(400);
- ok('   Lo lleva a la Nómina de Jesús con el vale arriba para aprobar',(await texto(r,'.vp')).includes('Pide un vale')&&(await texto(r,'.vp')).includes('$10'));
+ await r.click('.pend-fila.verde');await r.waitForSelector('#sheetValeRev.open');await r.waitForTimeout(400);
+ ok('   Lo lleva a la Nómina de Jesús, directo a su vale para aprobar',(await texto(r,'#valeRevTitulo')).includes('Vale de Jesús')&&(await texto(r,'#valeRevBody')).includes('$10')&&r.url().includes('taller.html'));
  await r.screenshot({path:'shots5/e15b-ray-vale.png'});
- await r.click('.vp [data-resolver="si"]');await r.waitForTimeout(900);
- ok('   Al aprobar se quita de arriba y ya descuenta',!(await r.$('.vp'))&&(await texto(r,'#trabBody')).includes('−$10'));
+ await r.click('#valeRevFoot [data-resolver="si"]');await r.waitForTimeout(900);
+ ok('   Al aprobar se quita de arriba y ya descuenta',!(await r.$('#trabBody .nm-vp'))&&(await texto(r,'#trabBody')).includes('−$10'));
  await jz.goto(H+'index.html?ver=pagos');await jz.waitForSelector('#sheetPagos.open');await jz.waitForTimeout(500);
  ok('   El vale aprobado sale en rojo y resta: te toca cobrar $30',(await texto(jz,'.pg-mov.vale .pg-mov-m'))==='−$10'&&(await texto(jz,'.pg-cobra b'))==='$30');
  await jz.screenshot({path:'shots5/e16-jesus-vale.png',fullPage:true});
@@ -347,22 +347,23 @@ const texto=async(p,sel)=>((await p.textContent(sel))||'').replace(/\s+/g,' ');
  // ===== Nómina: Ray paga la semana de Jesús =====
  await r.goto(H+'index.html');await r.waitForSelector('#cuenta-nomina .num');
  ok('7b. Inicio de Ray: Nómina dice "$30 por pagar"',(await texto(r,'#cuenta-nomina'))==='$30 por pagar',await texto(r,'#cuenta-nomina'));
- await r.click('a.ini-tile[href="nomina.html"]');await r.waitForSelector('.n-card');
- ok('   En Nómina, Jesús: 4 trabajos, vale −$10, $30 por pagar',(await texto(r,'.n-card')).includes('4 trabajos · vales −$10')&&(await texto(r,'.n-card .n-monto b'))==='$30');
+ await r.click('a.ini-tile[href="taller.html?vista=nomina"]');await r.waitForSelector('.nm-row[data-trab="u5"]');
+ ok('   En Nómina, Jesús: 4 trabajos, vale −$10, $30 por pagar',(await texto(r,'.nm-row[data-trab="u5"]')).includes('4 trabajos · vale −$10')&&(await texto(r,'.nm-row[data-trab="u5"] .nm-m')).startsWith('$30'));
  await r.screenshot({path:'shots5/e16b-nomina.png'});
- await r.click('.n-card');await r.waitForSelector('#sheetTrab.open');
- ok('   Cada trabajo dice de qué cliente y pedido es',(await texto(r,'#trabBody')).includes('Carla Prueba · N° '+v.id));
+ await r.click('.nm-row[data-trab="u5"]');await r.waitForSelector('#sheetTrab.open');
+ ok('   Cada trabajo dice de qué pedido es',(await texto(r,'#trabBody')).includes('N° '+v.id));
  await r.waitForTimeout(500);
- ok('   Los dos botones de abajo se ven completos',await r.evaluate(()=>{const b=document.getElementById('btnAnotarVale').getBoundingClientRect();return b.bottom<=window.innerHeight&&b.height>40;}));
+ ok('   El botón de pagar se ve completo',await r.evaluate(()=>{const b=document.getElementById('btnPagar').getBoundingClientRect();return b.bottom<=window.innerHeight&&b.height>40;}));
  await r.screenshot({path:'shots5/e16c-nomina-jesus.png'});
- await r.click('#trabBody [data-item]');await r.waitForSelector('#sheetItem.open');await r.waitForTimeout(300);
+ await r.click('#trabBody [data-item] .nm-tx');await r.waitForSelector('#sheetItem.open');await r.waitForTimeout(300);
  ok('   Al tocarlo: cliente, pedido, pago, foto que subió y enlace a la venta',(await texto(r,'#itemBody')).includes('Carla Prueba')&&(await texto(r,'#itemBody')).includes('Pago por esta parte')&&!!(await r.$('#itemBody [data-ver-foto]'))&&(await r.getAttribute('#itemBody .d-link','href'))==='ventas.html?abrir='+v.id);
  await r.screenshot({path:'shots5/e16d-nomina-trabajo.png'});
  await r.click('#sheetItem [data-cerrar="sheetItem"]');await r.waitForTimeout(400);
- ok('   Ray ve "Marcar pagado $30"',(await texto(r,'#btnPagar'))==='Marcar pagado $30');
- await r.click('#btnPagar');await r.waitForTimeout(1500);
- ok('   Al pagar: queda el recibo en su historial y le llega el aviso',DB.pagos.length===1&&DB.pagos[0].monto===30&&DB.notifs.some(n=>n.titulo==='Te pagaron $30')&&(await r.$$('#trabBody .rec')).length===1);
- ok('   Y ya no le debe nada',(await texto(r,'.n-card .n-monto b'))==='$0' && (await texto(r,'.n-card .n-ult')).includes('$30'));
+ ok('   Ray ve "Pagar $30 a Jesús"',(await texto(r,'#btnPagar'))==='Pagar $30 a Jesús');
+ await r.click('#btnPagar');await r.waitForSelector('#sheetSalida.open');await r.waitForTimeout(300);
+ await r.click('#btnSalida');await r.waitForTimeout(1500);
+ ok('   Al pagar: queda el recibo en su historial y le llega el aviso',DB.pagos.length===1&&DB.pagos[0].monto===30&&DB.notifs.some(n=>n.titulo==='Te pagaron $30')&&(await r.$$('#trabBody .nm-rec')).length===1);
+ ok('   Y ya no le debe nada',(await texto(r,'.nm-row[data-trab="u5"] .nm-m')).startsWith('al día'));
  await r.screenshot({path:'shots5/e16e-nomina-pagado.png'});
  await jz.goto(H+'index.html?ver=historial');await jz.waitForSelector('#sheetPagos.open');await jz.waitForTimeout(400);
  ok('   Jesús ve la semana pagada, cerrada',(await jz.$$('.pg-sem')).length===1&&(await jz.$$('.pg-sem[open]')).length===0);

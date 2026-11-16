@@ -51,7 +51,7 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   // ===== Ray =====
   const {p,rpcs}=await pagina(b,'u2',err); const w=ms=>p.waitForTimeout(ms||400);
   await p.goto(H+'deposito.html');await p.waitForSelector('#tabs [data-tab="fab"]');await w(800);
-  ok('Tres pestañas: Consumibles, Fabricación y Compras',(await p.textContent('#tabs')).replace(/\s+/g,' ').includes('Consumibles Fabricación Compras'));
+  ok('Dos pestañas: Consumibles y Fabricación (Compras se quitó)',(await p.textContent('#tabs')).replace(/\s+/g,' ').trim()==='Consumibles Fabricación');
   await p.click('#tabs [data-tab="fab"]');await p.waitForSelector('[data-fab="1"]');await w();
   ok('Depósito: compra en camino en amarillo y +4 en camino en el tubo',(await p.textContent('#cont')).includes('En camino: compra a Colores y Ambiente')&&(await p.textContent('[data-fab="1"]')).includes('+4 en camino'));
   const t=await p.textContent('#cont');
@@ -74,36 +74,16 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   await p.fill('#cn-1','3');await p.click('#btnGuardarConteo');await w(600);
   const cg=ultimo(rpcs,'conteo_guardar');
   ok('Conteo: manda lo contado de cada material',cg&&cg.p.conteo.find(x=>x.material_id===1).contado===3,cg);
-  // Compras
-  await p.click('#tabs [data-tab="compras"]');await p.waitForSelector('[data-factura="1"]');await w();
-  const tc=await p.textContent('#cont');
-  ok('Compras: la nota 00-2884 con el material por registrar y "Le debes"',tc.includes('00-2884')&&tc.includes('Material por registrar')&&tc.includes('Le debes'));
-  await p.screenshot({path:'shots4/t43-2-compras.png'});
-  await p.click('[data-factura="1"]');await p.waitForSelector('#sheetFactura.open');await w();
+  // Depósito › Compras se quitó (lote 6): solo dos pestañas; la factura se abre desde Finanzas
+  ok('Sin pestaña Compras ni Cargar compra',!(await p.$('#tabs [data-tab="compras"]'))&&!(await p.$('#btnFoto')));
+  await p.goto(H+'deposito.html?tab=compras&compra=1');await p.waitForSelector('#sheetFactura.open');await w();
+  const tf=await p.textContent('#sheetFactura');
+  ok('El enlace de Finanzas abre la factura 00-2884 sobre Fabricación',tf.includes('00-2884')&&(await p.getAttribute('#tabs [data-tab="fab"]','aria-pressed'))==='true');
   await p.click('[data-registrar-material]');await p.waitForSelector('#sheetFoto.open');await w();
   await p.click('[data-agregar-m="f2"]');await w(150);
-  ok('Al elegir el material trae el precio del proveedor (si lo tiene)',true);
   await p.fill('#aQ','2');await p.fill('#aP','61.05');await p.click('[data-agregar]');await w(200);
   await p.click('#btnGuardarFoto');await w(600);
   const rm=ultimo(rpcs,'compra_material_registrar');
   ok('Registrar el material de la nota',rm&&rm.cid===1&&rm.lineas[0].material_id===2&&rm.lineas[0].cantidad===2,rm);
-  // Compra solo con el total
-  await p.click('#btnFoto');await p.waitForSelector('#sheetFoto.open');await w();
-  await p.click('[data-c-modo="no"]');await w(150);
-  await p.fill('#fNum','A-77');await p.fill('#fTotal','116');
-  await p.click('#btnGuardarFoto');await w(600);
-  const cs=ultimo(rpcs,'compra_guardar');
-  ok('Compra solo con el total: sin líneas, total 116',cs&&cs.p.total===116&&cs.p.lineas.length===0&&cs.p.numero==='A-77'&&cs.p.documento==='factura',cs);
-  // Compra con materiales y transferencia aparte
-  await p.click('#btnFoto');await p.waitForSelector('#sheetFoto.open');await w();
-  await p.click('#btnGuardarFoto');await w(200);
-  ok('Sin materiales no guarda',ultimo(rpcs,'compra_guardar')===cs);
-  await p.click('[data-agregar-m="f1"]');await w(150);await p.fill('#aQ','4');await p.click('[data-agregar]');await w(200);
-  ok('El precio del proveedor llega solo',(await p.inputValue('#lp0'))==='12.98');
-  await p.click('[data-aparte]');await w(150);await p.click('[data-t-cuenta="1"]');await w(150);
-  await p.screenshot({path:'shots4/t43-3-compra.png'});
-  await p.click('#btnGuardarFoto');await w(600);
-  const cm=ultimo(rpcs,'compra_guardar');
-  ok('Compra con 4 tubos y transferencia aparte desde la cuenta 1',cm&&cm.p.lineas[0].cantidad===4&&cm.p.lineas[0].precio===12.98&&cm.p.aparte.cuenta_id===1&&cm.p.aparte.monto_salio>60,cm);
   console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas||err.length?fallas+' FALLAS':'TODO OK');
 }catch(x){console.log(res.join('\n'));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

@@ -188,7 +188,7 @@ async function entrar(b,user,rol,nombre){
  ok('La hoja de terminar dice cuál es',(await t.textContent('#terminarTTitulo'))==='Terminar Hierro' && (await t.textContent('#terminarTSub')).includes('Puerta Lineal · N° 40'));
  ok('Sin foto no se puede terminar',await t.isDisabled('#btnTConfirmar') && (await t.textContent('#tFotoAyuda'))==='La foto es obligatoria para terminar.' && (await t.textContent('#btnTFoto')).includes('Toca para tomar la foto'));
  await t.screenshot({path:'shots5/t3-terminar.png'});
- await t.setInputFiles('#tFotoInput',__dirname+'/foto-puerta.png');await t.waitForTimeout(500);
+ await t.setInputFiles('#tFotoInput',__dirname+'/foto-puerta.png');await t.waitForSelector('#btnTFoto img',{timeout:8000}).catch(()=>{});
  ok('Con la foto: se ve la foto y el botón dice cuánto suma',!(await t.isDisabled('#btnTConfirmar')) && !!(await t.$('#btnTFoto img')) && (await t.textContent('#btnTConfirmar'))==='Terminar · suma $25');
  await t.screenshot({path:'shots5/t3c-terminar-foto.png'});
  fallaTerminar=true;
@@ -318,19 +318,19 @@ async function entrar(b,user,rol,nombre){
  const a=await entrar(b,'u2','admin','Ray');a.on('pageerror',e=>err.push('admin:'+e.message));
  await a.waitForSelector('.pend-fila');await a.waitForTimeout(500);
  const av=await a.textContent('#avisosAdmin');
- ok('Admin ve "1 vale por aprobar" y lleva a la Nómina de Jesús',av.includes('1 vale por aprobar') && av.includes('Jesús') && !!(await a.$('a.pend-fila.verde[href="nomina.html?t=u5"]')));
+ ok('Admin ve "1 vale por aprobar" y lleva a la Nómina de Jesús',av.includes('1 vale por aprobar') && av.includes('Jesús') && !!(await a.$('a.pend-fila.verde[href="taller.html?vista=nomina&t=u5&que=vale"]')));
  ok('Admin ve "1 trabajo sin asignar"',av.includes('1 trabajo sin asignar'));
- ok('Admin ve "1 trabajo pasó su sábado" en amarillo y lleva a Atrasados',(await a.textContent('.pend-fila.amarillo')).includes('1 trabajo pasó su sábado') && !!(await a.$('a.pend-fila.amarillo[href="produccion.html?filtro=atrasados"]')));
+ ok('Admin ve "1 trabajo pasó su sábado" en amarillo y lleva a En proceso',(await a.textContent('.pend-fila.amarillo')).includes('1 trabajo pasó su sábado') && !!(await a.$('a.pend-fila.amarillo[href="taller.html?filtro=proceso"]')));
  ok('Admin ve el modelo vendido en un color sin foto, y lleva a editarlo',av.includes('1 modelo sin foto en un color') && av.includes('Combo Lineal en negro') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=12"]')));
  ok('Admin ve "En fabricación: 1 producto sin categoría"',av.includes('En fabricación: 1 producto sin categoría'));
  ok('Admin ve "1 combo sin medidas de las ventanas" y lleva a editarlo',av.includes('1 combo sin medidas de las ventanas') && av.includes('Combo Viejo') && !!(await a.$('a.pend-fila[href="catalogo.html?editar=21"]')));
  ok('Admin ve "En catálogo: 3 modelos sin categoría"',av.includes('En catálogo: 3 modelos sin categoría'));
- ok('Los avisos llevan al lugar correcto',!!(await a.$('a.pend-fila[href="produccion.html?filtro=asignar"]')) && !!(await a.$('a.pend-fila[href="produccion.html?filtro=sincat"]')) && !!(await a.$('a.pend-fila[href="categorias-pago.html?asignar=1"]')));
+ ok('Los avisos llevan al lugar correcto',!!(await a.$('a.pend-fila[href="taller.html?filtro=asignar"]')) && !!(await a.$('a.pend-fila[href="taller.html?filtro=sincat"]')) && !!(await a.$('a.pend-fila[href="categorias-pago.html?asignar=1"]')));
  ok('Los pendientes van en una sola caja con su contador',(await a.$$('#avisosAdmin .pend')).length===1 && (await a.$$('.pend-fila')).length===7 && (await a.textContent('.pend-n'))==='7');
  ok('Ya no hay hoja de vales en el Inicio',!(await a.$('#sheetVales')) && !(await a.$('[data-abrir-vales]')));
  ok('El aviso de notificaciones va aparte',!!(await a.$('#avisosAdmin > .notif-fila')));
  ok('Admin sigue viendo sus módulos',await a.isVisible('#modulos') && await a.isVisible('#btnNuevaVenta'));
- ok('La cajita Producción dice cuántos hay sin asignar',(await a.textContent('#cuenta-produccion'))==='1 sin asignar',await a.textContent('#cuenta-produccion'));
+ ok('La cajita Taller dice cuántos hay sin asignar',(await a.textContent('#cuenta-taller'))==='1 sin asignar',await a.textContent('#cuenta-taller'));
  await a.screenshot({path:'shots5/t6-admin.png',fullPage:true});
  // Minimizar pendientes
  await a.click('[data-pend-toggle]');await a.waitForTimeout(300);
@@ -341,8 +341,8 @@ async function entrar(b,user,rol,nombre){
  await a.click('[data-pend-toggle]');await a.waitForTimeout(300);
  ok('Otro toque los vuelve a mostrar',await a.isVisible('.pend-lista') && (await a.textContent('.pend-accion'))==='Ocultar');
  // Un aviso viejo de vale (index.html?ver=vales) lleva a Nómina
- await a.goto('http://127.0.0.1:8765/index.html?ver=vales');await a.waitForURL('**/nomina.html',{timeout:8000}).catch(()=>{});
- ok('Un aviso viejo de vale abre Nómina',a.url().includes('nomina.html'));
+ await a.goto('http://127.0.0.1:8765/index.html?ver=vales');await a.waitForURL('**/taller.html**',{timeout:8000}).catch(()=>{});
+ ok('Un aviso viejo de vale abre Nómina',a.url().includes("taller.html"));
 
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

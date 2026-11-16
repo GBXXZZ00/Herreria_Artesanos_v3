@@ -5,6 +5,109 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
 
+## Taller lote 7: vendedora y sello ENTREGADO (v85, 16 nov 2026, Claude de Gualfredo)
+**Vendedora (Yulimar)**
+- [ ] En el Taller ve solo Pedidos: Todos · En proceso · Listos. No ve montos, Asignar, Corte ni Nómina.
+- [ ] En Listos: la entrega, WhatsApp, Venta y Marcar entregada. Al marcarla, sale del Taller.
+
+**Nota del cliente**
+- [ ] Una venta entregada: su PDF (en la venta y en el seguimiento) trae el sello verde ENTREGADO con la fecha de entrega, sin tapar números.
+- [ ] Una venta que no está entregada: el PDF sale igual que siempre.
+
+## Taller › Corte › Material, lote 6 (v84, 16 nov 2026, Claude de Gualfredo)
+Antes: aplicar v89 a v96 con Gualfredo presente.
+
+**Material (Ray o Gualfredo)**
+- [ ] Corte › Material: la compra en camino en amarillo con ¿Llegó? y ⋯.
+- [ ] La tabla Hay · Apartado · Libre · Falta cuadra con lo que hay en el taller. Lo que falta sale en rojo.
+- [ ] Tocar la ✕ de un retazo que ya no está: sale del Depósito.
+- [ ] Comprar: lo que falta viene marcado; lo que queda en 0 se puede sumar. Pedir compra.
+- [ ] Sale el mensaje para el proveedor: cambiar Lo busco / Me lo traen y Hoy / Mañana, y Enviar por WhatsApp (abre el chat del proveedor con el texto).
+- [ ] ⋯ de la compra: Cambiar la compra (cantidades o proveedor) y Cancelar la compra (pide el motivo).
+- [ ] ¿Llegó? con Una parte: lo que no vino sigue en camino en amarillo en la misma compra.
+- [ ] Contar barras: la diferencia se ve antes de guardar.
+- [ ] + Retazo encontrado: sale en la tabla con su número.
+- [ ] Proveedores: lo que se debe; tocar uno abre su ficha en Finanzas; + Proveedor con WhatsApp.
+- [ ] Enviar un corte que pide compra: sale el mensaje para el proveedor.
+- [ ] ⋯ Más del corte enviado: Reportar barra dañada (otra del taller o se compra). El Depósito baja 1.
+
+**Depósito**
+- [ ] Ya no hay pestaña Compras. Desde Finanzas, tocar una factura de un proveedor la abre.
+
+## Taller › Corte, lote 5 (v83, 16 nov 2026, Claude de Gualfredo)
+Antes: aplicar v89 a v94 con Gualfredo presente (sin ellas el Corte no envía).
+
+**Corte (Ray o Gualfredo)**
+- [ ] En el Taller sale la pestaña Corte. Este sábado o el próximo.
+- [ ] Números de arriba, puertas sin asignar (Asignar puertas) y el aviso de material que falta.
+- [ ] Abrir un herrero: una tarjeta por puerta con su lista; la repetida dice "Igual que N° …".
+- [ ] "De dónde sale el material": TALLER, NUEVA o el retazo. Tocar una pieza y moverla a otra barra o retazo.
+- [ ] Enviar a … y pedir N barras: el herrero lo ve en Mi trabajo y la compra queda pedida.
+- [ ] Cambiar algo después de enviar: sale "Cambió · vuelve a enviar".
+- [ ] ⋯ de una puerta: pasarla a otro herrero, al próximo sábado o quitarla del plan.
+- [ ] Más: PDF, Sugerir de nuevo, Deshacer envío (si no empezó) y Corregir lo que cortó (cuando termina).
+- [ ] Si el herrero ya empezó, su plan queda con candado.
+
+**Herrero**
+- [ ] En su Inicio, "Qué cortar · te lo mandó Ray …" con sus puertas y barras. Si no le llegó: "Ray todavía no te manda el corte de esta semana."
+
+## Taller › Nómina, lote 3 (v82, 16 nov 2026, Claude de Gualfredo)
+Antes: cerrar y abrir la app. La migración v88 (`pagar_lo_marcado`) se aplica con Gualfredo presente: sin ella, Pagar dice que falta un cambio en la base.
+
+**Nómina (Ray)**
+- [ ] En el Taller, pestaña Nómina: Por pagar y Ya pagado esta semana; una fila por trabajador. El carpintero no te sale.
+- [ ] Un trabajador con algo de la semana pasada dice "1 de la semana pasada"; el que pidió vale dice "Pidió vale · revisar".
+- [ ] Abrir a uno: todo marcado. Desmarca un trabajo: el total y el botón "Pagar $… a …" cambian.
+- [ ] Pagar: elige la cuenta y Confirmar pago. Le llega el aviso, sale en Finanzas y lo desmarcado sigue ahí con ↩.
+- [ ] Historial: cada pago con su cuenta, quién pagó y sus trabajos.
+- [ ] Vale que pidió: Revisar, Aprobar vale (pregunta de qué cuenta salió) o No aprobar.
+- [ ] + Vale desde la lista: primero a quién, después el monto (en dólares o bolívares).
+- [ ] Un aviso viejo de "Vale pedido" (nomina.html) abre su vale en el Taller.
+
+**Gualfredo**
+- [ ] Ve al carpintero y le paga. A los demás les paga Ray: sin casillas ni botón de pagar.
+
+ (v81, 15 nov 2026, Claude de Gualfredo)
+Antes: cerrar y abrir la app. La migración v87 (el aviso abre el trabajo) se aplica con Gualfredo presente; sin ella el aviso sigue abriendo el pedido.
+
+**Resumen (Ray o Gualfredo)**
+- [ ] Al entrar al Taller sale Resumen: "Hoy … · semana …".
+- [ ] Avisos de arriba (entregas en 2 días, atrasados, listos): cada uno abre Pedidos con ese filtro.
+- [ ] 1 Por asignar: cuántos pasos y en cuántos pedidos, con Asignar en cada pedido.
+- [ ] 2 Lo asignado esta semana: "N de M hechos", la barra y la tabla por trabajador; lo de la semana pasada en rojo con ↩. Tocar un trabajador muestra sus trabajos con foto.
+- [ ] ‹ muestra la semana pasada y "Volver a esta semana" regresa.
+- [ ] 3 Por pagar: el total igual al de Nómina, con ↩ al que se le deben trabajos de antes y lo que ya pagaste esta semana.
+- [ ] 4 Vales: Revisar lleva a la Nómina de ese trabajador.
+- [ ] Atajos Plan de corte y + Fabricar para exhibición (ya no está el botón + flotante).
+
+**Aviso y foto del trabajo**
+- [ ] Cuando un trabajador termina, el aviso "Terminó …" abre ese trabajo: foto grande, Lo hizo, Se le paga, Sigue y Por pagar. Tocar la foto la amplía.
+- [ ] En un pedido, tocar un paso hecho abre lo mismo.
+- [ ] Inicio: "N trabajos sin asignar" ahora cuenta todos los pasos sin trabajador.
+
+Antes: cerrar y abrir la app. La migración v86 (montos de cada paso) se aplica con Gualfredo presente; sin ella todo funciona, pero los pasos que faltan salen sin monto.
+
+**Menú (Ray o Gualfredo)**
+- [ ] Abajo sale Inicio · Ventas · Catálogo · Taller · Costeador. Costeador abre Costos. La vendedora no ve Costeador.
+- [ ] En Ventas, arriba: Ventas · Cotizaciones. Pasar de una a otra y tocar Atrás: vuelve a Inicio.
+- [ ] Inicio sigue teniendo Cotizaciones, Nómina, Depósito, Finanzas y Costeador.
+
+**Taller › Pedidos**
+- [ ] Filtros Todos · Por asignar · En proceso · Listos en una línea, con sus números.
+- [ ] Cada pedido es una tarjeta con sus productos ("Bitral 1 de 2") y los pasos de colores: teal con ✓ hecho, borde teal haciendo, gris asignado, ámbar sin asignar, blanco esperando, rojo con ↩ si era para un sábado que ya pasó.
+- [ ] La fecha de entrega sale ámbar si faltan 2 días o menos, roja si pasó, verde "Lista".
+- [ ] Un pedido sin nada asignado tiene botón Asignar en la tarjeta: abre la hoja de la primera puerta.
+- [ ] Abrir un pedido: atajos Venta, Seguimiento, ✂ Corte y Costeo; cada puerta con un solo Asignar; cada paso dice quién y cuándo, con su foto chiquita y el monto ("por pagar" o "pagado").
+- [ ] Tocar un paso hecho: sale la foto en grande.
+- [ ] Asignar: la hoja de siempre, con lo que se paga a la derecha de cada paso. Un paso ya empezado sale fijo ("ya empezó").
+- [ ] Un paso de la semana pasada sale con ↩ y la caja roja "Sigue en la lista de ... para este sábado".
+- [ ] Listos: debe el cliente, entrega, WhatsApp, Fotos, Venta y Marcar entregada.
+- [ ] Un aviso viejo de "Terminó ..." (produccion.html) abre el pedido en el Taller.
+- [ ] Pestaña Nómina lleva a la Nómina de siempre; desde ahí, Pedidos vuelve al Taller.
+
+**Vendedora**
+- [ ] Ve el Taller sin montos, sin Asignar, sin Nómina y sin el botón +.
+
 ## Reestructura de Costos, Depósito y Finanzas (v75 a v78, 8 nov 2026, Claude de Gualfredo)
 Antes: aplicar las migraciones v81, v81b, v82, v83 y v84 (en ese orden) y cerrar y abrir la app.
 

@@ -12,6 +12,79 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-16 · Claude de Gualfredo (Code, migraciones del Taller aplicadas)
+- Con Gualfredo presente ("hagamos la migración pues"): se aplicaron v86 a v96 en orden con el conector (mismo nombre). Revisado después: `corte_datos`, `compras_en_camino`, `costos_datos`, `montos_pasos`, `mi_hoja_corte` y `finanzas_avisos` responden; `_fab_mover` ya no se llama desde la app.
+- Se une el PR #11. Ray dio el OK al Costeador: sigue el lote 8.
+
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 7 · vendedora y sello ENTREGADO)
+- Qué hizo: la vendedora en el Taller ve Todos · En proceso · **Listos** (sin montos, sin Asignar), con Marcar entregada; sus Listos se leen de `ventas` (sin migración). **Sello ENTREGADO** verde y girado con la fecha de entrega en el PDF de la venta entregada (`crearPDF`); antes de entregada, igual que siempre. Sin quién entregó (la app no lo guarda). Los estados (esqueletos, vacíos y errores) ya estaban de los lotes 1 a 6. `?v=85`.
+- Pruebas: test52 nueva. Batería completa en dos mitades (test14 a test54): todas TODO OK; test21 y test36 se ajustaron (todavía esperaban la vendedora sin Listos y el botón + viejo) y pasan solas. test26 pasó.
+- Está tocando: `ventas-comun.js` (PDF), Taller (vendedora).
+- Pendientes: batería completa, revisión propia y PR sin unir. Costeador espera el OK de Ray.
+
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 6 · Corte, material y compras)
+- Qué hizo (Gualfredo: "Dale lo que falta"): Taller › Corte con dos vistas, Por herrero y **Material** (K11 a K18): compra en camino con ¿Llegó? y ⋯ (cambiar, volver a mandar el mensaje, cancelar), tabla Hay · Apartado · Libre · Falta con retazos, Proveedores, Comprar (lo que falta marcado, lo que queda en 0 sugerido), mensaje al proveedor por WhatsApp (también al enviar un corte con compra), contar barras, retazo encontrado y **barra dañada** (K09). `compra.js`: ¿Llegó? con Todo · Una parte · Nada (lo que no vino sigue en camino, `quedan`); el botón "No llegó" pasó a ser "Nada". **Depósito sin Compras** (dos pestañas; la factura desde Finanzas se abre directo). `?v=84`.
+- Migraciones nuevas (sin aplicar, probadas con rollback): v95 (la app ya no llama 12 funciones internas; **con cuidado**: reglas de permisos) y v96 (`corte_barra_danada`).
+- Ojo: `_avisar_usuario` y `_a_produccion_si_pagada` siguen abiertas porque `cambiar_estado_venta` y `actualizar_venta` no son security definer. Queda para otro PR.
+- Pruebas: test54 nueva; test43, test48 y test53 ajustadas. 42, 44 (Bitral), 50, 53, 54 TODO OK.
+- Rama: `claude/lote-1-taller-costeador-t49naw`. Plan para seguir: `docs/tareas/2026-11-16-plan-lotes-6-7-para-code.md`.
+- Está tocando: Taller (Corte, Material), `compra.js`, Depósito.
+- Pendientes: lote 7 (vendedora, estados, sello ENTREGADO), batería completa, PR sin unir. Costeador espera el OK de Ray.
+
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 5 · Corte, pantallas)
+- Qué hizo: Taller › Corte (K01 a K08, K10, K19 a K21; Gualfredo: "Dale"). Pestaña Corte solo para Ray y Gualfredo, con el motor de siempre (`corte.js` + `costeo.js`; a `corte.js` solo se le agregó qué exporta). Por herrero, drawer del herrero, mover una pieza, ⋯ de la puerta, asignar puertas, Más, línea de tiempo, candado, corregir, avisos (también en el Resumen), vacío y error. Mi trabajo del herrero: "Qué cortar" con lo último que se le envió. Los atajos ✂ Corte del pedido y del Resumen abren esta pestaña. `?v=83`.
+- No quedó: K09 "Reportar barra dañada" necesita una función nueva en la base (bajar una barra del depósito o sumarla a la compra): se propone a Gualfredo antes de hacerla. La vista Material va en el lote 6.
+- Ojo seguridad (de antes, no de este lote): varias funciones internas (`_fab_mover`, `_generar_etapas`, `_precio_poner`, `_avisar_usuario`, `_compra_lineas_poner`, `_a_produccion_si_pagada`, `_mes_calcular` y las de saldos) se pueden llamar desde la app con cualquier sesión y no revisan el rol. Se propone a Gualfredo una migración que les quite el permiso a la app (las funciones que las usan siguen igual).
+- Pruebas: test53 nueva; test50 ajustada.
+- Rama: `claude/lote-1-taller-costeador-t49naw`.
+- Está tocando: Taller (Corte), `corte.js` (exporta más), Mi trabajo (Qué cortar).
+- Pendientes: lote 6 (Material, Comprar, mensaje, ¿Llegó?, Proveedores; quitar Depósito › Compras).
+
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 4 · Corte, base)
+- Qué hizo: las 6 migraciones 🔴 de §3B.2 (Gualfredo: "Dale"). v89 envío por herrero (`cortes_planes.enviados` con firma, hora y copia; candado por herrero; `_corte_aplicar` no baja barras si cambió lo asignado; `mi_hoja_corte` lee la copia; `corte_deshacer_envio`; `corte_datos` trae los envíos). v90 herrero en `compras_pedidas`. v91 `corte_enviar` (plan, envío y compra en una transacción). v92 un retazo en un solo plan abierto. v93 teléfono del proveedor normalizado. v94 ¿Llegó? con una parte (`quedan`) y `compra_pedida_cambiar`. Sin `drop`. Sin cambios de pantalla (van en los lotes 5 y 6).
+- Probadas juntas con `begin … rollback` en la base real (16 casos): enviar, hoja del herrero con la copia, cambio sin empezar, candado, deshacer y rehacer con el corte empezado, firma cambiada, bajar barras con lo enviado, enviar y pedir, compra que falla sin dejar el envío, retazo en dos planes, teléfono, llegó una parte, cambiar compra, herrero y teléfono en camino. Todas bien. **Sin aplicar.**
+- Ojo Ray: `corte_plan_guardar`, `_corte_plan_guardar_v82`, `_corte_aplicar`, `corte_plan_reiniciar`, `mi_hoja_corte`, `corte_datos`, `compra_pedir`, `compra_confirmar`, `compras_en_camino` y `proveedor_guardar` cambian (mismos datos de entrada). Hoy no hay planes ni compras pedidas guardados en la base.
+- Rama: `claude/lote-1-taller-costeador-t49naw`.
+- Está tocando: base del Corte y de compras.
+- Pendientes: lote 5 (Corte, pantallas K01 a K10, K19 a K21).
+
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 3)
+- Qué hizo: lote 3 (Gualfredo: "Dale"). La Nómina pasa a ser una pestaña del Taller (`nomina.js` reescrito, `nomina.html` redirige; `?t=ID` y `&que=vale` siguen abriendo al trabajador o su vale). Drawer del trabajador con Por pagar (casillas: se paga lo marcado, cuando sea; lo desmarcado queda con ↩), Historial y Vales; hoja Pagar con la cuenta y Confirmar pago; hoja del vale con Aprobar / No aprobar; + Vale eligiendo a quién; historial de todos. Al carpintero solo lo ve quien lleva la madera (Nómina, Resumen e Inicio). La ayuda de arriba abre el manual de la nómina en esa pestaña. `?v=82`.
+- Migración `v88_gualfredo_pagar_lo_marcado`: función nueva `pagar_lo_marcado` con las validaciones de `pagar_trabajador` (que queda igual). Primero la escribí reemplazando `pagar_trabajador` con un `drop`: el conector le pidió "Permitir" a Gualfredo dos veces y se venció. Se cambió a función con nombre nuevo y quedó la regla en `CLAUDE.md` (sin `drop` en las migraciones). Probada con `begin … rollback` (paga solo lo marcado, monto que no cuadra, trabajo de otro, nada marcado, pagar dos veces). **Sin aplicar.**
+- Pruebas: test51 nueva; test28, test30, test34, test37 y test50 ajustadas.
+- Rama: `claude/lote-1-taller-costeador-t49naw`.
+- Está tocando: Taller (Nómina), Inicio (total de nómina), Mi trabajo (enlace a Nómina), ayuda.
+- Pendientes: lote 3b (Corte, base: migraciones de §3B.2).
+
+## 2026-11-15 · Claude de Gualfredo (Code, Taller lote 2)
+- Qué hizo: lote 2 (Gualfredo: "Dalee"). Taller › Resumen (T1): avisos, Por asignar, Lo asignado esta semana con semanas ‹ ›, Por pagar (de `nomina_semana`), Vales y atajos; tocar un trabajador muestra sus trabajos con foto. Drawer del trabajo (T4) con foto grande, quién, cuánto, qué sigue y cuánto se le debe; se abre con `taller.html?trabajo=<id>` y tocando un paso hecho. El botón + flotante pasa a ser el atajo "+ Fabricar para exhibición" del Resumen. Inicio cuenta "sin asignar" con el criterio único (todos los pasos sin trabajador). `?v=81`.
+- Migración `v87_gualfredo_aviso_trabajo`: el aviso "Terminó …" de `marcar_etapa_terminada` y `terminar_etapa_madera` lleva a `taller.html?trabajo=<eid>` (se reemplaza solo ese texto en la definición actual). Probada con `begin … rollback`. **Sin aplicar.** Otros avisos con `produccion.html` siguen sirviendo con la redirección.
+- Ojo: `terminar_etapa_madera` ya tenía permiso para `anon` (la función exige sesión con `auth.uid()`, así que no es un riesgo). No se tocó.
+- Pruebas: test50 suma Resumen y trabajo; test21, 25, 28, 39 y 40 entran a Pedidos con `?vista=pedidos`.
+- Rama: `claude/lote-1-taller-costeador-t49naw`.
+- Está tocando: Taller, Inicio (conteo sin asignar).
+- Pendientes: lote 3 (Nómina con pagar lo marcado, vales e historial, sin el carpintero para Ray; migración `pagar_trabajador` con listas). En "Lo asignado" sale también el carpintero; en Nómina se esconde en el lote 3.
+
+## 2026-11-15 · Claude de Gualfredo (Code, Taller lote 1)
+- Qué hizo: lote 1 del Taller (Gualfredo dio el OK). Menú nuevo `Inicio · Ventas · Catálogo · Taller · Costeador` (Costeador abre Costos; solo Ray y Gualfredo). Cotizaciones va dentro de Ventas con la etiqueta Ventas · Cotizaciones (Gualfredo: "haz como te sea más conveniente"). `taller.html` + `taller.js` (antes `produccion.js`): Pedidos agrupado por pedido con pasos de colores, filtros Todos · Por asignar · En proceso · Listos, drawer del pedido con foto y monto, hoja de asignar de siempre con el monto a la derecha y paso empezado fijo, marca ↩, Listos con Marcar entregada. `produccion.html` redirige (avisos viejos con `?abrir=` siguen sirviendo). Nómina lleva las pestañas Pedidos · Nómina; se rehace en el lote 3. Resumen llega en el lote 2. `?v=80`.
+- Migración `v86_gualfredo_montos_pasos` (lo que se paga por cada paso que falta, solo admin, solo lectura; usa `_monto_etapa`). Gualfredo aprobó mostrar los montos. Probada con `begin … rollback` en la base real. **Sin aplicar**: se aplica con Gualfredo presente. Sin ella la pantalla funciona sin esos montos.
+- Pruebas: test50 nueva; test16, test21, test25, test26, test27, test28, test29, test39 y test40 pasadas al Taller. Batería completa en dos mitades (test14 a test27 y test28 a test50): todas TODO OK. test26 fallaba por tiempo al procesar la foto del trabajador (espera fija de 500 ms): ahora espera a que salga la foto.
+- Rama o PR: `claude/lote-1-taller-costeador-t49naw` (sale de `gualfredo/taller-costeador`; esta sesión solo puede subir a esa rama).
+- Está tocando: Taller (`taller.html`, `taller.js`, `produccion.html`), menú (`sesion.js`, con cuidado), Inicio (tarjetas de módulos), Ventas y Cotizaciones (pestañas), Nómina (pestañas), `base.css` (`.tabs-mod`).
+- Pendientes: lote 2 (Resumen, foto del trabajo y enlace del aviso). El conteo "sin asignar" de Inicio todavía cuenta solo el paso actual de cada línea; se alinea con el criterio único en el lote 2. Vendedora: sus Listos y Marcar entregada en el lote 7.
+
+## 2026-11-15 (tarde) · Claude de Gualfredo (chat)
+- Qué hizo: con Gualfredo y 3 rondas de consejo se definió **Taller › Corte** (plan de corte por herrero, de dónde sale cada pieza, Material con apartado/libre, Comprar, mensaje de WhatsApp al proveedor, ¿Llegó? con una parte, candado, barra dañada). ✅ Aprobado. El "Sábado" y las "Compras" salen del Costeador, que queda en Modelos · Precios. Tarea actualizada (§3B, con los cambios de base 🔴) y lienzo con 57 pantallas. **No se programó nada.**
+- Rama o PR: `gualfredo/taller-costeador` (PR #10, solo documentos).
+- Ojo Code: el Corte necesita migraciones antes de las pantallas (envío por herrero con copia, `corte_enviar` en una transacción, herrero en `compras_pedidas`, retazo en un solo plan abierto, teléfono normalizado). Se aplican con Gualfredo presente.
+
+## 2026-11-15 · Claude de Gualfredo (chat)
+- Qué hizo: con Gualfredo definió el módulo **Taller** (Producción + Nómina, agrupado por pedido, ✅ aprobado), el **sello ENTREGADO** en la nota del cliente (✅ aprobado) y la propuesta del **Costeador** unificado (🟡 falta OK de Gualfredo y Ray). Consejo de 3 revisores (Ray, UI/UX, flujo y datos) sobre las dos cosas. Todo queda escrito para Code en `docs/tareas/2026-11-15-gualfredo-taller-y-costeador.md`, con maquetas iPhone en `docs/tareas/maquetas-2026-11-15-taller-costeador/` (T1 a T7 Taller, C1 a C5 Costeador y nota). **No se programó nada.**
+- Rama o PR: `gualfredo/taller-costeador` (solo documentos).
+- Está tocando: nada todavía. Code tocará Producción, Nómina, menú (`sesion.js`), PDF de la venta (`ventas-comun.js`) y, con OK, Costos, Depósito y Finanzas.
+- Ojo Ray: el Costeador propuesto son tus 3 pestañas más una de Compras (Modelos · Sábado · Compras · Precios). Mira C1 a C4 y di si va.
+- Pendientes: OK de Gualfredo y Ray al Costeador; dos migraciones pequeñas del Taller (enlace del aviso y pagar lo elegido) que se aplican con Gualfredo presente.
+
 ## 2026-11-08 · Claude de Gualfredo (Code, lote 7 publicado)
 - Qué hizo: Gualfredo corrió `docs/tareas/2026-11-08-aplicar-v85.sql` en el SQL Editor (el "Allow once" del conector de Supabase se venció dos veces aunque lo tocó a tiempo). Revisado en la base real: funciones y columnas de v85 presentes y Bitral en $223,22. PR #8 unido: sale en vivo con `?v=79`. v85 no sale en la lista de migraciones de Supabase; el archivo está en `supabase/migrations`.
 - Rama o PR: PR #8 unido; esta nota y la del PR #7 van en `gualfredo/bitacora-extras-publicado`.

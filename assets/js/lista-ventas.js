@@ -326,7 +326,7 @@
           <div class="f-item-d">${it.ya_hecho ? 'Ya está hecho, solo se entrega · ' : ''}${esc(AV.detalleItem(it))}</div>
           <div class="f-item-p"><span class="f-item-cant">${it.cantidad} × ${dinero(it.precio_unitario)}${v.estado === 'en_produccion' ? `<span class="fab-chip" data-fab-item="${it.id}" hidden></span>` : ''}</span><b>${dinero(it.precio_unitario * it.cantidad)}</b></div></div>
       </div>`).join('')
-      + (v.estado === 'en_produccion' ? `<a class="f-ver-prod" href="produccion.html?abrir=${v.id}">Ver fabricación<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''));
+      + (v.estado === 'en_produccion' ? `<a class="f-ver-prod" href="taller.html?abrir=${v.id}">Ver fabricación<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''));
     if(cot){
       html += acordeon('precio', 'Precio', dinero(v.total), `<div class="totales">${totales}</div>`, true);
     } else {
@@ -539,7 +539,7 @@
   // Acciones de la ficha
   document.getElementById('sheetFicha').addEventListener('click', async (e) => {
     // Editar y Ver fabricación: se cierra la ficha antes de salir; al volver se abre de nuevo
-    const ed = e.target.closest('a[href^="venta.html?editar="], a[href^="produccion.html?abrir="]');
+    const ed = e.target.closest('a[href^="venta.html?editar="], a[href^="taller.html?abrir="]');
     if(ed){
       e.preventDefault();
       const destino = ed.getAttribute('href');

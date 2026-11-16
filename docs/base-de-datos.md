@@ -66,7 +66,7 @@ Idea general: la pantalla casi nunca escribe directo. Las reglas importantes (mo
 ## Funciones RPC que usa la app
 **Ventas:** `crear_venta(p)`, `actualizar_venta(vid, p)`, `convertir_en_venta(vid, a)`, `completar_detalles(vid, items)`, `editar_venta_fabricacion(vid, p)`, `registrar_abono(vid, a)`, `confirmar_abono(aid, llego, nota)` (solo Ray; si queda pagada pasa a fabricación), `cambiar_estado_venta(vid, nuevo, desde)`, `cancelar_venta(vid, motivo, metodo_devolucion)` (solo admin), `marcar_paso(vid, paso)`, `avance_venta(vid)`, `pagado_venta(vid)`, `seguimiento_publico(t)` (sin sesión).
 
-**Producción:** `produccion_lectura()`, `asignar_etapa(eid, tid, p_para)`, `asignar_etapas(p)`, `asignar_categoria_item(iid, cid)`, `crear_orden_exhibicion(p)`, `cancelar_orden_exhibicion(vid)`, `terminar_etapa_madera(eid, foto_url)`.
+**Producción (Taller):** `produccion_lectura()`, `pagar_lo_marcado(tid, esperado, p_etapas bigint[], p_vales bigint[])` (v88: paga solo lo marcado, con las validaciones de `pagar_trabajador`, que queda igual) · `montos_pasos(p_ventas bigint[])` (v86 · y v87: el aviso "Terminó …" de `marcar_etapa_terminada` y `terminar_etapa_madera` lleva a `taller.html?trabajo=<id del paso>`; lo que se paga por cada paso pendiente con la regla de `_monto_etapa`, solo admin, solo lectura), `asignar_etapa(eid, tid, p_para)`, `asignar_etapas(p)`, `asignar_categoria_item(iid, cid)`, `crear_orden_exhibicion(p)`, `cancelar_orden_exhibicion(vid)`, `terminar_etapa_madera(eid, foto_url)`.
 
 **Trabajador:** `mis_trabajos()`, `mis_pagos()`, `empezar_etapa(eid)`, `ordenar_mis_trabajos(p_ids)`, `marcar_etapa_terminada(eid, foto_url)`, `pedir_vale(p_monto, p_nota)`.
 
@@ -148,3 +148,17 @@ Todo se lee solo por quien confirma pagos (`_es_ray()`: Ray y Gualfredo) salvo D
 - Cualquiera con sesión puede subir a `catalogo-fotos` y `etapas-fotos` (también un trabajador al catálogo).
 
 Nada de esto se ha cambiado: queda para un PR aparte.
+
+## Corte por herrero y compras (lote 4, v89 a v94, 16 nov 2026, Claude de Gualfredo · sin aplicar)
+- `cortes_planes.enviados` = `{ tid: { firma, en, por, barras } }`: lo que se le envió a cada herrero. La firma es la de sus pasos de Hierro de ese sábado (`_corte_firma_tid`). El herrero ve esa copia (`mi_hoja_corte`) y es lo que se baja al terminar (`_corte_aplicar`); si la firma cambió después de enviar, no se baja nada y el plan queda con aviso.
+- Candado por herrero en `corte_plan_guardar` y `corte_plan_reiniciar`: si ya cortó o empezó el Hierro (`_corte_empezo`), su parte no cambia; la de los demás sí.
+- `corte_enviar(p_sab, p_tid, p_plan, p_compra)`: guarda el plan, el envío y la compra en una sola transacción. `corte_deshacer_envio(p_sab, p_tid)`: solo si no empezó.
+- `corte_datos().planes[sab].enviados[tid]` trae `firma_hoy` y `empezo` para saber si "cambió · vuelve a enviar".
+- `compras_pedidas.tid`: el herrero de la compra (`compra_pedir` lo recibe en `p.tid`; `compras_en_camino` lo devuelve con `herrero`, y a cada proveedor con su `telefono`).
+- Un retazo no puede estar en dos planes abiertos (`corte_plan_guardar`).
+- `proveedor_guardar` normaliza el teléfono (`normalizar_telefono`) para `wa.me`.
+- `compra_confirmar`: cada lugar puede traer `quedan` (lo que no llegó): sigue en camino en la misma compra (`_compra_queda_en_camino`). `compra_pedida_cambiar(pid, p)` cambia lo pedido a un lugar en camino; cancelar es `compra_no_llego`.
+
+## Seguridad y barra dañada (lote 6, v95 y v96, 16 nov 2026, Claude de Gualfredo · sin aplicar)
+- v95: la app ya no puede llamar directo a 12 funciones internas (`_fab_mover`, `_generar_etapas`, `_precio_poner`, `_compra_lineas_poner`, `_mes_calcular`, `_gasto_real_por_puerta`, `_pagos_por_ubicar`, `_precio_costeo`, `_prov_costeo`, `_saldo_cuenta`, `_saldo_proveedor`, `_categoria_sirve`). Las funciones de la app que las usan son security definer y siguen igual. `_avisar_usuario` y `_a_produccion_si_pagada` quedan abiertas porque `cambiar_estado_venta` y `actualizar_venta` corren con el permiso del usuario (pendiente: pasarlas a security definer en otro PR).
+- v96: `corte_barra_danada(p_sab, p_tid, p_mid, p_barra, p_compra)` (solo Ray o Gualfredo, el herrero debe tener el corte enviado): baja 1 barra del Depósito (motivo `ajuste`); con `p_compra` suma 1 a la compra en camino de ese herrero (o pide una nueva con el precio más barato); sin compra exige que quede otra en el taller. Lo anota en `enviados[tid].danadas`.

@@ -106,3 +106,14 @@ La clave queda guardada cifrada en GitHub: no se ve en el repo ni en los registr
 | 20261007020335 | v69_pieza_corregida_actualiza_venta |
 | 20261007021445 | v70_puertas_de_madera |
 | 20261007023130 | v70b_categoria_de_madera |
+| 20261116125732 | v86_gualfredo_montos_pasos · Taller: monto de cada paso pendiente (solo admin, lectura). |
+| 20261116125736 | v87_gualfredo_aviso_trabajo · el aviso "Terminó …" abre taller.html?trabajo=<id>. |
+| 20261116125825 | v88_gualfredo_pagar_lo_marcado · Nómina: pagar solo lo marcado (función nueva, sin drop). |
+| 20261116130117 | v89_gualfredo_corte_envio_por_herrero · envío, candado y hoja por herrero |
+| 20261116130256 | v90_gualfredo_compra_herrero · herrero en compras_pedidas |
+| 20261116130311 | v91_gualfredo_corte_enviar · enviar y pedir en una transacción |
+| 20261116130317 | v92_gualfredo_retazo_un_plan · un retazo en un solo plan abierto |
+| 20261116130421 | v93_gualfredo_proveedor_telefono · teléfono del proveedor para wa.me |
+| 20261116130455 | v94_gualfredo_compra_parte · ¿Llegó? con una parte y cambiar compra pedida |
+| 20261116130514 | v95_gualfredo_cerrar_funciones_internas · la app no llama funciones internas |
+| 20261116130540 | v96_gualfredo_barra_danada · reportar barra dañada desde el Corte |

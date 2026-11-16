@@ -62,7 +62,7 @@ let urlVentas='';
  ok('Naranja: "1 pedido atrasado · Hugo León"',(await txt('.pend-fila.naranja')).includes('1 pedido atrasado · Hugo León'));
  ok('5 pendientes en total, contador 5',(await y.$$('.pend-fila')).length===5 && (await txt('.pend-n'))==='5');
  ok('No ve pendientes del administrador (pagos por confirmar, vales, sin asignar)',!(await txt('#avisosAdmin')).includes('por confirmar') && !(await txt('#avisosAdmin')).includes('vale') && !(await txt('#avisosAdmin')).includes('sin asignar'));
- ok('La cajita Producción dice "3 pedidos en taller"',(await txt('#cuenta-produccion'))==='3 pedidos en taller');
+ ok('La cajita Taller dice "3 pedidos en taller"',(await txt('#cuenta-taller'))==='3 pedidos en taller');
  await y.screenshot({path:'shots5/y1-vendedora-inicio.png',fullPage:true});
  // Sin nada pendiente: no sale la caja
  ventas.length=0;

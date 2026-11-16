@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Artesanos">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/img/icon-192.png">
+<title>Taller · Herrería Artesanos</title>
+<link rel="stylesheet" href="assets/css/base.css?v=85">
+<style>
+  .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 110px)}
+  .p-nuevo{color:#fff!important;background:var(--danger)!important}
+  .p-unidad{display:inline-block;vertical-align:2px;margin-left:4px;font-size:11.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px}
+  .at-sub{font-size:12.5px;color:var(--ink-soft);margin:-4px 0 8px}
+  .solo-lectura #tabsTaller{display:none}
+  .btn-madera{display:flex;align-items:center;justify-content:center;height:40px;padding:0 16px;margin-top:8px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:800;white-space:nowrap;transition:transform 130ms var(--ease-out)}
+  .btn-madera:active{transform:scale(0.97)}
+  .p-madera-nota{margin-top:12px;font-size:13.5px;color:var(--ink-soft)}
+  .madera-foto{display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;border-radius:var(--radius-md);background:var(--surface-2);color:var(--ink-soft);font-size:14px;overflow:hidden;margin-bottom:10px}
+  .madera-foto img{width:100%;height:100%;object-fit:cover}
+  .at-paso{padding:12px 0}
+  .at-paso + .at-paso{border-top:1px solid var(--line)}
+  .at-nom{font-size:15px;font-weight:800;margin:0 0 8px}
+  .at-ops{display:flex;flex-wrap:wrap;gap:8px}
+  .at-op{display:flex;align-items:center;gap:7px;height:38px;padding:0 13px 0 5px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:13.5px;font-weight:700;color:var(--ink-soft);background:var(--surface);transition:transform 120ms var(--ease-out)}
+  .at-op:active{transform:scale(0.96)}
+  .at-op .ini{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  .at-op.nadie{padding:0 13px}
+  .at-op.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .at-op.on .ini{background:var(--accent);color:#fff}
+  .at-vacio{font-size:13px;color:var(--ink-soft);margin:0}
+
+  /* Categoría de pago de cada producto */
+  .p-cat{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:5px 11px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:12.5px;font-weight:700;max-width:100%;transition:transform 130ms var(--ease-out)}
+  .p-cat span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .p-cat:active{transform:scale(0.97)}
+  .p-cat.falta{background:#FFF1D6;color:#8A5A00}
+  .lista-cat{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .fila-cat{display:flex;align-items:center;justify-content:space-between;width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-align:left;font-size:15px;font-weight:700;transition:transform 130ms var(--ease-out),border-color 160ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .fila-cat:active{transform:scale(0.98)}
+  .fila-cat.sel{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .btn-cancelar-orden{display:block;width:100%;height:48px;margin-top:18px;border:1px solid #F4C7C3;border-radius:14px;color:var(--danger);font-size:14.5px;font-weight:700;transition:transform 130ms var(--ease-out)}
+  .btn-cancelar-orden:active{transform:scale(0.98)}
+
+  /* Fabricar para exhibición */
+  .f-link-box{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 12px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-strong);font-size:15px;color:var(--ink);text-align:left;transition:transform 130ms var(--ease-out)}
+  .f-link-box:active{transform:scale(0.98)}
+  .f-link-box .chev{margin-left:auto;color:var(--ink-faint);flex-shrink:0}
+  .f-link-box .ph{color:var(--ink-faint)}
+  .mini-foto{width:40px;height:40px;border-radius:10px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .mini-foto img{width:100%;height:100%;object-fit:cover}
+  .mod-nom{display:block;font-weight:800}
+  .mod-sub{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .lista-mod{display:flex;flex-direction:column;margin-top:10px}
+  .fila-mod{display:flex;align-items:center;gap:12px;width:100%;padding:10px 2px;text-align:left;transition:transform 130ms var(--ease-out)}
+  .fila-mod + .fila-mod{border-top:1px solid var(--line)}
+  .fila-mod:active{transform:scale(0.98)}
+  .field-hint.aviso{color:#8A5A00}
+
+  .cat-falta{display:block;width:100%;text-align:left;font-size:13px;line-height:1.4;color:#8A5A00;background:#FFF1D6;border-radius:12px;padding:10px 12px;margin:0 0 14px;transition:transform 130ms var(--ease-out)}
+  .cat-falta:active{transform:scale(0.98)}
+  .cat-falta b{font-weight:800}
+  #ordenBody .field-error{margin-top:6px}
+  /* Quién y para cuándo */
+  .e-tope.tarde{color:var(--danger)}
+  .at-nom .e-tope{margin-left:6px;font-size:12px}
+  .at-cuando{margin-bottom:6px}
+  .seg{display:flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:3px}
+  .seg-op{flex:1;min-width:0;height:40px;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--ink-soft);white-space:nowrap;transition:transform 120ms var(--ease-out),background-color 160ms var(--ease-out)}
+  .seg-op:active{transform:scale(0.97)}
+  .seg-op.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm)}
+  .p-foto-otra{font-size:12.5px;line-height:1.4;color:#8A5A00;background:#FFF1D6;border-radius:12px;padding:9px 12px;margin:-4px 0 14px}
+  .at-link{font-weight:800;color:var(--accent);text-decoration:underline}
+  /* Taller › Pedidos (maqueta T2) */
+  .tl-chips .chip{height:38px;padding:0 14px}
+  .tl-chips .chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+  .vlista{display:flex;flex-direction:column;gap:10px}
+  .tl-card{border:1px solid var(--line);border-radius:18px;padding:13px 15px;background:var(--surface);cursor:pointer;animation:tlEntra 260ms var(--ease-out) both;animation-delay:calc(var(--i, 0) * 30ms)}
+  @keyframes tlEntra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.tl-card{animation:none}}
+  .tl-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .tl-top b{font-size:16px;font-weight:800;min-width:0}
+  .tl-pill{flex-shrink:0;font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft);white-space:nowrap}
+  .tl-pill.am{background:#FDF3E1;color:var(--amber)}
+  .tl-pill.rj{background:#FDECEA;color:var(--danger)}
+  .tl-pill.ok{background:#E7F4EC;color:#1F7A4D}
+  .tl-prod{margin-top:9px}
+  .tl-prod > span{display:block;font-size:14.5px;font-weight:700;margin-bottom:5px}
+  .tl-trk{display:flex;flex-wrap:wrap;gap:5px}
+  .tl-f{font-style:normal;font-size:12px;font-weight:700;padding:3px 8px;border-radius:7px;white-space:nowrap}
+  .tl-f.h{background:var(--accent);color:#fff}
+  .tl-f.p{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+  .tl-f.a{background:var(--surface-2);color:var(--ink)}
+  .tl-f.s{background:#FDF3E1;color:var(--amber);box-shadow:inset 0 0 0 1.5px #E8C98F}
+  .tl-f.w{background:var(--surface);color:#B5B0A8;box-shadow:inset 0 0 0 1px var(--line)}
+  .tl-f.r{background:#FDECEA;color:var(--danger);box-shadow:inset 0 0 0 1.5px #F2B8B2}
+  .tl-pie{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:11px;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-soft)}
+  .tl-pie > span{min-width:0}
+  .tl-pie .rojo{color:var(--danger);font-weight:600}
+  .tl-abrir{flex-shrink:0;min-height:44px;padding:0 2px 0 10px;font-size:14.5px;font-weight:800;color:var(--accent);white-space:nowrap;transition:transform 120ms var(--ease-out)}
+  .tl-btn-asignar{flex-shrink:0;height:40px;padding:0 18px;border-radius:999px;background:var(--accent);color:#fff;font-size:15px;font-weight:800;white-space:nowrap;transition:transform 120ms var(--ease-out)}
+  .tl-abrir:active,.tl-btn-asignar:active{transform:scale(0.97)}
+  .tl-kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .tl-kv div{background:var(--surface-2);border-radius:12px;padding:9px 12px}
+  .tl-kv span{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .tl-kv b{font-size:15.5px;font-weight:800}
+  .tl-kv b.ok{color:#1F7A4D}
+  .tl-kv b.debe{color:var(--danger)}
+  .tl-ats{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+  .tl-ats a,.tl-ats button{text-decoration:none;display:inline-flex;align-items:center;min-height:36px;padding:0 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:700;white-space:nowrap;transition:transform 120ms var(--ease-out)}
+  .tl-ats a:active,.tl-ats button:active{transform:scale(0.97)}
+  .tl-entregar{width:100%;margin-top:2px;background:var(--accent)}
+  .tl-nota{font-size:13px;line-height:1.4;color:var(--ink-soft);text-align:center;margin:12px 6px 0}
+  .tl-vacio-btn{margin-top:12px}
+  /* Drawer del pedido (T3) */
+  .tl-dt{font-size:21px;font-weight:800;letter-spacing:-.3px;padding-right:44px}
+  .tl-ds{font-size:14px;color:var(--ink-soft);margin-top:3px}
+  .tl-unidad{margin-top:14px}
+  .tl-uh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
+  .tl-uh-t{min-width:0}
+  .tl-uh-t b{font-size:14.5px;font-weight:800;color:var(--ink-soft)}
+  .tl-uh-s{display:block;font-size:12.5px;color:var(--ink-faint)}
+  .e-rama-tit{font-size:11.5px;font-weight:800;letter-spacing:.3px;color:var(--ink-faint);text-transform:uppercase;margin:12px 0 2px}
+  .e-rama-inc{font-size:12.5px;color:var(--ink-soft);margin:0 0 4px}
+  .tl-paso{display:flex;align-items:center;gap:11px;padding:10px 0}
+  .tl-paso + .tl-paso{border-top:1px solid var(--line)}
+  .tl-paso[data-trabajo]{cursor:pointer}
+  .tl-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--surface-2);color:var(--ink-soft)}
+  .tl-dot.h{background:var(--accent);color:#fff}
+  .tl-dot.p{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+  .tl-dot.s{background:#FDF3E1;color:var(--amber)}
+  .tl-dot.w{color:#B5B0A8}
+  .tl-dot.r{background:#FDECEA;color:var(--danger)}
+  .tl-pt{flex:1;min-width:0}
+  .tl-pt .e-nom{display:block;font-size:15px;font-weight:800}
+  .tl-ps{display:block;font-size:13px;color:var(--ink-soft);margin-top:1px}
+  .tl-paso.r .tl-ps{color:var(--danger)}
+  .e-por{color:var(--amber);font-weight:600}
+  .e-ahora{color:var(--accent);font-weight:600}
+  .tl-mini{width:42px;height:42px;border-radius:10px;overflow:hidden;background:var(--surface-2);flex-shrink:0}
+  .tl-mini img{width:100%;height:100%;object-fit:cover}
+  .tl-monto{flex-shrink:0;text-align:right;font-size:15px;font-weight:800;white-space:nowrap}
+  .tl-monto small{display:block;font-size:12px;font-weight:600;color:var(--ink-soft)}
+  .tl-monto small.pp{color:var(--amber)}
+  .tl-carry{background:#FDECEA;color:var(--danger);border-radius:12px;padding:10px 12px;font-size:13.5px;font-weight:600;line-height:1.4;margin:6px 0 2px}
+  /* Hoja de Asignar (la de siempre) con lo que se paga a la derecha */
+  .sheet-sub{font-size:14px;color:var(--ink-soft)}
+  .at-cab{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 8px}
+  .at-cab .at-nom{margin:0}
+  .at-monto{flex-shrink:0;font-size:13.5px;color:var(--ink-soft);white-space:nowrap}
+  .at-op.fijo{opacity:.65}
+  .e-tope{font-size:12px;font-weight:700;color:var(--ink-soft)}
+  .e-tope.tarde{color:var(--danger)}
+  /* Taller › Resumen (maqueta T1) */
+  .tl-sk{height:150px;border-radius:18px;margin:0 18px 12px;background:var(--surface-2);animation:tlPulso 1.2s ease-in-out infinite alternate}
+  @keyframes tlPulso{from{opacity:.55}to{opacity:1}}
+  #vResumen{padding:0 18px}
+  #vResumen .tl-sk{margin:0 0 12px}
+  .tl-semnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 10px}
+  .tl-semnav span{font-size:14px;font-weight:700;color:var(--ink-soft);text-align:center;flex:1}
+  .tl-semnav button{width:44px;height:44px;border-radius:50%;background:var(--surface-2);color:var(--ink-soft);font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:transform 120ms var(--ease-out)}
+  .tl-semnav button:active{transform:scale(0.97)}
+  .tl-semnav button:disabled{opacity:.35}
+  .tl-alrt{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .tl-alrt button{flex:1 1 40%;min-height:44px;border-radius:14px;padding:8px 12px;font-size:14px;font-weight:700;text-align:left;transition:transform 120ms var(--ease-out)}
+  .tl-alrt button:active{transform:scale(0.97)}
+  .tl-alrt .am{background:#FDF3E1;color:var(--amber)}
+  .tl-alrt .rj{background:#FDECEA;color:var(--danger)}
+  .tl-alrt .ok{background:#E7F4EC;color:#1F7A4D}
+  .tl-sec{border-radius:18px;padding:13px 15px;margin-bottom:12px;background:var(--surface-2)}
+  .tl-sec.am{background:#FDF3E1}
+  .tl-sec h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:17px;font-weight:800;margin:0}
+  .tl-sec h3 button,.tl-sec h3 a{flex-shrink:0;font-size:14px;font-weight:700;color:var(--accent);text-decoration:none;min-height:32px}
+  .tl-big{font-size:15px;color:var(--ink-soft);margin:2px 0 4px}
+  .tl-big b{font-size:26px;font-weight:800;letter-spacing:-.4px;color:var(--ink)}
+  .tl-sec.am .tl-big b{color:var(--amber)}
+  .tl-big b.teal{color:var(--accent)}
+  .tl-row{display:flex;align-items:center;gap:10px;padding:10px 0}
+  .tl-row + .tl-row{border-top:1px solid rgba(28,26,23,.08)}
+  .tl-row > div{flex:1;min-width:0}
+  .tl-row b{display:block;font-size:15.5px;font-weight:800}
+  .tl-row span{font-size:13.5px;color:var(--ink-soft)}
+  .tl-prog{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0 6px;gap:2px;background:var(--surface)}
+  .tl-prog i{display:block;height:100%}
+  .tl-leg{display:flex;gap:6px 12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft)}
+  .tl-leg b{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px}
+  .c-h{background:var(--accent)}.c-p{background:#9AB5B8}.c-a{background:#DAD6CF}.c-r{background:#E3B8B0}
+  .tl-tt{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+  .tl-tt th{font-size:12.5px;color:var(--ink-soft);font-weight:600;text-align:right;padding:4px 2px}
+  .tl-tt th:first-child,.tl-tt td:first-child{text-align:left}
+  .tl-tt td{padding:9px 2px;text-align:right;border-top:1px solid rgba(28,26,23,.08)}
+  .tl-tt tr[data-trab]{cursor:pointer}
+  .tl-tt td small{font-weight:500;color:var(--ink-soft)}
+  .tl-tt .falta-r{color:var(--danger);font-weight:800}
+  .tl-tt tr.tot td{font-weight:800;border-top:1.5px solid var(--ink)}
+  .tl-tt .neg{color:var(--danger)}
+  .tl-rtag{display:inline-block;font-size:11.5px;font-weight:700;color:var(--danger);background:#FDECEA;padding:1px 7px;border-radius:6px;margin-left:5px}
+  .tl-arr{background:#FDECEA;color:var(--danger);border-radius:12px;padding:9px 11px;font-size:13.5px;font-weight:600;margin-top:8px;line-height:1.35}
+  .tl-sec .tl-nota{text-align:left;margin:10px 0 0}
+  .tl-btn-sm{flex-shrink:0;height:40px;padding:0 16px;border-radius:999px;background:var(--accent);color:#fff;font-size:15px;font-weight:800;white-space:nowrap;transition:transform 120ms var(--ease-out)}
+  .tl-btn-sm:active{transform:scale(0.97)}
+  .tl-atajos{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
+  .tl-atajos a,.tl-atajos button{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:700;white-space:nowrap;text-decoration:none;transition:transform 120ms var(--ease-out)}
+  .tl-atajos a:active,.tl-atajos button:active{transform:scale(0.97)}
+  .tl-volver{width:100%;margin-top:4px}
+  /* Trabajo terminado (T4) */
+  .tl-hero{position:relative;display:block;width:100%;aspect-ratio:4/3.4;border-radius:18px;overflow:hidden;background:var(--surface-2);margin-bottom:12px}
+  .tl-hero img{width:100%;height:100%;object-fit:cover}
+  .tl-hero .tag{position:absolute;left:10px;bottom:10px;background:rgba(28,26,23,.72);color:#fff;font-size:12.5px;padding:5px 11px;border-radius:999px;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tl-hero.sin{display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:14px}
+  .tl-kv2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .tl-kv2 div{background:var(--surface-2);border-radius:12px;padding:10px 12px;min-width:0}
+  .tl-kv2 span{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .tl-kv2 b{display:block;font-size:15.5px;font-weight:800;overflow-wrap:anywhere}
+  .tl-kv2 b.teal{color:var(--accent)}
+  .tl-paso-semana{display:flex;align-items:center;gap:10px;padding:10px 0}
+  .tl-paso-semana + .tl-paso-semana{border-top:1px solid var(--line)}
+  /* Nómina (T5, T6): de la Nómina de siempre */
+  .foto-otra{position:absolute;z-index:2;left:12px;top:12px;max-width:calc(100% - 24px);padding:6px 11px;border-radius:999px;background:rgba(28,26,23,0.78);color:#fff;font-size:12.5px;font-weight:800;line-height:1.25}
+  .aviso-m{font-size:12.5px;color:#8A5A00;margin-top:8px}
+  .solo-ray{text-align:center;font-size:13px;color:var(--ink-soft);margin-top:10px}
+  .d-parte{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:800;margin-top:12px}
+  .d-datos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .d-dato{background:var(--surface-2);border-radius:14px;padding:10px 12px;min-width:0}
+  .d-dato span{display:block;font-size:12px;color:var(--ink-soft);font-weight:700}
+  .d-dato b{display:block;font-size:15px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .d-suya{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--ink-soft)}
+  .d-suya button{width:56px;height:56px;border-radius:12px;overflow:hidden;background:var(--surface-2);flex-shrink:0}
+  .d-suya img{width:100%;height:100%;object-fit:cover}
+  .d-link{display:flex;align-items:center;justify-content:center;height:50px;margin-top:16px;border:1.5px solid var(--line-strong);border-radius:14px;font-weight:700;color:var(--accent);text-decoration:none;transition:transform 130ms var(--ease-out)}
+  .d-link:active{transform:scale(0.98)}
+  .bs-caja{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #vNomina{padding:0 18px}
+  .nm-bento{display:grid;grid-template-columns:1.3fr 1fr;gap:8px;margin-bottom:14px}
+  .nm-big{background:var(--accent);color:#fff;border-radius:18px;padding:12px 15px}
+  .nm-big span,.nm-big small{display:block;font-size:13.5px;color:rgba(255,255,255,.85)}
+  .nm-big b{display:block;font-size:32px;font-weight:800;letter-spacing:-.6px}
+  .nm-sm{background:var(--surface-2);border-radius:18px;padding:12px 15px}
+  .nm-sm b{display:block;font-size:24px;font-weight:800;letter-spacing:-.4px}
+  .nm-sm span{display:block;font-size:13.5px;color:var(--ink-soft)}
+  .nm-cab{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--ink-soft);margin:4px 0 2px}
+  .nm-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 0;text-align:left;transition:transform 120ms var(--ease-out)}
+  .nm-row + .nm-row{border-top:1px solid var(--line)}
+  .nm-row:active{transform:scale(0.98)}
+  .nm-av{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .nm-tx{flex:1;min-width:0;display:block}
+  .nm-tx > b{display:block;font-size:16px;font-weight:800}
+  .nm-tx > span{display:block;font-size:13.5px;color:var(--ink-soft);margin-top:1px}
+  .nm-tx > .nm-tag{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 9px;margin-top:4px;margin-right:4px}
+  .nm-tag.rj{background:#FDECEA;color:var(--danger)}
+  .nm-tag.am{background:#FDF3E1;color:var(--amber)}
+  .nm-m{flex-shrink:0;font-size:16px;font-weight:800;color:var(--accent);white-space:nowrap}
+  .nm-m.dia{font-size:15px}
+  .nm-tabs{padding:2px 0;margin:0 0 6px}
+  .nm-tabs .chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+  .nm-it{display:flex;align-items:center;gap:11px;padding:11px 0}
+  .nm-it + .nm-it{border-top:1px solid var(--line)}
+  .nm-it[data-item]{cursor:pointer}
+  .nm-ck{width:28px;height:28px;border-radius:8px;border:2px solid var(--line-strong);background:var(--surface);color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 120ms var(--ease-out)}
+  .nm-ck:active{transform:scale(0.92)}
+  .nm-ck.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .nm-ck:disabled{opacity:.4}
+  .nm-foto{width:46px;height:46px;border-radius:10px;background:var(--surface-2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:12px}
+  .nm-foto img{width:100%;height:100%;object-fit:cover}
+  .nm-it .nm-tx > b{font-size:15px}
+  .nm-vuelta{display:inline-block;font-size:12px;color:var(--danger);background:#FDECEA;border-radius:6px;padding:0 6px;margin-left:4px}
+  .nm-ped{color:var(--ink-soft);text-decoration:underline}
+  .nm-im{flex-shrink:0;font-size:15.5px;font-weight:800;white-space:nowrap}
+  .nm-im.gris{color:var(--ink-soft);font-size:13px}
+  .nm-im.rojo{color:var(--danger)}
+  .nm-tit{font-size:14px;font-weight:800;color:var(--ink-soft);margin:14px 0 2px}
+  .nm-reloj{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);flex-shrink:0;position:relative}
+  .nm-reloj::after{content:'';position:absolute;left:11px;top:11px;width:3px;height:3px;border-radius:50%;background:var(--accent)}
+  .nm-vp{display:flex;align-items:center;gap:10px;background:#FDF3E1;border-radius:14px;padding:10px 12px;margin:2px 0 6px}
+  .nm-tot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14.5px;color:var(--ink-soft);margin-bottom:10px}
+  .nm-tot b{font-size:17px;color:var(--ink)}
+  .nm-nota{font-size:13px;color:var(--ink-soft);text-align:center;margin-top:8px}
+  .nm-nota:empty{display:none}
+  .nm-rec{border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
+  .nm-rec summary{list-style:none;display:flex;align-items:flex-start;gap:10px;padding:12px 14px;cursor:pointer}
+  .nm-rec summary::-webkit-details-marker{display:none}
+  .nm-rm{font-size:17px;font-weight:800;white-space:nowrap}
+  .nm-rec-b{padding:0 14px 6px}
+  .nm-motivo{border:1px solid var(--line);border-radius:14px;padding:10px 13px;margin-bottom:10px}
+  .nm-motivo span{display:block;font-size:13px;color:var(--ink-soft)}
+  .nm-motivo b{font-size:16px}
+  .nm-pie2{display:flex;flex-direction:column;gap:8px}
+  .nm-pie2 .btn-secondary{width:100%}
+  .nm-no{color:var(--danger)}
+  .nm-cuentas{display:flex;flex-direction:column;gap:8px}
+  .nm-cta{display:flex;align-items:center;gap:12px;width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:14px;text-align:left;background:var(--surface);transition:transform 120ms var(--ease-out)}
+  .nm-cta:active{transform:scale(0.98)}
+  .nm-cta.on{border-color:var(--accent);background:var(--accent-soft)}
+  .nm-rad{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-strong);flex-shrink:0}
+  .nm-cta.on .nm-rad{border:6px solid var(--accent)}
+  .nm-teal{background:var(--accent)!important}
+  .nm-nw{white-space:nowrap}
+  .nm-montofijo{background:var(--surface-2);border-radius:12px;padding:12px 14px;font-size:17px;font-weight:700}
+  .det-name{font-size:19px;font-weight:800}
+  .det-type{font-size:13.5px;color:var(--ink-soft)}
+  /* Taller › Corte (K01 a K10) */
+  #vCorte{padding:0 18px}
+  .ck-sab{margin:2px 0 12px}
+  /* Corte › Material (lote 6, K09 y K11 a K18) */
+  /* Lo que usan las hojas de compra.js (Comprar y ¿Llegó?) y las de Material */
+  .fi-opc{display:flex;flex-wrap:wrap;gap:8px}
+  .fx{flex-shrink:0;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);font-size:14px;font-weight:700;color:var(--ink-soft);white-space:nowrap;transition:transform 120ms var(--ease-out)}
+  .fx:active{transform:scale(0.97)}
+  .fx.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .fx:disabled{opacity:.45}
+  .ln{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 2px;width:100%;text-align:left}
+  .ln + .ln{border-top:1px solid var(--line)}
+  .ln-t{font-size:14.5px;font-weight:700}
+  .ln-s{font-size:12.5px;color:var(--ink-soft)}
+  .ln-v{font-size:14.5px;font-weight:800;text-align:right;white-space:nowrap}
+  .mat-s{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+  .tit{font-size:13px;font-weight:800;color:var(--ink-soft);margin:18px 2px 4px}
+  .caja-amar{margin-top:6px;padding:10px 12px;border-radius:12px;background:#FDF3E1;color:var(--amber);font-size:13px;font-weight:700;line-height:1.4}
+  .caja-rara{margin-top:12px;padding:12px 14px;border-radius:14px;background:#FDF1EF;color:var(--danger);font-size:14px;font-weight:700;line-height:1.4}
+  .btn-mini{display:inline-flex;align-items:center;height:38px;padding:0 14px;border-radius:12px;background:var(--danger);color:#fff;font-size:14px;font-weight:800}
+  .btn-mini.sec2{background:var(--surface);color:var(--accent);border:1px solid var(--line-strong)}
+  .ck-vista{margin:2px 0 10px}
+  .mt-camino{display:flex;align-items:center;gap:8px;border:1.5px solid var(--amber);background:#FDF3E1;border-radius:16px;padding:10px 12px;margin-bottom:10px}
+  .mt-cam-t{flex:1;min-width:0}
+  .mt-cam-t b{display:block;font-size:15px}
+  .mt-cam-t span{display:block;font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .mt-amb{background:var(--amber)}
+  .mt-dots{width:44px;height:44px;flex-shrink:0;border-radius:12px;font-size:20px;font-weight:800;color:var(--ink);transition:transform 120ms var(--ease-out)}
+  .mt-dots:active{transform:scale(0.97)}
+  .mt-tabla{border:1px solid var(--line);border-radius:16px;padding:2px 12px;margin:4px 0 10px}
+  .mt-fila{display:grid;grid-template-columns:minmax(0,1fr) 34px 54px 38px 38px;gap:4px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:15px;font-weight:700;text-align:center}
+  .mt-fila > span:first-child{text-align:left;font-weight:400}
+  .mt-cab{border-top:0;font-size:11.5px;font-weight:700;color:var(--ink-soft);padding:9px 0 6px}
+  .mt-cab > span:first-child{font-weight:700}
+  .mt-nom b{display:block;font-size:14.5px;font-weight:700}
+  .mt-nom small{display:block;font-size:12px;color:var(--ink-soft);margin-top:1px}
+  .mt-rojo{color:var(--danger);font-weight:800}
+  .mt-gris{color:var(--ink-soft)}
+  .mt-rets{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 10px}
+  .mt-ret{display:inline-flex;align-items:center;gap:2px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--ink-soft);color:var(--ink);border-radius:8px;padding:0 0 0 8px;font-size:12.5px;font-weight:700}
+  .mt-ret button{width:36px;height:36px;font-size:13px;color:var(--ink-soft);transition:transform 120ms var(--ease-out)}
+  .mt-ret button:active{transform:scale(0.97)}
+  .mt-provs{border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin-bottom:12px}
+  .mt-pie .btn-primary{width:100%}
+  .mt-links{display:grid;grid-template-columns:1fr 1fr;margin-top:4px}
+  .mt-links .ck-link{min-height:44px;text-align:center;justify-content:center}
+  .mt-msg{height:auto;min-height:180px;padding-top:10px;padding-bottom:10px;resize:vertical;font-size:15px;line-height:1.45}
+  .mt-dato{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+  .mt-dato span{color:var(--ink-soft)}
+  .mt-wa{display:flex;align-items:center;justify-content:center;text-decoration:none;width:100%}
+  .mt-peligro{background:var(--danger);width:100%}
+  .mt-barra{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px;transition:transform 120ms var(--ease-out)}
+  .mt-barra:active{transform:scale(0.97)}
+  .mt-barra.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .mt-barra b{display:block;font-size:15px}
+  .mt-barra span{display:block;font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .mt-cont{padding:6px 0 10px;border-bottom:1px solid var(--line)}
+  .mt-nums b{font-size:18px}
+  .ck-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .ck-nums div{background:var(--surface-2);border-radius:16px;padding:10px 12px}
+  .ck-nums b{display:block;font-size:26px;font-weight:800}
+  .ck-nums span{font-size:13px;color:var(--ink-soft)}
+  .ck-card{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+  .ck-card > div{flex:1;min-width:0}
+  .ck-card b{display:block;font-size:16px}
+  .ck-card span{font-size:13.5px;color:var(--ink-soft)}
+  .ck-aviso{background:var(--surface-2);border-radius:14px;padding:10px 12px;font-size:14px;line-height:1.4;margin-bottom:10px}
+  .ck-aviso.rj{background:#FDECEA;color:var(--danger)}
+  .ck-link{color:inherit;font-weight:700;text-decoration:underline;min-height:32px}
+  .ck-lista .nm-row{align-items:center}
+  .nm-tx > .ck-e{display:inline-block;margin-top:5px}
+  .ck-e.gris,.ck-e.sin{background:var(--surface-2);color:var(--ink-soft)}
+  .ck-e.ok{background:#E7F4EC;color:#1F7A4D}
+  .ck-e.rj{background:#FDECEA;color:var(--danger)}
+  .ck-estado{background:var(--surface-2);border-radius:12px;padding:9px 12px;font-size:14.5px;font-weight:600;margin-bottom:12px}
+  .ck-estado.ok{background:#E7F4EC;color:#1F7A4D}
+  .ck-estado.rj{background:#FDECEA;color:var(--danger)}
+  .ck-estado.lock{color:var(--ink-soft)}
+  .ck-tiempo{list-style:none;padding:0;margin:0 0 12px}
+  .ck-tiempo li{position:relative;padding:0 0 10px 22px}
+  .ck-tiempo li::before{content:'';position:absolute;left:3px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+  .ck-tiempo li.a::before{background:var(--surface);box-shadow:inset 0 0 0 2px var(--accent)}
+  .ck-tiempo li.w::before{background:var(--line)}
+  .ck-tiempo b{display:block;font-size:14.5px}
+  .ck-tiempo span{font-size:12.5px;color:var(--ink-soft)}
+  .ck-puerta{border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+  .ck-ph{display:flex;align-items:flex-start;gap:10px}
+  .ck-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0;margin-top:4px}
+  .ck-mas{flex-shrink:0;width:40px;height:32px;border-radius:10px;font-size:20px;color:var(--ink-soft);transition:transform 120ms var(--ease-out)}
+  .ck-mas:active{transform:scale(0.97)}
+  .ck-lista-c{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px}
+  .ck-lista-c span{color:var(--ink-soft)}
+  .ck-igual{margin-top:10px}
+  .ck-igual summary{display:flex;justify-content:space-between;list-style:none;cursor:pointer;font-size:14.5px}
+  .ck-igual summary::-webkit-details-marker{display:none}
+  .ck-igual summary span{color:var(--accent);font-weight:700}
+  .ck-mat{font-size:14px;font-weight:700;margin-top:10px;border-radius:10px}
+  .ck-mat.ok{color:var(--accent)}
+  .ck-mat.rj{color:var(--danger);background:#FDECEA;padding:8px 10px}
+  .ck-sinc{font-size:14px;color:var(--ink-soft);margin-top:8px}
+  .ck-sinc a{color:var(--accent);font-weight:700}
+  .ck-tit{display:flex;justify-content:space-between;font-size:14px;color:var(--ink-soft);margin:14px 0 4px}
+  .ck-leg{margin-bottom:6px}
+  .ck-m{border-top:1px solid var(--line);padding:10px 0}
+  .ck-mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .ck-mh b{font-size:15.5px}
+  .ck-mh span{font-size:13px;color:var(--ink-soft)}
+  .ck-b{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft);margin:8px 0 4px}
+  .ck-tag{flex-shrink:0;font-size:11.5px;font-weight:800;border-radius:6px;padding:2px 7px}
+  .ck-tag.taller{background:var(--accent-soft);color:var(--accent)}
+  .ck-tag.nueva{background:#FDF3E1;color:var(--amber)}
+  .ck-tag.ret{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink-soft)}
+  .ck-barra{display:flex;height:30px;border-radius:6px;overflow:hidden;gap:2px}
+  .ck-pz{min-width:0;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;transition:transform 120ms var(--ease-out)}
+  .ck-pz small{font-size:10px;opacity:.85}
+  .ck-pz:active{transform:scale(0.97)}
+  .ck-sob{background:#EAD9CF}
+  .ck-pie{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--ink-soft)}
+  .ck-pie .ck-link{text-decoration:none;color:var(--ink);white-space:nowrap}
+  .ck-nota{background:var(--surface-2);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.4;margin-top:10px}
+  .nm-cta .ck-tag{margin-left:auto}
+  .nm-cta:disabled{opacity:.5}
+  .ck-hs{margin:4px 0 6px 32px}
+  .ck-as{border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:10px}
+  .ck-ash{display:flex;gap:10px;margin-bottom:10px}
+  .ck-asf{width:56px;height:56px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0}
+  .ck-ash .ck-link{color:var(--accent);text-decoration:none;font-size:14px}
+  .ck-mrow{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:52px;text-align:left;border-bottom:1px solid var(--line)}
+  .ck-mrow b{font-size:16px}
+  .ck-mrow span{font-size:13.5px;color:var(--ink-soft);text-align:right}
+  .ck-mrow:disabled{opacity:.45}
+  .ck-co{border-bottom:1px solid var(--line);padding:10px 0}
+  .ck-step{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .ck-step span{flex:1;font-size:15px}
+  .ck-step button{width:44px;height:44px;border-radius:12px;background:var(--surface-2);font-size:20px;font-weight:700;transition:transform 120ms var(--ease-out)}
+  .ck-step button:active{transform:scale(0.97)}
+  .ck-step b{min-width:28px;text-align:center;font-size:18px}
+</style>
+</head>
+<body data-requiere-sesion="si" data-modo="produccion">
+
+<header class="topbar" id="topbar">
+  <div class="logo-mark con-img"><img src="assets/img/icon-192.png" alt="Herrería Artesanos"></div>
+  <div class="topbar-text">
+    <div class="topbar-title">Taller</div>
+    <div class="topbar-sub" id="subtitulo">Cargando</div>
+  </div>
+  <button class="icon-btn" id="btnActualizar" aria-label="Actualizar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+  </button>
+</header>
+
+<main class="page">
+  <nav class="tabs-mod" id="tabsTaller" aria-label="Partes del taller">
+    <button type="button" data-vista="resumen" class="on" aria-pressed="true">Resumen</button>
+    <button type="button" data-vista="pedidos" aria-pressed="false">Pedidos</button>
+    <button type="button" data-vista="corte" aria-pressed="false" class="hidden" id="tabCorte">Corte</button>
+    <button type="button" data-vista="nomina" aria-pressed="false">Nómina</button>
+  </nav>
+  <section id="vResumen" aria-live="polite">
+    <div class="tl-sk"></div><div class="tl-sk"></div><div class="tl-sk"></div>
+  </section>
+  <section id="vCorte" class="hidden" aria-live="polite"></section>
+  <section id="vNomina" class="hidden" aria-live="polite">
+    <div class="tl-sk"></div><div class="tl-sk"></div>
+  </section>
+  <div id="vPedidos" class="hidden">
+    <div class="chips tl-chips" id="chips" role="tablist"></div>
+    <section class="vlista" id="lista" aria-live="polite">
+      <div class="sk-vcard"></div><div class="sk-vcard"></div><div class="sk-vcard"></div>
+    </section>
+  </div>
+</main>
+
+<div class="bottom-nav-wrap" id="menuModulos" data-activo="taller"></div>
+
+<!-- Ficha del pedido: productos y sus etapas -->
+<div class="sheet-scrim" id="scrimFicha" data-cerrar="sheetFicha"></div>
+<section class="sheet sheet-auto" id="sheetFicha" role="dialog" aria-modal="true" aria-label="Pedido">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetFicha" aria-label="Cerrar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sheet-body" id="fichaBody" style="padding-top:18px"></div>
+</section>
+
+<!-- Asignar trabajadores: quién hace cada paso y para cuándo -->
+<div class="sheet-scrim scrim-top" id="scrimTodo" data-cerrar="sheetTodo"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetTodo" role="dialog" aria-modal="true" aria-labelledby="todoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="todoTitulo">Asignar trabajadores</h2>
+    <button class="icon-btn" data-cerrar="sheetTodo" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="sheet-sub" id="todoSub" style="margin:-4px 0 6px"></p>
+    <p class="field-hint" style="margin:0 0 12px">Elige quién hace cada paso. A cada uno le llega el aviso cuando le toque.</p>
+    <div id="todoBody"></div>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarTodo" disabled>Elige quién hace cada paso</button></div>
+</section>
+
+<div class="sheet-scrim scrim-top" id="scrimCatItem" data-cerrar="sheetCatItem"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCatItem" role="dialog" aria-modal="true" aria-labelledby="catItemTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="catItemTitulo">Categoría de pago</h2>
+    <button class="icon-btn" data-cerrar="sheetCatItem" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="field-label" id="catItemSub" style="margin-bottom:10px"></p>
+    <div class="lista-cat" id="listaCatItem"></div>
+  </div>
+</section>
+
+<!-- Fabricar para exhibición -->
+<div class="sheet-scrim" id="scrimOrden" data-cerrar="sheetOrden"></div>
+<section class="sheet sheet-auto" id="sheetOrden" role="dialog" aria-modal="true" aria-labelledby="ordenTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="ordenTitulo">Fabricar para exhibición</h2>
+    <button class="icon-btn" data-cerrar="sheetOrden" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ordenBody"></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnCrearOrden">Mandar a fabricar</button></div>
+</section>
+
+<!-- Elegir modelo -->
+<div class="sheet-scrim scrim-top" id="scrimModelos" data-cerrar="sheetModelos"></div>
+<section class="sheet sheet-top" id="sheetModelos" role="dialog" aria-modal="true" aria-labelledby="modelosTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="modelosTitulo">Elige el modelo</h2>
+    <button class="icon-btn" data-cerrar="sheetModelos" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <label class="search-box" style="margin:0">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="buscaModelo" placeholder="Buscar modelo" autocomplete="off" aria-label="Buscar modelo">
+    </label>
+    <div class="lista-mod" id="listaModelos"></div>
+  </div>
+</section>
+
+<div class="sheet-scrim scrim-top" id="scrimMadera" data-cerrar="sheetMadera"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetMadera" role="dialog" aria-modal="true" aria-labelledby="maderaTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="maderaTitulo">Terminar paso</h2>
+    <button class="icon-btn" data-cerrar="sheetMadera" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <p class="sheet-sub" id="maderaSub" style="margin-bottom:12px"></p>
+    <div class="madera-foto" id="maderaFoto"></div>
+    <button class="btn-secondary" type="button" id="btnMaderaFoto" style="width:100%">Tomar la foto</button>
+    <input type="file" accept="image/*" capture="environment" id="maderaInput" class="hidden">
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnMaderaOk" disabled>Primero toma la foto</button></div>
+</section>
+
+<!-- Un trabajo terminado con su foto (desde el aviso o tocando un paso hecho) -->
+<div class="sheet-scrim scrim-top" id="scrimTrabajo" data-cerrar="sheetTrabajo"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetTrabajo" role="dialog" aria-modal="true" aria-labelledby="trabajoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="trabajoTitulo">Trabajo</h2><p class="sheet-sub" id="trabajoSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetTrabajo" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="trabajoBody"></div>
+</section>
+
+<!-- Lo de la semana de un trabajador -->
+<div class="sheet-scrim scrim-top" id="scrimTrabSem" data-cerrar="sheetTrabSem"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetTrabSem" role="dialog" aria-modal="true" aria-labelledby="trabSemTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="trabSemTitulo">Trabajador</h2><p class="sheet-sub" id="trabSemSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetTrabSem" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="trabSemBody"></div>
+</section>
+
+<!-- Nómina: drawer del trabajador (Por pagar · Historial · Vales) -->
+<div class="sheet-scrim scrim-top" id="scrimTrab" data-cerrar="sheetTrab"></div>
+<section class="sheet sheet-top" id="sheetTrab" role="dialog" aria-modal="true" aria-labelledby="trabNombre">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="trabNombre">Trabajador</h2><p class="sheet-sub" id="trabSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetTrab" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="chips nm-tabs" id="trabTabs" role="tablist">
+      <button class="chip active" type="button" role="tab" data-tab="pagar">Por pagar</button>
+      <button class="chip" type="button" role="tab" data-tab="historial">Historial</button>
+      <button class="chip" type="button" role="tab" data-tab="vales">Vales</button>
+    </div>
+    <div id="trabBody"></div>
+  </div>
+  <div class="sheet-foot" id="trabFoot"></div>
+</section>
+
+<!-- Un trabajo: de qué cliente y pedido es -->
+<div class="sheet-scrim scrim-top" id="scrimItem" data-cerrar="sheetItem"></div>
+<section class="sheet sheet-hero sheet-top" id="sheetItem" role="dialog" aria-modal="true" aria-label="Trabajo">
+  <div class="sheet-handle"></div>
+  <button class="sheet-x" data-cerrar="sheetItem" aria-label="Cerrar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="sheet-body" id="itemBody"></div>
+</section>
+
+<!-- Anotar un vale (Ray) -->
+<div class="sheet-scrim scrim-top" id="scrimVale" data-cerrar="sheetVale"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetVale" role="dialog" aria-modal="true" aria-labelledby="valeTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="valeTitulo">Anotar un vale</h2>
+    <button class="icon-btn" data-cerrar="sheetVale" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field hidden" id="campoValeQuien">
+      <span class="field-label">¿A quién?</span>
+      <div class="opts" id="valeQuien" style="--cols:2"></div>
+      <p class="field-error">Elige a quién le das el vale</p>
+    </div>
+    <div class="field" id="campoValeMonto">
+      <label class="field-label" for="valeMonto">Monto en dólares</label>
+      <div class="input-affix"><span class="affix">$</span><input class="input" id="valeMonto" type="text" inputmode="decimal" autocomplete="off"></div>
+      <p class="field-error">Escribe un monto mayor a 0</p>
+    </div>
+    <div class="field">
+      <label class="field-label" for="valeNota">Para qué (opcional)</label>
+      <input class="input" id="valeNota" type="text" maxlength="120" autocomplete="off">
+    </div>
+    <button class="tchip" type="button" id="btnValeBs" aria-pressed="false"><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Se dio en bolívares</button>
+    <div class="bs-caja hidden" id="cajaBs" style="margin-top:12px">
+      <div class="field" id="campoValeBs">
+        <label class="field-label" for="valeBs">Bolívares</label>
+        <input class="input" id="valeBs" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+      <div class="field" id="campoValeTasa">
+        <label class="field-label" for="valeTasa">Tasa (Bs por $)</label>
+        <input class="input" id="valeTasa" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+    </div>
+    <p class="field-hint" id="valeAyuda">Queda aprobado y se descuenta en su próximo pago.</p>
+  </div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnGuardarVale">Anotar vale</button></div>
+</section>
+
+<!-- Revisar el vale que pidió (T6) -->
+<div class="sheet-scrim scrim-top" id="scrimValeRev" data-cerrar="sheetValeRev"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetValeRev" role="dialog" aria-modal="true" aria-labelledby="valeRevTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="valeRevTitulo">Vale</h2><p class="sheet-sub" id="valeRevSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetValeRev" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="valeRevBody"></div>
+  <div class="sheet-foot nm-pie2" id="valeRevFoot"></div>
+</section>
+
+<!-- Pagar: de qué cuenta salió y Confirmar pago (también ubica la salida de un vale) -->
+<div class="sheet-scrim scrim-top" id="scrimSalida" data-cerrar="sheetSalida"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetSalida" role="dialog" aria-modal="true" aria-labelledby="salTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="salTitulo">¿De qué cuenta salió?</h2><p class="sheet-sub" id="salSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetSalida" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="salBody"></div>
+  <div class="sheet-foot"><button class="btn-primary" type="button" id="btnSalida">Guardar</button><p class="nm-nota" id="salNota"></p></div>
+</section>
+
+<!-- Historial de todos los pagos -->
+<div class="sheet-scrim scrim-top" id="scrimHist" data-cerrar="sheetHist"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetHist" role="dialog" aria-modal="true" aria-labelledby="histTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="histTitulo">Historial de pagos</h2><p class="sheet-sub">Los últimos pagos de nómina</p></div>
+    <button class="icon-btn" data-cerrar="sheetHist" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="histBody"></div>
+</section>
+
+<!-- Taller › Corte (K02 a K10) -->
+<div class="sheet-scrim" id="scrimCorte" data-cerrar="sheetCorte"></div>
+<section class="sheet" id="sheetCorte" role="dialog" aria-modal="true" aria-labelledby="ckTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckTitulo"></h2><p class="sheet-sub" id="ckSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCorte" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckBody"></div>
+  <div class="sheet-foot" id="ckFoot"></div>
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkPieza" data-cerrar="sheetCkPieza"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCkPieza" role="dialog" aria-modal="true" aria-labelledby="ckPzTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckPzTitulo"></h2><p class="sheet-sub" id="ckPzSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCkPieza" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckPzBody"></div>
+  <div class="sheet-foot"><button class="btn-primary nm-teal" type="button" id="btnCkPieza">Listo</button></div>
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkPuerta" data-cerrar="sheetCkPuerta"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCkPuerta" role="dialog" aria-modal="true" aria-labelledby="ckPuTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckPuTitulo"></h2><p class="sheet-sub" id="ckPuSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCkPuerta" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckPuBody"></div>
+  <div class="sheet-foot"><button class="btn-primary nm-teal" type="button" id="btnCkPuerta">Listo</button></div>
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkAsignar" data-cerrar="sheetCkAsignar"></div>
+<section class="sheet sheet-top" id="sheetCkAsignar" role="dialog" aria-modal="true" aria-labelledby="ckAsTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckAsTitulo">Asignar puertas</h2><p class="sheet-sub" id="ckAsSub">Las que faltan por asignar o de otro herrero</p></div>
+    <button class="icon-btn" data-cerrar="sheetCkAsignar" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckAsBody"></div>
+  <div class="sheet-foot"><button class="btn-primary nm-teal" type="button" id="btnCkAsignar" disabled>Asignar</button></div>
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkMas" data-cerrar="sheetCkMas"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCkMas" role="dialog" aria-modal="true" aria-labelledby="ckMasTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckMasTitulo">Más</h2><p class="sheet-sub" id="ckMasSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCkMas" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckMasBody"></div>
+  
+</section>
+<div class="sheet-scrim scrim-top" id="scrimCkCorregir" data-cerrar="sheetCkCorregir"></div>
+<section class="sheet sheet-auto sheet-top" id="sheetCkCorregir" role="dialog" aria-modal="true" aria-labelledby="ckCoTitulo">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><div style="min-width:0"><h2 class="sheet-title" id="ckCoTitulo">Corregir lo que cortó</h2><p class="sheet-sub" id="ckCoSub"></p></div>
+    <button class="icon-btn" data-cerrar="sheetCkCorregir" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheet-body" id="ckCoBody"></div>
+  <div class="sheet-foot"><button class="btn-primary nm-teal" type="button" id="btnCkCorregir">Guardar corrección</button></div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/vendor/supabase.js?v=85"></script>
+<script src="assets/js/supabase-client.js?v=85"></script>
+<script src="assets/js/img-compress.js?v=85"></script>
+<script src="assets/js/comun.js?v=85"></script>
+<script src="assets/js/avisos.js?v=85"></script>
+<script src="assets/js/sesion.js?v=85"></script>
+<script src="assets/js/ayuda.js?v=85"></script>
+<script src="assets/js/ventas-comun.js?v=85"></script>
+<script src="assets/js/specs-producto.js?v=85"></script>
+<script src="assets/js/pdf-reporte.js?v=85"></script>
+<script src="assets/js/costeo.js?v=85"></script>
+<script src="assets/js/corte.js?v=85"></script>
+<script src="assets/js/compra.js?v=85"></script>
+<script src="assets/js/taller-corte.js?v=85"></script>
+<script src="assets/js/taller-material.js?v=85"></script>
+<script src="assets/js/nomina.js?v=85"></script>
+<script src="assets/js/taller.js?v=85"></script>
+</body>
+</html>

@@ -4,6 +4,9 @@
 // ¿Llegó?: cantidades y precios de la factura, número, foto, total del papel para cuadrar, y cómo se paga en una sola
 // hoja (Lo debo · Pagué · Una parte · Saqué dinero, con tasa en bolívares). Confirma el admin (compra_confirmar).
 // "No llegó" anula ese lugar con motivo (compra_no_llego). Nada se borra.
+// Taller › Corte › Material (lote 6): abrirMaterial(items, sugeridos) trae marcado lo que falta y sugiere lo que
+// queda en 0; alPedir(fn) avisa la compra pedida (para el mensaje al proveedor). En ¿Llegó?, cada lugar dice
+// Todo · Una parte · Nada: con una parte, lo que no vino sigue en camino en la misma compra (quedan, v94).
 (function(){
   'use strict';
   const { esc, toast, abrirHoja, cerrarHoja, dinero } = window.AH;
@@ -15,7 +18,7 @@
   const corto = (n) => String(n || '').replace('Inversiones ', '').replace(' (ferretería y otros)', '');
   const fechaTxt = (iso) => { try{ return new Date(iso).toLocaleDateString('es-VE', { day:'numeric', month:'short' }); } catch(e){ return ''; } };
   let E = null, S = null, ocupado = false;
-  const cambios = [];
+  const cambios = [], pedidos = [];
 
   async function cargar(){ const { data, error } = await db.rpc('compras_en_camino'); if(error) throw error; E = data; return E; }
   const prov = (id) => (E.proveedores || []).find(p => String(p.id) === String(id)) || { nombre:'Proveedor', iva:false, saldo:0, tipos:[] };
@@ -35,6 +38,7 @@
       return `<button class="cp-amar" type="button" data-compra-llego="${g.grupo}"><span><b>${esc((o.titulo || 'Compra pedida') + ' a ' + nom)} · ${dinero(g.total)}</b><small>${esc(resumenGrupo(g))} · pedida ${esc(fechaTxt(g.fecha))} · por confirmar</small></span><span class="cp-llego">¿Llegó? ›</span></button>`; }).join('');
   }
   const alCambiar = (fn) => cambios.push(fn);
+  const alPedir = (fn) => pedidos.push(fn);
   async function avisar(){ try{ await cargar(); } catch(e){} cambios.forEach(fn => { try{ fn(); } catch(e){} }); }
 
   // ---------- Hoja propia ----------
@@ -85,6 +89,13 @@
     S = { modo:'pedir', plan_sab:P.sab, items, en:'barato', lugares:repartir(items, 'barato'), gastos:[], pago:{}, agregar:null, titulo:'Comprar lo que falta' };
     hoja(); pintar(); abrirHoja('sheetCompra');
   }
+  // Desde Taller › Corte › Material: lo que falta ya viene marcado; lo que queda en 0 se sugiere sin marcar
+  async function abrirMaterial(items, sugeridos){
+    try{ await cargar(); } catch(e){ toast(errTxt(e), 'error'); return; }
+    if(!(items || []).length && !(sugeridos || []).length) return abrirNueva();
+    S = { modo:'pedir', plan_sab:null, items:(items || []).slice(), sugeridos:(sugeridos || []).slice(), en:'barato', lugares:repartir(items || [], 'barato'), gastos:[], pago:{}, agregar:null, titulo:'Comprar' };
+    hoja(); pintar(); abrirHoja('sheetCompra');
+  }
   function abrirNueva(){
     return cargar().then(() => { S = { modo:'pedir', plan_sab:null, items:[], en:'barato', lugares:[], gastos:[], pago:{}, agregar:{ que:'lugar' }, titulo:'Pedir compra' }; hoja(); pintar(); abrirHoja('sheetCompra'); })
       .catch(e => toast(errTxt(e), 'error'));
@@ -92,8 +103,8 @@
   async function abrirLlego(grupo){
     try{ await cargar(); } catch(e){ toast(errTxt(e), 'error'); return; }
     const g = (E.grupos || []).find(x => String(x.grupo) === String(grupo)); if(!g){ toast('Esa compra ya no está en camino', 'error'); return; }
-    S = { modo:'llego', grupo:g.grupo, fecha:g.fecha, totalPedido:g.total, lugares:(g.lugares || []).map(l => ({ pedida_id:l.id, proveedor_id:l.proveedor_id, numero:'', papel:'', foto:null, noLlego:false, motivo:'',
-      lineas:(l.lineas || []).map(x => ({ material_id:x.material_id || null, consumible_id:x.consumible_id || null, descripcion:x.descripcion || null, n:x.n, cantidad:String(x.cantidad), precio:String(x.precio) })) })),
+    S = { modo:'llego', grupo:g.grupo, fecha:g.fecha, totalPedido:g.total, lugares:(g.lugares || []).map(l => ({ pedida_id:l.id, proveedor_id:l.proveedor_id, numero:'', papel:'', foto:null, noLlego:false, motivo:'', llega:'todo',
+      lineas:(l.lineas || []).map(x => ({ material_id:x.material_id || null, consumible_id:x.consumible_id || null, descripcion:x.descripcion || null, n:x.n, cantidad:String(x.cantidad), pedido:Number(x.cantidad), precio:String(x.precio) })) })),
       gastos:(g.gastos || []).map(x => ({ categoria:x.categoria, monto:String(x.total) })), pago:{ modo:'debo', cuenta_id:null, origen:'BCV' }, agregar:null, titulo:'¿Llegó la compra?' };
     hoja(); pintar(); abrirHoja('sheetCompra');
   }
@@ -109,6 +120,8 @@
       const debe = S.lugares.reduce((a, l) => a + Math.min(0, Number(prov(l.proveedor_id).saldo || 0)), 0);
       h += `<div class="cp-saldos"><div><span>Tienes en cuentas</span><b>${cs.length ? dinero(tienes) : '·'}</b><small>${mayor ? esc('más en ' + mayor.nombre) : 'Crea tus cuentas en Finanzas'}</small></div>
         <div class="${debe < 0 ? 'rojo' : ''}"><span>${S.lugares.length === 1 ? 'Le debes a ' + esc(corto(prov(S.lugares[0].proveedor_id).nombre)) : 'Le debes a estos'}</span><b>${dinero(Math.abs(debe))}</b><small>${debe < 0 ? 'antes de esta compra' : 'al día'}</small></div></div>`;
+      if(S.sugeridos && S.items.length) h += '<p class="mat-s" style="margin:10px 2px 0">Ya viene marcado lo que falta para los cortes.</p>';
+      if(S.sugeridos && S.sugeridos.length) h += `<div class="field-label" style="margin-top:12px">Se va a quedar en 0 · toca para sumarlo</div><div class="fi-opc">${S.sugeridos.map((x, i) => `<button class="fx" type="button" data-cp-sug="${i}">+ ${esc(nomLinea(x))} · ${esc(x.cantidad)}</button>`).join('')}</div>`;
       if(S.items.length){ const ps = (E.proveedores || []).filter(p => (p.tipos || []).some(t => ['hierro','laminas','vidrio'].includes(t)));
         h += `<div class="field-label" style="margin-top:12px">Comprar en</div><div class="fi-opc">${[['barato', 'Más barato']].concat(ps.map(p => [String(p.id), esc(corto(p.nombre))])).map(([v, t]) => `<button class="fx ${String(S.en) === v ? 'on' : ''}" type="button" data-cp-en="${v}">${t}</button>`).join('')}</div>`; }
     } else {
@@ -116,12 +129,15 @@
     }
     S.lugares.forEach((l, i) => {
       const p = prov(l.proveedor_id), sinPrecio = l.lineas.filter(x => !(numL(x.precio) > 0)).length;
+      const faltan = S.modo === 'llego' && !l.noLlego ? l.lineas.filter(x => x.pedido > 0 && (numL(x.cantidad) || 0) < x.pedido) : [];
       h += `<div class="cp-lugar ${l.noLlego ? 'anulado' : ''}"><div class="cp-lh"><b>${esc(corto(p.nombre))}</b><span>${dinero(S.modo === 'llego' ? totalPapel(l) : totLugar(l))}</span></div>
+        ${S.modo === 'llego' && l.pedida_id ? `<div class="field-label" style="margin-top:4px">¿Llegó todo?</div><div class="fi-opc" style="margin-bottom:8px">${[['todo','Todo'],['parte','Una parte'],['nada','Nada']].map(([v, t]) => `<button class="fx ${(l.noLlego ? 'nada' : l.llega) === v ? 'on' : ''}" type="button" data-cp-llega="${i}:${v}">${t}</button>`).join('')}</div>` : ''}
         <div class="cp-fila cp-cab"><span>Material</span><span>${S.modo === 'llego' ? 'Llegó' : 'Cant.'}</span><span>s/IVA</span></div>
-        ${l.lineas.map((x, j) => `<div class="cp-fila"><span>${esc(nomLinea(x))}<small>${esc(vaA(x))}</small></span>${inp('l:' + i + ':' + j + ':cantidad', x.cantidad, 'aria-label="Cantidad"')}${inp('l:' + i + ':' + j + ':precio', x.precio, 'aria-label="Precio sin IVA"')}</div>`).join('')}
+        ${l.lineas.map((x, j) => `<div class="cp-fila"><span>${esc(nomLinea(x))}<small>${esc(S.modo === 'llego' && x.pedido > 0 ? 'pediste ' + x.pedido : vaA(x))}</small></span>${inp('l:' + i + ':' + j + ':cantidad', x.cantidad, 'aria-label="Cantidad"')}${inp('l:' + i + ':' + j + ':precio', x.precio, 'aria-label="Precio sin IVA"')}</div>`).join('')}
+        ${faltan.length ? `<p class="cp-aviso">Falta ${esc(faltan.map(x => (x.pedido - (numL(x.cantidad) || 0)) + ' ' + nomLinea(x).toLowerCase()).join(' y '))}: sigue en camino, en amarillo, en la misma compra.</p>` : ''}
         ${sinPrecio ? `<p class="cp-aviso">${plural(sinPrecio, '1 línea sin precio', 'líneas sin precio')}: escríbelo cuando lo sepas.</p>` : ''}
         <p class="mat-s" style="margin:4px 2px 0">${p.iva ? 'Con IVA 16 %' : 'Sin IVA'}${p.saldo < 0 ? ' · le debes ' + dinero(-p.saldo) : ''}</p>
-        <div class="cp-mas"><button type="button" data-cp-mas="${i}">+ Material</button>${S.modo === 'llego' && l.pedida_id ? `<button type="button" data-cp-nollego="${i}">No llegó</button>` : `<button type="button" data-cp-quitarl="${i}">Quitar lugar</button>`}</div>
+        <div class="cp-mas"><button type="button" data-cp-mas="${i}">+ Material</button>${S.modo === 'llego' && l.pedida_id ? '' : `<button type="button" data-cp-quitarl="${i}">Quitar lugar</button>`}</div>
         ${S.modo === 'llego' ? `${l.noLlego ? `<div class="field" style="margin-top:8px"><label class="field-label" for="cpMot${i}">¿Por qué no llegó?</label><input class="input" id="cpMot${i}" data-k="m:${i}" value="${esc(l.motivo)}"><button class="btn-secondary" type="button" data-cp-anular="${i}" style="width:100%;margin-top:8px">Anular este lugar</button></div>` : `
           <div class="input-row" style="margin-top:10px"><div class="field"><label class="field-label" for="cpNum${i}">N° factura</label><input class="input" id="cpNum${i}" data-k="n:${i}" value="${esc(l.numero)}"></div>
           <div class="field"><span class="field-label">Foto</span><label class="btn-secondary cp-foto">${l.foto ? 'Foto lista' : 'Tomar foto'}<input type="file" accept="image/*" data-cp-foto="${i}" hidden></label></div></div>
@@ -232,7 +248,10 @@
   function validarLineas(){
     for(const l of S.lugares.filter(x => !x.noLlego)){
       if(!l.lineas.length){ toast('Cada lugar necesita al menos un material. Quita el lugar o agrégale algo.', 'error'); return false; }
-      for(const x of lineasOk(l)){
+      const ls = lineasOk(l);
+      if(S.modo === 'llego' && l.pedida_id && !ls.some(x => x.cantidad > 0)){ toast('Si no llegó nada de ' + corto(prov(l.proveedor_id).nombre) + ', toca Nada.', 'error'); return false; }
+      for(const x of ls){
+        if(S.modo === 'llego' && l.pedida_id && x.cantidad === 0) continue;
         if(!(x.cantidad > 0)){ toast('Revisa la cantidad de ' + (x.descripcion || 'cada material'), 'error'); return false; }
         if((x.material_id || x.consumible_id) && x.cantidad % 1){ toast('Las barras, hojas y consumibles se cuentan enteros', 'error'); return false; }
         if(x.precio < 0){ toast('El precio no puede ser negativo', 'error'); return false; }
@@ -245,9 +264,10 @@
     if(S.gastos.some(g => !(numL(g.monto) >= 0))){ toast('Revisa el monto de cada gasto', 'error'); return; }
     if(ocupado) return; ocupado = true;
     try{
-      const { error } = await db.rpc('compra_pedir', { p:{ plan_sab:S.plan_sab || null, lugares:S.lugares.filter(l => l.lineas.length).map(l => ({ proveedor_id:l.proveedor_id, lineas:lineasOk(l) })), gastos:S.gastos.map(g => ({ categoria:g.categoria, monto:numL(g.monto) || 0 })) } });
+      const { data, error } = await db.rpc('compra_pedir', { p:{ plan_sab:S.plan_sab || null, lugares:S.lugares.filter(l => l.lineas.length).map(l => ({ proveedor_id:l.proveedor_id, lineas:lineasOk(l) })), gastos:S.gastos.map(g => ({ categoria:g.categoria, monto:numL(g.monto) || 0 })) } });
       if(error) throw error;
       toast('Compra pedida. Queda en amarillo hasta que llegue.'); cerrarHoja('sheetCompra', true); S = null; await avisar();
+      pedidos.forEach(fn => { try{ fn(data || {}); } catch(_){} });
     } catch(e){ toast(errTxt(e), 'error'); }
     finally { ocupado = false; }
   }
@@ -276,7 +296,11 @@
     try{
       const lugares = [];
       for(const l of vivos){ let foto = null; if(l.foto) foto = await subirFoto(l.foto);
-        lugares.push({ pedida_id:l.pedida_id || null, proveedor_id:l.proveedor_id, numero:String(l.numero || '').trim() || null, foto, total:numL(l.papel) > 0 ? numL(l.papel) : null, lineas:lineasOk(l) }); }
+        // Una parte: lo que llegó entra; lo que no vino sigue en camino en la misma compra (quedan)
+        const quedan = l.pedida_id ? l.lineas.filter(x => x.pedido > 0 && (numL(x.cantidad) || 0) < x.pedido).map(x => ({ material_id:x.material_id || null, consumible_id:x.consumible_id || null,
+          descripcion:x.material_id || x.consumible_id ? null : (x.descripcion || x.n), cantidad:x.pedido - (numL(x.cantidad) || 0), precio:numL(x.precio) || 0 })) : [];
+        lugares.push({ pedida_id:l.pedida_id || null, proveedor_id:l.proveedor_id, numero:String(l.numero || '').trim() || null, foto, total:numL(l.papel) > 0 ? numL(l.papel) : null,
+          lineas:lineasOk(l).filter(x => x.cantidad > 0), quedan:quedan.length ? quedan : null }); }
       const pago = { modo:P.modo, cuenta_id:c ? c.id : null, monto:P.modo === 'parte' ? numL(P.monto) : null, sacado:P.modo === 'saque' ? numL(P.sacado) : null,
         vuelto:P.modo === 'saque' && numL(P.vuelto) >= 0 ? numL(P.vuelto) : null, motivo:String(P.motivo || '').trim() || null, tasa:c && c.moneda === 'VES' ? numL(P.tasa) : null, tasa_origen:c && c.moneda === 'VES' ? P.origen : null };
       const { data, error } = await db.rpc('compra_confirmar', { grupo_id:S.grupo, p:{ lugares, gastos:S.gastos.map(g => ({ categoria:g.categoria, monto:numL(g.monto) || 0 })), pago } });
@@ -319,6 +343,13 @@
       if(!(m >= 0) || !nom){ const w = $('cpGMW'); if(w) w.classList.add('invalid'); return; } S.gastos.push({ categoria:nom, monto:String(m) }); S.agregar = null; return pintar(); }
     if((x = q('data-cp-quitarg'))){ leer(); S.gastos.splice(+x.dataset.cpQuitarg, 1); return pintar(); }
     if((x = q('data-cp-quitarl'))){ leer(); S.lugares.splice(+x.dataset.cpQuitarl, 1); return pintar(); }
+    if((x = q('data-cp-sug'))){ leer(); const it = S.sugeridos.splice(+x.dataset.cpSug, 1)[0]; S.items.push(it);
+      repartir([it], S.en).forEach(n => { const l = S.lugares.find(y => String(y.proveedor_id) === String(n.proveedor_id)); if(l) l.lineas.push(...n.lineas); else S.lugares.push(Object.assign({ numero:'', papel:'', foto:null }, n)); });
+      return pintar(); }
+    if((x = q('data-cp-llega'))){ leer(); const [i, v] = x.dataset.cpLlega.split(':'), l = S.lugares[+i];
+      l.noLlego = v === 'nada'; l.llega = v === 'nada' ? l.llega : v;
+      if(v === 'todo') l.lineas.forEach(y => { if(y.pedido > 0) y.cantidad = String(y.pedido); });
+      return pintar(); }
     if((x = q('data-cp-nollego'))){ leer(); const l = S.lugares[+x.dataset.cpNollego]; l.noLlego = !l.noLlego; return pintar(); }
     if((x = q('data-cp-anular'))) return anular(+x.dataset.cpAnular);
     if((x = q('data-cp-modo'))){ leer(); S.pago.modo = x.dataset.cpModo; return pintar(); }
@@ -339,5 +370,5 @@
     catch(err){ toast('No se pudo leer la foto', 'error'); }
   });
 
-  window.COMPRA = { cargar, get datos(){ return E; }, enCamino, tarjetasHtml, resumenGrupo, alCambiar, abrirDesdePlan, abrirNueva, abrirLlego };
+  window.COMPRA = { cargar, get datos(){ return E; }, enCamino, tarjetasHtml, resumenGrupo, alCambiar, alPedir, abrirDesdePlan, abrirMaterial, abrirNueva, abrirLlego };
 })();

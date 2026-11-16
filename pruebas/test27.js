@@ -1,5 +1,5 @@
 // Menú: si al abrir la app falla la lectura del perfil (mala señal), un administrador
-// no pierde "Producción" (antes caía en "vendedor"). Se usa el último perfil guardado.
+// no pierde "Taller" (antes caía en "vendedor"). Se usa el último perfil guardado.
 const { chromium, devices } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
 const now=Math.floor(Date.now()/1000);
@@ -21,15 +21,15 @@ let perfilFalla=false; let intentos=0;
  await a.goto('http://127.0.0.1:8765/index.html');await a.waitForSelector('.quien-btn');await a.click('.quien-btn');
  for(const d of '222222') await a.click(`#pinTeclado [data-t="${d}"]`);
  await a.waitForSelector('#vInicio.entra');
- ok('Con señal: el admin ve Producción en el menú',!!(await a.$('a.nav-item[href="produccion.html"]')));
+ ok('Con señal: el admin ve el Taller en el menú',!!(await a.$('a.nav-item[href="taller.html"]')));
 
  // Sin señal al leer el perfil
  perfilFalla=true;
  await a.goto('http://127.0.0.1:8765/catalogo.html');await a.waitForTimeout(2500);
  ok('Sin señal: se reintenta leer el perfil',intentos>=2,intentos);
- ok('Sin señal: sigue viendo Producción (usa el perfil guardado)',!!(await a.$('a.nav-item[href="produccion.html"]')));
- await a.goto('http://127.0.0.1:8765/produccion.html');await a.waitForTimeout(2500);
- ok('Sin señal: puede entrar a Producción',a.url().includes('produccion.html'));
+ ok('Sin señal: sigue viendo Producción (usa el perfil guardado)',!!(await a.$('a.nav-item[href="taller.html"]')));
+ await a.goto('http://127.0.0.1:8765/taller.html');await a.waitForTimeout(2500);
+ ok('Sin señal: puede entrar al Taller',a.url().includes('taller.html'));
 
  // Al salir se borra el perfil guardado
  perfilFalla=false;
@@ -56,7 +56,7 @@ let perfilFalla=false; let intentos=0;
  falla2=false;
  await t.click('[data-reintentar-perfil]');await t.waitForSelector('.hoy',{timeout:8000});
  ok('Reintentar con señal carga su Inicio de trabajador',!!(await t.$('.hoy')));
- // Mismo teléfono: entra Jesús, sale, entra Gualfredo sin recargar: el menú vuelve a tener Producción
+ // Mismo teléfono: entra Jesús, sale, entra Gualfredo sin recargar: el menú vuelve a tener Taller
  const c3=await b.newContext({...devices['iPhone 13']});
  let quien='jesus';
  await c3.route('**/*.supabase.co/**',async r=>{const u=decodeURIComponent(r.request().url());const j=(x,st=200)=>r.fulfill({status:st,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(x)});
@@ -77,6 +77,6 @@ let perfilFalla=false; let intentos=0;
  quien='gualfredo';
  await z.waitForSelector('.quien-btn');await z.click('.quien-btn >> text=Gualfredo');for(const d of '111111') await z.click(`#pinTeclado [data-t="${d}"]`);
  await z.waitForSelector('#vInicio.entra');await z.waitForTimeout(1200);
- ok('Después de Jesús, Gualfredo sí ve Producción en el menú de abajo (sin recargar)',!!(await z.$('a.nav-item[href="produccion.html"]')) && await z.isVisible('#menuModulos'));
+ ok('Después de Jesús, Gualfredo sí ve el Taller en el menú de abajo (sin recargar)',!!(await z.$('a.nav-item[href="taller.html"]')) && await z.isVisible('#menuModulos'));
  console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log(fallas?fallas+' FALLAS':'TODO OK');
  }catch(x){console.log(res.join('\n'));console.log('Errores JS:',JSON.stringify(err));console.log('CORTE:',x.message.split('\n')[0]);} await b.close();})();

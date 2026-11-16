@@ -11,7 +11,7 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 |---|---|
 | `supabase-client.js` | Crea `window.db`. Única parte donde está la URL y la clave publicable. |
 | `comun.js` | `window.AH`: tipos de producto, especificaciones, formatos de dinero, hojas inferiores, toasts, `AH.imgMini`, `AH.subirFoto`, `AH.resumenSpecs`, `AH.PRODUCTOS_PAGO`, `AH.notaPago`. RPC `fotos_sin_mini`. |
-| `sesion.js` | Entrar con usuario y PIN, sesión guardada, menú de abajo. Esconde Producción a quien no es admin ni vendedor. Lee `perfiles`. |
+| `sesion.js` | Entrar con usuario y PIN, sesión guardada, menú de abajo. Menú de abajo: Inicio · Ventas · Catálogo · Taller · Costeador (Taller solo admin y vendedora; Costeador solo quien confirma pagos). Las pestañas `.tabs-mod` (Ventas · Cotizaciones, Taller · Nómina) cambian de pantalla sin apilar. Lee `perfiles`. |
 | `avisos.js` | Web Push: suscribir el teléfono (`push_suscripciones`). En iPhone solo con la app abierta desde el ícono. |
 | `ayuda.js` + `assets/css/ayuda.css` + `assets/ayuda/` | Botón "Ayuda" en cada pantalla con su parte del manual según el rol. Tabla `PAGINAS`. |
 | `img-compress.js` | Comprime fotos en el teléfono antes de subirlas. |
@@ -45,17 +45,23 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 - **Reglas:** arriba Cotización o Venta. La cotización vale 20 días y no pide detalles de fabricación; la venta los exige (hacia dónde abre, bloque, vidrio, ahumado). Se sugiere 50% de pago; menos avisa pero deja seguir. Manillón +$20. Combo Ecobel +$80. "Solo protección" pide su monto. Marco decorativo que el modelo no trae pide monto. "Ya está hecho, solo se entrega" (a medida) no va al taller. En fabricación: se edita y se agrega, no se quita; producto con pasos terminados bloqueado; el total no puede quedar por debajo de lo pagado; si edita la vendedora, aviso al admin.
 - **Pendiente:** dar "Listo" sin cambiar nada marca el producto como tocado.
 
-## Cotizaciones y Ventas (`cotizaciones.html`, `ventas.html` + `lista-ventas.js`)
+## Cotizaciones y Ventas (`cotizaciones.html`, `ventas.html` + `lista-ventas.js`) · Cotizaciones va dentro de Ventas con la etiqueta Ventas · Cotizaciones
 - **Para qué:** listas con filtros y la ficha de cada una: convertir en venta, registrar pagos, confirmar pagos, cambiar estado, cancelar con devolución, "Enviar PDF" y "Descargar PDF" siempre arriba en "Avisar al cliente", mensaje al cliente por WhatsApp con el enlace de seguimiento, avance de fabricación, "Cambios en el pedido".
 - **Roles:** admin y vendedora. Confirmar pagos solo Ray. Cancelar solo admin.
 - **Datos:** `ventas`, `venta_items`, `abonos`, `venta_cambios`; bucket `comprobantes`. RPC `convertir_en_venta`, `completar_detalles`, `registrar_abono`, `confirmar_abono`, `cambiar_estado_venta`, `cancelar_venta`, `marcar_paso`, `avance_venta`.
 - **Reglas:** estados Cotización, Confirmada, En fabricación (`en_produccion`), Lista, Entregada, Cancelada. Al confirmar Ray el pago pasa sola a fabricación y se crean los pasos. Al terminar el último paso pasa sola a Lista. No se entrega debiendo.
 
-## Producción (`produccion.html` + `produccion.js`)
-- **Para qué:** pedidos en fabricación y órdenes para exhibición, por producto y por unidad ("1 de 2"), con sus pasos, quién los hace y para qué sábado. "Asignar trabajadores" (una fila por rol, este sábado o el próximo). "Fabricar para exhibición".
-- **Roles:** admin asigna (Ray hierro y aluminio; la madera solo Gualfredo). Vendedora solo mira, sin montos. Gualfredo y la vendedora de madera marcan los pasos de madera con foto.
-- **Datos:** `ventas`, `catalogo`, `categorias_pago`, `perfiles`, `sedes`. RPC `produccion_lectura`, `asignar_etapas`, `asignar_categoria_item`, `crear_orden_exhibicion`, `cancelar_orden_exhibicion`, `terminar_etapa_madera`.
-- **Reglas:** sin categoría de pago no se asigna. Nadie escribe `etapas` directo, solo por funciones. Pasos por producto en `docs/claude/documentos/reglas-produccion.md`.
+## Taller › Resumen (`taller.html` + `taller.js`, lote 2)
+- **Para qué:** lo primero que ve el administrador al entrar al Taller. Avisos (entregas en 2 días, atrasados, listos) que abren Pedidos con ese filtro; 1 Por asignar (todos los pasos sin trabajador, por pedido, con Asignar); 2 Lo asignado esta semana (pasos con `para_el` del sábado vista más lo de sábados anteriores sin terminar con ↩; barra y tabla por trabajador; tocar uno abre sus trabajos con foto); 3 Por pagar (de `nomina_semana`, con ↩ si debe trabajos de semanas anteriores y lo ya pagado esta semana); 4 Vales (por revisar, Revisar lleva a Nómina; aprobados que se descuentan); atajos Plan de corte y Fabricar para exhibición. Con ‹ › se ven otras semanas (solo lo asignado).
+- **Trabajo con su foto:** `taller.html?trabajo=<id del paso>` (aviso "Terminó …") o tocar un paso hecho: foto grande, quién, cuánto se le paga, qué sigue, cuánto se le debe, atajos Ver pedido y Nómina. Si el pedido ya no está en el taller, lo busca en la base.
+- **Datos:** RPC `nomina_semana`; tablas `etapas`, `vales`, `pagos_trabajador`, `perfiles` (lectura de administrador).
+
+## Taller › Pedidos (`taller.html` + `taller.js`) · antes Producción
+- **Para qué:** una tarjeta por pedido u orden de exhibición, con cada producto y unidad ("Bitral 1 de 2") y sus pasos como fichitas de colores (hecho, haciendo, asignado, sin asignar, espera, ↩). Filtros Todos · Por asignar · En proceso · Listos. Drawer del pedido con atajos (Venta, Seguimiento, ✂ Corte, Costeo), y por unidad sus pasos con quién, cuándo, foto y monto ("por pagar" o "pagado"); un solo Asignar por unidad (la hoja de siempre, con lo que se paga a la derecha). Listos para entregar con WhatsApp, Fotos, Venta y Marcar entregada. Fabricar para exhibición (+), categoría de pago y madera como antes.
+- **Quién:** admin todo; vendedora solo mira (Todos y En proceso, sin montos ni Asignar ni Nómina).
+- **Datos:** `ventas` (en fabricación y listas), `venta_items`, `etapas`, `abonos`, `sedes`, `catalogo`, `categorias_pago`, `perfiles`. RPC `produccion_lectura` (vendedora), `montos_pasos` (v86, lo que se paga por cada paso que falta, solo admin), `asignar_etapas`, `asignar_categoria_item`, `crear_orden_exhibicion`, `cancelar_orden_exhibicion`, `terminar_etapa_madera`, `cambiar_estado_venta`.
+- **Reglas:** "por asignar" cuenta todos los pasos sin trabajador. ↩ = paso con `para_el` anterior al sábado de esta semana y sin hacer; no se mueve solo. Que pasos distintos caigan en semanas distintas no se marca. Un paso ya empezado sale fijo en Asignar. Sin categoría de pago no se asigna. Nadie escribe `etapas` directo, solo por funciones. Pasos por producto en `docs/claude/documentos/reglas-produccion.md`.
+- **Enlaces viejos:** `produccion.html` redirige a `taller.html` con lo mismo (`?abrir=N` abre ese pedido; `?filtro=atrasados` cae en En proceso y `sincat` en Por asignar).
 
 ## Categorías de pago (`categorias-pago.html` + `categorias-pago.js`)
 - **Para qué:** cuánto se le paga al taller por cada trabajo de un producto, fijo o por m², y a qué modelos se aplica.
@@ -64,13 +70,32 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 - **Reglas:** una categoría es de un solo producto (Puerta, Portón, Ventana, Combo, Madera) y solo muestra sus trabajos. Masilla y pintura un solo monto. Aluminio por ventana. Extra de protección aparte. Madera un monto por puerta. Cambiar una tarifa recalcula los pasos no pagados (`categoria_recalcular`).
 - **Pendiente:** bug sin reproducir "se queda marcado el último monto".
 
-## Nómina (`nomina.html` + `nomina.js`)
-- **Para qué:** lo que se le debe a cada trabajador esta semana (lunes a sábado, se paga el sábado), sus vales y su historial. Enlace directo `nomina.html?t=ID`.
-- **Roles:** admin ve. Solo Ray paga, aprueba vales y anota vales; al carpintero le paga quien lleva la madera (`_puede_pagar_a`).
-- **Datos:** `categorias_pago`. RPC `nomina_semana`, `nomina_trabajador`, `pagar_trabajador`, `anotar_vale`, `resolver_vale`, `asignar_categoria_item`.
-- **Reglas:** un trabajo sin monto sale "Por definir". Lo del domingo pasa a la semana siguiente. Vales pueden ser en bolívares (se guarda tasa). Los pagos y vales hechos no se tocan (triggers `pago_protegido`, `vale_protegido`, `etapa_protegida`).
+## Taller › Corte (`taller.html` + `taller-corte.js`, lote 5) · solo Ray y Gualfredo
+- **Para qué:** el Hierro de cada herrero para este sábado o el próximo. Por herrero: puertas por cortar, enviados y sin enviar; puertas sin asignar (Asignar puertas); faltante de material; una fila por herrero con su estado (Sin enviar, Enviado, Enviado · cortando, Cambió · vuelve a enviar, Sin cortes · Cargar). Drawer del herrero: una tarjeta por puerta (lista en palabras, "Igual que", material hay todo o lo que falta, ⋯ para pasarla a otro herrero, al próximo sábado o quitarla del plan), "De dónde sale el material" con TALLER, R-n y NUEVA (tocar una pieza la mueve) y un solo botón "Enviar a … (y pedir N barras)". Línea de tiempo después de enviar, candado si ya empezó, Más (PDF, Sugerir de nuevo, Deshacer envío, Corregir lo que cortó). Avisos (puerta que salió del plan, plan que ya no cuadra) también en el Resumen.
+- **Datos:** `costos_datos` y `corte_datos` (con el motor de `corte.js` y `costeo.js`), `corte_plan_guardar`, `corte_enviar`, `corte_deshacer_envio`, `corte_plan_reiniciar`, `corte_manual`, `corte_corregir`, `asignar_etapas`.
+- **Herrero (Mi trabajo):** "Qué cortar" con lo último que se le envió (quién y cuándo, sus puertas, sus barras con TALLER, NUEVA o el retazo); si tiene Hierro y no le llegó el corte: "Ray todavía no te manda el corte de esta semana."
+
+## Taller › Nómina (`taller.html` + `nomina.js`, lote 3) · antes `nomina.html`
+- **Para qué:** Por pagar (trabajos menos vales) y lo ya pagado esta semana; una fila por trabajador con ↩ si se le deben trabajos de semanas anteriores y "Pidió vale · revisar". Drawer del trabajador con Por pagar (casillas: se paga lo marcado, el día que sea; lo desmarcado queda con ↩), Historial (cada pago con su cuenta, quién pagó y sus trabajos) y Vales. Hoja Pagar con "¿De qué cuenta salió?" y Confirmar pago. Hoja del vale con Aprobar / No aprobar. + Vale (elige a quién), Categorías de pago e Historial de todos.
+- **Quién:** administradores. Paga y aprueba quien le paga a ese trabajador (`_puede_pagar_a`: el carpintero, quien lleva la madera; los demás, Ray). Al carpintero solo lo ve quien lleva la madera (también en el Resumen y en Inicio).
+- **Datos:** RPC `nomina_semana`, `nomina_trabajador`, `pagar_lo_marcado` (v88), `resolver_vale`, `anotar_vale`, `nomina_salida`, `vale_salida`, `movimiento_ubicar`; tablas `etapas`, `pagos_trabajador`, `movimientos`, `cuentas` (lectura).
+- **Enlaces viejos:** `nomina.html` redirige a `taller.html?vista=nomina` (con `&t=ID` abre a ese trabajador; `&que=vale`, su vale por revisar).
+
+## Taller: vendedora (lote 7, T7)
+- La vendedora ve solo Pedidos: Todos · En proceso · Listos, sin montos, sin Asignar, sin Corte ni Nómina. Lo que está en fabricación sale de `produccion_lectura`; sus Listos, de `ventas` en estado `lista` (la vendedora ya puede leer ventas). En Listos: entrega, WhatsApp, Venta y Marcar entregada (`cambiar_estado_venta`).
+
+## Nota del cliente: sello ENTREGADO (lote 7, Parte B)
+- `crearPDF` (`ventas-comun.js`): si la venta está `entregada`, sello verde girado ENTREGADO con la fecha de `entregada_en`, en el blanco a la izquierda de los totales. La app no guarda quién entregó, así que solo va la fecha.
+
+## Taller › Corte › Material (`taller-material.js` + `compra.js`, lote 6) · solo Ray y Gualfredo
+- **Para qué:** el material del taller y sus compras. Arriba lo que viene en camino (amarillo, ¿Llegó? y ⋯: cambiar, volver a mandar el mensaje, cancelar). Tabla Material · Hay · Apartado · Libre · Falta (apartado = los planes de este sábado y el próximo), retazos con su número y ✕, Proveedores (deuda, en camino, + Proveedor; cada uno abre su ficha en Finanzas). Abajo un solo Comprar (lo que falta marcado, lo que queda en 0 sugerido), + Retazo encontrado y Contar barras.
+- **Mensaje al proveedor:** después de pedir (en Material o al enviar un corte con compra) sale el mensaje ya escrito (Lo busco / Me lo traen, Hoy / Mañana) para mandarlo por WhatsApp (`wa.me`).
+- **¿Llegó?:** Todo · Una parte · Nada por proveedor; con una parte, lo que no vino sigue en camino en la misma compra.
+- **Barra dañada:** en ⋯ Más del corte de un herrero ya enviado: material, cuál barra y si se reemplaza con otra del taller o se compra (`corte_barra_danada`).
+- **Datos:** `compras_en_camino`, `compra_pedir`, `compra_confirmar` (con `quedan`), `compra_pedida_cambiar`, `compra_no_llego`, `conteo_guardar`, `retazo_agregar`, `retazo_quitar`, `proveedor_guardar`, `corte_barra_danada`.
 
 ## Depósito (`deposito.html` + `deposito.js`)
+- **Lote 6:** se quitó la pestaña Compras (y "Cargar compra"): comprar y ¿Llegó? viven en Taller › Corte › Material. Quedan Consumibles y Fabricación. El enlace de una factura desde Finanzas (`deposito.html?tab=compras&compra=ID`) abre esa factura sobre Fabricación.
 - **Para qué:** materiales por unidad (discos, sierras, pintura), entregas a trabajadores, compras y revisión de Ray.
 - **Roles:** admin y vendedora entregan. Solo admin agrega materiales y compra. Solo Ray revisa (aprueba o cuestiona). La vendedora no ve costos.
 - **Datos:** todo por RPC: `deposito_resumen`, `deposito_entregar`, `deposito_revisar`, `deposito_comprar`, `deposito_comprar_varios`, `deposito_material_guardar`, `deposito_pedir_reponer`, `deposito_trabajos`.

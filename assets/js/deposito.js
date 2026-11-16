@@ -118,14 +118,11 @@
     const grupo = (tab === 'materiales' || tab === 'entregas') ? 'materiales' : tab;
     document.querySelectorAll('#tabs [data-tab]').forEach(b => { const on = b.dataset.tab === grupo; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     $('tabs').classList.toggle('en-2', grupo === 'fab');
-    $('tabs').classList.toggle('en-3', grupo === 'compras');
     $('subCons').classList.toggle('hidden', grupo !== 'materiales');
     document.querySelectorAll('#subCons [data-sub]').forEach(b => b.classList.toggle('on', b.dataset.sub === tab));
     $('pieEntregar').classList.toggle('hidden', grupo !== 'materiales' || !datos.materiales.some(m => m.activo));
     $('pieFab').classList.toggle('hidden', grupo !== 'fab');
-    $('pieCompra').classList.toggle('hidden', grupo !== 'compras');
     if(grupo === 'fab'){ $('filtrosWrap').classList.add('hidden'); window.DepNuevo.pintarFab(); return; }
-    if(grupo === 'compras'){ $('filtrosWrap').classList.add('hidden'); window.DepNuevo.pintarCompras(); return; }
     if(tab === 'materiales') pintarMateriales(); else pintarEntregas();
   }
   $('tabs').addEventListener('click', (e) => {
@@ -698,8 +695,11 @@
     if(perfil.rol !== 'admin' && perfil.rol !== 'vendedor'){ location.replace('index.html'); return; }
     // deposito.html?entrega=ID (aviso a Ray) · ?tab=entregas&filtro=revisar · ?tab=materiales
     const q = new URLSearchParams(location.search);
-    if(['entregas','fab','compras'].includes(q.get('tab'))) tab = q.get('tab');
-    if(perfil.rol !== 'admin' && (tab === 'fab' || tab === 'compras')) tab = 'materiales';
+    // Depósito › Compras se quitó (lote 6): comprar y ¿Llegó? viven en Taller › Corte › Material.
+    // deposito.html?tab=compras&compra=ID (factura desde Finanzas) abre Fabricación con esa factura encima.
+    if(['entregas','fab'].includes(q.get('tab'))) tab = q.get('tab');
+    if(q.get('tab') === 'compras') tab = 'fab';
+    if(perfil.rol !== 'admin' && tab === 'fab') tab = 'materiales';
     // La vendedora no ve Fabricación ni Compras (tienen costos y saldos)
     if(perfil.rol !== 'admin') $('tabs').classList.add('hidden');
     if(q.get('filtro') === 'revisar') filtro = 'revisar';
@@ -710,6 +710,8 @@
       try{ history.replaceState(null, '', location.pathname); } catch(e){}
       abrirEntrega(abrir);
     }
+    const fac = Number(q.get('compra'));
+    if(fac && perfil.rol === 'admin' && window.DepNuevo){ try{ history.replaceState(null, '', location.pathname + '?tab=fab'); } catch(e){} window.DepNuevo.abrirCompra(fac); }
     // deposito.html?material=ID (aviso "hay que comprar"): abre ese material
     const mat = Number(q.get('material'));
     if(mat && datos && materialDe(mat)){

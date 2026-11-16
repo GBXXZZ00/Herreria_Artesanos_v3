@@ -189,7 +189,7 @@
       h += `<div class="caja-amar" style="margin-top:8px">${esc(x.n)} del ${esc(u.etq)} sin cortes: ${mano ? esc(u.herrero || 'el herrero') + ' ' + la + ' corta a mano esta semana.' : 'no entra al plan.'}
         <span class="dos-btn"><a class="btn-mini" href="costos.html?modelo=${encodeURIComponent(u.mid)}&extra=${x.k}&volver=semana&para=${semSab}">Cargar cortes</a>${mano ? '' : `<button class="btn-mini sec" type="button" data-extra-mano="${esc(u.eid)}" data-k="${x.k}">Cortar a mano</button>`}</span></div>`;
     }));
-    if(P.pendientes.length) h += `<a class="row-link" href="produccion.html" style="margin-top:6px"><span>${plural(P.pendientes.length, '1 puerta sin asignar', 'puertas sin asignar')} en Producción</span><span class="pill amar">Asignar</span></a>`;
+    if(P.pendientes.length) h += `<a class="row-link" href="taller.html" style="margin-top:6px"><span>${plural(P.pendientes.length, '1 puerta sin asignar', 'puertas sin asignar')} en Producción</span><span class="pill amar">Asignar</span></a>`;
     if(P.otroSab.length) h += `<p class="mat-s" style="margin:6px 2px 0">${plural(P.otroSab.length, '1 puerta asignada', 'puertas asignadas')} para otro sábado.</p>`;
     if(P.aluminio) h += `<div class="gris-l">Aluminio · ${plural(P.aluminio, '1 paso', 'pasos')} en fabricación. El plan de aluminio llega pronto.</div>`;
     // ---- 2 Material
@@ -368,7 +368,7 @@
       const mats = alcanzaMats();
       let h = `<p class="mat-s" style="margin:0 2px 10px;font-size:14px">Simula: pon cuántas barras enteras tienes de cada perfil (ya están las del Depósito). La app agrega las puertas en orden de entrega mientras alcance. Los retazos también cuentan.</p>
         ${mats.map(f => `<div class="field"><label class="field-label" for="fH_${f.id}">${esc(f.nombre)}</label><input class="input" id="fH_${f.id}" inputmode="numeric" value="${esc(F.hay[f.id] != null ? F.hay[f.id] : f.stock)}"></div>`).join('') || '<p class="mat-s">No hay puertas con cortes este sábado.</p>'}
-        <a class="row-link" href="produccion.html" style="margin-top:4px"><span>Puerta de exhibición: se agrega en Producción</span>›</a>`;
+        <a class="row-link" href="taller.html" style="margin-top:4px"><span>Puerta de exhibición: se agrega en Taller</span>›</a>`;
       if(F.res) h += `<div class="tit">Alcanza para</div>${F.res.si.length ? F.res.si.map(u => `<div class="ped-c"><span class="dot" style="background:${u.color}"></span><span><b>${esc(u.etq)} · ${esc(u.nombre)}</b><small>${esc(u.herrero || '')}</small></span><span class="pill verde">Sí</span></div>`).join('') : '<p class="mat-s">Ninguna puerta completa.</p>'}
         ${F.res.no.length ? `<div class="tit">No alcanza para</div>${F.res.no.map(u => `<div class="ped-c"><span class="dot" style="background:${u.color}"></span><span><b>${esc(u.etq)} · ${esc(u.nombre)}</b><small>${esc(u.herrero || '')} · quedaría pendiente</small></span><span class="pill rojo">Falta</span></div>`).join('')}` : ''}`;
       return { titulo:'Exhibición o simular', h, boton:'Calcular' };
@@ -449,7 +449,7 @@
     const hh = e.target.closest('[data-hoja-h]'); if(hh){ abrirHojaHerrero(hh.dataset.hojaH); return true; }
     const ph = e.target.closest('[data-pdf-hoja]'); if(ph){ pdfHoja(ph.dataset.pdfHoja); return true; }
     if(e.target.closest('[data-pdf-compra]')){ pdfCompra(); return true; }
-    if(e.target.closest('[data-comprar]')){ if(window.COMPRA && window.COMPRA.abrirDesdePlan) window.COMPRA.abrirDesdePlan(planSemana(semSab)); else location.href = 'deposito.html?tab=compras'; return true; }
+    if(e.target.closest('[data-comprar]')){ if(window.COMPRA && window.COMPRA.abrirDesdePlan) window.COMPRA.abrirDesdePlan(planSemana(semSab)); else location.href = 'taller.html?vista=corte'; return true; }
     if(e.target.closest('[data-alcanza]')){ window.CostosApp.abrirCorte({ k:'alcanza', hay:{}, res:null }); return true; }
     const cm = e.target.closest('[data-cmat]'); if(cm){ window.CostosApp.abrirCorte({ k:'mat', mid:cm.dataset.cmat, nuevoRet:false }); return true; }
     if(e.target.closest('[data-aceptar]')){ const P = planSemana(semSab); P.aceptado = true; guardarPlan(P, { aceptado:true, ajustado:P.ajustado }, 'Plan aceptado. Cada herrero ya tiene su hoja de corte en Mi trabajo.'); return true; }
@@ -458,5 +458,8 @@
     return false;
   }
 
-  window.CORTE = { cargar, html, despues, click, form, clickForm, guardarForm, necesita, planSemana, alcanza, sabados, get sab(){ return semSab; } };
+  // Para Taller › Corte: el mismo motor (la sugerencia, mover una pieza, la hoja del herrero y su PDF)
+  function setSab(s){ semSab = s; }
+  window.CORTE = { cargar, html, despues, click, form, clickForm, guardarForm, necesita, planSemana, alcanza, sabados, get sab(){ return semSab; },
+    setSab, datos:() => C, moverPieza, limpiar, piezasDe, fabDe, nomMat, minRet, retazosLibres, hojaHerrero, pdfHoja, reglas, mTxt, num, COLORES };
 })();
