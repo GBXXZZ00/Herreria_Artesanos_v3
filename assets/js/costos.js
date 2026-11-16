@@ -1,8 +1,11 @@
 // Costos (solo quien confirma pagos: Ray o Gualfredo). Misma fórmula del Costeador de Ray (costeo.js = _costeo de la base):
 // materiales con IVA, consumibles por rendimiento, herrajes, mano de obra por categoría de pago,
 // costo × (1 + ganancia) + gastos fijos por puerta. Los extras se cobran aparte (× ganancia, sin gastos fijos).
-// Pestañas: Modelos · Plan de corte (corte.js) · Precios. La Ganancia por modelo vive en Finanzas › Mes y los
-// gastos fijos en Finanzas › Gastos. La ficha de cada modelo ocupa toda la pantalla (una sola lista de cortes).
+// Costeador (lote 8, maquetas C1, C2, R1, R2): pestañas Modelos · Precios (el plan de corte vive en Taller › Corte).
+// Modelos: buscador, + Nuevo, filtros Todos · Puertas · Combos · Ventanas · Extras, grupos Listos · Borrador · Faltan
+// por costear. Ficha en pantalla propia: los cortes se escriben en la fila (cant × cm × nota), la barra se redibuja y
+// la franja del precio (fija abajo) cambia al instante; lo demás en acordeones con su subtotal. Un solo Guardar cuando
+// hay cambios. La Ganancia por modelo vive en Finanzas › Mes y los gastos fijos en Finanzas › Gastos.
 (function(){
   'use strict';
   const { esc, toast, abrirHoja, cerrarHoja, dinero } = window.AH;
@@ -26,7 +29,9 @@
   const insumoDe = (codigo) => D().insumos.find(i => i.codigo === codigo);
   const provNom = (id) => id === 'barato' ? 'El más barato' : ((D().proveedores.find(p => String(p.id) === String(id)) || {}).nombre || 'Proveedor').replace('Inversiones ', '').replace(' (ferretería y otros)', '');
 
-  const TABS = ['modelos','semana','materiales'];
+  const TABS = ['modelos','materiales'];
+  // El plan de corte se pasó a Taller › Corte (lote 5 y 6)
+  if(q.get('tab') === 'semana'){ location.replace('taller.html?vista=corte'); return; }
   let tab = TABS.includes(q.get('tab')) ? q.get('tab') : 'modelos', filtro = 'Todos', busca = '';
   let sel = null, prov = null, modo = 'metro', F = null, ocupado = false, ini = null;
   let filPrecios = 'hierro', vistaPrecios = 'material';
@@ -37,7 +42,7 @@
   const pill = (s) => `<span class="pill ${s[0]}">${esc(s[1])}</span>`;
   const fichaAbierta = () => $('sheetFicha').classList.contains('open');
 
-  async function recargar(){ await X.cargar(); if(prov == null) prov = D().prov; if(window.CORTE) await window.CORTE.cargar().catch(() => {}); if(window.COMPRA) await window.COMPRA.cargar().catch(() => {}); pintar(); if(sel != null && fichaAbierta()) pintarFicha(); }
+  async function recargar(){ await X.cargar(); if(prov == null) prov = D().prov; pintar(); if(sel != null && fichaAbierta()){ cargarBorrador(); pintarFicha(); } }
   // Guarda y vuelve a cargar todo; avisa si falla (sin señal o regla de la base)
   async function hacer(fn, ok){
     if(ocupado) return false; ocupado = true;
@@ -51,17 +56,17 @@
     if(!D()) return;
     document.querySelectorAll('#tabs [data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     $('tabs').querySelector('.seg-fondo').style.transform = `translateX(${TABS.indexOf(tab) * 100}%)`;
-    $('filtros').classList.toggle('hidden', tab === 'semana');
     if(tab === 'modelos'){ pintarFiltrosModelos(); $('cont').innerHTML = secModelos(); }
-    else if(tab === 'materiales'){ pintarFiltrosPrecios(); $('cont').innerHTML = secPrecios(); }
-    else { $('cont').innerHTML = window.CORTE ? window.CORTE.html() : ''; window.CORTE && window.CORTE.despues(); }
+    else { pintarFiltrosPrecios(); $('cont').innerHTML = secPrecios(); }
   }
 
   // ================= Modelos: los productos del Catálogo por grupos =================
   const enFab = () => { const n = {}; (D().enFabricacion || []).forEach(id => { n[id] = 1; }); return n; };
+  // La madera queda fuera del Costeador por ahora. Los modelos en diseño salen en Borrador.
+  const sinMadera = (o) => o.m.tipo !== 'Puerta de Madera';
   const FIL = {
-    'Todos':(o) => !o.dis, 'Puertas':(o) => !o.dis && /^Puerta/.test(o.m.tipo || '') && o.m.tipo !== 'Puerta de Madera', 'Combos':(o) => !o.dis && o.m.tipo === 'Combo',
-    'Ventanas':(o) => !o.dis && /ventana/i.test(o.m.tipo || ''), 'Madera':(o) => !o.dis && o.m.tipo === 'Puerta de Madera', 'En diseño':(o) => o.dis,
+    'Todos':sinMadera, 'Puertas':(o) => /^Puerta/.test(o.m.tipo || '') && sinMadera(o), 'Combos':(o) => o.m.tipo === 'Combo',
+    'Ventanas':(o) => /ventana/i.test(o.m.tipo || ''), 'Extras':() => false,
   };
   const listo = (o) => o.x && o.x.c.estado === 'listo' && !o.x.falta.length;
   function lista(){
@@ -74,13 +79,20 @@
     $('filtros').querySelector('.mostrar-t').textContent = 'Ver';
     $('filtrosL').innerHTML = Object.keys(FIL).map(k => `<button type="button" class="fx ${k === filtro ? 'on' : ''}" data-filtro="${esc(k)}">${esc(k)}</button>`).join('');
   }
+  // Cómo está contra el catálogo: "$6,79 abajo" (rojo) o "gana 31 %" (verde)
+  function contraCatalogo(x){
+    if(!x || x.hoy == null) return '';
+    const dif = r2(x.hoy - x.final);
+    return dif < -0.005 ? `<span class="mod-dif rojo">${dinero(-dif)} abajo</span>` : `<span class="mod-dif verde">gana ${Math.round(x.pct)} %</span>`;
+  }
+  const tipoCorto = (t) => /^Puerta/.test(t || '') ? 'Puerta' : (t || '');
   function filaModelo(o){
-    const { m, x, dis, fab } = o, s = X.semaforo(x);
+    const { m, x, dis, fab } = o;
     let der;
-    if(listo(o)) der = `<b>${dinero(x.final)}</b><span style="margin-top:3px">${dis ? pill(['gris','En diseño']) : pill(s)}</span>`;
-    else if(x) der = `<b style="font-size:14px;color:var(--amber)">${esc(x.falta.length ? 'falta ' + x.falta[0] : 'en borrador')}</b>`;
-    else der = CHEV;
-    const sub = dis ? 'En diseño' + (x && x.c.codigo ? ' · ' + esc(x.c.codigo) : '') : esc(m.tipo || '') + (fab ? ' · <b style="color:var(--accent)">en fabricación</b>' : x ? '' : ' · catálogo ' + dinero(m.precio_base));
+    if(listo(o) && !dis) der = `<b>${dinero(x.final)}</b>${contraCatalogo(x)}`;
+    else if(x) der = `<b>${listo(o) ? dinero(x.final) : '·'}</b><span class="mod-dif gris">${dis ? 'en diseño' : x.falta.length ? 'falta ' + esc(x.falta[0]) : 'borrador'}</span>`;
+    else der = '<b>·</b><span class="mod-dif amar">sin cortes</span>';
+    const sub = dis ? esc(tipoCorto(m.tipo)) + ' · en diseño' + (x && x.c.codigo ? ' · ' + esc(x.c.codigo) : '') : esc(tipoCorto(m.tipo)) + (fab ? ' · <b style="color:var(--accent)">en fabricación</b>' : ' · catálogo ' + dinero(m.precio_base));
     return `<button class="mod" type="button" data-modelo="${esc(m.id)}"><img src="${esc(foto(m))}" alt="" loading="lazy">
       <span class="grow"><span class="mat-t">${esc(m.nombre)}</span><span class="mat-s">${sub}</span></span>
       <span class="mat-n">${der}</span></button>`;
@@ -89,25 +101,37 @@
     const todos = lista(), cat = todos.filter(o => !o.dis);
     $('subtitulo').textContent = `${cat.filter(listo).length} de ${cat.length} modelos listos`;
     const t = (window.AH.normalizar ? window.AH.normalizar : (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''));
-    const ver = todos.filter(FIL[filtro] || FIL.Todos).filter(o => !busca || t(o.m.nombre).includes(t(busca)));
-    let h = `<label class="search-box" style="margin:0 0 6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="buscaModelo" type="search" placeholder="Buscar modelo" aria-label="Buscar modelo" value="${esc(busca)}" autocomplete="off"></label><div id="modLista">`;
+    if(!FIL[filtro]) filtro = 'Todos';
+    const ver = todos.filter(FIL[filtro]).filter(o => !busca || t(o.m.nombre).includes(t(busca)));
+    let h = `<div class="mod-top"><label class="search-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="buscaModelo" type="search" placeholder="Buscar modelo" aria-label="Buscar modelo" value="${esc(busca)}" autocomplete="off"></label><button class="btn-nuevo-m" type="button" data-nuevo-modelo>+ Nuevo</button></div><div id="modLista">`;
+    if(filtro === 'Extras') return h + listaExtras() + '</div>';
     const pend = (D().extrasPendientes || []).filter(p => modelo(p.catalogo_id));
-    if(pend.length && filtro !== 'En diseño' && !busca) h += `<div class="grp-t"><span>Extras vendidos sin costear</span><span>${pend.length}</span></div>` + pend.map(p => { const m = modelo(p.catalogo_id);
+    if(pend.length && !busca) h += `<div class="grp-t"><span>Extras vendidos sin costear</span><span>${pend.length}</span></div>` + pend.map(p => { const m = modelo(p.catalogo_id);
       return `<button class="mod" type="button" data-extra-pend="${esc(p.catalogo_id)}" data-k="${esc(p.k)}"><img src="${esc(foto(m))}" alt="" loading="lazy"><span class="grow"><span class="mat-t">${esc(p.extra)} del ${esc(m.nombre)}</span><span class="mat-s">vendido en ${p.n === 1 ? '1 puerta' : p.n + ' puertas'} en fabricación · sin cortes</span></span><span class="mat-n"><b style="font-size:14px;color:var(--amber)">Cargar cortes</b></span></button>`; }).join('');
     h += listaModelos(ver) + '</div>';
     return h;
   }
+  // Extras: las fichas de extra de todos los modelos, no solo las que se vendieron sin costear
+  function listaExtras(){
+    const t = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''), L = [];
+    D().catalogo.concat(D().enDiseno).forEach(m => { const c = D().costeo[m.id]; if(!c) return;
+      (c.extras || []).forEach((e, i) => { if(busca && !t(e.n + ' ' + m.nombre).includes(t(busca))) return; L.push({ m, e, i, x:X.costearExtra(c, m, e, prov) }); }); });
+    if(!L.length) return `<div class="vacio-d"><b>No hay extras aquí</b>${busca ? 'Prueba con otro nombre.' : 'Los extras se agregan dentro de la ficha de cada modelo, o con + Nuevo › Extra.'}</div>`;
+    return `<div class="grp-t"><span>Extras</span><span>${L.length}</span></div>` + L.map(({ m, e, i, x }) => `<button class="mod" type="button" data-extra-de="${esc(m.id)}" data-i="${i}"><img src="${esc(foto(m))}" alt="" loading="lazy">
+      <span class="grow"><span class="mat-t">${esc(e.n)}</span><span class="mat-s">del ${esc(m.nombre)}${e.ofrecer ? '' : ' · oculto'}</span></span>
+      <span class="mat-n">${x.listo ? `<b>${dinero(x.venta)}</b><span class="mod-dif gris">cuesta ${dinero(x.costo)}</span>` : '<b>·</b><span class="mod-dif amar">falta</span>'}</span></button>`).join('');
+  }
   function listaModelos(ver){
-    if(!ver.length) return `<div class="vacio-d"><b>No hay modelos aquí</b>${busca ? 'Prueba con otro nombre.' : filtro === 'En diseño' ? 'Los modelos nuevos se hacen duplicando uno que ya esté costeado.' : 'Cambia el filtro de arriba.'}</div>`;
-    if(filtro === 'En diseño') return `<div class="grp-t"><span>En diseño</span><span>${ver.length}</span></div>` + ver.map(filaModelo).join('');
-    const G = [['Listos', ver.filter(listo)], ['Borrador', ver.filter(o => o.x && !listo(o))], ['Faltan por costear', ver.filter(o => !o.x)]];
+    if(!ver.length) return `<div class="vacio-d"><b>No hay modelos aquí</b>${busca ? 'Prueba con otro nombre.' : 'Cambia el filtro de arriba o toca + Nuevo.'}</div>`;
+    const G = [['Listos', ver.filter(o => listo(o) && !o.dis)], ['Borrador', ver.filter(o => o.x && (!listo(o) || o.dis))], ['Faltan por costear', ver.filter(o => !o.x)]];
     return G.filter(([, l]) => l.length).map(([n, l]) => `<div class="grp-t"><span>${n}</span><span>${l.length}</span></div>${l.map(filaModelo).join('')}`).join('');
   }
 
   // ================= Ficha del modelo (pantalla completa) =================
   function abrirFicha(id){
-    sel = id; ini = null;
+    sel = id; ini = null; franja = false; abiertos = new Set();
     const m = modelo(id); if(!m) return;
+    cargarBorrador();
     if(!D().costeo[id]){ const b = bases()[0]; ini = b ? { modo:'copiar', de:b.id } : { modo:'estandar' }; }
     pintarFicha(); abrirHoja('sheetFicha'); $('fichaBody').scrollTop = 0;
   }
@@ -122,66 +146,138 @@
     if(e.vidrio_o_farquilla) l.push(e.vidrio_o_farquilla + (e.color_vidrio ? ' ' + e.color_vidrio : ''));
     return l;
   }
+  // ---- Borrador de cortes: se escriben en la fila; el cálculo usa solo las filas completas
+  let BOR = [], GUARD = '[]', abiertos = new Set(), franja = false, nuevaFila = null, abierto3d = null;
+  const pzValidas = () => BOR.filter(p => numLibre(p.n) > 0 && numLibre(p.cm) > 0).map(p => [Number(p.mid), Math.round(numLibre(p.n)), numLibre(p.cm), String(p.nota || '').trim(), p.que || null, p.ori || null]);
+  function cargarBorrador(){ const c = sel != null ? D().costeo[sel] : null; BOR = c ? c.piezas.map(p => ({ mid:p[0], n:String(p[1]), cm:String(p[2]), nota:p[3] || '', que:p[4] || null, ori:p[5] || null })) : []; GUARD = JSON.stringify(c ? c.piezas.map(p => [Number(p[0]), Number(p[1]), Number(p[2]), String(p[3] || '').trim(), p[4] || null, p[5] || null]) : []); nuevaFila = null; abierto3d = null; }
+  const incompletas = () => BOR.filter(p => (String(p.n).trim() !== '' || String(p.cm).trim() !== '') && !(numLibre(p.n) > 0 && numLibre(p.cm) > 0));
+  const sucio = () => !!(sel != null && D().costeo[sel]) && (JSON.stringify(pzValidas()) !== GUARD || incompletas().length > 0);
+  function aplicarBorrador(){ const c = sel != null ? D().costeo[sel] : null; if(c) c.piezas = pzValidas(); }
+  const metrosC = (cm) => num(cm / 100, 2) + ' m';
+  // Barras dibujadas: máximo 3 por perfil
+  function barrasHtml(g){
+    const ver = g.barras.slice(0, 3), mas = g.barras.length - ver.length;
+    return ver.map(b => `<div class="barra">${b.piezas.map(p => `<span style="flex:${p.cm}">${num(p.cm, p.cm % 1 ? 1 : 0)}</span>`).join('')}${b.libre > 0 ? `<span class="sob" style="flex:${b.libre}">${b.libre >= 60 ? 'sobra ' + metrosC(b.libre) : ''}</span>` : ''}</div>`).join('')
+      + (mas > 0 ? `<p class="mat-s" style="margin:4px 2px 0">+${mas === 1 ? '1 barra' : mas + ' barras'}</p>` : '');
+  }
+  function filaPz(i){
+    const p = BOR[i];
+    return `<div class="pzf${nuevaFila === i ? ' nueva' : ''}" data-fila="${i}"><input class="pzf-in" data-pz="${i}:n" inputmode="numeric" value="${esc(p.n)}" aria-label="Cantidad"><span class="pzf-x">×</span><input class="pzf-in" data-pz="${i}:cm" inputmode="decimal" value="${esc(p.cm)}" aria-label="Medida en cm"><input class="pzf-nota" data-pz="${i}:nota" value="${esc(p.nota)}" maxlength="60" aria-label="Nota de la pieza"><button class="pzf-3d${p.que || p.ori ? ' on' : ''}" type="button" data-pz3d="${i}" aria-label="Para 3D" aria-expanded="${abierto3d === i}">3D</button><button class="pzf-q" type="button" data-pzx="${i}" aria-label="Quitar pieza">✕</button></div>`
+      + (abierto3d === i ? `<div class="pz3d"><span class="field-label">Qué es (para 3D)</span>${chips(QUE.map(v => [v, v]), p.que, 'data-pzque')}<span class="field-label" style="margin-top:8px">Va</span>${chips([['V','Vertical'],['H','Horizontal']], p.ori, 'data-pzori')}</div>` : '');
+  }
+  const SECS = [['s-hojas','Lámina y vidrio'],['s-cons','Pintura y consumibles'],['s-herr','Herrajes y manillón'],['s-obra','Mano de obra'],['s-extras','Extras'],['s-notas','Notas']];
   function pintarFicha(){
     const m = modelo(sel); if(!m) return;
+    aplicarBorrador();
     const x = X.costear(m.id, { prov, modo:'metro' });
     const dis = !!m.en_diseno, md = medida(m);
     const est = !x ? 'Faltan sus cortes' : dis ? 'En diseño' : x.c.estado === 'listo' && !x.falta.length ? 'Listo' : 'Borrador';
-    $('fichaHead').innerHTML = `<button class="fi-volver" type="button" data-cerrar="sheetFicha">‹ Modelos</button>
-      <div class="fi-tit"><div style="min-width:0"><h2 class="sheet-title" id="fichaTitulo">${esc(m.nombre)}</h2><span class="mat-s">${esc([x && x.c.codigo, md, est].filter(Boolean).join(' · '))}</span></div>
+    const cat = x ? x.cat : null;
+    $('fichaHead').innerHTML = `<div class="fi-fila1"><button class="fi-volver" type="button" data-salir-ficha>‹ Modelos</button><span class="pill ${est === 'Listo' ? 'verde' : 'gris'}">${esc(est)}</span></div>
+      <div class="fi-tit"><div style="min-width:0"><h2 class="sheet-title" id="fichaTitulo">${esc(m.nombre)}</h2><span class="mat-s">${esc([x && x.c.codigo, tipoCorto(m.tipo) + (md ? ' ' + md + ' cm' : ''), cat && cat.nombre].filter(Boolean).join(' · '))}</span></div>
       ${x ? '<button class="fi-dup" type="button" data-duplicar>Duplicar</button>' : ''}</div>`;
     if(!x) return pintarInicio(m);
     const R = D().reglas, c = x.c, suma = (gs) => x.lineas.filter(l => gs.includes(l.g)).reduce((a, l) => a + l.v, 0);
-    const S = [['s-cortes','Cortes',suma(['Hierro'])],['s-hojas','Lámina',suma(['Lámina','Vidrio'])],['s-cons','Consumibles',suma(['Pintura y masilla','Consumibles'])],['s-herr','Herrajes',suma(['Accesorios'])],['s-obra','Obra',suma(['Mano de obra'])],['s-extras','Extras',suma(['Extras incluidos']) || null]];
-    let h = `<div class="fi-idx">${S.map(([id, t, v]) => `<button class="fx" type="button" data-ir="${id}">${t}${v != null ? ' ' + dinero(v) : ''}</button>`).join('')}</div>`;
+    let h = `<div class="fi-idx" id="fiIdx"></div>`;
     if(x.falta.length) h += `<div class="caja-rara">Faltan datos: ${esc(x.falta.join(', '))}. Sin esto no se sabe cuánto cuesta.</div>`;
-    // ---- Cortes: una sola lista, agrupada por material, con su barra dibujada
-    h += `<section class="fi-sec" id="s-cortes"><div class="fi-sh"><h3>Cortes</h3><span>${dinero(S[0][2])}</span></div>`;
-    const orden = []; c.piezas.forEach((p, i) => { let g = orden.find(o => String(o.mid) === String(p[0])); if(!g){ g = { mid:p[0], idx:[] }; orden.push(g); } g.idx.push(i); });
-    if(!orden.length) h += '<p class="mat-s" style="margin:4px 2px">Todavía no tiene cortes. Toca "+ Pieza" para agregar el primero.</p>';
+    // ---- Cortes: escritos en la fila, agrupados por perfil, con su barra dibujada
+    const orden = []; BOR.forEach((p, i) => { let g = orden.find(o => String(o.mid) === String(p.mid)); if(!g){ g = { mid:p.mid, idx:[] }; orden.push(g); } g.idx.push(i); });
+    h += `<section class="fi-sec" id="s-cortes"><div class="fi-sh"><h3>Cortes <small>cantidad × cm</small></h3><span id="totCortes"></span></div>`;
+    if(!orden.length) h += '<p class="mat-s" style="margin:4px 2px">Todavía no tiene cortes. Toca "+ perfil" para elegir el primer material.</p>';
     orden.forEach(o => {
-      const f = fabDe(o.mid) || { nombre:'Material' }, g = x.grupos.find(y => String(y.id) === String(o.mid));
-      h += `<div class="fi-mat"><b>${esc(f.nombre)}</b><span>${g ? metros(g.cm) + ' · ' + plural(g.barras.length, '1 barra', 'barras') + ' · ' + dinero(g.v) : 'sin precio'}</span></div>`;
-      h += o.idx.map(i => { const p = c.piezas[i], et = p[4] ? (p[4] === 'Otra' ? (p[3] || 'Otra') : p[4]) : (p[3] || 'Sin decir qué es');
-        return `<button class="pzr" type="button" data-pieza="${i}"><span class="pzr-n">${p[1]}</span><span class="pzr-n pzr-cm">${num(p[2], p[2] % 1 ? 1 : 0)}</span><span class="pzr-t${p[4] ? '' : ' gris'}">${esc(et)}${p[5] ? `<i>${p[5]}</i>` : ''}</span>${CHEV}</button>`; }).join('');
-      if(g) h += `<div class="barras">${g.barras.map(b => `<div class="barra">${b.piezas.map(p => `<span style="flex:${p.cm}">${num(p.cm, p.cm % 1 ? 1 : 0)}</span>`).join('')}${b.libre > 0 ? `<span class="sob" style="flex:${b.libre}">${b.libre >= 60 ? 'sobra ' + metros(b.libre) : ''}</span>` : ''}</div>`).join('')}</div>`;
+      const f = fabDe(o.mid) || { nombre:'Material' };
+      h += `<div class="pf" data-pf="${esc(o.mid)}"><div class="fi-mat"><b>${esc(f.nombre)}</b><span class="pf-v"></span></div><div class="pf-s"></div>
+        <div class="pzf-cab"><span>Cant.</span><span></span><span>cm</span><span>Nota</span></div>
+        ${o.idx.map(filaPz).join('')}<div class="barras pf-b"></div><button class="pz-mas" type="button" data-pz-mas="${esc(o.mid)}">+ pieza</button></div>`;
     });
-    h += '<button class="btn-nuevo" type="button" data-pieza="nueva">+ Pieza</button></section>';
-    // ---- Lámina y vidrio
-    h += `<section class="fi-sec" id="s-hojas"><div class="fi-sh"><h3>Lámina y vidrio</h3><span>${dinero(S[1][2])}</span></div>`;
-    h += c.hojas.map((p, i) => { const f = fabDe(p[0]); if(!f || !f.hoja) return ''; const pr = X.precioFab(f, prov), m2 = p[1] * p[2] * p[3] / 10000, hm2 = f.hoja[0] * f.hoja[1] / 10000;
-      return `<button class="ln" type="button" data-hoja="${i}"><span class="ln-t">${esc(f.nombre)} · ${p[1] > 1 ? p[1] + ' de ' : ''}${num(p[2])} × ${num(p[3])}</span><span class="ln-v">${pr.p != null ? dinero(m2 * pr.p * (1 + R.iva / 100) / hm2) : 'sin precio'}</span><span class="ln-s">${num(m2, 2)} m² · ${Math.round(m2 / hm2 * 100)} % de la hoja${p[4] ? ' · ' + esc(p[4]) : ''}</span></button>`; }).join('') || '<p class="mat-s" style="margin:4px 2px">Sin lámina ni vidrio.</p>';
-    h += '<button class="btn-nuevo" type="button" data-hoja="nueva">+ Lámina o vidrio</button></section>';
-    // ---- Pintura y consumibles: siempre a la vista, con su rendimiento
-    h += `<section class="fi-sec" id="s-cons"><div class="fi-sh"><h3>Pintura y consumibles</h3><span>${dinero(S[2][2])}</span></div><p class="mat-s" style="margin:0 2px 2px">Toca uno para cambiar cuántas puertas rinde en este modelo.</p>`;
-    h += D().insumos.filter(i => i.grupo !== 'Accesorios').map(it => {
+    h += '<button class="pz-mas pf-mas" type="button" data-pf-nuevo>+ perfil</button></section>';
+    // ---- Lo demás en acordeones cerrados, con su subtotal
+    const cuerpo = {};
+    cuerpo['s-hojas'] = () => (c.hojas.map((p, i) => { const f = fabDe(p[0]); if(!f || !f.hoja) return ''; const pr = X.precioFab(f, prov), m2 = p[1] * p[2] * p[3] / 10000, hm2 = f.hoja[0] * f.hoja[1] / 10000;
+      return `<button class="ln" type="button" data-hoja="${i}"><span class="ln-t">${esc(f.nombre)} · ${p[1] > 1 ? p[1] + ' de ' : ''}${num(p[2])} × ${num(p[3])}</span><span class="ln-v">${pr.p != null ? dinero(m2 * pr.p * (1 + R.iva / 100) / hm2) : 'sin precio'}</span><span class="ln-s">${num(m2, 2)} m² · ${Math.round(m2 / hm2 * 100)} % de la hoja${p[4] ? ' · ' + esc(p[4]) : ''}</span></button>`; }).join('') || '<p class="mat-s" style="margin:4px 2px">Sin lámina ni vidrio.</p>')
+      + '<button class="btn-nuevo" type="button" data-hoja="nueva">+ Lámina o vidrio</button>';
+    cuerpo['s-cons'] = () => '<p class="mat-s" style="margin:0 2px 2px">Toca uno para cambiar cuántas puertas rinde en este modelo.</p>' + D().insumos.filter(i => i.grupo !== 'Accesorios').map(it => {
       const propio = Number((c.rend || {})[it.id]) || 0, r = propio || Number(it.r) || 0, l = x.lineas.find(y => y.n === it.nombre && y.g === it.grupo);
       const txt = !r ? (it.grupo === 'Pintura y masilla' ? 'Falta cuántas puertas rinde' : 'Sin dato: no se cuenta') : (r >= 1 ? 'rinde ' + num(r) + (r === 1 ? ' puerta' : ' puertas') : num(1 / r, 0) + ' por puerta') + (propio ? ' · de este modelo' : ' · general');
       return `<button class="ln" type="button" data-rend="${it.id}"><span class="ln-t">${esc(it.nombre)}</span><span class="ln-v"${!r && it.grupo === 'Pintura y masilla' ? ' style="color:var(--danger)"' : ''}>${l ? dinero(l.v) : !r && it.grupo === 'Pintura y masilla' ? 'Falta' : '·'}</span><span class="ln-s">${esc(txt)}</span></button>`; }).join('');
-    h += '</section>';
-    // ---- Herrajes
-    h += `<section class="fi-sec" id="s-herr"><div class="fi-sh"><h3>Herrajes</h3><span>${dinero(S[3][2])}</span></div>`;
-    h += Object.entries(c.acc || {}).map(([k, n]) => { const it = D().insumos.find(y => String(y.id) === String(k)); if(!it) return ''; const l = x.lineas.find(y => y.g === 'Accesorios' && y.n === it.nombre);
-      return `<button class="ln" type="button" data-acc="${esc(k)}"><span class="ln-t">${num(n)} × ${esc(it.nombre)}</span><span class="ln-v">${l ? dinero(l.v) : ''}</span><span class="ln-s">${dinero(it.p)} sin IVA cada uno</span></button>`; }).join('') || '<p class="mat-s" style="margin:4px 2px">Sin herrajes.</p>';
-    h += '<button class="btn-nuevo" type="button" data-acc="nuevo">+ Herraje</button></section>';
-    // ---- Mano de obra
-    h += `<section class="fi-sec" id="s-obra"><div class="fi-sh"><h3>Mano de obra</h3><span>${dinero(S[4][2])}</span></div>`;
-    h += x.lineas.filter(l => l.g === 'Mano de obra').map(l => `<div class="ln"><span class="ln-t">${esc(l.n)}</span><span class="ln-v">${dinero(l.v)}</span></div>`).join('');
-    h += `<div class="field-label" style="margin-top:10px">Categoría de pago</div><div class="opts" style="--cols:2">${D().categorias.filter(k => !m.tipo || k.producto === m.tipo).map(k => `<button class="opt ${x.cat && String(x.cat.id) === String(k.id) ? 'selected' : ''}" type="button" data-cat="${k.id}">${esc(k.nombre)}</button>`).join('') || '<p class="mat-s">No hay categorías de este producto.</p>'}</div>
-      <p class="mat-s" style="margin:6px 2px 0">Las tarifas se cambian en <a href="categorias-pago.html" style="color:var(--accent);font-weight:800">Categorías de pago</a>.</p></section>`;
-    // ---- Extras
-    h += `<section class="fi-sec" id="s-extras"><div class="fi-sh"><h3>Extras</h3><span>se cobran aparte</span></div>`;
-    h += (D().extrasPendientes || []).filter(p => String(p.catalogo_id) === String(m.id)).map(p => `<div class="caja-amar">${p.n === 1 ? 'Se vendió 1' : 'Se vendieron ' + p.n} con ${esc(String(p.extra).toLowerCase())} y no tiene sus cortes. Cárgalos para saber cuánto cuesta.</div>`).join('');
-    h += x.lineas.filter(l => l.g === 'Extras incluidos').map(l => `<div class="ln"><span class="ln-t">${esc(l.n)}</span><span class="ln-v">${dinero(l.v)}</span><span class="ln-s">Viene en el modelo (tildado en el Catálogo): ya está en el costo</span></div>`).join('');
-    h += x.extras.length ? x.extras.map((e, i) => `<button class="ln" type="button" data-extra="${i}"><span class="ln-t">${esc(e.n)}${e.ofrecer ? '' : ' · oculto'}</span><span class="ln-v"${e.listo ? '' : ' style="color:var(--amber)"'}>${e.listo ? dinero(e.venta) : 'Falta'}</span><span class="ln-s">${e.listo ? 'Cuesta ' + dinero(e.costo) + ' · sin gastos fijos' : 'Falta ' + esc(e.falta.join(', ')) + '. Se vende igual: la vendedora escribe el monto.'}</span></button>`).join('') : '<p class="mat-s" style="margin:4px 2px">Sin extras. Ejemplo: protección, marco decorativo, yeso.</p>';
-    h += `<button class="btn-nuevo" type="button" data-extra="nuevo">+ Extra</button></section>
-      <div class="field" style="margin-top:16px"><label class="field-label" for="fNotas">Notas</label><textarea class="input" id="fNotas" rows="2">${esc(c.notas || '')}</textarea><div class="field-hint">Se guardan al salir del campo.</div></div>`;
-    if(q.get('volver') === 'semana') h = `<a class="caja-ok" style="display:block;text-decoration:none;margin-bottom:10px" href="costos.html?tab=semana&para=${esc(q.get('para') || '')}">${c.piezas.length ? 'Cortes cargados. Volver al plan de corte' : 'Cuando cargues sus cortes, vuelve al plan de corte'} ›</a>` + h;
+    cuerpo['s-herr'] = () => (Object.entries(c.acc || {}).map(([k, n]) => { const it = D().insumos.find(y => String(y.id) === String(k)); if(!it) return ''; const l = x.lineas.find(y => y.g === 'Accesorios' && y.n === it.nombre);
+      return `<button class="ln" type="button" data-acc="${esc(k)}"><span class="ln-t">${num(n)} × ${esc(it.nombre)}</span><span class="ln-v">${l ? dinero(l.v) : ''}</span><span class="ln-s">${dinero(it.p)} sin IVA cada uno</span></button>`; }).join('') || '<p class="mat-s" style="margin:4px 2px">Sin herrajes.</p>')
+      + '<button class="btn-nuevo" type="button" data-acc="nuevo">+ Herraje</button>';
+    cuerpo['s-obra'] = () => x.lineas.filter(l => l.g === 'Mano de obra').map(l => `<div class="ln"><span class="ln-t">${esc(l.n)}</span><span class="ln-v">${dinero(l.v)}</span></div>`).join('')
+      + `<div class="field-label" style="margin-top:10px">Categoría de pago</div><div class="opts" style="--cols:2">${D().categorias.filter(k => !m.tipo || k.producto === m.tipo).map(k => `<button class="opt ${x.cat && String(x.cat.id) === String(k.id) ? 'selected' : ''}" type="button" data-cat="${k.id}">${esc(k.nombre)}</button>`).join('') || '<p class="mat-s">No hay categorías de este producto.</p>'}</div>
+      <p class="mat-s" style="margin:6px 2px 0">Las tarifas se cambian en <a href="categorias-pago.html" style="color:var(--accent);font-weight:800">Categorías de pago</a>.</p>`;
+    cuerpo['s-extras'] = () => (D().extrasPendientes || []).filter(p => String(p.catalogo_id) === String(m.id)).map(p => `<div class="caja-amar">${p.n === 1 ? 'Se vendió 1' : 'Se vendieron ' + p.n} con ${esc(String(p.extra).toLowerCase())} y no tiene sus cortes. Cárgalos para saber cuánto cuesta.</div>`).join('')
+      + x.lineas.filter(l => l.g === 'Extras incluidos').map(l => `<div class="ln"><span class="ln-t">${esc(l.n)}</span><span class="ln-v">${dinero(l.v)}</span><span class="ln-s">Viene en el modelo (tildado en el Catálogo): ya está en el costo</span></div>`).join('')
+      + (x.extras.length ? x.extras.map((e, i) => `<button class="ln" type="button" data-extra="${i}"><span class="ln-t">${esc(e.n)}${e.ofrecer ? '' : ' · oculto'}</span><span class="ln-v"${e.listo ? '' : ' style="color:var(--amber)"'}>${e.listo ? dinero(e.venta) : 'Falta'}</span><span class="ln-s">${e.listo ? 'Cuesta ' + dinero(e.costo) + ' · sin gastos fijos' : 'Falta ' + esc(e.falta.join(', ')) + '. Se vende igual: la vendedora escribe el monto.'}</span></button>`).join('') : '<p class="mat-s" style="margin:4px 2px">Sin extras. Ejemplo: protección, marco decorativo, yeso.</p>')
+      + '<button class="btn-nuevo" type="button" data-extra="nuevo">+ Extra</button>';
+    cuerpo['s-notas'] = () => `<div class="field" style="margin-top:6px"><label class="field-label" for="fNotas">Notas</label><textarea class="input" id="fNotas" rows="2">${esc(c.notas || '')}</textarea><div class="field-hint">Se guardan al salir del campo. Las fotos del modelo se cambian en el Catálogo.</div></div>`;
+    const der = { 's-hojas':dinero(suma(['Lámina','Vidrio'])), 's-cons':dinero(suma(['Pintura y masilla','Consumibles'])), 's-herr':dinero(suma(['Accesorios'])), 's-obra':dinero(suma(['Mano de obra'])),
+      's-extras':x.extras.length ? plural(x.extras.length, '1 extra', 'extras') : 'ninguno', 's-notas':c.notas ? 'con nota' : 'sin nota' };
+    h += SECS.map(([id, t]) => { const on = abiertos.has(id);
+      return `<section class="fi-sec fi-acc${on ? ' on' : ''}" id="${id}"><button class="fi-acc-h" type="button" data-acc-t="${id}" aria-expanded="${on}"><span>${t}</span><span>${esc(der[id])} ${on ? '⌃' : '›'}</span></button>${on ? `<div class="fi-acc-b">${cuerpo[id]()}</div>` : ''}</section>`; }).join('');
     $('fichaBody').innerHTML = h;
-    // ---- Precio siempre abajo
+    refrescar();
+  }
+  // Recalcula sin repintar las filas (para no perder el teclado): perfiles, barras, chips y la franja
+  function refrescar(){
+    const m = modelo(sel); if(!m || sel == null) return;
+    aplicarBorrador();
+    const x = X.costear(m.id, { prov, modo:'metro' }); if(!x) return;
+    const suma = (gs) => x.lineas.filter(l => gs.includes(l.g)).reduce((a, l) => a + l.v, 0);
+    document.querySelectorAll('#fichaBody [data-pf]').forEach(el => {
+      const g = x.grupos.find(y => String(y.id) === String(el.dataset.pf));
+      el.querySelector('.pf-v').textContent = g ? dinero(g.v) : 'sin precio';
+      el.querySelector('.pf-s').textContent = g ? `${metrosC(g.cm)} / ${plural(g.barras.length, '1 barra', 'barras')} / sobra ${metrosC(g.barras.reduce((a, b) => a + (Number(b.libre) || 0), 0))}` : 'escribe cantidad y medida';
+      el.querySelector('.pf-b').innerHTML = g ? barrasHtml(g) : '';
+    });
+    const tc = $('totCortes'); if(tc) tc.textContent = dinero(suma(['Hierro']));
+    const idx = $('fiIdx');
+    if(idx) idx.innerHTML = [['s-cortes','Cortes',suma(['Hierro'])],['s-hojas','Lámina',suma(['Lámina'])],['s-hojas','Vidrio',suma(['Vidrio'])],['s-cons','Pintura',suma(['Pintura y masilla','Consumibles'])],['s-herr','Herrajes',suma(['Accesorios'])],['s-obra','Obra',suma(['Mano de obra'])]]
+      .map(([id, t, v]) => `<button class="fx" type="button" data-ir="${id}">${t} ${dinero(v)}</button>`).join('');
+    pintarFranja(x);
+  }
+  // ---- Franja del precio, fija abajo: cerrada muestra el sugerido; al tocarla se abre en el mismo lugar
+  function pintarFranja(x){
+    const m = modelo(sel), dis = !!m.en_diseno, R = D().reglas;
     const dif = x.hoy != null ? r2(x.hoy - x.final) : null;
-    const etq = x.falta.length ? '<span class="pill gris">Faltan datos</span>' : dis ? '<span class="pill gris">En diseño</span>' : Math.abs(dif) < 0.005 ? '<span class="pill verde">Igual al catálogo</span>' : dif < 0 ? `<span class="pill rojo">${dinero(-dif)} abajo del catálogo</span>` : `<span class="pill verde">${dinero(dif)} arriba del catálogo</span>`;
-    $('fichaFoot').innerHTML = `<button class="fi-precio" type="button" data-precio><span class="fi-pl"><small>Sugerido · cuesta ${dinero(x.costo)}</small><b>${dinero(x.final)}</b></span><span class="fi-pr">${etq}<small>${esc(provNom(prov))} · por metro ›</small></span></button>`;
+    const etq = x.falta.length ? '<span class="pill gris">faltan datos</span>' : dis ? '<span class="pill gris">en diseño</span>' : Math.abs(dif) < 0.005 ? '<span class="pill verde">igual al catálogo</span>' : dif < 0 ? `<span class="pill rojo">${dinero(-dif)} abajo</span>` : `<span class="pill verde">${dinero(dif)} arriba</span>`;
+    const guardar = sucio() ? `<button class="btn-primary fr-guardar" type="button" data-guardar-cortes>Guardar cambios</button>` : '';
+    if(!franja){
+      $('fichaFoot').innerHTML = guardar + `<button class="fr-cab" type="button" data-franja aria-expanded="false"><span class="fr-l"><small>Precio sugerido · toca para ver más</small><b>${dinero(x.final)}</b></span><span class="fr-r">${etq}<small>${dis ? 'todavía no está en el catálogo' : 'catálogo ' + dinero(x.hoy)}</small></span></button>`;
+      return;
+    }
+    const xm = X.costear(m.id, { prov, modo }), xt = X.costear(m.id, { prov, modo:'tubo' }), provs = D().proveedores.filter(p => (p.tipos || []).includes('hierro'));
+    const precio = xm.final, puede = !xm.falta.length && !sucio();
+    $('fichaFoot').innerHTML = `<div class="fr-scrim" data-franja></div><div class="fr-panel" role="region" aria-label="Precio del modelo">
+      <button class="fr-cab abierta" type="button" data-franja aria-expanded="true"><span class="fr-l"><small>Precio sugerido</small><b>${dinero(xm.final)}</b></span><span class="fr-r">${etq}<small>toca para cerrar</small></span></button>
+      <div class="field-label">Precios de</div>${chips(provs.map(p => [p.id, esc(provNom(p.id))]).concat([['barato', 'Más barato']]), prov, 'data-fprov')}
+      <div class="opts" style="--cols:2;margin-top:10px"><button class="opt ${modo === 'metro' ? 'selected' : ''}" type="button" data-fmodo="metro">Por metro usado</button><button class="opt ${modo === 'tubo' ? 'selected' : ''}" type="button" data-fmodo="tubo">Barra completa</button></div>
+      ${xm.avisos.map(a => `<div class="caja-amar">${esc(a)}</div>`).join('')}
+      <div class="tot" style="margin-top:10px">
+        <div class="fila"><span>1 · Costo de la puerta</span><b>${dinero(xm.costo)}</b></div>
+        <div class="fila"><span>2 · Con ganancia (+${num(R.ganancia)} %)</span><b>${dinero(xm.venta)}</b></div>
+        <div class="fila"><span>3 · + Gastos fijos (${dinero(R.gastosMes)} ÷ ${R.puertasMes})</span><b>${dinero(xm.fijos)}</b></div>
+        <div class="fila fin"><span>Precio sugerido</span><span>${dinero(xm.final)}</span></div></div>
+      <p class="mat-s" style="margin:6px 2px 0">${[modo === 'metro' ? 'con barra completa: ' + dinero(xt.final) : '', !dis ? 'hoy en catálogo ' + dinero(xm.hoy) + ', ganas ' + Math.round(xm.pct) + ' %' : ''].filter(Boolean).join(' · ')}</p>
+      ${sucio() ? '<p class="mat-s" style="margin:6px 2px 0;color:var(--amber);font-weight:700">Guarda los cambios de los cortes antes de pasar el precio al catálogo.</p>' : ''}
+      <button class="btn-primary" type="button" data-al-catalogo="${precio}" ${puede ? '' : 'disabled'} style="margin-top:10px">${dis ? 'Pasar al Catálogo: ' + dinero(precio) : 'Catálogo: ' + dinero(xm.hoy) + ' → ' + dinero(precio)}</button>
+    </div>`;
+  }
+  function enfocarFila(i){ const el = document.querySelector(`#fichaBody [data-pz="${i}:n"]`); if(el){ el.focus(); el.scrollIntoView({ block:'center' }); } setTimeout(() => { nuevaFila = null; const f = document.querySelector('#fichaBody .pzf.nueva'); if(f) f.classList.remove('nueva'); }, 900); }
+  async function alCatalogo(precio){
+    const m = modelo(sel), eraDis = !!m.en_diseno, c0 = D().costeo[sel];
+    if(!confirm(eraDis ? `¿Pasar ${m.nombre} al Catálogo con ${dinero(precio)}?` : `¿Cambiar el precio de ${m.nombre} en el Catálogo de ${dinero(m.precio_base)} a ${dinero(precio)}?`)) return;
+    let nuevoSel = sel;
+    const ok = await hacer(async () => { if(!c0.mid) await X.guardarCosteo(sel); const r = await X.rpc('costeo_pasar_catalogo', { mid:c0.mid, p_precio:Math.round(precio * 100) / 100 }); nuevoSel = r.catalogo_id; },
+      eraDis ? 'Listo: ya está en el Catálogo. Ponle foto y categoría de pago allí.' : 'Precio cambiado en el Catálogo');
+    if(ok){ sel = nuevoSel; franja = false; cargarBorrador(); pintar(); pintarFicha(); }
+  }
+  async function guardarCortes(){
+    const mal = incompletas();
+    if(mal.length){ const i = BOR.indexOf(mal[0]); toast('Revisa la cantidad y la medida de cada corte', 'error'); const el = document.querySelector(`[data-pz="${i}:${numLibre(mal[0].n) > 0 ? 'cm' : 'n'}"]`); if(el) el.focus(); return; }
+    aplicarBorrador();
+    const ok = await hacer(() => X.guardarCosteo(sel), 'Cortes guardados. El precio ya está al día.');
+    if(ok){ cargarBorrador(); pintarFicha(); }
   }
   const r2 = X.r2;
   function pintarInicio(m){
@@ -303,7 +399,73 @@
     if(i >= 0) return abrirExtra(i);
     abrirExtra('nuevo'); F.kind = EXK.find(n => X.claveExtra(n) === k) || null; pintarForm();
   }
+  // ---- Elige el perfil (C2, tercera pantalla): buscador, filtros por tipo y el precio del proveedor elegido
+  const CATP = [['Tubos', /^tubo/i], ['Platinas', /^platina/i], ['Marcos', /^marco/i], ['Otros', null]];
+  const catPerfil = (f) => { const c = CATP.find(([, r]) => r && r.test(f.nombre)); return c ? c[0] : 'Otros'; };
+  const normT = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  function pintarPerfil(){
+    $('formTitulo').textContent = 'Elige el perfil';
+    const todos = D().fab.filter(f => f.activo && f.pres === 'barra'), cats = CATP.map(c => c[0]).filter(k => todos.some(f => catPerfil(f) === k));
+    if(!cats.includes(F.cat)) F.cat = cats[0];
+    const L = todos.filter(f => F.bm ? normT(f.nombre).includes(normT(F.bm)) : catPerfil(f) === F.cat);
+    $('formBody').innerHTML = `<p class="mat-s" style="margin:-4px 2px 10px">Precio sin IVA de ${esc(provNom(prov))}.</p>
+      <label class="search-box" style="margin:0 0 8px"><input id="fBuscaMat" type="search" placeholder="Buscar: tubo, platina, marco…" aria-label="Buscar perfil" value="${esc(F.bm || '')}" autocomplete="off"></label>
+      ${F.bm ? '' : chips(cats.map(k => [k, k]), F.cat, 'data-fcat')}
+      <div id="listaMat" style="margin-top:8px">${L.map(f => { const pr = X.precioFab(f, prov), ks = Object.keys(f.precios || {});
+        return `<button class="ln" type="button" data-elige-perfil="${f.id}"><span class="ln-t">${esc(f.nombre)}</span><span class="ln-v">${pr.p != null ? dinero(pr.p) : 'sin precio'}</span><span class="ln-s">barra ${num(f.largo / 100)} m${ks.length === 1 ? ' · solo ' + esc(provNom(ks[0])) : ''}</span></button>`; }).join('') || '<p class="mat-s">No hay perfiles con ese nombre.</p>'}</div>
+      <button class="btn-nuevo" type="button" data-mat-nuevo-perfil>+ Material nuevo</button>`;
+    $('formFoot').innerHTML = ''; $('formFoot').style.display = 'none';
+  }
+  // ---- + Nuevo (C1, segunda pantalla): un modelo en diseño o un extra de un modelo
+  const conCortes = () => D().catalogo.concat(D().enDiseno).filter(c => D().costeo[c.id] && D().costeo[c.id].piezas.length && c.tipo !== 'Puerta de Madera');
+  function leerNuevo(){ const a = $('nvNom'), b = $('nvN'); if(a) F.nombre = a.value; if(b) F.n = b.value; }
+  function pintarNuevo(){
+    $('formTitulo').textContent = 'Nuevo';
+    let h = `<p class="mat-s" style="margin:-4px 2px 10px">${F.que === 'modelo' ? 'Queda en diseño. Pasa al Catálogo con el botón de la franja del precio.' : 'Un extra va dentro de un modelo y se cobra aparte.'}</p>
+      <div class="field"><span class="field-label">¿Qué es?</span>${opts([['modelo','Modelo'],['extra','Extra']], F.que, 'data-nv-que')}</div>`;
+    if(F.que === 'modelo'){
+      const bs = conCortes(), de = F.de != null ? modelo(F.de) : null;
+      h += `<div class="field" id="c_nvNom"><label class="field-label" for="nvNom">Nombre</label><input class="input" id="nvNom" maxlength="60" value="${esc(F.nombre)}" autocomplete="off"><div class="field-error">Escribe el nombre</div></div>
+        <div class="field"><span class="field-label">Tipo</span>${opts([['Puerta Multilock','Puerta'],['Portón','Portón'],['Ventana','Ventana'],['Combo','Combo']], F.tipo, 'data-nv-tipo', 4)}</div>
+        <div class="field"><span class="field-label">Empezar</span>
+        <div class="opt-grande ${F.modo === 'copiar' ? 'on' : ''}" role="button" tabindex="0" data-nv-modo="copiar"><b>Copiar de otro modelo</b><span>${de ? esc(de.nombre) + ' · cambias solo lo distinto' : 'Elige de cuál'}</span>
+          ${F.modo === 'copiar' ? `<div class="fi-chips" style="margin-top:8px">${bs.slice(0, 8).map(b => `<button type="button" class="fx ${String(F.de) === String(b.id) ? 'on' : ''}" data-nv-de="${esc(b.id)}">${esc(b.nombre)}</button>`).join('') || '<span class="mat-s">Todavía no hay modelos con cortes.</span>'}</div>` : ''}</div>
+        <div class="opt-grande ${F.modo === 'estandar' ? 'on' : ''}" role="button" tabindex="0" data-nv-modo="estandar"><b>Estructura estándar</b><span>bastidor 3"x1": 2 × 200 y 2 × 88 cm</span></div>
+        <div class="opt-grande ${F.modo === 'blanco' ? 'on' : ''}" role="button" tabindex="0" data-nv-modo="blanco"><b>En blanco</b><span>para portones, ventanas o algo distinto</span></div></div>`;
+    } else {
+      const ms = D().catalogo.concat(D().enDiseno).filter(m => D().costeo[m.id] && m.tipo !== 'Puerta de Madera' && (!F.bm || normT(m.nombre).includes(normT(F.bm))));
+      h += `<div class="field" id="c_nvMod"><span class="field-label">¿De qué modelo?</span><label class="search-box" style="margin:0 0 8px"><input id="nvBusca" type="search" placeholder="Buscar modelo" aria-label="Buscar modelo" value="${esc(F.bm || '')}" autocomplete="off"></label>
+        <div class="fi-chips">${ms.slice(0, 10).map(m => `<button type="button" class="fx ${String(F.mid) === String(m.id) ? 'on' : ''}" data-nv-mod="${esc(m.id)}">${esc(m.nombre)}</button>`).join('') || '<span class="mat-s">No hay modelos costeados con ese nombre.</span>'}</div><div class="field-error">Elige el modelo</div></div>
+        <div class="field" id="c_nvKind"><span class="field-label">Qué extra</span>${chips(EXK.concat(['Otro']).map(k => [k, k]), F.kind, 'data-nv-kind')}<div class="field-error">Elige qué extra es</div></div>
+        ${F.kind === 'Otro' ? `<div class="field" id="c_nvN"><label class="field-label" for="nvN">Nombre del extra</label><input class="input" id="nvN" maxlength="40" value="${esc(F.n || '')}" autocomplete="off"><div class="field-error">Escribe el nombre</div></div>` : ''}`;
+    }
+    $('formBody').innerHTML = h;
+    $('formFoot').innerHTML = '<button class="btn-primary" type="button" data-nv-crear style="flex:1">Crear y abrir</button>'; $('formFoot').style.display = 'flex';
+  }
+  async function crearNuevo(){
+    leerNuevo();
+    if(F.que === 'extra'){
+      if(!F.mid){ $('c_nvMod').classList.add('invalid'); return; }
+      if(!F.kind || (F.kind === 'Otro' && !String(F.n || '').trim())){ ($(F.kind === 'Otro' ? 'c_nvN' : 'c_nvKind') || {}).classList.add('invalid'); return; }
+      const mid = F.mid, kind = F.kind, n = String(F.n || '').trim();
+      cerrarHoja('sheetForm', true); F = null; abrirFicha(mid); abrirExtra('nuevo'); F.kind = kind; if(kind === 'Otro') F.n = n; pintarForm(); return;
+    }
+    const nombre = String(F.nombre || '').trim();
+    if(!nombre){ $('c_nvNom').classList.add('invalid'); return; }
+    if(F.modo === 'copiar' && !(F.de != null && D().costeo[F.de])){ toast('Elige de cuál modelo copiar', 'error'); return; }
+    const R = D().reglas; let c;
+    if(F.modo === 'copiar') c = Object.assign(JSON.parse(JSON.stringify(D().costeo[F.de])), { mid:null, estado:'borrador', notas:'', extras:(D().costeo[F.de].extras || []).map(e => Object.assign({}, e, { id:null })) });
+    else if(F.modo === 'estandar'){ const bis = insumoDe('bisagra'), cer = insumoDe('cerradura'), acc = {}; if(bis) acc[bis.id] = R.bisagras; if(cer) acc[cer.id] = 1; c = { mid:null, estado:'borrador', piezas:bastidor(), hojas:[], rend:{}, acc, extras:[], notas:'' }; }
+    else c = { mid:null, estado:'borrador', piezas:[], hojas:[], rend:{}, acc:{}, extras:[], notas:'' };
+    D().enDiseno.push({ id:'nuevo', nombre, tipo:F.tipo, precio_base:0, en_diseno:true }); D().costeo.nuevo = c;
+    let nid = null;
+    const ok = await hacer(async () => { const r = await X.guardarCosteo('nuevo'); nid = 'd' + r.id; }, 'Creado en diseño. Escribe o cambia sus cortes.');
+    if(ok && nid){ cerrarHoja('sheetForm', true); F = null; filtro = 'Todos'; pintar(); abrirFicha(nid); }
+  }
   function pintarForm(){
+    if(F.t === 'perfil') return pintarPerfil();
+    if(F.t === 'nuevo') return pintarNuevo();
+    $('formFoot').style.display = 'flex';
     const d = D(); let h = '', boton = 'Guardar', borrar = false, txtBorrar = 'Quitar';
     if(F.t === 'pieza' || F.t === 'hoja'){
       const f = fabDe(F.mat), pres = F.t === 'pieza' ? 'barra' : 'hoja';
@@ -582,6 +744,20 @@
     if(e.target.closest('#btnForm')) return guardar();
     if(e.target.closest('#btnBorrar')) return borrar();
     // ---- Dentro de una hoja de formulario
+    if(F && e.target.closest('#sheetForm') && (F.t === 'perfil' || F.t === 'nuevo')){
+      let b;
+      if((b = e.target.closest('[data-fcat]'))){ F.cat = b.dataset.fcat; pintarForm(); return; }
+      if((b = e.target.closest('[data-elige-perfil]'))){ BOR.push({ mid:Number(b.dataset.eligePerfil), n:'', cm:'', nota:'', que:null, ori:null }); nuevaFila = BOR.length - 1; cerrarHoja('sheetForm', true); F = null; pintarFicha(); enfocarFila(nuevaFila); return; }
+      if(e.target.closest('[data-mat-nuevo-perfil]')){ abrirForm({ t:'matnuevo', tipo:'hierro' }); return; }
+      if((b = e.target.closest('[data-nv-que]'))){ leerNuevo(); F.que = b.dataset.nvQue; pintarForm(); return; }
+      if((b = e.target.closest('[data-nv-tipo]'))){ leerNuevo(); F.tipo = b.dataset.nvTipo; pintarForm(); return; }
+      if((b = e.target.closest('[data-nv-de]'))){ leerNuevo(); F.de = isNaN(+b.dataset.nvDe) ? b.dataset.nvDe : +b.dataset.nvDe; F.modo = 'copiar'; pintarForm(); return; }
+      if((b = e.target.closest('[data-nv-modo]'))){ leerNuevo(); F.modo = b.dataset.nvModo; pintarForm(); return; }
+      if((b = e.target.closest('[data-nv-mod]'))){ leerNuevo(); F.mid = isNaN(+b.dataset.nvMod) ? b.dataset.nvMod : +b.dataset.nvMod; pintarForm(); return; }
+      if((b = e.target.closest('[data-nv-kind]'))){ leerNuevo(); F.kind = b.dataset.nvKind; pintarForm(); return; }
+      if(e.target.closest('[data-nv-crear]')) return crearNuevo();
+      return;
+    }
     if(F && e.target.closest('#sheetForm')){
       const set = (attr, k) => { const b = e.target.closest('[' + attr + ']'); if(b){ leer(); F[k] = b.getAttribute(attr); pintarForm(); return true; } };
       const pk = e.target.closest('[data-f-pick]'); if(pk){ leer(); F.pick = pk.dataset.fPick === 'si'; F.bm = ''; pintarForm(); return; }
@@ -602,7 +778,24 @@
     }
     // ---- Lista y ficha
     const md = e.target.closest('[data-modelo]'); if(md){ const id = isNaN(+md.dataset.modelo) ? md.dataset.modelo : +md.dataset.modelo; return abrirFicha(id); }
-    const ir = e.target.closest('[data-ir]'); if(ir){ const s = $(ir.dataset.ir); if(s) s.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
+    const ir = e.target.closest('[data-ir]'); if(ir){ const id = ir.dataset.ir; if(id !== 's-cortes' && !abiertos.has(id)){ abiertos.add(id); pintarFicha(); } const s = $(id); if(s) s.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
+    if(e.target.closest('[data-nuevo-modelo]')){ const b = conCortes()[0]; return abrirForm({ t:'nuevo', que:'modelo', nombre:'', tipo:'Puerta Multilock', modo:b ? 'copiar' : 'estandar', de:b ? b.id : null, mid:null, kind:null, n:'', bm:'' }); }
+    const xd = e.target.closest('[data-extra-de]'); if(xd){ const id = isNaN(+xd.dataset.extraDe) ? xd.dataset.extraDe : +xd.dataset.extraDe; abrirFicha(id); if(D().costeo[id]) abrirExtra(+xd.dataset.i); return; }
+    // ---- Ficha: cortes en la fila, acordeones y franja del precio
+    if(e.target.closest('[data-salir-ficha]')){ if(sucio() && !confirm('Tienes cortes sin guardar. ¿Salir sin guardarlos?')) return; if(sucio()){ D().costeo[sel].piezas = JSON.parse(GUARD); } franja = false; cerrarHoja('sheetFicha', true); pintar(); return; }
+    let fb;
+    if((fb = e.target.closest('[data-pz-mas]'))){ BOR.push({ mid:isNaN(+fb.dataset.pzMas) ? fb.dataset.pzMas : +fb.dataset.pzMas, n:'', cm:'', nota:'', que:null, ori:null }); nuevaFila = BOR.length - 1; pintarFicha(); enfocarFila(nuevaFila); return; }
+    if((fb = e.target.closest('[data-pzx]'))){ BOR.splice(+fb.dataset.pzx, 1); abierto3d = null; nuevaFila = null; pintarFicha(); return; }
+    if((fb = e.target.closest('[data-pz3d]'))){ const i = +fb.dataset.pz3d; abierto3d = abierto3d === i ? null : i; pintarFicha(); return; }
+    if((fb = e.target.closest('[data-pzque]')) && abierto3d != null){ const p = BOR[abierto3d]; p.que = p.que === fb.dataset.pzque ? null : fb.dataset.pzque; pintarFicha(); return; }
+    if((fb = e.target.closest('[data-pzori]')) && abierto3d != null){ const p = BOR[abierto3d]; p.ori = p.ori === fb.dataset.pzori ? null : fb.dataset.pzori; pintarFicha(); return; }
+    if(e.target.closest('[data-pf-nuevo]')) return abrirForm({ t:'perfil', bm:'', cat:'Tubos' });
+    if((fb = e.target.closest('[data-acc-t]'))){ const id = fb.dataset.accT; if(abiertos.has(id)) abiertos.delete(id); else abiertos.add(id); pintarFicha(); return; }
+    if(e.target.closest('[data-franja]')){ franja = !franja; refrescar(); return; }
+    if((fb = e.target.closest('[data-fprov]'))){ prov = fb.dataset.fprov; refrescar(); return; }
+    if((fb = e.target.closest('[data-fmodo]'))){ modo = fb.dataset.fmodo; refrescar(); return; }
+    if((fb = e.target.closest('[data-al-catalogo]')) && !fb.disabled) return alCatalogo(Number(fb.dataset.alCatalogo));
+    if(e.target.closest('[data-guardar-cortes]')) return guardarCortes();
     const ib = e.target.closest('[data-ini-de]'); if(ib){ ini = { modo:'copiar', de:isNaN(+ib.dataset.iniDe) ? ib.dataset.iniDe : +ib.dataset.iniDe }; return pintarFicha(); }
     if(e.target.closest('[data-buscar-base]')) return abrirForm({ t:'buscarBase', bm:'' });
     const io = e.target.closest('[data-ini]'); if(io){ ini = { modo:io.dataset.ini, de:io.dataset.ini === 'copiar' ? (ini.de != null ? ini.de : (bases()[0] || {}).id) : ini.de }; return pintarFicha(); }
@@ -627,9 +820,10 @@
     const ins = e.target.closest('[data-insumo]'); if(ins) return abrirForm({ t:'insumo', id:ins.dataset.insumo, grupo:filPrecios });
   });
   document.addEventListener('input', (e) => {
+    if(e.target.matches && e.target.matches('#fichaBody [data-pz]')){ const [i, k] = e.target.dataset.pz.split(':'); if(BOR[+i]){ BOR[+i][k] = e.target.value; refrescar(); } return; }
     if(e.target.id === 'buscaModelo'){ busca = e.target.value; const l = $('modLista'); if(l) l.innerHTML = listaModelos(lista().filter(FIL[filtro] || FIL.Todos).filter(o => { const t = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); return !busca || t(o.m.nombre).includes(t(busca)); })); return; }
     if(!F) return;
-    if(e.target.id === 'fBuscaMat' || e.target.id === 'fBuscaBase'){ F.bm = e.target.value; const pos = e.target.selectionStart; pintarForm(); const el = $(e.target.id); if(el){ el.focus(); try{ el.setSelectionRange(pos, pos); } catch(_){} } return; }
+    if(e.target.id === 'fBuscaMat' || e.target.id === 'fBuscaBase' || e.target.id === 'nvBusca'){ if(e.target.id === 'nvBusca') leerNuevo(); F.bm = e.target.value; const pos = e.target.selectionStart; pintarForm(); const el = $(e.target.id); if(el){ el.focus(); try{ el.setSelectionRange(pos, pos); } catch(_){} } return; }
     if(F.t === 'hoja' && ['fCant','fA','fH'].includes(e.target.id)){ leer(); const f = fabDe(F.mat), caja = $('cajaHoja'); if(f && f.hoja && caja){ const m2 = (numLibre(F.cant) || 0) * (numLibre(F.a) || 0) * (numLibre(F.h) || 0) / 10000, hm2 = f.hoja[0] * f.hoja[1] / 10000; caja.innerHTML = `<span>Uso de la hoja</span>${num(m2, 3)} m² de una hoja de ${f.hoja[0]} × ${f.hoja[1]} cm = <b>${Math.round(m2 / hm2 * 100)} %</b>`; } }
     if(F.t === 'extra' && !F.sub && ['fV','fMano','fN'].includes(e.target.id)){ leer(); const caja = $('cajaExtra'); if(caja) caja.innerHTML = resumenExtra(); }
   });
