@@ -90,6 +90,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
   }
   if(u.includes('/categorias_pago')) return j([{id:1,nombre:'General'}]);
   if(u.includes('/ventas')){
+    if(u.includes('estado=eq.lista')) return j(ventas.filter(v=>v.estado==='lista'));   // Listos de la vendedora (lote 7)
     const activos=ventas.filter(v=>v.estado==='en_produccion');
     return j(activos);
   }
@@ -106,7 +107,7 @@ function mock(ctx,user,rol){return ctx.route('**/*.supabase.co/**',async r=>{con
  ok('Su cajita Taller dice cuántos hay en taller',(await y.textContent('#cuenta-taller'))==='3 pedidos en taller',await y.textContent('#cuenta-taller'));
  await y.click('a.nav-item[href="taller.html"]');await y.waitForSelector('.tl-card');
  ok('Vendedora ve los 3 pedidos en taller',(await y.$$('.tl-card')).length===3);
- ok('Solo chips Todos y En proceso, sin botón + ni pestañas de Nómina',(await y.$$eval('#chips .chip',x=>x.map(c=>c.dataset.f))).join()==='todos,proceso' && !(await y.isVisible('#btnNuevaOrden')) && !(await y.isVisible('#tabsTaller')));
+ ok('Chips Todos, En proceso y Listos, sin botón + ni pestañas de Nómina',(await y.$$eval('#chips .chip',x=>x.map(c=>c.dataset.f))).join()==='todos,proceso,listos' && !(await y.isVisible('#btnNuevaOrden')) && !(await y.isVisible('#tabsTaller')));
  ok('Cada pedido dice en qué va',(await y.textContent('.tl-card >> nth=0')).includes('En masilla y pintura'));
  ok('Una etiqueta larga no estira la pantalla',await y.evaluate(()=>document.documentElement.scrollWidth<=390),await y.evaluate(()=>document.documentElement.scrollWidth));
  await y.screenshot({path:'shots5/s0-vendedora-lista.png'});
