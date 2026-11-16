@@ -106,7 +106,7 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
     &&JSON.stringify(cc.p.gastos)==='[{"categoria":"Flete","monto":20}]'&&cc.p.pago.modo==='saque'&&cc.p.pago.cuenta_id===1&&cc.p.pago.sacado===100&&cc.p.pago.vuelto===49&&cc.p.pago.motivo==='Se perdió un billete',cc);
   // No llegó
   await p.click('[data-compra-llego="41"]');await p.waitForSelector('#sheetCompra.open');await w();
-  await p.click('[data-cp-nollego="0"]');await w();await p.click('[data-cp-anular="0"]');await w(400);
+  await p.click('[data-cp-llega="0:nada"]');await w();await p.click('[data-cp-anular="0"]');await w(400);
   ok('No llegó sin motivo no anula',!ultimo(rpcs,'compra_no_llego'));
   await p.fill('#cpMot0','El proveedor no tenía');await p.click('[data-cp-anular="0"]');await w(900);
   ok('No llegó con motivo',JSON.stringify(ultimo(rpcs,'compra_no_llego'))===JSON.stringify({pid:41,motivo:'El proveedor no tenía'}));
