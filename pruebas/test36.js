@@ -61,8 +61,8 @@ const modelos=[{id:1,nombre:'Con chiquita',tipo:'Puerta Multilock',fotos:{Blanco
  ok('miniDe: solo cambia fotos de la app',await p.evaluate(()=>{const m=window.AH.miniDe;return m('https://x.supabase.co/storage/v1/object/public/etapas-fotos/2026-09/a.jpg').endsWith('/etapas-fotos/mini/2026-09/a.jpg')&&m('data:image/gif;base64,x')==='data:image/gif;base64,x'&&m('https://x.supabase.co/storage/v1/object/public/catalogo-fotos/mini/a.jpg').endsWith('/catalogo-fotos/mini/a.jpg')&&m(null)===null;}));
  // Producción: la lista de modelos para fabricar también usa la chiquita
  st.pedidas=[];
- await p.goto(H+'produccion.html');await w(1500);
- await p.click('#btnNuevaOrden');await p.waitForSelector('#sheetOrden.open');
+ await p.goto(H+'taller.html');await p.waitForSelector('[data-nueva-orden]');await w(500);
+ await p.click('[data-nueva-orden]');await p.waitForSelector('#sheetOrden.open');
  await p.click('#ordenBody [data-g="__otipo"][data-v="Puerta Multilock"]');await p.click('#btnModelo');await p.waitForSelector('#sheetModelos.open');await w(2500);
  const ps=await p.$$eval('#listaModelos .mini-foto img',x=>x.map(y=>y.getAttribute('src').split('catalogo-fotos/')[1]));
  ok('Producción, fabricar: la lista de modelos usa las chiquitas',ps.join()==='mini/modelos/a.jpg,modelos/b.jpg'&&!st.pedidas.includes('modelos/a.jpg'),[ps,st.pedidas]);
