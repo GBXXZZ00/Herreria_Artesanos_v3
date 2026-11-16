@@ -342,7 +342,8 @@
       const tel = v.cliente && v.cliente.telefono;
       const entrega = `<div><span>Entrega</span><b>${v.fecha_entrega ? esc(fechaDia(v.fecha_entrega, true)) : 'sin fecha'}</b></div>`;
       // La vendedora no ve montos en el Taller (T7): solo la entrega
-      abajo = `<div class="tl-kv">${lectura ? entrega : `<div><span>Debe el cliente</span><b class="${resta > 0 ? 'debe' : 'ok'}">${resta > 0 ? dinero(resta) : '$0 · pagado'}</b></div>${entrega}`}</div>
+      abajo = `<div class="tl-kv">${lectura ? entrega : `<div><span>Debe el cliente</span><b class="${resta > 0 ? 'debe' : 'ok'}">${resta > 0 ? dinero(resta) : '$0 · pagado'}</b></div>
+          ${entrega}`}</div>
         <div class="tl-ats">${tel ? `<a href="${esc(AV.linkSeguimientoWA(v))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${lectura ? '' : `<button type="button" data-abrir="${v.id}">Fotos</button>`}<a href="ventas.html?abrir=${v.id}" data-sub>Venta</a></div>
         <button class="btn-primary tl-entregar" type="button" data-entregar="${v.id}">Marcar entregada</button>`;
     } else {
