@@ -5,6 +5,19 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
 
+## Costeador, lote 8 (v86, 16 nov 2026, Claude de Gualfredo) · Ray o Gualfredo
+- [ ] El menú dice Costeador y tiene dos pestañas: Modelos · Precios.
+- [ ] Modelos: Listos, Borrador y Faltan por costear; cada uno dice "$x abajo" (rojo), "gana N %" (verde) o "sin cortes".
+- [ ] Filtro Extras: salen los extras de cada modelo.
+- [ ] + Nuevo › Modelo: nombre, tipo y copiar de otro (o estándar o en blanco). Queda en diseño y se abre su ficha.
+- [ ] + Nuevo › Extra: elegir el modelo y qué extra; se abre el formulario del extra.
+- [ ] En la ficha: cambiar la cantidad o los cm de un corte y ver la barra y el precio cambiar al instante.
+- [ ] + pieza y + perfil (Elige el perfil); "3D" para decir qué es y si va vertical u horizontal.
+- [ ] Guardar cambios; salir sin guardar pregunta antes.
+- [ ] Tocar la franja del precio: se abre abajo con el desglose y el botón Catálogo: $x → $y.
+- [ ] Precios: escribir un precio en la tabla, ver el verde del más barato y Guardar precios (N cambios).
+- [ ] Finanzas › un proveedor: ya no lista precios; lleva a Costeador › Precios.
+
 ## Taller lote 7: vendedora y sello ENTREGADO (v85, 16 nov 2026, Claude de Gualfredo)
 **Vendedora (Yulimar)**
 - [ ] En el Taller ve solo Pedidos: Todos · En proceso · Listos. No ve montos, Asignar, Corte ni Nómina.

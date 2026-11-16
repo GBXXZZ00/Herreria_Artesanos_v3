@@ -232,7 +232,12 @@
     }
     return { lugares:Object.entries(lugares).map(([prov, lineas]) => ({ proveedor_id:Number(prov), lineas })), nota:'Para el corte de ' + x.nombre + ' del ' + sabadoCorto(sab) };
   }
-  const datosPlan = (P, extra) => Object.assign({ firma:P.firma, barras:K().limpiar(P.barras), aceptado:P.aceptado, ajustado:P.ajustado, no_usar:P.noUsar, manual:P.manual, extras_mano:P.extrasMano }, extra || {});
+  // Los extras que se vendieron sin cortes (protección, marco decorativo) se cortan a mano: van con el envío para que
+  // el herrero los vea en "Qué cortar" como "córtalo como siempre"
+  const extrasMano = (P) => { const out = (P.extrasMano || []).slice();
+    P.asign.forEach(u => (u.extFalta || []).forEach(z => { if(!out.some(o => String(o.eid) === String(u.eid) && o.k === z.k)) out.push({ eid:u.eid, k:z.k, extra:z.n, etq:u.etq + ' · ' + u.nombre, tid:u.tid }); }));
+    return out; };
+  const datosPlan = (P, extra) => Object.assign({ firma:P.firma, barras:K().limpiar(P.barras), aceptado:P.aceptado, ajustado:P.ajustado, no_usar:P.noUsar, manual:P.manual, extras_mano:extrasMano(P) }, extra || {});
   async function enviar(btn){
     if(ocupado) return;
     const P = plan(), x = P.herreros.find(h => String(h.tid) === String(abierto)); if(!x) return;

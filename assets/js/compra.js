@@ -1,4 +1,4 @@
-// Compra pedida (amarilla) y "¿Llegó?" (window.COMPRA). Se usa en Costos › Plan de corte, Depósito y Finanzas.
+// Compra pedida (amarilla) y "¿Llegó?" (window.COMPRA). Se usa en Taller › Corte › Material y en Finanzas.
 // Pedir: con los últimos precios pagados, "Más barato" (divide por proveedor) o "Todo en <proveedor>"; + Material,
 // + Otro lugar, + Gasto (flete). No toca nada real: queda en amarillo (compra_pedir).
 // ¿Llegó?: cantidades y precios de la factura, número, foto, total del papel para cuadrar, y cómo se paga en una sola

@@ -59,8 +59,8 @@ async function pagina(b,uid,err){
 const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.length-1][1]:null;};
 (async()=>{ const b=await chromium.launch(); const err=[]; try{
   let {p,rpcs}=await pagina(b,'u2',err); const w=ms=>p.waitForTimeout(ms||400);
-  await p.goto(H+'costos.html?tab=semana');await p.waitForSelector('[data-comprar]');await w();
-  await p.click('[data-comprar]');await p.waitForSelector('#sheetCompra.open');await w();
+  await p.goto(H+'taller.html?vista=corte');await p.waitForSelector('#vCorte .ck-vista');await w(600);
+  await p.evaluate((s)=>{window.CORTE.setSab(s);window.COMPRA.abrirDesdePlan(window.CORTE.planSemana(s));},sab);await p.waitForSelector('#sheetCompra.open');await w();
   let t=await p.textContent('#compraBody');
   ok('Comprar lo que falta: saldos arriba (tienes en cuentas)',t.includes('Tienes en cuentas')&&t.includes('$2,550'),t.slice(0,120));
   ok('Más barato divide por proveedor: Colores y Torniplemaca',t.includes('Colores y Ambiente')&&t.includes('Torniplemaca'));
@@ -80,12 +80,12 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   ok('Tubo 1" x 3" a Colores con el último precio $12.98',t3&&t3.cantidad===1&&t3.precio===12.98,t3);
   // En camino (amarillo)
   CAMINO.grupos=[{grupo:41,fecha:new Date().toISOString(),plan_sab:sab,total:35.06,lugares:[{id:41,proveedor_id:1,proveedor:'Colores y Ambiente',iva:true,total:15.06,lineas:[{material_id:1,cantidad:1,precio:12.98,n:'Tubo 1" x 3"',pres:'barra'}]}],gastos:[{id:42,categoria:'Flete',total:20}]}];
-  await p.goto(H+'costos.html?tab=semana');await p.waitForSelector('[data-compra-llego="41"]');await w();
-  ok('Plan: tarjeta amarilla "Compra pedida a Colores y Ambiente"',(await p.textContent('[data-compra-llego="41"]')).includes('Compra pedida a Colores y Ambiente'));
-  const f1=await p.textContent('[data-cmat="1"]');
-  ok('Plan: +1 en camino y ya no pide comprar ese tubo',f1.includes('+1 en camino')&&f1.trim().endsWith('0'),f1);
+  await p.goto(H+'taller.html?vista=corte&ver=material');await p.waitForSelector('#vCorte [data-compra-llego="41"]');await w();
+  ok('Material: tarjeta amarilla "En camino · Colores y Ambiente"',(await p.textContent('#vCorte .mt-camino')).includes('En camino · Colores y Ambiente'));
+  const f1=await p.evaluate(()=>window.TallerMaterial.filas().find(r=>String(r.f.id)==='1'));
+  ok('Material: el tubo 1" x 3" cuenta 1 en camino',f1&&f1.camino===1,f1&&{camino:f1.camino,falta:f1.falta});
   // ¿Llegó?
-  await p.click('[data-compra-llego="41"]');await p.waitForSelector('#sheetCompra.open');await w();
+  await p.click('#vCorte [data-compra-llego="41"]');await p.waitForSelector('#sheetCompra.open');await w();
   ok('¿Llegó? con lo pedido en amarillo',(await p.textContent('#compraBody')).includes('por confirmar'));
   await p.fill('[data-k="l:0:0:cantidad"]','2');await p.fill('#cpNum0','A-77');await p.fill('#cpPapel0','30.11');await w();
   ok('Total del papel: cuadra con las líneas',(await p.textContent('#cpCuadra0')).includes('Cuadra'));
@@ -105,13 +105,13 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   ok('Confirmar: factura, cantidad real, flete y pago con vuelto y motivo',cc&&cc.grupo_id===41&&cc.p.lugares[0].numero==='A-77'&&cc.p.lugares[0].total===30.11&&cc.p.lugares[0].lineas[0].cantidad===2&&cc.p.lugares[0].pedida_id===41
     &&JSON.stringify(cc.p.gastos)==='[{"categoria":"Flete","monto":20}]'&&cc.p.pago.modo==='saque'&&cc.p.pago.cuenta_id===1&&cc.p.pago.sacado===100&&cc.p.pago.vuelto===49&&cc.p.pago.motivo==='Se perdió un billete',cc);
   // No llegó
-  await p.click('[data-compra-llego="41"]');await p.waitForSelector('#sheetCompra.open');await w();
+  await p.click('#vCorte [data-compra-llego="41"]');await p.waitForSelector('#sheetCompra.open');await w();
   await p.click('[data-cp-llega="0:nada"]');await w();await p.click('[data-cp-anular="0"]');await w(400);
   ok('No llegó sin motivo no anula',!ultimo(rpcs,'compra_no_llego'));
   await p.fill('#cpMot0','El proveedor no tenía');await p.click('[data-cp-anular="0"]');await w(900);
   ok('No llegó con motivo',JSON.stringify(ultimo(rpcs,'compra_no_llego'))===JSON.stringify({pid:41,motivo:'El proveedor no tenía'}));
   // Bolívares: pagar con tasa escrita
-  await p.click('[data-compra-llego="41"]');await p.waitForSelector('#sheetCompra.open');await w();
+  await p.click('#vCorte [data-compra-llego="41"]');await p.waitForSelector('#sheetCompra.open');await w();
   await p.click('[data-cp-modo="pague"]');await w();await p.click('[data-cp-cuenta="2"]');await w();
   await p.click('[data-cp-confirmar]');await w(400);
   ok('En bolívares pide la tasa',ultimo(rpcs,'compra_confirmar')===cc);

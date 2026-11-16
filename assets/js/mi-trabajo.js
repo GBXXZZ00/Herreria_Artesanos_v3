@@ -53,7 +53,7 @@
     pagos = rp.data || {};
     hojasCorte = (rc && !rc.error && rc.data) || [];
   }
-  // Hoja de corte del sábado (cuando Ray o Gualfredo aceptan el plan de Costos › Semana)
+  // Hoja de corte del sábado (lo que Ray o Gualfredo le envían desde Taller › Corte)
   let hojasCorte = [];
   // Medidas de la hoja: piezas en cm; retazos y lo que sobra en metros. El mínimo que se guarda lo da la base.
   const mTxt = (cm) => (Number(cm) / 100).toLocaleString('es-VE', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' m';
