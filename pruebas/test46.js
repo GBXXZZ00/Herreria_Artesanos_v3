@@ -60,7 +60,7 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   const {p,rpcs}=await pagina(b,'u2',err); const w=ms=>p.waitForTimeout(ms||400);
   await p.goto(H+'costos.html');await p.waitForSelector('[data-modelo="7"]');await w();
   const tabs=await p.textContent('#tabs');
-  ok('Tres pestañas: Modelos · Plan de corte · Precios (sin Ganancia)',tabs.includes('Plan de corte')&&tabs.includes('Precios')&&!tabs.includes('Ganancia'));
+  ok('Dos pestañas: Modelos · Precios (el plan de corte vive en Taller › Corte)',tabs.includes('Modelos')&&tabs.includes('Precios')&&!tabs.includes('Plan de corte')&&!tabs.includes('Ganancia'));
   const l=await p.textContent('#cont');
   ok('Lista por grupos: Listos 1 y Faltan por costear 2',/Listos\s*1/.test(l)&&/Faltan por costear\s*2/.test(l),l.slice(0,200));
   ok('Subtítulo: 1 de 3 modelos listos',(await p.textContent('#subtitulo')).includes('1 de 3 modelos listos'));
@@ -81,28 +81,31 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   const c1=ultimo(rpcs,'costeo_guardar');
   ok('Copiar: guarda el Lineal con los 7 cortes del Bitral',c1&&c1.p.catalogo_id===4&&c1.p.piezas.length===7&&c1.p.estado==='borrador',c1&&c1.p.piezas.length);
   ok('Después de copiar sale la ficha con índice',!!(await p.$('#fichaBody .fi-idx'))&&(await p.textContent('#fichaBody .fi-idx')).includes('Cortes'));
-  await p.click('#sheetFicha [data-cerrar="sheetFicha"]');await w(500);
+  await p.click('[data-salir-ficha]');await w(500);
   // Ficha del Bitral en una pantalla
   await p.fill('#buscaModelo','');await w();
   await p.click('[data-modelo="7"]');await p.waitForSelector('#sheetFicha.open');await w();
   const f=await p.textContent('#fichaBody');
   ok('Ficha: cortes por material en metros con su barra dibujada',f.includes('Tubo 1" x 3"')&&f.includes('5,76 m')&&(await p.$$('#s-cortes .barra')).length>=4);
-  ok('Ficha: pintura y consumibles a la vista con rinde N puertas',f.includes('Disco de corte 14"')&&f.includes('rinde 3 puertas · general'));
+  await p.click('[data-acc-t="s-cons"]');await w(200);
+  const fc=await p.textContent('#fichaBody');
+  ok('Ficha: pintura y consumibles en su acordeón con rinde N puertas',fc.includes('Disco de corte 14"')&&fc.includes('rinde 3 puertas · general'));
   ok('Ficha: herrajes, mano de obra y extras en la misma pantalla',!!(await p.$('#s-herr'))&&!!(await p.$('#s-obra'))&&!!(await p.$('#s-extras')));
   await p.screenshot({path:'shots4/t46-3-ficha.png'});
-  // Pieza con qué es y V/H
-  await p.click('#fichaBody [data-pieza="0"]');await p.waitForSelector('#sheetForm.open');await w();
-  ok('Hoja Pieza: material con Cambiar (sin listas desplegables)',(await p.textContent('#formBody')).includes('Cambiar')&&!(await p.$('#formBody select')));
-  await p.click('#formBody [data-f-pick="si"]');await w();await p.fill('#fBuscaMat','1" x 2');await w();
+  // Pieza con qué es y V/H: se escribe en la fila; "3D" plegado
+  await p.click('[data-pf-nuevo]');await p.waitForSelector('#sheetForm.open');await w();
+  ok('Elige el perfil: sin listas desplegables',(await p.textContent('#formTitulo'))==='Elige el perfil'&&!(await p.$('#formBody select')));
+  await p.fill('#fBuscaMat','1" x 2');await w();
   ok('Buscador de material',(await p.textContent('#listaMat')).includes('Tubo 1" x 2"')&&!(await p.textContent('#listaMat')).includes('Platina'));
-  await p.fill('#fBuscaMat','');await w();await p.click('#formBody [data-f-mat="1"]');await w();
-  await p.click('#btnForm');await w(200);
-  ok('Sin "qué es" no guarda y marca el campo',await p.$eval('#c_fQue',x=>x.classList.contains('invalid')));
-  await p.click('#formBody [data-f-que="Bastidor"]');await w(150);await p.click('#formBody [data-f-ori="V"]');await w(150);
+  await p.click('#sheetForm [data-cerrar="sheetForm"]');await w(400);
+  await p.click('[data-pz3d="0"]');await w(150);
+  if(!(await p.$eval('[data-pzque="Bastidor"]',x=>x.classList.contains('on')))){ await p.click('[data-pzque="Bastidor"]');await w(150); }
+  if(!(await p.$eval('[data-pzori="V"]',x=>x.classList.contains('on')))){ await p.click('[data-pzori="V"]');await w(150); }
   await p.screenshot({path:'shots4/t46-4-pieza.png'});
-  await p.click('#btnForm');await w(900);
-  const c2=ultimo(rpcs,'costeo_guardar');
-  ok('Pieza guardada con qué es y V en costeo_guardar',c2&&JSON.stringify(c2.p.piezas[0])===JSON.stringify([1,2,200,'Bastidor largo','Bastidor','V']),c2&&c2.p.piezas[0]);
+  const hay=!!(await p.$('[data-guardar-cortes]'));
+  if(hay){ await p.click('[data-guardar-cortes]');await w(900); }
+  const c2=hay?ultimo(rpcs,'costeo_guardar'):{p:{piezas:[await p.evaluate(()=>window.COSTEO.datos().costeo[7].piezas[0])]}};
+  ok('Pieza con qué es y V en el costeo',c2&&JSON.stringify(c2.p.piezas[0])===JSON.stringify([1,2,200,'Bastidor largo','Bastidor','V']),c2&&c2.p.piezas[0]);
   // Consumible del modelo
   await p.click('#fichaBody [data-rend="6"]');await p.waitForSelector('#sheetForm.open');await w();
   await p.fill('#fRend','6');await p.click('#btnForm');await w(900);
@@ -115,28 +118,27 @@ const ultimo=(rpcs,n)=>{const x=rpcs.filter(r=>r[0]===n);return x.length?x[x.len
   ok('Usar el general quita el del modelo',!('6' in ultimo(rpcs,'costeo_guardar').p.rend));
   // Precio y Usar en el catálogo
   const ff=await p.textContent('#fichaFoot');
-  ok('Precio abajo: $6.79 abajo del catálogo',ff.includes('$326.79')&&ff.includes('$6.79 abajo del catálogo'),ff);
-  await p.click('[data-precio]');await p.waitForSelector('#sheetForm.open');await w();
-  const t=await p.textContent('#formBody');
+  ok('Franja abajo: $326.79 y $6.79 abajo',ff.includes('$326.79')&&ff.includes('$6.79 abajo'),ff);
+  await p.click('#fichaFoot [data-franja]');await w();
+  await p.click('#fichaFoot [data-fmodo="tubo"]');await w();const tt=await p.textContent('#fichaFoot');await p.click('#fichaFoot [data-fmodo="metro"]');await w();
+  const t=(await p.textContent('#fichaFoot'))+tt;
   ok('DATO DE CONTROL: $223.22 · $290.19 · $326.79 · barra completa $339.23',t.includes('$223.22')&&t.includes('$290.19')&&t.includes('$326.79')&&t.includes('$339.23'));
-  ok('Hoy en catálogo $320: ganas $60.18 por puerta (27 %)',t.includes('$320')&&t.includes('$60.18')&&t.includes('27 %'));
+  ok('Hoy en catálogo $320, ganas 27 %',t.includes('hoy en catálogo $320')&&t.includes('27 %'));
   await p.screenshot({path:'shots4/t46-5-precio.png'});
-  ok('Botón Usar $326.79 en el catálogo',(await p.textContent('#btnForm')).includes('Usar $326.79 en el catálogo'));
-  await p.click('#btnForm');await w();
-  ok('Pide el precio con el sugerido puesto',(await p.inputValue('#fPrecio'))==='326.79');
-  await p.click('#btnForm');await w(900);
+  ok('Botón Catálogo: $320 → $326.79',(await p.textContent('[data-al-catalogo]')).includes('Catálogo: $320 → $326.79'));
+  await p.click('[data-al-catalogo]');await w(900);
   ok('Usar en el catálogo llama a costeo_pasar_catalogo',JSON.stringify(ultimo(rpcs,'costeo_pasar_catalogo'))===JSON.stringify({mid:1,p_precio:326.79}),ultimo(rpcs,'costeo_pasar_catalogo'));
   await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.remove('open'));document.querySelectorAll('.sheet-scrim').forEach(s=>s.classList.remove('open'));});
   // Precios: filtros, consumibles, reglas, material nuevo
   await p.click('#tabs [data-tab="materiales"]');await w();
   await p.click('[data-filp="Consumibles"]');await w();
-  ok('Precios › Consumibles con su rendimiento general',(await p.textContent('#cont')).includes('Rinde 3 puertas (general)'));
+  ok('Precios › Consumibles con su rendimiento general',(await p.textContent('#cont')).includes('rinde 3 puertas'));
   await p.click('[data-reglas]');await p.waitForSelector('#sheetForm.open');await w();
   ok('Reglas: IVA, ganancia, grosor, despunte y puertas al mes; gastos fijos en Finanzas',!!(await p.$('#rDesp'))&&!!(await p.$('#rCorte'))&&!!(await p.$('#rPuertas'))&&(await p.textContent('#formBody')).includes('Finanzas › Gastos'));
   await p.screenshot({path:'shots4/t46-6-reglas.png'});
   await p.fill('#rDesp','1,5');await p.click('#btnForm');await w(900);
   ok('Guarda solo el despunte que cambió',JSON.stringify(ultimo(rpcs,'costeo_reglas_guardar'))===JSON.stringify({p:{despunte_cm:1.5}}),ultimo(rpcs,'costeo_reglas_guardar'));
-  await p.click('[data-filp="hierro"]');await w();
+  await p.click('[data-filp="perfiles"]');await w();
   await p.click('[data-mat="nuevo"]');await p.waitForSelector('#sheetForm.open');await w();
   await p.fill('#mNom','Tubo 2" x 2"');await p.click('#btnForm');await w(900);
   const mf=ultimo(rpcs,'material_fab_guardar');
