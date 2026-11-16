@@ -5,6 +5,15 @@ Lista de todo lo que hay que probar en el teléfono. Cada chat que haga cambios 
 Antes de probar: cerrar la app por completo y volver a abrirla, para que cargue la versión nueva.
 
 
+## Taller lote 7: vendedora y sello ENTREGADO (v85, 16 nov 2026, Claude de Gualfredo)
+**Vendedora (Yulimar)**
+- [ ] En el Taller ve solo Pedidos: Todos · En proceso · Listos. No ve montos, Asignar, Corte ni Nómina.
+- [ ] En Listos: la entrega, WhatsApp, Venta y Marcar entregada. Al marcarla, sale del Taller.
+
+**Nota del cliente**
+- [ ] Una venta entregada: su PDF (en la venta y en el seguimiento) trae el sello verde ENTREGADO con la fecha de entrega, sin tapar números.
+- [ ] Una venta que no está entregada: el PDF sale igual que siempre.
+
 ## Taller › Corte › Material, lote 6 (v84, 16 nov 2026, Claude de Gualfredo)
 Antes: aplicar v89 a v96 con Gualfredo presente.
 

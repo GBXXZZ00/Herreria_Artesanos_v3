@@ -12,6 +12,12 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 7 · vendedora y sello ENTREGADO)
+- Qué hizo: la vendedora en el Taller ve Todos · En proceso · **Listos** (sin montos, sin Asignar), con Marcar entregada; sus Listos se leen de `ventas` (sin migración). **Sello ENTREGADO** verde y girado con la fecha de entrega en el PDF de la venta entregada (`crearPDF`); antes de entregada, igual que siempre. Sin quién entregó (la app no lo guarda). Los estados (esqueletos, vacíos y errores) ya estaban de los lotes 1 a 6. `?v=85`.
+- Pruebas: test52 nueva. 16, 17, 28 TODO OK.
+- Está tocando: `ventas-comun.js` (PDF), Taller (vendedora).
+- Pendientes: batería completa, revisión propia y PR sin unir. Costeador espera el OK de Ray.
+
 ## 2026-11-16 · Claude de Gualfredo (Code, Taller lote 6 · Corte, material y compras)
 - Qué hizo (Gualfredo: "Dale lo que falta"): Taller › Corte con dos vistas, Por herrero y **Material** (K11 a K18): compra en camino con ¿Llegó? y ⋯ (cambiar, volver a mandar el mensaje, cancelar), tabla Hay · Apartado · Libre · Falta con retazos, Proveedores, Comprar (lo que falta marcado, lo que queda en 0 sugerido), mensaje al proveedor por WhatsApp (también al enviar un corte con compra), contar barras, retazo encontrado y **barra dañada** (K09). `compra.js`: ¿Llegó? con Todo · Una parte · Nada (lo que no vino sigue en camino, `quedan`); el botón "No llegó" pasó a ser "Nada". **Depósito sin Compras** (dos pestañas; la factura desde Finanzas se abre directo). `?v=84`.
 - Migraciones nuevas (sin aplicar, probadas con rollback): v95 (la app ya no llama 12 funciones internas; **con cuidado**: reglas de permisos) y v96 (`corte_barra_danada`).

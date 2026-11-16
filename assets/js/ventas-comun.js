@@ -137,6 +137,22 @@
     });
   }
 
+  // Sello verde ENTREGADO con su fecha ("20 NOV 2026"): un recuadro girado 12° (sube a la derecha) con doble borde
+  function sello(doc, x, y, fecha){
+    const VERDE = [31, 122, 77], ang = 12 * Math.PI / 180, w = 64, h = 24;
+    const rot = (dx, dy) => [x + dx * Math.cos(ang) + dy * Math.sin(ang), y - dx * Math.sin(ang) + dy * Math.cos(ang)];
+    const caja = (m, grosor) => { const pts = [rot(m, m), rot(w - m, m), rot(w - m, h - m), rot(m, h - m)];
+      doc.setLineWidth(grosor); pts.forEach((pt, i) => { const q = pts[(i + 1) % 4]; doc.line(pt[0], pt[1], q[0], q[1]); }); };
+    doc.setDrawColor(VERDE[0], VERDE[1], VERDE[2]); doc.setTextColor(VERDE[0], VERDE[1], VERDE[2]);
+    caja(0, 1.1); caja(1.8, 0.35);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
+    const t1 = rot(w / 2 - doc.getTextWidth('ENTREGADO') / 2, 12.5); doc.text('ENTREGADO', t1[0], t1[1], { angle:12 });
+    const d = fecha ? new Date(fecha) : null;
+    if(d && !isNaN(d)){
+      const f = d.getDate() + ' ' + ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'][d.getMonth()] + ' ' + d.getFullYear();
+      doc.setFontSize(10.5); const t2 = rot(w / 2 - doc.getTextWidth(f) / 2, 19.5); doc.text(f, t2[0], t2[1], { angle:12 });
+    }
+  }
   async function crearPDF(v){
     await cargarJsPDF();
     const { jsPDF } = window.jspdf;
@@ -248,6 +264,10 @@
     if(!cot && abonos.length){ const ult = abonos.filter(a => a.tipo === 'abono').pop(); if(ult) notas.push(`Método de pago: ${ult.metodo}.`); }
     if(v.notas) notas.push('Nota: ' + v.notas);
     notas.forEach(t => { const ls = doc.splitTextToSize(t, X - M - 10); doc.text(ls, M, yn); yn += ls.length * 3.8 + 1.5; });
+
+    // Sello ENTREGADO (Parte B, maqueta C5): verde, girado, con la fecha de entrega, en el blanco debajo de las notas
+    // y a la izquierda de los totales. Antes de entregada la nota sale como siempre. No se guarda quién la entregó.
+    if(v.estado === 'entregada') sello(doc, M + 8, Math.min(Math.max(yn + 6, yNotas + 10), 236), v.entregada_en);
 
     // Pie
     const paginas = doc.getNumberOfPages();

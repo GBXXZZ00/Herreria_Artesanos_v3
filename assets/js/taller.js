@@ -174,10 +174,16 @@
     SAB = sabados();
     try{
       if(lectura){
-        const { data, error } = await db.rpc('produccion_lectura');
-        if(error) throw error;
+        // Vendedora (T7): lo que está en fabricación (produccion_lectura) y sus Listos (ventas en estado lista,
+        // que ella ya puede leer), sin montos. Los Listos no traen pasos: ya se terminaron todos.
+        const [rp, rl] = await Promise.all([db.rpc('produccion_lectura'),
+          db.from('ventas').select('id,estado,total,fecha_entrega,lista_en,token_seguimiento,interna,cliente:clientes(nombre,telefono),abonos(monto,tipo,estado),items:venta_items(id,nombre,tipo,foto,cantidad,especificaciones,catalogo:catalogo(id,fotos))')
+            .eq('estado', 'lista').eq('interna', false).order('lista_en', { ascending:true })]);
+        if(rp.error) throw rp.error;
+        if(rl.error) toast('No se pudieron cargar los pedidos listos. Toca actualizar.', 'error');
         montos = {};
-        return mostrarPedidos(data || []);
+        return mostrarPedidos((rp.data || []).map(v => Object.assign({ estado:'en_produccion' }, v))
+          .concat((rl.data || []).map(v => Object.assign(v, { items:(v.items || []).map(it => Object.assign(it, { etapas:[] })) }))));
       }
       const [rv, rc] = await Promise.all([
         db.from('ventas')
@@ -328,14 +334,16 @@
     const r = v._resumen;
     const pie = pieTarjeta(v);
     const botonAsignar = !lectura && !r.lista && r.asignados === 0 && r.sinAsignar > 0 && primeraPorAsignar(v);
-    const prods = itemsFabrica(v).map(it => `<div class="tl-prod"><span>${esc(it.nombre)}${it._de ? ` ${it._unidad} de ${it._de}` : it.cantidad > 1 ? ' ×' + it.cantidad : ''}</span><div class="tl-trk">${fichitas(it)}</div></div>`).join('');
+    const its = itemsFabrica(v).length ? itemsFabrica(v) : (r.lista ? (v.items || []) : []);
+    const prods = its.map(it => `<div class="tl-prod"><span>${esc(it.nombre)}${it._de ? ` ${it._unidad} de ${it._de}` : it.cantidad > 1 ? ' ×' + it.cantidad : ''}</span><div class="tl-trk">${fichitas(it)}</div></div>`).join('');
     let abajo;
-    if(filtro === 'listos' && r.lista && !v.interna && !lectura){
+    if(filtro === 'listos' && r.lista && !v.interna){
       const resta = AV.resta(v);
       const tel = v.cliente && v.cliente.telefono;
-      abajo = `<div class="tl-kv"><div><span>Debe el cliente</span><b class="${resta > 0 ? 'debe' : 'ok'}">${resta > 0 ? dinero(resta) : '$0 · pagado'}</b></div>
-          <div><span>Entrega</span><b>${v.fecha_entrega ? esc(fechaDia(v.fecha_entrega, true)) : 'sin fecha'}</b></div></div>
-        <div class="tl-ats">${tel ? `<a href="${esc(AV.linkSeguimientoWA(v))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<button type="button" data-abrir="${v.id}">Fotos</button><a href="ventas.html?abrir=${v.id}" data-sub>Venta</a></div>
+      const entrega = `<div><span>Entrega</span><b>${v.fecha_entrega ? esc(fechaDia(v.fecha_entrega, true)) : 'sin fecha'}</b></div>`;
+      // La vendedora no ve montos en el Taller (T7): solo la entrega
+      abajo = `<div class="tl-kv">${lectura ? entrega : `<div><span>Debe el cliente</span><b class="${resta > 0 ? 'debe' : 'ok'}">${resta > 0 ? dinero(resta) : '$0 · pagado'}</b></div>${entrega}`}</div>
+        <div class="tl-ats">${tel ? `<a href="${esc(AV.linkSeguimientoWA(v))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${lectura ? '' : `<button type="button" data-abrir="${v.id}">Fotos</button>`}<a href="ventas.html?abrir=${v.id}" data-sub>Venta</a></div>
         <button class="btn-primary tl-entregar" type="button" data-entregar="${v.id}">Marcar entregada</button>`;
     } else {
       abajo = `<div class="tl-pie"><span class="${pie.rojo ? 'rojo' : ''}">${esc(pie.t)}</span>${botonAsignar
@@ -1310,8 +1318,8 @@
     if(p.rol !== 'admin' && p.rol !== 'vendedor'){ location.replace('index.html'); return; }
     if(p.rol === 'vendedor'){
       lectura = true;
-      // La vendedora ve Todos y En proceso, sin montos ni Asignar ni Nómina (sus Listos llegan después)
-      FILTROS = FILTROS_ADMIN.filter(f => f.id === 'todos' || f.id === 'proceso');
+      // La vendedora ve Todos, En proceso y Listos, sin montos ni Asignar ni Nómina (T7). Marca entregada.
+      FILTROS = FILTROS_ADMIN.filter(f => f.id !== 'asignar');
       if(!FILTROS.some(f => f.id === filtro)) filtro = 'todos';
       document.body.classList.add('solo-lectura');
     }

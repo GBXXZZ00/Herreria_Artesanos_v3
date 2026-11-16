@@ -81,6 +81,12 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 - **Datos:** RPC `nomina_semana`, `nomina_trabajador`, `pagar_lo_marcado` (v88), `resolver_vale`, `anotar_vale`, `nomina_salida`, `vale_salida`, `movimiento_ubicar`; tablas `etapas`, `pagos_trabajador`, `movimientos`, `cuentas` (lectura).
 - **Enlaces viejos:** `nomina.html` redirige a `taller.html?vista=nomina` (con `&t=ID` abre a ese trabajador; `&que=vale`, su vale por revisar).
 
+## Taller: vendedora (lote 7, T7)
+- La vendedora ve solo Pedidos: Todos · En proceso · Listos, sin montos, sin Asignar, sin Corte ni Nómina. Lo que está en fabricación sale de `produccion_lectura`; sus Listos, de `ventas` en estado `lista` (la vendedora ya puede leer ventas). En Listos: entrega, WhatsApp, Venta y Marcar entregada (`cambiar_estado_venta`).
+
+## Nota del cliente: sello ENTREGADO (lote 7, Parte B)
+- `crearPDF` (`ventas-comun.js`): si la venta está `entregada`, sello verde girado ENTREGADO con la fecha de `entregada_en`, en el blanco a la izquierda de los totales. La app no guarda quién entregó, así que solo va la fecha.
+
 ## Taller › Corte › Material (`taller-material.js` + `compra.js`, lote 6) · solo Ray y Gualfredo
 - **Para qué:** el material del taller y sus compras. Arriba lo que viene en camino (amarillo, ¿Llegó? y ⋯: cambiar, volver a mandar el mensaje, cancelar). Tabla Material · Hay · Apartado · Libre · Falta (apartado = los planes de este sábado y el próximo), retazos con su número y ✕, Proveedores (deuda, en camino, + Proveedor; cada uno abre su ficha en Finanzas). Abajo un solo Comprar (lo que falta marcado, lo que queda en 0 sugerido), + Retazo encontrado y Contar barras.
 - **Mensaje al proveedor:** después de pedir (en Material o al enviar un corte con compra) sale el mensaje ya escrito (Lo busco / Me lo traen, Hoy / Mañana) para mandarlo por WhatsApp (`wa.me`).

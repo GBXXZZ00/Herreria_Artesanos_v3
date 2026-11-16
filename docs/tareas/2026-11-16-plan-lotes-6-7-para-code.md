@@ -33,7 +33,7 @@ Si la sesión se corta, una sesión nueva sigue desde aquí. Primero lee `docs/t
 11. **Prueba nueva `pruebas/test54.js`** (con el arnés de `test53`): Material (tabla, retazo ✕, en camino), Comprar marcado y sugerido + mensaje, ¿Llegó? una parte manda `quedan`, ⋯ cambiar y cancelar, contar, retazo, proveedores, barra dañada, Depósito sin Compras. Correr también test42, test43, test48, test53, test44 (Bitral).
 12. Subir `?v=84`, bitácora, `docs/modulos.md`, `docs/base-de-datos.md` (v95, v96), `docs/claude/documentos/lista-de-pruebas.md`, `pruebas/LEEME.md`, `supabase/migrations/LEEME.md`. Capturas iPhone 13 de las pantallas nuevas. Commit y push.
 
-## Lote 7
+## Lote 7: ✅ hecho (v85, test52)
 - Vendedora en el Taller (maqueta T7): solo Pedidos (Todos · En proceso · Listos), sin montos ni Nómina ni Corte, puede Marcar entregada.
 - Estados en todo el Taller: esqueletos al cargar, vacíos que dicen qué hacer, errores con `.toast` claro.
 - Sello **ENTREGADO** en el PDF de la venta (§4, `ventas-comun.js`, jsPDF) cuando la venta está entregada (maqueta C5).
