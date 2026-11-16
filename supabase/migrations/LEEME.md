@@ -117,3 +117,4 @@ La clave queda guardada cifrada en GitHub: no se ve en el repo ni en los registr
 | 20261116130455 | v94_gualfredo_compra_parte · ¿Llegó? con una parte y cambiar compra pedida |
 | 20261116130514 | v95_gualfredo_cerrar_funciones_internas · la app no llama funciones internas |
 | 20261116130540 | v96_gualfredo_barra_danada · reportar barra dañada desde el Corte |
+| 20261116143030 | v97_gualfredo_cerrar_avisos_y_produccion · cierra _avisar_usuario y _a_produccion_si_pagada |
