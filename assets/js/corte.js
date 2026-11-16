@@ -449,7 +449,7 @@
     const hh = e.target.closest('[data-hoja-h]'); if(hh){ abrirHojaHerrero(hh.dataset.hojaH); return true; }
     const ph = e.target.closest('[data-pdf-hoja]'); if(ph){ pdfHoja(ph.dataset.pdfHoja); return true; }
     if(e.target.closest('[data-pdf-compra]')){ pdfCompra(); return true; }
-    if(e.target.closest('[data-comprar]')){ if(window.COMPRA && window.COMPRA.abrirDesdePlan) window.COMPRA.abrirDesdePlan(planSemana(semSab)); else location.href = 'deposito.html?tab=compras'; return true; }
+    if(e.target.closest('[data-comprar]')){ if(window.COMPRA && window.COMPRA.abrirDesdePlan) window.COMPRA.abrirDesdePlan(planSemana(semSab)); else location.href = 'taller.html?vista=corte'; return true; }
     if(e.target.closest('[data-alcanza]')){ window.CostosApp.abrirCorte({ k:'alcanza', hay:{}, res:null }); return true; }
     const cm = e.target.closest('[data-cmat]'); if(cm){ window.CostosApp.abrirCorte({ k:'mat', mid:cm.dataset.cmat, nuevoRet:false }); return true; }
     if(e.target.closest('[data-aceptar]')){ const P = planSemana(semSab); P.aceptado = true; guardarPlan(P, { aceptado:true, ajustado:P.ajustado }, 'Plan aceptado. Cada herrero ya tiene su hoja de corte en Mi trabajo.'); return true; }

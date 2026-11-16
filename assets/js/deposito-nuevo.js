@@ -409,8 +409,10 @@
   });
   $('btnContar').onclick = abrirConteo;
   $('btnGuardarConteo').onclick = guardarConteo;
-  $('btnFoto').onclick = abrirCompra;
+  // "Cargar compra" se quitó con Depósito › Compras (lote 6)
   $('btnGuardarFoto').onclick = guardarCompra;
 
-  window.DepNuevo = { pintarFab, pintarCompras, recargar };
+  // Factura desde Finanzas (deposito.html?tab=compras&compra=ID): carga y la abre
+  async function abrirFacturaDe(id){ try{ if(!D) await cargar(); abrirFactura(id); } catch(e){ toast(errTxt(e), 'error'); } }
+  window.DepNuevo = { pintarFab, pintarCompras, recargar, abrirCompra:abrirFacturaDe };
 })();

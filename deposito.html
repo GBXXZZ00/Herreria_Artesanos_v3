@@ -23,13 +23,8 @@
   .seg-d button.on{color:var(--accent)}
   .seg-fondo{position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:44px;border-radius:11px;background:var(--surface);box-shadow:0 1px 3px rgba(20,40,40,.12);transition:transform 220ms var(--ease-out)}
   .seg-d.en-2 .seg-fondo{transform:translateX(100%)}
-  /* Tres pestañas: Consumibles, Fabricación y Compras */
-  .seg-d{grid-template-columns:1fr 1fr 1fr}
-  .seg-d button{font-size:14.5px}
-  .seg-fondo{width:calc(33.333% - 2.7px)}
-  .seg-d.en-3 .seg-fondo{transform:translateX(200%)}
   .mat-ico.fab{background:var(--surface-2);color:var(--ink)}
-  #pieFab,#pieCompra{z-index:40}
+  #pieFab{z-index:40}
   .s-favor{color:var(--accent)} .s-debe{color:#B42318}
   /* En computadora la lista queda a la izquierda y el detalle se abre al lado */
   @media (min-width:1024px){
@@ -236,7 +231,6 @@
     <span class="seg-fondo" aria-hidden="true"></span>
     <button class="on" type="button" data-tab="materiales" aria-pressed="true">Consumibles</button>
     <button type="button" data-tab="fab" aria-pressed="false">Fabricación</button>
-    <button type="button" data-tab="compras" aria-pressed="false">Compras</button>
   </div>
   <div class="mostrar" id="subCons"><span class="mostrar-t">Ver</span><div class="mostrar-l"><button class="fx on" type="button" data-sub="materiales">Materiales</button><button class="fx" type="button" data-sub="entregas">Entregas</button></div></div>
   <div class="mostrar hidden" id="filtrosWrap"><span class="mostrar-t">Mostrar</span><div class="mostrar-l" id="filtros" role="group" aria-label="Filtrar entregas"></div></div>
@@ -246,7 +240,6 @@
 </main>
 
 <div class="pie-entregar hidden" id="pieFab"><button class="btn-primary" type="button" id="btnContar">Contar barras</button></div>
-<div class="pie-entregar hidden" id="pieCompra"><button class="btn-primary" type="button" id="btnFoto">Cargar compra</button></div>
 <div class="pie-entregar hidden" id="pieEntregar"><button class="btn-primary" type="button" id="btnEntregar">Entregar material</button></div>
 
 <div class="bottom-nav-wrap" id="menuModulos" data-activo="deposito"></div>
