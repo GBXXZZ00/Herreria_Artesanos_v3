@@ -15,7 +15,7 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 ## 2026-11-16 · Claude de Gualfredo (Code, seguridad v97 y Costeador publicado)
 - PR #12 (Costeador) unido con el OK de Gualfredo ("haz todo de una").
 - v97: `cambiar_estado_venta` y `actualizar_venta` pasan a security definer con la revisión de rol al empezar (administrador o vendedora); se cierran `_avisar_usuario` y `_a_produccion_si_pagada`. Probado con rollback contra la base real: la vendedora marca entregada igual; un trabajador ya no puede cambiar ni editar ventas; las dos internas quedan cerradas. **Con cuidado**: reglas de permisos de ventas.
-- Sin cambios en la app (ni `?v=`).
+- Sin cambios en la app (ni `?v=`). Aplicada con el conector (versión 20261116143030).
 
 ## 2026-11-16 · Claude de Gualfredo (Code, lote 8 · Costeador)
 - Qué hizo (Gualfredo: "Ray dio ok con todo, a darle play"): **Costeador** con dos pestañas, Modelos · Precios (el plan de corte vive en Taller › Corte; `costos.html?tab=semana` lleva allá).
