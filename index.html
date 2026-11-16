@@ -15,7 +15,7 @@
 <title>Herrería Artesanos</title>
 <link rel="prefetch" href="venta.html">
 <link rel="prefetch" href="catalogo.html">
-<link rel="stylesheet" href="assets/css/base.css?v=85">
+<link rel="stylesheet" href="assets/css/base.css?v=86">
 <style>
   .page{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 32px)}
   .vista{opacity:0;transform:translateY(8px);transition:opacity 260ms var(--ease-out),transform 260ms var(--ease-out)}
@@ -325,7 +325,7 @@
   .pz{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:baseline;background:var(--surface-2);border-radius:14px;padding:11px 12px;margin:10px 0 2px;font-size:14px;color:var(--ink-soft)}
   .pz b{color:var(--ink);font-weight:800}
   .pz-n{font-weight:800;color:var(--ink);min-width:14px;text-align:right}
-  /* Hoja de corte del herrero (Costos › Semana) */
+  /* Hoja de corte del herrero (Taller › Corte) */
   .tj-corte{border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0}
   .tj-corte-m span{float:right;font-weight:600;color:var(--ink-soft);font-size:12.5px}
   .tj-corte-t{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -598,15 +598,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/vendor/supabase.js?v=85"></script>
-<script src="assets/js/supabase-client.js?v=85"></script>
-<script src="assets/js/img-compress.js?v=85"></script>
-<script src="assets/js/comun.js?v=85"></script>
-<script src="assets/js/avisos.js?v=85"></script>
-<script src="assets/js/sesion.js?v=85"></script>
-<script src="assets/js/ayuda.js?v=85"></script>
-<script src="assets/js/pdf-reporte.js?v=85"></script>
-<script src="assets/js/mi-trabajo.js?v=85"></script>
+<script src="assets/vendor/supabase.js?v=86"></script>
+<script src="assets/js/supabase-client.js?v=86"></script>
+<script src="assets/js/img-compress.js?v=86"></script>
+<script src="assets/js/comun.js?v=86"></script>
+<script src="assets/js/avisos.js?v=86"></script>
+<script src="assets/js/sesion.js?v=86"></script>
+<script src="assets/js/ayuda.js?v=86"></script>
+<script src="assets/js/pdf-reporte.js?v=86"></script>
+<script src="assets/js/mi-trabajo.js?v=86"></script>
 <script>
 (function(){
   'use strict';
@@ -863,8 +863,8 @@
     if(ef) ef.innerHTML = a.por_confirmar ? `<span class="num">${a.por_confirmar}</span> por confirmar` : a.por_ubicar ? `<span class="num">${a.por_ubicar}</span> por ubicar` : 'Dónde está tu dinero';
     if(a.por_ubicar) pend.push({ color:'naranja', icono:'dinero', titulo: plural(a.por_ubicar, '1 pago por ubicar', 'pagos por ubicar'), detalle:'¿Dónde quedó?', href:'finanzas.html?ubicar=1' });
     (a.debes || []).forEach(pr => pend.push({ color:'rojo', icono:'dinero', titulo:'Le debes a ' + String(pr.nombre).replace('Inversiones ', ''), detalle: din(-pr.saldo), href:'finanzas.html?prov=' + pr.id }));
-    if(a.faltan_barras) pend.push({ color:'amarillo', icono:'caja', titulo: 'Faltan ' + plural(a.faltan_barras.n, '1 barra', 'barras') + ' para el ' + window.AH.sabadoCorto(a.faltan_barras.sab), detalle:'Ver plan de corte', href:'costos.html?tab=semana&para=' + a.faltan_barras.sab });
-    if(a.plan_por_aceptar) pend.push({ color:'azul', icono:'reloj', titulo:'Plan de corte del ' + window.AH.sabadoCorto(a.plan_por_aceptar.sab) + ' por aceptar', detalle: plural(a.plan_por_aceptar.n, '1 puerta', 'puertas') + ' asignadas', href:'costos.html?tab=semana&para=' + a.plan_por_aceptar.sab });
+    if(a.faltan_barras) pend.push({ color:'amarillo', icono:'caja', titulo: 'Faltan ' + plural(a.faltan_barras.n, '1 barra', 'barras') + ' para el ' + window.AH.sabadoCorto(a.faltan_barras.sab), detalle:'Ver plan de corte', href:'taller.html?vista=corte&para=' + a.faltan_barras.sab });
+    if(a.plan_por_aceptar) pend.push({ color:'azul', icono:'reloj', titulo:'Plan de corte del ' + window.AH.sabadoCorto(a.plan_por_aceptar.sab) + ' por aceptar', detalle: plural(a.plan_por_aceptar.n, '1 puerta', 'puertas') + ' asignadas', href:'taller.html?vista=corte&para=' + a.plan_por_aceptar.sab });
     if(a.sin_cortes && a.sin_cortes.length) pend.push({ color:'rojo', icono:'etiqueta', titulo: plural(a.sin_cortes.length, '1 modelo en fabricación sin cortes', 'modelos en fabricación sin cortes'), detalle: a.sin_cortes.slice(0, 2).map(m => m.nombre).join(', ') + ' · cargarlos', href:'costos.html?modelo=' + a.sin_cortes[0].id });
     if(a.mes_sin_cerrar) pend.push({ color:'naranja', icono:'reloj', titulo:'Cierra el mes de ' + a.mes_sin_cerrar.nombre, detalle:'Reporte completo en Finanzas', href:'finanzas.html?tab=mes&mes=' + a.mes_sin_cerrar.mes });
     if(a.extras_sin_costear && a.extras_sin_costear.length){ const x = a.extras_sin_costear, n = x.reduce((t, e) => t + (Number(e.n) || 0), 0);

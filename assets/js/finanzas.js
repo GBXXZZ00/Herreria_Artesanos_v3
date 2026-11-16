@@ -56,18 +56,13 @@
     if(window.COMPRA) await window.COMPRA.cargar().catch(() => {});
     // Lo que sigue es extra: si falla, Finanzas igual funciona
     const ini0 = mesActual() + '-01';
-    const [rc, rp, rv] = await Promise.all([
+    // Los precios de cada proveedor viven en Costeador › Precios (lote 8): aquí ya no se cargan
+    const [rc, rv] = await Promise.all([
       db.from('compras').select('id,proveedor_id,documento,numero,fecha,subtotal,iva,total,material_pendiente,foto,nota').order('fecha', { ascending:false }).limit(300),
-      db.from('material_precios').select('material_id,proveedor_id,precio,espesor,desde,vigente').eq('vigente', true),
       db.from('ventas').select('id,total,confirmada_en,interna,estado,items:venta_items(catalogo_id,nombre,cantidad,precio_unitario)').gte('confirmada_en', ini0).not('estado', 'in', '(cotizacion,cancelada)'),
-    ]).catch(() => [{}, {}, {}]);
+    ]).catch(() => [{}, {}]);
     EXTRA.compras = (rc && !rc.error && rc.data) || [];
-    EXTRA.precios = (rp && !rp.error && rp.data) || [];
     VENTAS_MES = ((rv && !rv.error && rv.data) || []).filter(v => !v.interna);
-    if(EXTRA.precios.length){
-      const { data:mats } = await db.from('materiales').select('id,nombre,tipo').in('id', [...new Set(EXTRA.precios.map(x => x.material_id))]);
-      EXTRA.materiales = mats || [];
-    }
     // Costo de cada modelo del catálogo, calculado en la base (Costos)
     if(VENTAS_MES.length){ const rr = await Promise.resolve(db.rpc('costeo_resumen')).catch(() => ({})); COSTOS = (rr && !rr.error && rr.data) || null; }
   }
@@ -261,8 +256,6 @@
   function fichaProv(id){
     const p = prov(id), s = saldoProv(id), st = saldoTxt(s), movs = movsProv(id);
     const facturas = EXTRA.compras.filter(f => String(f.proveedor_id) === String(id));
-    const precios = EXTRA.precios.filter(x => String(x.proveedor_id) === String(id));
-    const mat = (mid) => EXTRA.materiales.find(m => m.id === mid) || {};
     const ajustes = movs.filter(m => m.tipo === 'ajuste');
     const body = (window.COMPRA ? window.COMPRA.tarjetasHtml({ proveedor:id, titulo:'En camino' }) : '') + `<div class="grande ${s > 0.005 ? 'favor' : s < -0.005 ? 'debe' : ''}"><span>${st.corto}</span><b>${dinero(Math.abs(s))}</b>
         <p>${s > 0.005 ? 'Le transferiste de más. Se descuenta solo en la próxima compra.' : s < -0.005 ? 'Compraste más de lo que le has transferido.' : 'No le debes nada y no tienes saldo a favor.'}</p></div>
@@ -276,7 +269,7 @@
       <div class="pie-dos" style="margin-top:10px"><button class="btn-secondary" type="button" data-ajustar-prov="${p.id}">Cambiar saldo</button><button class="btn-secondary" type="button" data-editar-prov="${p.id}">Editar</button></div>
       ${acc('movs', 'Movimientos · ' + movs.length, 'el más nuevo arriba', libretaHtml(movs, 'ep'))}
       ${acc('facturas', 'Facturas y notas · ' + facturas.length, dinero(facturas.reduce((a, f) => a + Number(f.total), 0)), facturas.length ? facturas.map(f => `<a class="cg-fila" href="deposito.html?tab=compras&compra=${f.id}"><div class="cg-nom">${f.documento === 'factura' ? 'Factura' : 'Nota de entrega'} ${esc(f.numero || '')}<span>${fecha(f.fecha)} · ${Number(f.iva) ? 'con IVA ' + dinero(f.iva) : 'sin IVA'}${f.foto ? ' · con foto' : ''}${f.material_pendiente ? ' · material por registrar' : ''}</span></div><div style="text-align:right;font-weight:800">${dinero(f.total)}</div></a>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin compras registradas.</p>')}
-      ${acc('vende', 'Lo que te vende · ' + precios.length, 'sin IVA', precios.length ? precios.map(x => `<div class="cg-fila"><div class="cg-nom">${esc(mat(x.material_id).nombre || 'Material')}<span>${esc(TIPO[mat(x.material_id).tipo] || '')}${x.espesor ? ' · ' + esc(x.espesor) : ''} · desde ${fecha(x.desde)}</span></div><div style="text-align:right;font-weight:800">${dinero(x.precio)}</div></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Todavía no hay precios de este proveedor.</p>')}
+      <a class="row-link" href="costos.html?tab=materiales" style="margin-top:10px"><span>Sus precios se cambian en Costeador › Precios</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></a>
       ${acc('ajustes', 'Saldos cambiados · ' + ajustes.length, '', ajustes.length ? ajustes.map(m => `<div class="cg-fila"><div class="cg-nom">Ajuste de saldo · ${fecha(m.fecha)}<span>${esc(m.nota || '')} · ${esc(m.por)}${m.anulado ? ' · anulado' : ''}</span></div><div style="text-align:right;font-weight:800">${Number(m.ep) >= 0 ? '+' : '−'}${dinero(Math.abs(m.ep))}</div></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin cambios de saldo.</p>')}
       <button class="btn-nuevo" type="button" data-cuadrar="${p.id}">Cuadrar con el proveedor</button>`;
     const foot = `<button class="btn-secondary" type="button" data-pdf="${p.id}" style="height:54px">Estado de cuenta</button><button class="btn-primary" type="button" data-transferir="${p.id}">Le transferí</button>`;

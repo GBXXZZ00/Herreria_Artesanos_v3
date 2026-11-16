@@ -81,6 +81,12 @@ Reglas generales de las pantallas en `CLAUDE.md`. Detalle de tablas y funciones 
 - **Datos:** RPC `nomina_semana`, `nomina_trabajador`, `pagar_lo_marcado` (v88), `resolver_vale`, `anotar_vale`, `nomina_salida`, `vale_salida`, `movimiento_ubicar`; tablas `etapas`, `pagos_trabajador`, `movimientos`, `cuentas` (lectura).
 - **Enlaces viejos:** `nomina.html` redirige a `taller.html?vista=nomina` (con `&t=ID` abre a ese trabajador; `&que=vale`, su vale por revisar).
 
+## Costeador (`costos.html` + `costos.js` + `costeo.js`, lote 8) · solo Ray y Gualfredo
+- **Pestañas:** Modelos · Precios. El plan de corte y las compras viven en Taller › Corte (`?tab=semana` redirige).
+- **Modelos:** buscador, + Nuevo (modelo en diseño con `costeo_guardar`, copiado, estándar o en blanco; o extra de un modelo), filtros Todos · Puertas · Combos · Ventanas · Extras, grupos Listos · Borrador · Faltan por costear.
+- **Ficha:** cortes escritos en la fila (borrador en memoria; el cálculo usa las filas completas), barras dibujadas (máx 3), + pieza, + perfil (Elige el perfil), 3D plegado, acordeones con subtotal, franja del precio fija abajo (`costeo_pasar_catalogo` con confirmación). Un solo Guardar cambios (`costeo_guardar`).
+- **Precios:** tabla material × proveedor (`material_precio_guardar`), pintura, consumibles y herrajes con un precio (`costeo_insumo_guardar`), + Material, + Proveedor (`proveedor_guardar`), Reglas.
+
 ## Taller: vendedora (lote 7, T7)
 - La vendedora ve solo Pedidos: Todos · En proceso · Listos, sin montos, sin Asignar, sin Corte ni Nómina. Lo que está en fabricación sale de `produccion_lectura`; sus Listos, de `ventas` en estado `lista` (la vendedora ya puede leer ventas). En Listos: entrega, WhatsApp, Venta y Marcar entregada (`cambiar_estado_venta`).
 

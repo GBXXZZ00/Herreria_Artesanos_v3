@@ -243,7 +243,7 @@
     const etq = x.falta.length ? '<span class="pill gris">faltan datos</span>' : dis ? '<span class="pill gris">en diseño</span>' : Math.abs(dif) < 0.005 ? '<span class="pill verde">igual al catálogo</span>' : dif < 0 ? `<span class="pill rojo">${dinero(-dif)} abajo</span>` : `<span class="pill verde">${dinero(dif)} arriba</span>`;
     const guardar = sucio() ? `<button class="btn-primary fr-guardar" type="button" data-guardar-cortes>Guardar cambios</button>` : '';
     if(!franja){
-      $('fichaFoot').innerHTML = guardar + `<button class="fr-cab" type="button" data-franja aria-expanded="false"><span class="fr-l"><small>Precio sugerido · toca para ver más</small><b>${dinero(x.final)}</b></span><span class="fr-r">${etq}<small>${dis ? 'todavía no está en el catálogo' : 'catálogo ' + dinero(x.hoy)}</small></span></button>`;
+      $('fichaFoot').innerHTML = guardar + `<button class="fr-cab" type="button" data-franja aria-expanded="false"><span class="fr-l"><small>Precio sugerido · toca para ver más</small><b>${dinero(x.final)}</b></span><span class="fr-r">${etq}<small>${dis ? 'sin catálogo' : 'catálogo ' + dinero(x.hoy)}</small></span></button>`;
       return;
     }
     const xm = X.costear(m.id, { prov, modo }), xt = X.costear(m.id, { prov, modo:'tubo' }), provs = D().proveedores.filter(p => (p.tipos || []).includes('hierro'));
@@ -411,7 +411,7 @@
     const L = D().fab.filter(f => f.activo && f.pres === pres && (!F.bm || t(f.nombre).includes(t(F.bm))));
     return `<label class="search-box" style="margin:0 0 8px"><input id="fBuscaMat" type="search" placeholder="Buscar material" aria-label="Buscar material" value="${esc(F.bm || '')}" autocomplete="off"></label>
       <div id="listaMat">${L.map(f => `<button class="ln" type="button" data-f-mat="${f.id}"><span class="ln-t">${esc(f.nombre)}</span><span class="ln-v">${String(f.id) === String(F.mat) ? '✓' : ''}</span><span class="ln-s">${f.pres === 'barra' ? 'barra de ' + num(f.largo) + ' cm' : 'hoja ' + num(f.hoja[0]) + ' × ' + num(f.hoja[1]) + ' cm'}</span></button>`).join('') || '<p class="mat-s">No hay materiales con ese nombre.</p>'}</div>
-      <button class="btn-nuevo" type="button" data-ir-precios>¿No está? Agrégalo en Costos › Precios</button>`;
+      <button class="btn-nuevo" type="button" data-ir-precios>¿No está? Agrégalo en Precios</button>`;
   }
   // ---- Extras: tipos, lo que lleva el formulario y cuánto cuesta
   const EXK = ['Protección', 'Marco decorativo', 'Yeso', 'Vitrales', 'Farquilla', 'Ecobel', 'Detalles de ventana', 'Ventana con protección', 'Manillón'];

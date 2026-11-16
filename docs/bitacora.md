@@ -12,6 +12,17 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-16 · Claude de Gualfredo (Code, lote 8 · Costeador)
+- Qué hizo (Gualfredo: "Ray dio ok con todo, a darle play"): **Costeador** con dos pestañas, Modelos · Precios (el plan de corte vive en Taller › Corte; `costos.html?tab=semana` lleva allá).
+  - Modelos (C1): buscador y **+ Nuevo** (modelo en diseño copiado de otro, con la estructura estándar o en blanco, con nombre y tipo; o un extra de un modelo), filtros Todos · Puertas · Combos · Ventanas · Extras (la madera queda fuera), grupos Listos · Borrador · Faltan por costear, "$x abajo" en rojo, "gana N %" en verde, "sin cortes" en ámbar.
+  - Ficha (C2, R1, R2): **cortes escritos en la fila** (cant × cm × nota), la barra se redibuja y el precio cambia al instante, "3D" plegado (qué es y V/H), **+ pieza** y **+ perfil** (Elige el perfil con buscador, filtros y precio), lo demás en acordeones con su subtotal, y la **franja del precio fija abajo** que se abre en el mismo lugar (proveedor, por metro / barra completa, desglose 1-2-3, botón Catálogo: $x → $y). Un solo "Guardar cambios" cuando hay cambios; al salir sin guardar pregunta.
+  - Precios (C4): tabla material × proveedor con el precio escrito en la celda y el más barato en verde, un solo "Guardar precios (N cambios)", + Material, + Proveedor y Reglas.
+  - Finanzas: la ficha del proveedor ya no lista precios (lleva a Costeador › Precios). Enlaces y textos viejos a "Costos › Semana" apuntan a Taller › Corte.
+- Sin migraciones. El cálculo (`costeo.js`) no se tocó: Bitral $223,22 · $290,19 · $326,79 · $339,23 (test44).
+- Pendiente por decidir (no se tocó la base): que + Nuevo cree el modelo en el Catálogo oculto hasta tener foto, con su tipo y medida, pide cambiar `costeo_pasar_catalogo` (hoy crea el producto al pasarlo al catálogo, con medida 2 × 1). Esconder Depósito › Fabricación para Ray: no se hizo, se pregunta antes.
+- Pruebas: test55 nueva; test44 al día (franja, cortes en la fila, Precios en tabla). `?v=86`.
+- Está tocando: Costeador (`costos.html`, `costos.js`), Finanzas (ficha del proveedor).
+
 ## 2026-11-16 · Claude de Gualfredo (Code, migraciones del Taller aplicadas)
 - Con Gualfredo presente ("hagamos la migración pues"): se aplicaron v86 a v96 en orden con el conector (mismo nombre). Revisado después: `corte_datos`, `compras_en_camino`, `costos_datos`, `montos_pasos`, `mi_hoja_corte` y `finanzas_avisos` responden; `_fab_mover` ya no se llama desde la app.
 - Se une el PR #11. Ray dio el OK al Costeador: sigue el lote 8.

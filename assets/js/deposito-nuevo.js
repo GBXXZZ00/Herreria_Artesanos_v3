@@ -1,6 +1,6 @@
 // Depósito › Fabricación (barras y hojas, retazos con su medida, conteo) y Compras (facturas y notas,
 // a mano o solo con el total y el material "por registrar"). Solo el administrador.
-// Lo que se corta cada sábado vive en Costos › Semana (sale de lo asignado en Producción).
+// Lo que se corta cada sábado vive en Taller › Corte (sale de lo asignado en el Taller).
 (function(){
   'use strict';
   const { esc, toast, abrirHoja, cerrarHoja, dinero } = window.AH;
@@ -49,7 +49,7 @@
     let h = `<div class="res">
       ${sab ? `<div class="res-c ${falta ? 'rojo' : 'ok'}"><span>Para el ${esc(sabTxt(sab))}</span><b>${falta ? 'Faltan ' + falta : 'Alcanza'}</b></div>` : ''}
       <div class="res-c"><span>Barras y retazos</span><b>${esc(barras)} · ${esc(rets)}</b></div></div>`;
-    if(falta) h += `<a class="caja-amar" style="display:block;text-decoration:none;margin:0 0 12px" href="costos.html?tab=semana&para=${esc(sab)}">Faltan ${plural(falta, '1 barra u hoja', 'barras u hojas')} para lo asignado al ${esc(sabTxt(sab))}. Ver el plan de corte y qué comprar →</a>`;
+    if(falta) h += `<a class="caja-amar" style="display:block;text-decoration:none;margin:0 0 12px" href="taller.html?vista=corte&para=${esc(sab)}">Faltan ${plural(falta, '1 barra u hoja', 'barras u hojas')} para lo asignado al ${esc(sabTxt(sab))}. Ver el plan de corte y qué comprar →</a>`;
     if(D.conteo){ const n = (D.conteo.diferencias || []).length; h += `<div class="${n ? 'caja-rara' : 'caja-ok'}" style="margin:0 0 12px">Último conteo: ${fecha(D.conteo.fecha)} · ${esc(D.conteo.por)}. ${n ? plural(n, '1 diferencia', 'diferencias') + ': ' + D.conteo.diferencias.map(x => `${esc(x.nombre)} decía ${x.antes}, había ${x.contado}`).join('. ') : 'Todo cuadró.'}</div>`; }
     const camino = window.COMPRA ? window.COMPRA.tarjetasHtml({ titulo:'En camino: compra' }) : '';
     if(camino) h += camino + '<p class="mat-s" style="margin:-4px 2px 12px">Lo que está en camino no se puede cortar ni entregar hasta confirmar que llegó.</p>';
@@ -72,7 +72,7 @@
     if(apagados.length) h += `<p class="mat-s" style="margin:8px 2px">${plural(apagados.length, '1 material apagado', 'materiales apagados')}: ${apagados.map(f => `<button class="link-btn" type="button" data-fab="${f.id}">${esc(f.nombre)}</button>`).join(', ')}</p>`;
     h += `<button class="btn-nuevo" type="button" data-fab-nuevo>+ Agregar material de fabricación</button>
       <button class="btn-secondary" type="button" data-pdf-existencias style="width:100%;margin-top:10px">Existencias en PDF</button>
-      <p class="mat-s" style="margin:8px 2px 0">Las barras suben con cada compra y bajan cuando en Costos › Semana se marca que el herrero ya cortó. Los retazos de 50 cm o más quedan anotados con su medida y el plan siguiente los usa primero.</p>`;
+      <p class="mat-s" style="margin:8px 2px 0">Las barras suben con cada compra y bajan solas cuando el herrero termina el Hierro con el corte que se le envió en Taller › Corte. Los retazos que sirven quedan anotados con su número y el plan siguiente los usa primero.</p>`;
     $('cont').innerHTML = h;
   }
   let FM = null;   // material abierto o en edición
@@ -102,7 +102,7 @@
       <div class="tit">Precio sin IVA por proveedor</div>
       ${precios.length ? precios.map(({ p, v }) => `<div class="cg-fila"><div class="cg-nom">${esc(p.nombre)}<span>${v.esp ? esc(v.esp) + ' · ' : ''}desde ${fecha(v.desde)}</span></div><div style="text-align:right;font-weight:800">${dinero(v.p)}</div></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin precios todavía.</p>'}
       ${f.fijo ? `<p class="mat-s" style="margin:6px 2px 0">Para costear se usa el precio fijo ${dinero(f.fijo)}.</p>` : ''}
-      ${sab ? `<a class="row-link" href="costos.html?tab=semana&para=${esc(sab)}" style="margin-top:12px"><span>Ver cómo se corta el ${esc(sabTxt(sab))}</span>${CHEV}</a>` : ''}
+      ${sab ? `<a class="row-link" href="taller.html?vista=corte&para=${esc(sab)}" style="margin-top:12px"><span>Ver cómo se corta el ${esc(sabTxt(sab))}</span>${CHEV}</a>` : ''}
       <a class="row-link" href="costos.html?tab=precios&material=${f.id}"><span>Cambiar precios (en Costos)</span>${CHEV}</a>
       <div class="tit">Movimientos</div>
       ${movs.length ? movs.map(m => `<div class="mov"><span style="min-width:0"><span class="mov-t">${esc(m.ref || m.motivo)}</span><span class="mov-s">${new Date(m.fecha).toLocaleDateString('es-VE', { day:'numeric', month:'short' })} · ${esc(m.por)}</span></span><span class="mov-m ${m.n > 0 ? 'mas' : 'menos'}">${m.n > 0 ? '+' : ''}${m.n}</span></div>`).join('') : '<p class="mat-s" style="margin:0 2px">Sin movimientos todavía.</p>'}
@@ -133,7 +133,7 @@
     const p = { id:FM.id || null, nombre:o.nombre.trim(), tipo:o.tipo, presentacion:o.pres, espesor:o.espesor || null, precio_fijo:num(o.fijo) > 0 ? num(o.fijo) : null, activo:o.activo !== false };
     if(o.pres === 'barra'){ if(!(num(o.largo) > 0)) return toast('Escribe el largo de la barra', 'error'); p.largo_cm = num(o.largo); }
     else { if(!(num(o.ancho) > 0) || !(num(o.alto) > 0)) return toast('Escribe las medidas de la hoja', 'error'); p.hoja_ancho_cm = num(o.ancho); p.hoja_alto_cm = num(o.alto); }
-    try{ const r = await rpc('material_fab_guardar', { p }); toast(FM.id ? 'Material guardado' : 'Material agregado. Ponle su precio en Costos › Precios.'); FM = { id:r.id, editar:false }; await recargar(); pintarFicha(); }
+    try{ const r = await rpc('material_fab_guardar', { p }); toast(FM.id ? 'Material guardado' : 'Material agregado. Ponle su precio en Costeador › Precios.'); FM = { id:r.id, editar:false }; await recargar(); pintarFicha(); }
     catch(e){ toast(errTxt(e), 'error'); }
   }
 

@@ -45,7 +45,7 @@ Si la sesión se corta, una sesión nueva sigue desde aquí. Primero lee `docs/t
 3. PR hacia `main` **sin unir**, título `[Gualfredo] Taller: Pedidos, Resumen, Nómina y Corte`, texto con "Hecho por: Gualfredo (Claude de Gualfredo)", lo que cambia, pruebas, migraciones v86 a v96 por aplicar (en orden y con Gualfredo presente) y qué probar en el teléfono.
 4. Respuesta corta a Gualfredo: qué quedó, qué probar, que falta aplicar v86 a v96 y que el Costeador espera el OK de Ray.
 
-## Lote 8 · Costeador (empezado 16 nov; Gualfredo: "Ray dio ok con todo, a darle play")
+## Lote 8 · Costeador ✅ hecho (v86, test55; falta decidir Catálogo oculto y Depósito › Fabricación) (empezado 16 nov; Gualfredo: "Ray dio ok con todo, a darle play")
 Estado al empezar: PR #11 unido (Taller publicado, v85) y migraciones v86 a v96 aplicadas. Rama `claude/lote-1-taller-costeador-t49naw` sigue desde `main` (avance rápido).
 Leer: §5 de `docs/tareas/2026-11-15-gualfredo-taller-y-costeador.md` (5.1 a 5.10) y maquetas C1, C2, C4, R1, R2 (`docs/tareas/maquetas-2026-11-15-taller-costeador/`, fuente en `fuente/costeador*.html`). **El cálculo no se toca** (`costeo.js`); test44 (Bitral $223,22 · $290,19 · $326,79 · $339,23) en cada parte.
 Partes (un `?v=` por lote: v86 en los HTML):
