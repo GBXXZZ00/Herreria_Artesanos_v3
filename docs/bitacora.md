@@ -12,6 +12,15 @@ Cada sesión de trabajo de cualquiera de los dos Claude agrega una entrada **arr
 
 ---
 
+## 2026-11-19 · Claude de Gualfredo (traspaso a Ray: Taller por cliente y Costeador)
+- Qué hizo: análisis con consejo (Ray, UI/UX, flujo y datos contra el código y la base) del Taller y del Costeador, sin programar. Gualfredo: "Me gusta, pero continuará Ray desde su cuenta, primero con los mockups".
+  - Tarea: `docs/tareas/2026-11-19-ray-taller-por-cliente-y-costeador.md` (mapa "un dato en un solo lugar", Taller agrupado por cliente con Ver venta, asignar por especialidad, Costeador con los 49 modelos y lo que le falta a cada uno, una sola lista de materiales, hallazgos de la base y orden de lotes).
+  - Prompt para Claude de Ray: `docs/tareas/2026-11-19-PROMPT-para-claude-de-ray.md`.
+  - Referencias de maquetas del 18 y 19 nov: `docs/tareas/maquetas-2026-11-19-taller/` (anuncios y trabajo terminado siguen valiendo; lista por pedido y asignar por paso quedaron reemplazados).
+- Rama o PR: `gualfredo/traspaso-ray-taller-costeador` (solo documentos, sin cambios en la app ni en la base).
+- Está tocando: nada. Sigue Claude de Ray con las maquetas del Lote 1.
+- Pendientes: ver §9 de la tarea (nombre Costeador o Costos, deuda para la vendedora, semana por defecto, WhatsApp al trabajador, hora del recordatorio, captura de Aliados, firma del mensaje al proveedor).
+
 ## 2026-11-16 · Claude de Gualfredo (Code, seguridad v97 y Costeador publicado)
 - PR #12 (Costeador) unido con el OK de Gualfredo ("haz todo de una").
 - v97: `cambiar_estado_venta` y `actualizar_venta` pasan a security definer con la revisión de rol al empezar (administrador o vendedora); se cierran `_avisar_usuario` y `_a_produccion_si_pagada`. Probado con rollback contra la base real: la vendedora marca entregada igual; un trabajador ya no puede cambiar ni editar ventas; las dos internas quedan cerradas. **Con cuidado**: reglas de permisos de ventas.
