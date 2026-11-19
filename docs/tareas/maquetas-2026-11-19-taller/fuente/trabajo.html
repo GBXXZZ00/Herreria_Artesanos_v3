@@ -1,0 +1,283 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=390">
+<title>Taller · trabajo terminado</title>
+<style>
+:root{--accent:#17555C;--accent-soft:rgba(23,85,92,.09);--ink:#1C1A17;--ink-soft:#6E6A64;--surface-2:#F7F6F4;--line:#E9E7E3;--danger:#B42318;--danger-soft:#FDECEA;--amber:#B7791F;--amber-tx:#8A5A12;--amber-soft:#FDF3E1;--ok:#1F7A4D;--ok-soft:#E7F4EC}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;color:var(--ink);background:#e9e9e9;font-size:15px;display:flex;flex-wrap:wrap;gap:30px;padding:30px}
+.scr{width:390px;height:844px;background:#fff;position:relative;overflow:hidden;padding:14px 16px 100px}
+.scr.alto{height:auto;padding-bottom:30px}
+.top{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+.logo{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.logo img{width:34px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.sub{color:var(--ink-soft);font-size:14px;margin-top:2px}
+.tabs{display:flex;background:var(--surface-2);border-radius:14px;padding:4px;margin-bottom:12px}
+.tabs b{flex:1;text-align:center;font-size:14px;padding:9px 0;color:var(--ink-soft);font-weight:600;border-radius:11px}
+.tabs b.on{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(28,26,23,.08)}
+.chips{display:flex;gap:5px;margin-bottom:12px}
+.chips b{font-size:13px;padding:7px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;font-weight:600}
+.chips b.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.foot{position:absolute;left:12px;right:12px;bottom:14px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:12px 6px;box-shadow:0 6px 24px rgba(28,26,23,.10)}
+.nav{display:flex;justify-content:space-around;font-size:11px;color:var(--ink-soft);font-weight:600}
+.nav span.on{color:var(--accent)}
+.pill{display:inline-block;font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft);white-space:nowrap}
+.pill.am{background:var(--amber-soft);color:var(--amber)}.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.rj{background:var(--danger-soft);color:var(--danger)}
+.foto{border-radius:9px;background:#F4F3EF url(p.png) center/cover;flex-shrink:0;border:1px solid var(--line)}
+/* tarjeta de la lista */
+.pc{border:1px solid var(--line);border-radius:18px;padding:13px 14px;margin-bottom:10px}
+.pc .h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pc .h b{font-size:16.5px;display:block}.pc .h small{font-size:13px;color:var(--ink-soft)}
+.pc .h small .db{color:var(--amber);font-weight:700}
+.prods{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 8px}
+.prods div{display:flex;gap:8px;align-items:center;font-size:14.5px;font-weight:600}
+.pbar{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.pfoot{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink-soft);margin-top:9px;gap:8px}
+.pfoot .am{color:var(--amber);font-weight:700}.pfoot .rj{color:var(--danger);font-weight:700}
+.bsm{background:var(--accent);color:#fff;font-weight:700;border-radius:999px;padding:8px 16px;font-size:14px;white-space:nowrap}
+.ver{color:var(--accent);font-weight:700;font-size:14px;white-space:nowrap}
+/* hojas */
+.dim{position:absolute;inset:0;background:rgba(28,26,23,.38)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 20px;overflow:hidden}
+.handle{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.sh-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.sh-h h2{font-size:21px;font-weight:800;letter-spacing:-.3px;line-height:1.2}
+.close{width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:15px;flex-shrink:0}
+.btn{display:block;text-align:center;background:var(--accent);color:#fff;font-weight:700;border-radius:14px;padding:14px;font-size:16px;white-space:nowrap}
+.btn.dk{background:var(--ink)}
+.btn.out{background:#fff;color:var(--accent);border:1.5px solid var(--accent);padding:12px}
+.vpc{display:flex;align-items:center;justify-content:space-between;background:var(--accent-soft);color:var(--accent);border-radius:14px;padding:13px 14px;font-weight:700;font-size:15.5px;margin-bottom:12px}
+/* cobro */
+.cobro{display:grid;grid-template-columns:1fr 1.25fr;gap:8px;margin-bottom:14px}
+.cobro .a{background:var(--amber-soft);border-radius:16px;padding:12px 14px}
+.cobro .a span{font-size:12.5px;color:#7a5313;font-weight:600}.cobro .a b{display:block;font-size:26px;font-weight:800;color:var(--amber);letter-spacing:-.5px;margin-top:2px}
+.cobro .a small{font-size:12px;color:#7a5313}
+.cobro .b{background:var(--surface-2);border-radius:16px;padding:10px 13px;font-size:13.5px}
+.cobro .b div{display:flex;justify-content:space-between;padding:2.5px 0}
+.cobro .b div span{color:var(--ink-soft)}
+.cobro .b .pc2 b{color:var(--amber)}
+/* producto */
+.item{border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:12px}
+.ih{display:flex;gap:12px}
+.ih .t b{font-size:17px;display:block}.ih .t span{font-size:13.5px;color:var(--ink-soft);display:block;margin-top:1px}
+.cat{display:inline-block;width:fit-content;margin-top:7px;font-size:12.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:4px 10px}
+.spec{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 2px}
+.spec span{background:var(--surface-2);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600}
+.spec span.ig{background:#fff;border:1px dashed var(--line);color:var(--ink-soft)}
+.paso{display:flex;gap:11px;padding:11px 0 4px;position:relative}
+.paso+.paso{border-top:1px solid var(--line)}
+.d{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;background:var(--surface-2);color:var(--ink-soft)}
+.d.h{background:var(--accent);color:#fff}.d.p{background:#fff;color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}.d.s{background:var(--amber-soft);color:var(--amber)}.d.r{background:var(--danger-soft);color:var(--danger)}
+.pb{flex:1;min-width:0}
+.pb>b{font-size:15.5px;display:block;margin:3px 0 4px}
+.u{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13.5px}
+.u .n{font-size:12px;font-weight:800;color:var(--ink-soft);background:var(--surface-2);border-radius:6px;padding:2px 6px;white-space:nowrap}
+.u .n.las{background:var(--accent-soft);color:var(--accent)}
+.u .tx{flex:1;min-width:0;color:var(--ink)}
+.u .tx small{display:block;color:var(--ink-soft);font-size:12.5px}
+.u .m{text-align:right;font-weight:700;font-size:13.5px;white-space:nowrap}
+.u .m small{display:block;font-size:11.5px;color:var(--amber);font-weight:700}
+.u .mini{width:34px;height:34px;border-radius:8px;flex-shrink:0}
+.chipw{font-size:12.5px;font-weight:700;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.chipw.ahora{background:#fff;box-shadow:inset 0 0 0 1.5px var(--accent)}
+.por{font-size:12.5px;font-weight:700;background:var(--amber-soft);color:var(--amber);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.esp{font-size:12.5px;color:var(--ink-soft);margin:0 0 4px}
+.mas{margin-top:6px}
+.mas a{display:flex;justify-content:space-between;align-items:center;padding:12px 2px;border-top:1px solid var(--line);font-size:15px;color:var(--ink);text-decoration:none}
+.mas a span{color:var(--ink-soft);font-size:13px}
+.mas a i{font-style:normal;color:var(--ink-soft)}
+.pie{position:sticky;bottom:0;background:#fff;padding-top:10px}
+/* asignar */
+.lbl{font-size:13.5px;font-weight:700;color:var(--ink);margin:10px 0 6px}
+.seg{display:flex;gap:8px}
+.seg b{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:9px 6px;text-align:center;font-size:14.5px}
+.seg b small{display:block;font-weight:500;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+.seg b.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.seg b.on small{color:var(--accent)}
+.ph{display:flex;align-items:center;gap:10px;margin:14px 0 2px}
+.ph b{font-size:16px}.ph span{font-size:13px;color:var(--ink-soft);display:block}
+.ap{padding:11px 0;border-top:1px solid var(--line)}
+.ap .c{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.ap .c b{font-size:15px}.ap .c em{font-style:normal;font-size:12px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:1px}
+.ap .c em.un{color:var(--ink-soft);background:var(--surface-2)}
+.ap .c span{font-size:13.5px;color:var(--ink-soft);white-space:nowrap}
+.ops{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.op{display:flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;font-size:14.5px;font-weight:700;color:var(--ink-soft)}
+.op i{width:26px;height:26px;border-radius:50%;background:var(--surface-2);color:var(--ink-soft);font-style:normal;display:flex;align-items:center;justify-content:center;font-size:12px}
+.op small{font-weight:500;font-size:12px}
+.op.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.op.on i{background:var(--accent);color:#fff}
+.op.no{padding:4px 12px}
+.op.fijo{opacity:.65}
+.sep{font-size:13px;color:var(--accent);font-weight:700;margin-top:8px;display:inline-block}
+.hecho{font-size:13px;color:var(--ink-soft);margin-top:4px}
+/* estados */
+.st{border:1px dashed #cfccc6;border-radius:16px;padding:12px;margin-bottom:12px}
+.st .tg{font-size:11px;font-weight:800;color:var(--ink-soft);letter-spacing:.4px;margin-bottom:8px}
+.sk{background:#EFEDEA;border-radius:8px}
+.vac{text-align:center;padding:10px 6px 4px}
+.vac b{font-size:17px;display:block}.vac p{font-size:14px;color:var(--ink-soft);margin:4px 0 12px}
+.toast{background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;font-size:14px}
+/* ventas */
+.back{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--accent);font-weight:700;border-radius:999px;padding:7px 13px 7px 10px;font-size:14px;margin:4px 0 12px}
+.fn{font-size:13px;color:var(--ink-soft);font-weight:700}
+.fnom{font-size:24px;font-weight:800;letter-spacing:-.4px;margin-top:2px}
+.ct{display:flex;gap:8px;margin:12px 0}
+.ct b{flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:10px;font-size:14px;color:var(--accent)}
+.est{display:flex;gap:4px;margin:6px 0 4px}
+.est i{flex:1;height:6px;border-radius:3px;background:var(--line)}.est i.on{background:var(--accent)}
+.estl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-soft)}
+.acc{border-top:1px solid var(--line);padding:13px 0}
+.acc .c{display:flex;justify-content:space-between;font-size:16px;font-weight:700}
+.acc .c span{font-size:13.5px;color:var(--ink-soft);font-weight:500}
+.fi{display:flex;gap:10px;align-items:center;padding:9px 0}
+.vf{display:flex;justify-content:space-between;align-items:center;border:2px solid var(--accent);color:var(--accent);font-weight:700;border-radius:12px;padding:11px 13px;margin-top:6px}
+.marca{position:absolute;right:14px;font-size:11.5px;font-weight:800;color:#fff;background:var(--ink);border-radius:8px;padding:4px 8px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.kv div{background:var(--surface-2);border-radius:12px;padding:9px 12px}
+.kv span{display:block;font-size:12px;color:var(--ink-soft)}.kv b{font-size:15px}.kv b.db{color:var(--amber)}
+.ats{display:flex;gap:6px;margin-bottom:10px}
+.ats b{font-size:13.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:7px 12px;border-radius:999px}
+.nota{font-size:13px;color:var(--ink-soft);text-align:center;margin-top:10px}
+
+.pill.am,.pfoot .am,.por,.d.s,.u .m small{color:var(--amber-tx)}
+.u .m small{color:var(--ink-soft)}
+.pc .h small .db{color:var(--ink);font-weight:700}
+.ahora{font-size:13px;color:var(--ink);margin-top:7px;display:flex;align-items:center;gap:6px}
+.ahora i{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block}
+.d.s{background:var(--surface-2);color:var(--ink-soft)}
+.cb{background:var(--surface-2);border-radius:16px;padding:11px 14px;margin-bottom:12px}
+.cb .r{display:flex;justify-content:space-between}
+.cb .r div span{display:block;font-size:12px;color:var(--ink-soft)}.cb .r div b{font-size:17px}
+.cb .r div.dbt b{font-size:19px}
+.cb p{font-size:12.5px;color:var(--ink-soft);margin-top:6px;border-top:1px solid var(--line);padding-top:6px}
+.nt{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13.5px;margin:8px 0 2px}
+.nt span{font-size:12px;color:var(--ink-soft);display:block}
+.lk{font-size:13px;color:var(--accent);font-weight:700;margin-top:3px;display:inline-block}
+.ops .sp{margin-left:auto;align-self:center;font-size:13px;color:var(--accent);font-weight:700}
+.btn.dk{background:var(--accent)}
+.hint{font-size:12.5px;color:var(--ink-soft);margin-top:4px}
+.bk{font-size:14px;color:var(--accent);font-weight:700;margin-bottom:6px;display:block}
+.rbtn{background:#fff;color:var(--danger);border:1.5px solid var(--danger);font-weight:700;border-radius:999px;padding:7px 14px;font-size:14px;white-space:nowrap}
+
+.toastok{position:absolute;left:12px;right:12px;top:12px;background:var(--ink);color:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 10px 30px rgba(28,26,23,.25);display:flex;gap:11px;align-items:center;z-index:5}
+.toastok .ic{width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;font-size:15px}
+.toastok .ic.am{background:var(--amber)}
+.toastok .tt{flex:1;min-width:0;font-size:14px;line-height:1.3}.toastok .tt b{display:block;font-size:14.5px}
+.toastok .tt span{color:rgba(255,255,255,.75);font-size:13px}
+.toastok .ac{background:#fff;color:var(--ink);font-weight:800;border-radius:999px;padding:8px 12px;font-size:13.5px;white-space:nowrap}
+.cap{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:12px;color:var(--ink-soft)}
+.an{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:26px 26px 0 0;padding:12px 18px 26px;text-align:center}
+.an .ok{width:72px;height:72px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;margin:14px auto 14px;font-size:34px;font-weight:800}
+.an h2{font-size:23px;font-weight:800;letter-spacing:-.3px}
+.an .s{color:var(--ink-soft);font-size:14.5px;margin:4px 0 16px}
+.an .res{background:var(--surface-2);border-radius:16px;padding:6px 14px;text-align:left;margin-bottom:16px}
+.an .res div{display:flex;justify-content:space-between;padding:8px 0;font-size:14.5px}
+.an .res div+div{border-top:1px solid var(--line)}
+.an .res span{color:var(--ink-soft)}
+.an .res .tot{font-weight:800}
+.an .btn{margin-bottom:8px}
+.an .sec2{display:block;text-align:center;color:var(--ink-soft);font-weight:700;font-size:15px;padding:10px}
+.sec{border-top:1px solid var(--line);margin-top:6px}
+.sec-h{display:flex;align-items:center;gap:10px;padding:12px 0 2px}
+.sec-h b{font-size:16px}.sec-h span.s2{font-size:13px;color:var(--ink-soft);display:block}
+.nuevo{font-size:11.5px;font-weight:800;color:#fff;background:var(--accent);border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:2px}
+.fold{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.fold b{font-size:15px}.fold span.s2{font-size:13px;color:var(--ok);font-weight:700;display:block}
+.fold i{margin-left:auto;font-style:normal;color:var(--ink-soft)}
+.wk{border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:10px}
+.wk .h{display:flex;justify-content:space-between;align-items:center}
+.wk .h b{font-size:16px}
+.wkb{background:var(--surface-2);border-radius:16px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.wkb b{font-size:24px;font-weight:800;color:var(--accent)}.wkb span{font-size:13px;color:var(--ink-soft)}
+.blur{filter:saturate(.9)}
+
+.frm{width:390px}
+.frm>.cap1{background:var(--ink);color:#fff;border-radius:16px 16px 0 0;padding:12px 16px}
+.frm>.cap1 b{display:block;font-size:16px}.frm>.cap1 span{font-size:13px;color:rgba(255,255,255,.78)}
+.frm>.cap1 em{font-style:normal;font-size:11.5px;font-weight:800;background:var(--accent);border-radius:6px;padding:2px 7px;margin-right:6px}
+.lock{background:linear-gradient(170deg,#2a4a4f,#0f2427);color:#fff;padding:14px 14px}
+.lock .clk{text-align:center;font-size:72px;font-weight:300;letter-spacing:-2px;margin-top:40px}
+.lock .dt{text-align:center;font-size:17px;opacity:.85;margin-bottom:40px}
+.push{background:rgba(255,255,255,.9);color:var(--ink);border-radius:20px;padding:12px 13px;display:flex;gap:10px;margin-bottom:10px}
+.push .ic{width:38px;height:38px;border-radius:9px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.push .tx{flex:1;font-size:14px;line-height:1.3}.push .tx b{display:block;font-size:14.5px}
+.push .tx small{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);margin-bottom:2px}
+.push.old{opacity:.55;transform:scale(.97)}
+.lbl2{font-size:12px;font-weight:800;letter-spacing:.4px;color:rgba(255,255,255,.75);margin:4px 4px 6px}
+.hero{height:230px;border-radius:16px;background:#F4F3EF url(p.png) center/contain no-repeat;border:1px solid var(--line);position:relative;margin-bottom:12px}
+.hero span{position:absolute;left:10px;bottom:10px;background:rgba(28,26,23,.7);color:#fff;font-size:12px;padding:5px 10px;border-radius:999px}
+.sig{border:2px solid var(--accent);border-radius:18px;padding:12px 14px;margin-bottom:12px}
+.sig.ok{border-color:var(--line);background:var(--surface-2)}
+.sig .t{font-size:12px;font-weight:800;letter-spacing:.4px;color:var(--accent);margin-bottom:4px}
+.sig.ok .t{color:var(--ink-soft)}
+.sig h3{font-size:17px;font-weight:800}
+.sig p{font-size:13.5px;color:var(--ink-soft);margin:2px 0 8px}
+.sig .btn{margin-top:10px}
+.sig .chk{display:flex;gap:10px;align-items:center}
+.sig .chk i{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-style:normal;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+.kv3{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.kv3 div{background:var(--surface-2);border-radius:12px;padding:9px 12px}
+.kv3 div.w{grid-column:span 2}
+.kv3 span{display:block;font-size:12px;color:var(--ink-soft)}.kv3 b{font-size:15px}.kv3 b.tl{color:var(--accent)}
+.ats2{display:flex;gap:8px}
+.ats2 b{flex:1;text-align:center;font-size:14px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:10px 6px;border-radius:12px;white-space:nowrap}
+.wa{display:block;text-align:center;font-size:14px;font-weight:700;color:var(--ink-soft);padding:4px 0 14px}
+.falta{display:flex;justify-content:space-between;align-items:center;background:var(--amber-soft);border-radius:14px;padding:11px 13px;margin-bottom:12px;font-size:14px}
+.falta b{color:var(--amber-tx)}.falta span.a{font-weight:800;color:var(--accent);white-space:nowrap}
+.sheet2{position:absolute;left:0;right:0;bottom:0;top:56px;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 20px;overflow:hidden}
+.debe{font-size:13.5px;margin-top:2px}.debe b{color:var(--ink)}
+</style></head><body>
+<div class="frm" id="t1"><div class="cap1"><b><em>AVISO</em>El aviso que le llega a Ray</b><span>Ahora dice qué sigue, para saber si tiene que hacer algo</span></div><div class="scr lock"><div class="clk">10:42</div><div class="dt">jueves, 19 de noviembre</div>
+<p class="lbl2">AHORA</p>
+<div class="push"><span class="ic"><img src="logo.png" style="width:30px"></span><span class="tx"><small><span>Artesanos</span><span>ahora</span></small><b>Jesus terminó Hierro · N° 1200</b>Sigue Masilla y pintura: nadie la tiene. Toca para darla.</span></div>
+<div class="push"><span class="ic"><img src="logo.png" style="width:30px"></span><span class="tx"><small><span>Artesanos</span><span>hace 1 h</span></small><b>Luis terminó Detalles · N° 1198</b>Era el último paso: el pedido quedó listo. Avísale al cliente.</span></div>
+<p class="lbl2" style="margin-top:18px">ANTES</p>
+<div class="push old"><span class="ic"><img src="logo.png" style="width:30px"></span><span class="tx"><small><span>Artesanos</span><span>ayer</span></small><b>Terminó Hierro · foto lista</b>Jesus · Modelo bitral 1 de 2 · N° 1200. Toca para ver la foto.</span></div>
+</div></div>
+<div class="frm" id="t2"><div class="cap1"><b><em>CASO 1</em>El siguiente paso no tiene a nadie</b><span>Ray toca el aviso. Elige al trabajador ahí mismo y listo</span></div><div class="scr"><div class="top" style="opacity:.5"><div class="logo"><img src="logo.png"></div><div><h1>Taller</h1></div></div><div class="dim"></div><div class="sheet2"><div class="handle"></div>
+<div class="sh-h"><div><h2>Hierro terminado</h2><div class="sub">Modelo bitral 1 de 2 · N° 1200 · Ana Rincón</div></div><span class="close">✕</span></div>
+<div class="hero"><span>Foto de Jesus · toca para ampliar</span></div>
+<div class="sig"><div class="t">LO QUE SIGUE</div><h3>Masilla y pintura · nadie la tiene</h3><p>Ya se puede empezar. ¿A quién se la das? Es para esta semana.</p>
+<div class="ops"><span class="op on"><i>L</i>Luis Paz <small>2</small></span><span class="op"><i>P</i>Pedro <small>1</small></span></div>
+<div class="btn">Dársela a Luis Paz</div></div>
+<div class="kv3"><div><span>Lo hizo</span><b>Jesus · hoy 9:40</b></div><div><span>Se le paga por esto</span><b>$30</b></div><div class="w"><span>Por pagar a Jesus en total</span><b class="tl">$125 · 4 trabajos</b></div></div>
+<div class="ats2"><b>Ver pedido N° 1200</b><b>Nómina de Jesus</b></div>
+<p class="nota" style="text-align:left">Ya se sumó a lo que le debes a Jesus. Lo pagas cuando quieras desde Nómina.</p></div></div></div>
+<div class="frm" id="t3"><div class="cap1"><b><em>CASO 1</em>Después de tocar</b><span>Queda asignado sin salir de la pantalla</span></div><div class="scr"><div class="top" style="opacity:.5"><div class="logo"><img src="logo.png"></div><div><h1>Taller</h1></div></div><div class="dim"></div><div class="toastok" style="z-index:9"><span class="ic">✓</span><span class="tt"><b>Masilla y pintura para Luis</b><span>Ya le llegó el aviso</span></span></div><div class="sheet2"><div class="handle"></div>
+<div class="sh-h"><div><h2>Hierro terminado</h2><div class="sub">Modelo bitral 1 de 2 · N° 1200 · Ana Rincón</div></div><span class="close">✕</span></div>
+<div class="hero"><span>Foto de Jesus · toca para ampliar</span></div>
+<div class="sig ok"><div class="t">LO QUE SIGUE</div><div class="chk"><i>✓</i><div><h3>Masilla y pintura · Luis Paz</h3><p style="margin:0">Ya le llegó el aviso. Puede empezar.</p></div></div></div>
+<div class="kv3"><div><span>Lo hizo</span><b>Jesus · hoy 9:40</b></div><div><span>Se le paga por esto</span><b>$30</b></div><div class="w"><span>Por pagar a Jesus en total</span><b class="tl">$125 · 4 trabajos</b></div></div>
+<div class="ats2"><b>Ver pedido N° 1200</b><b>Nómina de Jesus</b></div>
+<p class="nota" style="text-align:left">Ya se sumó a lo que le debes a Jesus. Lo pagas cuando quieras desde Nómina.</p></div></div></div>
+<div class="frm" id="t4"><div class="cap1"><b><em>CASO 2</em>El siguiente paso ya tiene a alguien</b><span>No hay nada que hacer: solo lo informa</span></div><div class="scr"><div class="top" style="opacity:.5"><div class="logo"><img src="logo.png"></div><div><h1>Taller</h1></div></div><div class="dim"></div><div class="sheet2"><div class="handle"></div>
+<div class="sh-h"><div><h2>Hierro terminado</h2><div class="sub">Modelo bitral 1 de 2 · N° 1200 · Ana Rincón</div></div><span class="close">✕</span></div>
+<div class="hero"><span>Foto de Jesus · toca para ampliar</span></div>
+<div class="sig ok"><div class="t">LO QUE SIGUE</div><div class="chk"><i>✓</i><div><h3>Masilla y pintura · Luis Paz</h3><p style="margin:0">Ya le llegó el aviso. Puede empezar.</p></div></div></div>
+<div class="kv3"><div><span>Lo hizo</span><b>Jesus · hoy 9:40</b></div><div><span>Se le paga por esto</span><b>$30</b></div><div class="w"><span>Por pagar a Jesus en total</span><b class="tl">$125 · 4 trabajos</b></div></div>
+<div class="ats2"><b>Ver pedido N° 1200</b><b>Nómina de Jesus</b></div>
+<p class="nota" style="text-align:left">Ya se sumó a lo que le debes a Jesus. Lo pagas cuando quieras desde Nómina.</p></div></div></div>
+<div class="frm" id="t5"><div class="cap1"><b><em>CASO 3</em>Era el último paso del pedido</b><span>El momento justo para avisar y cobrar lo que falta</span></div><div class="scr"><div class="top" style="opacity:.5"><div class="logo"><img src="logo.png"></div><div><h1>Taller</h1></div></div><div class="dim"></div><div class="sheet2"><div class="handle"></div>
+<div class="sh-h"><div><h2>Detalles terminado</h2><div class="sub">Lineal · N° 1198 · José Marín</div></div><span class="close">✕</span></div>
+<div class="hero"><span>Foto de Luis · toca para ampliar</span></div>
+<div class="sig"><div class="t">ERA EL ÚLTIMO PASO</div><h3>N° 1198 quedó listo</h3><p class="debe">José Marín · entrega 20 nov · <b>debe $90</b></p>
+<div class="btn">Avisar al cliente por WhatsApp</div></div>
+<div class="kv3"><div><span>Lo hizo</span><b>Luis Paz · hoy 9:10</b></div><div><span>Se le paga por esto</span><b>$15</b></div><div class="w"><span>Por pagar a Luis en total</span><b class="tl">$95 · 3 trabajos</b></div></div>
+<div class="ats2"><b>Ver pedido N° 1198</b><b>Nómina de Luis</b></div>
+<p class="nota" style="text-align:left">Ya se sumó a lo que le debes a Luis. Lo pagas cuando quieras desde Nómina.</p></div></div></div>
+<div class="frm" id="t6"><div class="cap1"><b><em>CASO 4</em>Al pedido le faltan otros pasos</b><span>Además de lo que sigue, avisa lo que falta del pedido entero</span></div><div class="scr"><div class="top" style="opacity:.5"><div class="logo"><img src="logo.png"></div><div><h1>Taller</h1></div></div><div class="dim"></div><div class="sheet2"><div class="handle"></div>
+<div class="sh-h"><div><h2>Hierro terminado</h2><div class="sub">Modelo bitral 1 de 2 · N° 1200 · Ana Rincón</div></div><span class="close">✕</span></div>
+<div class="hero"><span>Foto de Jesus · toca para ampliar</span></div>
+<div class="sig ok"><div class="t">LO QUE SIGUE</div><div class="chk"><i>✓</i><div><h3>Masilla y pintura · Luis Paz</h3><p style="margin:0">Ya le llegó el aviso. Puede empezar.</p></div></div></div><div class="falta"><span><b>Al N° 1200 le faltan 3 pasos</b><br><span style="font-size:13px;color:var(--ink-soft)">Detalles de las 2 y masilla de la 2</span></span><span class="a">Asignarlos ›</span></div>
+<div class="kv3"><div><span>Lo hizo</span><b>Jesus · hoy 9:40</b></div><div><span>Se le paga por esto</span><b>$30</b></div><div class="w"><span>Por pagar a Jesus en total</span><b class="tl">$125 · 4 trabajos</b></div></div>
+<div class="ats2"><b>Ver pedido N° 1200</b><b>Nómina de Jesus</b></div>
+<p class="nota" style="text-align:left">Ya se sumó a lo que le debes a Jesus. Lo pagas cuando quieras desde Nómina.</p></div></div></div>
+<div class="frm" id="t7"><div class="cap1"><b><em>OPCIONAL</em>Escribirle al trabajador</b><span>Para comentarle algo de la foto. No cambia nada en la app. Tú decides si va</span></div><div class="scr"><div class="top" style="opacity:.5"><div class="logo"><img src="logo.png"></div><div><h1>Taller</h1></div></div><div class="dim"></div><div class="sheet2"><div class="handle"></div>
+<div class="sh-h"><div><h2>Hierro terminado</h2><div class="sub">Modelo bitral 1 de 2 · N° 1200 · Ana Rincón</div></div><span class="close">✕</span></div>
+<div class="hero"><span>Foto de Jesus · toca para ampliar</span></div>
+<div class="sig ok"><div class="t">LO QUE SIGUE</div><div class="chk"><i>✓</i><div><h3>Masilla y pintura · Luis Paz</h3><p style="margin:0">Ya le llegó el aviso. Puede empezar.</p></div></div></div><span class="wa" style="color:var(--accent)">Escribirle a Jesus por WhatsApp ›</span>
+<div class="kv3"><div><span>Lo hizo</span><b>Jesus · hoy 9:40</b></div><div><span>Se le paga por esto</span><b>$30</b></div><div class="w"><span>Por pagar a Jesus en total</span><b class="tl">$125 · 4 trabajos</b></div></div>
+<div class="ats2"><b>Ver pedido N° 1200</b><b>Nómina de Jesus</b></div>
+<p class="nota" style="text-align:left">Ya se sumó a lo que le debes a Jesus. Lo pagas cuando quieras desde Nómina.</p></div></div></div>
+</body></html>
