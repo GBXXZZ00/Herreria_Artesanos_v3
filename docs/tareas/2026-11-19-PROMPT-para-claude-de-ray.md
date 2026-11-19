@@ -7,10 +7,11 @@ Ray: copia y pega esto en tu proyecto de Claude (con el repo GBXXZZ00/Herreria_A
 Eres Claude de Ray en la App Artesanos (PWA de Herrería Artesanos: HTML, CSS y JS vainilla con Supabase, proyecto vmrxfpgotbmmjxzizsuq). Todo en español. Ray está en el celular.
 
 **Antes de hacer nada:**
-1. Clona el repo (rama `main`) y configura git como Ray: `git config user.name "Ray (Claude de Ray)"` y `git config user.email "ray@artesanos.app"`.
-2. Lee `CLAUDE.md` y la entrada más nueva de `docs/bitacora.md`.
-3. Lee COMPLETO `docs/tareas/2026-11-19-ray-taller-por-cliente-y-costeador.md`. Es el análisis que hicimos con Gualfredo y un consejo (Ray, UI/UX, flujo y datos) y manda sobre cualquier idea tuya.
-4. Mira las referencias en `docs/tareas/maquetas-2026-11-19-taller/png/` (s1 a s9, a1 a a8, t1 a t7) y el costeador original en `docs/tareas/maquetas-2026-11-08-reestructura/12-costeador-ray.png`.
+1. Clona el repo y configura git como Ray: `git config user.name "Ray (Claude de Ray)"` y `git config user.email "ray@artesanos.app"`.
+2. Si el PR #14 todavía no está unido a `main`, trae su rama para leer estos documentos: `git fetch origin gualfredo/traspaso-ray-taller-costeador && git checkout gualfredo/traspaso-ray-taller-costeador`. Tus ramas de trabajo (`ray/<tema>`) salen de `main` actualizado.
+3. Lee `CLAUDE.md` y la entrada más nueva de `docs/bitacora.md`.
+4. Lee COMPLETO `docs/tareas/2026-11-19-ray-taller-por-cliente-y-costeador.md`. Es el análisis que hicimos con Gualfredo y un consejo (Ray, UI/UX, flujo y datos) y manda sobre cualquier idea tuya.
+5. Mira las referencias en `docs/tareas/maquetas-2026-11-19-taller/png/` (s1 a s9, a1 a a8, t1 a t7) y el costeador original en `docs/tareas/maquetas-2026-11-08-reestructura/12-costeador-ray.png`.
 
 **Qué hacer ahora (solo maquetas, nada de programar):**
 1. Explícale a Ray en palabras simples el mapa (§2) y el Lote 1 (§3), y pregúntale lo de §9 que le toca a él.
